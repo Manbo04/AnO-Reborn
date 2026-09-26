@@ -140,6 +140,11 @@ CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING = {
     "malls": 5000000,  # 5.0M
 }
 CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING_DEFAULT = 1500000
+# Consumer goods are distributed per province (app_core/economy/consumer_goods.py).
+# Spare retail capacity in one province can supply another province that has
+# too little, but those long-distance deliveries only count at this fraction
+# (the goods are consumed in full; the rest is lost to transport).
+REMOTE_CG_EFFICIENCY = 0.5
 
 # Feature flag for demographic-based consumption system
 FEATURE_DEMOGRAPHIC_CONSUMPTION = True  # toggle the new mechanic on/off

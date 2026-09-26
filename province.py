@@ -327,6 +327,11 @@ def province(pId):
             "monorails",
             "primary_school",
             "high_school",
+            # City slot, same as the /buy route's city_units list and
+            # building_costs.CITY_UNITS -- this display list used to count it
+            # against land, so free land/city shown here disagreed with what
+            # the purchase check actually allowed.
+            "industrial_district",
         ]
         land_buildings = [
             "army_bases",
@@ -348,7 +353,6 @@ def province(pId):
             "ammunition_factories",
             "aluminium_refineries",
             "oil_refineries",
-            "industrial_district",
         ]
 
         used_city_slots = sum(units.get(b, 0) or 0 for b in city_buildings)
@@ -395,15 +399,113 @@ def province(pId):
         max_cg = math.ceil(province["population"] / variables.CONSUMER_GOODS_PER)
         cg_dist_cap = 0
         enough_consumer_goods = consumer_goods >= max_cg
+        # Per-province CG supply for the status card -- same allocation the
+        # tax tick uses (app_core/economy/consumer_goods.py).
+        cg_status = None
         try:
             if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
-                from tasks import consumer_goods_distribution_capacity
+                from app_core.economy.consumer_goods import (
+                    allocate_consumer_goods,
+                    load_province_cg_capacities,
+                    province_cg_need,
+                )
 
-                cg_dist_cap = consumer_goods_distribution_capacity(cId, db=db) or 0
-                cg_available = min(consumer_goods, cg_dist_cap)
-                enough_consumer_goods = cg_available >= max_cg
+                db.execute(
+                    "SELECT id, population, pop_children, pop_working, pop_elderly "
+                    "FROM provinces WHERE userId=%s ORDER BY id",
+                    (user_id,),
+                )
+                nation_provs = db.fetchall()
+                prov_ids = [row_val(r, "id", 0) for r in nation_provs]
+                has_demo = all(
+                    row_val(r, "pop_children", 2) is not None
+                    and row_val(r, "pop_working", 3) is not None
+                    and row_val(r, "pop_elderly", 4) is not None
+                    for r in nation_provs
+                )
+                db.execute("SELECT education FROM policies WHERE user_id=%s", (user_id,))
+                pol_row = db.fetchone()
+                pol = (row_val(pol_row, "education", 0) if pol_row else None) or []
+                healthcare = variables.POLICY_UNIVERSAL_HEALTHCARE in pol
+                needs = [
+                    province_cg_need(
+                        row_val(r, "population", 1, default=0) or 0,
+                        row_val(r, "pop_children", 2),
+                        row_val(r, "pop_working", 3),
+                        row_val(r, "pop_elderly", 4),
+                        healthcare,
+                        has_demo,
+                    )
+                    for r in nation_provs
+                ]
+                caps_by_id = load_province_cg_capacities(db, prov_ids)
+                caps = [caps_by_id.get(pid, 0.0) for pid in prov_ids]
+                alloc = allocate_consumer_goods(needs, caps, consumer_goods)
+                if province["id"] in prov_ids:
+                    idx = prov_ids.index(province["id"])
+                    cg_dist_cap = int(caps[idx])
+                    coverage = alloc["coverage"][idx]
+                    if needs[idx] <= 0:
+                        source = "none_needed"
+                    elif alloc["remote"][idx] > 0 and alloc["local"][idx] <= 0:
+                        source = "remote"
+                    elif alloc["remote"][idx] > 0:
+                        source = "mixed"
+                    elif alloc["local"][idx] > 0:
+                        source = "local"
+                    else:
+                        source = "unserved"
+                    cg_status = {
+                        "coverage_percent": int(round(coverage * 100)),
+                        "source": source,
+                        "remote_efficiency_percent": int(
+                            round(variables.REMOTE_CG_EFFICIENCY * 100)
+                        ),
+                    }
+                    enough_consumer_goods = coverage >= 0.999
         except Exception:
             rollback_db_cursor(db)
+
+        # Economies of scale + vertical integration shown on each producing
+        # building's card (same helper the production tick uses).
+        industry_bonus = {}
+        try:
+            from app_core.economy.industry_bonuses import (
+                PROCESSING_BUILDINGS,
+                SCALE_BUILDINGS,
+                production_bonuses,
+                self_sufficiency,
+            )
+
+            db.execute(
+                "SELECT bd.name, COALESCE(SUM(ub.quantity), 0) "
+                "FROM user_buildings ub "
+                "JOIN building_dictionary bd ON bd.building_id = ub.building_id "
+                "WHERE ub.user_id = %s GROUP BY bd.name",
+                (user_id,),
+            )
+            nation_counts = {
+                row_val(r, "name", 0): int(row_val(r, "coalesce", 1, default=0) or 0)
+                for r in db.fetchall()
+            }
+            for bname in SCALE_BUILDINGS:
+                b = production_bonuses(
+                    bname,
+                    units,
+                    province.get("land") or 0,
+                    province.get("citycount") or 0,
+                    nation_counts,
+                )
+                entry = {"scale": round(b["scale"] * 100, 1), "integration": None}
+                if bname in PROCESSING_BUILDINGS:
+                    entry["integration"] = round(b["integration"] * 100, 1)
+                    entry["self_sufficiency"] = int(
+                        round(self_sufficiency(bname, nation_counts) * 100)
+                    )
+                industry_bonus[bname] = entry
+        except Exception:
+            rollback_db_cursor(db)
+            industry_bonus = {}
 
         rations_minus = province["population"] // variables.RATIONS_PER
         nation_distribution = None
@@ -706,6 +808,8 @@ def province(pId):
             cg_distribution_capacity=(
                 cg_dist_cap if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION else None
             ),
+            cg_status=cg_status,
+            industry_bonus=industry_bonus,
             province_base_layout=province_base_layout,
             province_count=province_count,
             province_rename_cost=PROVINCE_RENAME_COST,

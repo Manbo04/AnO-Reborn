@@ -54,6 +54,7 @@ from app_core.game_ticks.common import (
 )
 from app_core.game_ticks.locks import try_pg_advisory_lock, release_pg_advisory_lock
 from app_core.game_ticks.population import find_unit_category
+from app_core.economy.industry_bonuses import production_bonuses
 
 
 
@@ -320,7 +321,8 @@ def generate_province_revenue():  # Runs each hour
                            energy, population,
                            COALESCE(pop_children, 0) AS pop_children,
                            COALESCE(pop_working, 0) AS pop_working,
-                           COALESCE(pop_elderly, 0) AS pop_elderly
+                           COALESCE(pop_elderly, 0) AS pop_elderly,
+                           COALESCE(CAST(citycount AS INTEGER), 0) AS citycount
                     FROM provinces WHERE id = ANY(%s)
                 """,
                     (all_province_ids,),
@@ -343,6 +345,7 @@ def generate_province_revenue():  # Runs each hour
                                 "pop_children": row[7] if len(row) > 7 else 0,
                                 "pop_working": row[8] if len(row) > 8 else 0,
                                 "pop_elderly": row[9] if len(row) > 9 else 0,
+                                "citycount": row[10] if len(row) > 10 else 0,
                             }
                         # Reset energy to 0 (will be built up by nuclear_reactors)
                         prov_dict["energy"] = 0
@@ -495,6 +498,30 @@ def generate_province_revenue():  # Runs each hour
                         "happiness_penalty": 0,
                         "gold_penalty": 0,
                     }
+
+            # Nation-wide building counts (for vertical integration). The
+            # workforce block above already loads them; load here otherwise.
+            if variables.FEATURE_PHASE3_WORKFORCE:
+                nation_building_counts = user_building_counts
+            else:
+                nation_building_counts = {}
+                if all_user_ids:
+                    dbdict.execute(
+                        """
+                        SELECT ub.user_id, bd.name,
+                               COALESCE(SUM(ub.quantity), 0) AS count
+                        FROM user_buildings ub
+                        JOIN building_dictionary bd
+                            ON bd.building_id = ub.building_id
+                        WHERE ub.user_id = ANY(%s)
+                        GROUP BY ub.user_id, bd.name
+                        """,
+                        (all_user_ids,),
+                    )
+                    for row in dbdict.fetchall():
+                        nation_building_counts.setdefault(row["user_id"], {})[
+                            row["name"]
+                        ] = int(row["count"] or 0)
 
             # Track happiness penalties per province (to apply after batch writes)
             happiness_penalties = {}  # province_id -> penalty_amount
@@ -691,11 +718,15 @@ def generate_province_revenue():  # Runs each hour
 
                         # Use tracked energy in provinces_data instead of
                         # per-building SELECT
+                        # EAF must be checked first: steel_mills is also in
+                        # ENERGY_CONSUMERS, so with the generic branch first the
+                        # documented 2-energy EAF cost was never charged (mills
+                        # got the halved inputs for the normal 1 energy).
                         energy_per_unit = 0
-                        if unit in energy_consumers:
-                            energy_per_unit = 1  # Each unit consumes 1 energy
-                        elif unit == "steel_mills" and upgrades.get("electricarcfurnace"):
+                        if unit == "steel_mills" and upgrades.get("electricarcfurnace"):
                             energy_per_unit = 2  # EAF consumes 2 energy per mill
+                        elif unit in energy_consumers:
+                            energy_per_unit = 1  # Each unit consumes 1 energy
 
                         if energy_per_unit:
                             prov_data = provinces_data.get(province_id, {})
@@ -866,6 +897,17 @@ def generate_province_revenue():  # Runs each hour
                         if unit == "steel_mills":
                             if upgrades.get("integratedsteelmaking"):
                                 plus_amount_multiplier += 0.36
+
+                        # Economies of scale + vertical integration
+                        # (app_core/economy/industry_bonuses.py).
+                        bonus = production_bonuses(
+                            unit,
+                            province_buildings,
+                            land,
+                            provinces_data.get(province_id, {}).get("citycount", 0),
+                            nation_building_counts.get(user_id, {}),
+                        )
+                        plus_amount_multiplier *= bonus["multiplier"]
 
                         # PHASE 3: Apply workforce efficiency multiplier
                         # (reduces production if understaffed)

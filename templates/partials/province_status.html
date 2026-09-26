@@ -32,7 +32,19 @@
             <span class="material-icons-outlined">{% if enough_consumer_goods %}check_circle{% else %}cancel{% endif %}</span>
             <span>{% if enough_consumer_goods %}Your citizens have consumer goods{% else %}Your citizens do not have consumer goods{% endif %}</span>
         </div>
-        {% if cg_distribution_capacity is not none %}
+        {% if cg_status %}
+        <p class="province-status-card__detail">
+            {% if cg_status.source == "local" %}
+            Supplied by this province's own shops ({{ cg_status.coverage_percent }}% of demand met).
+            {% elif cg_status.source == "mixed" %}
+            {{ cg_status.coverage_percent }}% of demand met. Local shops can't cover everyone, so the rest is shipped in from your other provinces at {{ cg_status.remote_efficiency_percent }}% effect.
+            {% elif cg_status.source == "remote" %}
+            No shops here: goods are shipped in from your other provinces at {{ cg_status.remote_efficiency_percent }}% effect ({{ cg_status.coverage_percent }}% of demand met). Build retail in this province for the full tax bonus.
+            {% elif cg_status.source == "unserved" %}
+            No shops here and no spare retail elsewhere to ship from. Build retail in this province.
+            {% endif %}
+        </p>
+        {% elif cg_distribution_capacity is not none %}
         <p class="province-status-card__detail">
             CG distribution serves {{ cg_distribution_capacity | commas }} population
         </p>

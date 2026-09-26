@@ -180,6 +180,7 @@ PROVINCE_BASE_SLOTS: list[dict[str, Any]] = [
             "banks",
             "malls",
             "distribution_centers",
+            "industrial_district",
         ],
     },
     {
@@ -207,7 +208,6 @@ PROVINCE_BASE_SLOTS: list[dict[str, Any]] = [
             "ammunition_factories",
             "aluminium_refineries",
             "oil_refineries",
-            "industrial_district",
         ],
     },
     {
@@ -218,10 +218,10 @@ PROVINCE_BASE_SLOTS: list[dict[str, Any]] = [
             "city_parks",
             "libraries",
             "hospitals",
-            "universities",
-            "monorails",
             "primary_school",
             "high_school",
+            "universities",
+            "monorails",
         ],
     },
     {

@@ -308,12 +308,12 @@
                         <tr>
                             <td>{{ units["wind_farms"] }} Wind Farms</td>
                             <td>{{ units["farmers_markets"] }} Farmers Markets</td>
-                            <td>{{ units["universities"] }} Universities</td>
+                            <td>{{ units["primary_school"] }} Primary Schools</td>
                         </tr>
                         <tr>
                             <td>{{ units["geothermal_plants"] }} Geothermal Plants</td>
                             <td>{{ units["banks"] }} Banks</td>
-                            <td>{{ units["primary_school"] }} Primary Schools</td>
+                            <td>{{ units["high_school"] }} High Schools</td>
                         </tr>
                         <tr>
                             <td>{{ units["hydro_dams"] }} Hydro Dams</td>
@@ -322,7 +322,7 @@
                             {% else %}
                             <td>{{ units["malls"] }} Malls</td>
                             {% endif %}
-                            <td>{{ units["high_school"] }} High Schools</td>
+                            <td>{{ units["universities"] }} Universities</td>
                         </tr>
                         <tr>
                             <td>{{ units["nuclear_reactors"] }} Nuclear Reactors</td>
@@ -332,6 +332,11 @@
                             {% else %}
                             <td>{{ units["monorails"] }} Monorails</td>
                             {% endif %}
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>{{ units["industrial_district"] }} Industrial Districts</td>
+                            <td></td>
                         </tr>
                     </table>
                 </div>
@@ -1025,6 +1030,45 @@
                         </div>
                         {% endif %}
                     </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Industrial District</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["industrial_district"] }} Industrial Districts</h3>
+
+                                <p class="templatecontentpleft">Industrial Districts are a large-scale consumer goods facility, producing far more per building than a general store.</p>
+
+                                <ul>Industrial Districts cost {{ infra["industrial_district_money"] | fmt }} per hour and produce {{ infra["industrial_district_plus"]["consumer_goods"] | weight_fmt }} consumer goods per hour, as well as +{{ infra["industrial_district_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>{{ "industrial_district" | prores }}</ul>
+                                {% if industry_bonus and industry_bonus.get("industrial_district") %}{% set _ib = industry_bonus["industrial_district"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced at home){% endif %}</ul>{% endif %}
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="industrial_district" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/industrial_district/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/industrial_district/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+                                <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename=game_asset_path('buildings', 'industrial_district')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <!--Public Works-->
                 <div id="works" class="works">
@@ -1154,47 +1198,6 @@
                     </div>
                     <div class="menudiv">
 
-                        <h2 class="templatecontentheaderleft">Universities</h2>
-
-                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
-                            <div class="templatedivflex2left">
-
-                                <h3 class="templatecontentheadercenter">You have {{ units["universities"] }} Universities</h3>
-
-                                <p class="templatecontentpleft">Universities help educate your population, making them far more productive. University gives their students some great memories.</p>
-
-                                <ul>Universities cost {{ infra["universities_money"] | fmt }} per hour and contribute +{{ infra["universities_effect"][0]["productivity"] }}% productivity and +{{ new_infra["universities"]["eff"]["happiness"] }}% happiness</ul>
-                                <ul>Uses -1 electricity per hour</ul>
-                                <ul>{{ "universities" | prores }}</ul>
-
-                                <div class="purchasemilitarydiv">
-                                    <input class="loginsignupinput" autocomplete="off" name="universities" type="number" placeholder="Amount" />
-
-                                    <div class="templatedivflex2 divflex2center">
-                                        <div class="templatedivflex2left flexchildvanilla">
-
-                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/universities/' ~ province['id']) }}
-
-                                        </div>
-                                        <div class="templatedivflex2left flexchildvanilla">
-
-                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/universities/' ~ province['id']) }}
-
-                                        </div>
-                                    </div>
-                                </div>
-
-                            </div>
-                            <div class="templatedivflex2right province-card-media">
-
-
-
-                                <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename=game_asset_path('buildings', 'universities')) }}?v=2" />
-                            </div>
-                        </div>
-                    </div>
-                    <div class="menudiv">
-
                         <h2 class="templatecontentheaderleft">Primary Schools</h2>
 
                         <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
@@ -1270,6 +1273,47 @@
 
 
                                 <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename=game_asset_path('buildings', 'high_school')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Universities</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units["universities"] }} Universities</h3>
+
+                                <p class="templatecontentpleft">Universities help educate your population, making them far more productive. University gives their students some great memories.</p>
+
+                                <ul>Universities cost {{ infra["universities_money"] | fmt }} per hour and contribute +{{ infra["universities_effect"][0]["productivity"] }}% productivity and +{{ new_infra["universities"]["eff"]["happiness"] }}% happiness</ul>
+                                <ul>Uses -1 electricity per hour</ul>
+                                <ul>{{ "universities" | prores }}</ul>
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="universities" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/universities/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/universities/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename=game_asset_path('buildings', 'universities')) }}?v=2" />
                             </div>
                         </div>
                     </div>
@@ -1724,6 +1768,7 @@
                                 <ul>Farms cost {{ (infra["farms_money"] * 0.8) | fmt }} {% else %}
                                     <ul>Farms cost {{ infra["farms_money"] | fmt }} {% endif %} {% if upgrades["advancedmachinery"] %} and produce +{{ (infra["farms_plus"]["rations"] * 1.5) | int  | weight_fmt }} rations per hour, {% else %} and produce +{{ infra["farms_plus"]["rations"]  | weight_fmt }} rations per hour, {% endif %} as well as +{{ infra["farms_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "farms" | prores }}</ul>
+                                    {% if industry_bonus and industry_bonus.get("farms") %}{% set _ib = industry_bonus["farms"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced at home){% endif %}</ul>{% endif %}
 
                                     <div class="purchasemilitarydiv">
                                         <input class="loginsignupinput" autocomplete="off" name="farms" type="number" placeholder="Amount" />
@@ -1773,6 +1818,7 @@
                                 <ul>Iron mines cost {{ (infra["iron_mines_money"] * 0.8) | fmt }} per hour {% else %}
                                     <ul>Iron mines cost {{ infra["iron_mines_money"] | fmt }} per hour {% endif %} and produce {{ infra["iron_mines_plus"]["iron"]  | weight_fmt }} iron per hour, as well as +{{ infra["iron_mines_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "iron_mines" | prores }}</ul>
+                                    {% if industry_bonus and industry_bonus.get("iron_mines") %}{% set _ib = industry_bonus["iron_mines"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced at home){% endif %}</ul>{% endif %}
 
                                     <div class="purchasemilitarydiv">
                                         <input class="loginsignupinput" autocomplete="off" name="iron_mines" type="number" placeholder="Amount" />
@@ -1820,6 +1866,7 @@
                                     <ul>Coal mines cost {{ infra["coal_mines_money"] | fmt }} per hour {% endif %}
                                         <ul>and produce {{ infra["coal_mines_plus"]["coal"]  | weight_fmt }} coal per hour, as well as +{{ infra["coal_mines_effect"][0]["pollution"] }}% pollution</ul>
                                         <ul>{{ "coal_mines" | prores }}</ul>
+                                        {% if industry_bonus and industry_bonus.get("coal_mines") %}{% set _ib = industry_bonus["coal_mines"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced at home){% endif %}</ul>{% endif %}
 
                                         <div class="purchasemilitarydiv">
                                             <input class="loginsignupinput" autocomplete="off" name="coal_mines" type="number" placeholder="Amount" />
@@ -1866,6 +1913,7 @@
                                 <ul>Copper mines cost {{ (infra["copper_mines_money"] * 0.8) | fmt }} per hour {% else %}
                                     <ul>Copper mines cost {{ infra["copper_mines_money"] | fmt }} per hour {% endif %} and produce {{ infra["copper_mines_plus"]["copper"]  | weight_fmt }} copper per hour, as well as +{{ infra["copper_mines_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "copper_mines" | prores }}</ul>
+                                    {% if industry_bonus and industry_bonus.get("copper_mines") %}{% set _ib = industry_bonus["copper_mines"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced at home){% endif %}</ul>{% endif %}
 
                                     <div class="purchasemilitarydiv">
                                         <input class="loginsignupinput" autocomplete="off" name="copper_mines" type="number" placeholder="Amount" />
@@ -1909,6 +1957,7 @@
                                 <ul>Pumpjacks cost {{ (infra["pumpjacks_money"] * 0.8) | fmt }} per hour {% else %}
                                     <ul>Pumpjacks cost {{ infra["pumpjacks_money"] | fmt }} per hour {% endif %} and produce {{ infra["pumpjacks_plus"]["oil"]  | weight_fmt }} oil per hour, as well as +{{ infra["pumpjacks_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "pumpjacks" | prores }}</ul>
+                                    {% if industry_bonus and industry_bonus.get("pumpjacks") %}{% set _ib = industry_bonus["pumpjacks"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced at home){% endif %}</ul>{% endif %}
 
                                     <div class="purchasemilitarydiv">
                                         <input class="loginsignupinput" autocomplete="off" name="pumpjacks" type="number" placeholder="Amount" />
@@ -1951,6 +2000,7 @@
                                 <ul>Lumber mills cost {{ (infra["lumber_mills_money"] * 0.8) | fmt }} per hour {% else %}
                                     <ul>Lumber mills cost {{ infra["lumber_mills_money"] | fmt }} per hour {% endif %} and produce {{ infra["lumber_mills_plus"]["lumber"]  | weight_fmt }} lumber per hour, as well as +{{ infra["lumber_mills_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "lumber_mills" | prores }}</ul>
+                                    {% if industry_bonus and industry_bonus.get("lumber_mills") %}{% set _ib = industry_bonus["lumber_mills"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced at home){% endif %}</ul>{% endif %}
 
                                     <div class="purchasemilitarydiv">
                                         <input class="loginsignupinput" autocomplete="off" name="lumber_mills" type="number" placeholder="Amount" />
@@ -1994,6 +2044,7 @@
                                 <ul>Lead mines cost {{ (infra["lead_mines_money"] * 0.8) | fmt }} per hour {% else %}
                                     <ul>Lead mines cost {{ infra["lead_mines_money"] | fmt }} per hour {% endif %} and produce {{ infra["lead_mines_plus"]["lead"]  | weight_fmt }} lead per hour, as well as +{{ infra["lead_mines_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "lead_mines" | prores }}</ul>
+                                    {% if industry_bonus and industry_bonus.get("lead_mines") %}{% set _ib = industry_bonus["lead_mines"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced at home){% endif %}</ul>{% endif %}
 
                                     <div class="purchasemilitarydiv">
                                         <input class="loginsignupinput" autocomplete="off" name="lead_mines" type="number" placeholder="Amount" />
@@ -2037,6 +2088,7 @@
                                 <ul>Bauxite mines cost {{ (infra["bauxite_mines_money"] * 0.8) | fmt }} per hour {% else %}
                                     <ul>Bauxite mines cost {{ infra["bauxite_mines_money"] | fmt }} per hour {% endif %} and produce {{ infra["bauxite_mines_plus"]["bauxite"]  | weight_fmt }} bauxite per hour, as well as +{{ infra["bauxite_mines_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "bauxite_mines" | prores }}</ul>
+                                    {% if industry_bonus and industry_bonus.get("bauxite_mines") %}{% set _ib = industry_bonus["bauxite_mines"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced at home){% endif %}</ul>{% endif %}
 
                                     <div class="purchasemilitarydiv">
                                         <input class="loginsignupinput" autocomplete="off" name="bauxite_mines" type="number" placeholder="Amount" />
@@ -2079,6 +2131,7 @@
                                 <ul>Lumber mills cost {{ (infra["lumber_mills_money"] * 0.8) | fmt }} per hour {% else %}
                                     <ul>Lumber mills cost {{ infra["lumber_mills_money"] | fmt }} per hour {% endif %} and produce {{ infra["lumber_mills_plus"]["lumber"]  | weight_fmt }} lumber per hour, as well as +{{ infra["lumber_mills_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "lumber_mills" | prores }}</ul>
+                                    {% if industry_bonus and industry_bonus.get("lumber_mills") %}{% set _ib = industry_bonus["lumber_mills"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced at home){% endif %}</ul>{% endif %}
 
                                     <div class="purchasemilitarydiv">
                                         <input class="loginsignupinput" autocomplete="off" name="lumber_mills" type="number" placeholder="Amount" />
@@ -2122,6 +2175,7 @@
                                 <ul>Pumpjacks cost {{ (infra["pumpjacks_money"] * 0.8) | fmt }} per hour {% else %}
                                     <ul>Pumpjacks cost {{ infra["pumpjacks_money"] | fmt }} per hour {% endif %} and produce {{ infra["pumpjacks_plus"]["oil"]  | weight_fmt }} oil per hour, as well as +{{ infra["pumpjacks_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "pumpjacks" | prores }}</ul>
+                                    {% if industry_bonus and industry_bonus.get("pumpjacks") %}{% set _ib = industry_bonus["pumpjacks"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced at home){% endif %}</ul>{% endif %}
 
                                     <div class="purchasemilitarydiv">
                                         <input class="loginsignupinput" autocomplete="off" name="pumpjacks" type="number" placeholder="Amount" />
@@ -2165,6 +2219,7 @@
                                 {% else %}
                                 <ul>Lumber mills cost {{ infra["lumber_mills_money"] | fmt }} per hour {% endif %} and produce {{ infra["lumber_mills_plus"]["lumber"]  | weight_fmt }} lumber per hour, as well as +{{ infra["lumber_mills_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "lumber_mills" | prores }}</ul>
+                                    {% if industry_bonus and industry_bonus.get("lumber_mills") %}{% set _ib = industry_bonus["lumber_mills"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced at home){% endif %}</ul>{% endif %}
 
                                     <div class="purchasemilitarydiv">
                                         <input class="loginsignupinput" autocomplete="off" name="lumber_mills" type="number" placeholder="Amount" />
@@ -2205,6 +2260,7 @@
                                 <ul>Uranium mines cost {{ (infra["uranium_mines_money"] * 0.8) | fmt }} per hour {% else %}
                                     <ul>Uranium mines cost {{ infra["uranium_mines_money"] | fmt }} per hour {% endif %} and produce {{ infra["uranium_mines_plus"]["uranium"]  | weight_fmt }} uranium per hour, as well as +{{ infra["uranium_mines_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "uranium_mines" | prores }}</ul>
+                                    {% if industry_bonus and industry_bonus.get("uranium_mines") %}{% set _ib = industry_bonus["uranium_mines"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced at home){% endif %}</ul>{% endif %}
 
                                     <div class="purchasemilitarydiv">
                                         <input class="loginsignupinput" autocomplete="off" name="uranium_mines" type="number" placeholder="Amount" />
@@ -2247,6 +2303,7 @@
                                 <ul>Bauxite mines cost {{ (infra["bauxite_mines_money"] * 0.8) | fmt }} per hour {% else %}
                                     <ul>Bauxite mines cost {{ infra["bauxite_mines_money"] | fmt }} per hour {% endif %} and produce {{ infra["bauxite_mines_plus"]["bauxite"]  | weight_fmt }} bauxite per hour, as well as +{{ infra["bauxite_mines_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "bauxite_mines" | prores }}</ul>
+                                    {% if industry_bonus and industry_bonus.get("bauxite_mines") %}{% set _ib = industry_bonus["bauxite_mines"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced at home){% endif %}</ul>{% endif %}
 
                                     <div class="purchasemilitarydiv">
                                         <input class="loginsignupinput" autocomplete="off" name="bauxite_mines" type="number" placeholder="Amount" />
@@ -2290,6 +2347,7 @@
                                 <ul>Coal mines cost {{ (infra["coal_mines_money"] * 0.8) | fmt }} per hour {% else %}
                                     <ul>Coal mines cost {{ infra["coal_mines_money"] | fmt }} per hour {% endif %} and produce {{ infra["coal_mines_plus"]["coal"]  | weight_fmt }} coal per hour, as well as +{{ infra["coal_mines_effect"][0]["pollution"] }}% pollution</ul>
                                     <ul>{{ "coal_mines" | prores }}</ul>
+                                    {% if industry_bonus and industry_bonus.get("coal_mines") %}{% set _ib = industry_bonus["coal_mines"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced at home){% endif %}</ul>{% endif %}
 
                                     <div class="purchasemilitarydiv">
                                         <input class="loginsignupinput" autocomplete="off" name="coal_mines" type="number" placeholder="Amount" />
@@ -2363,6 +2421,7 @@
                                 <ul>Uses -1 electricity per hour</ul>
                                 {% endif %}
                                 <ul>{{ "component_factories" | prores }}</ul>
+                                {% if industry_bonus and industry_bonus.get("component_factories") %}{% set _ib = industry_bonus["component_factories"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced at home){% endif %}</ul>{% endif %}
 
                                 <div class="purchasemilitarydiv">
                                     <input class="loginsignupinput" autocomplete="off" name="component_factories" type="number" placeholder="Amount" />
@@ -2401,14 +2460,17 @@
 
                                 <p class="templatecontentpleft">Steel mills produce steel from iron and coal, an incredibly robust material</p>
 
-                                {% if upgrades["largerforges"] %}
-                                <ul>Steel Mills cost {{ ((infra["steel_mills_money"] * 0.7) | int) | fmt }} and convert {{ (infra["steel_mills_convert_minus"][1]["iron"] * 0.7) | int  | weight_fmt }} iron and {{ (infra["steel_mills_convert_minus"][0]["coal"] * 0.7) | int  | weight_fmt }} coal into {{ infra["steel_mills_plus"]["steel"]  | weight_fmt }} steel per hour, as well as +{{ infra["steel_mills_effect"][0]["pollution"] }}% pollution</ul>
-                                <ul>Uses -2 electricity per hour if you have Electric Arc Furnace researched, otherwise -1</ul>
-                                {% else %}
-                                <ul>Steel Mills cost {{ infra["steel_mills_money"] | fmt }} and convert {{ infra["steel_mills_convert_minus"][1]["iron"]  | weight_fmt }} iron and {{ infra["steel_mills_convert_minus"][0]["coal"]  | weight_fmt }} coal into {{ infra["steel_mills_plus"]["steel"]  | weight_fmt }} steel per hour, as well as +{{ infra["steel_mills_effect"][0]["pollution"] }}% pollution</ul>
-                                <ul>Uses -2 electricity per hour if you have Electric Arc Furnace researched, otherwise -1</ul>
-                                {% endif %}
+                                {# Mirrors the per-mill input/output/energy multipliers in
+                                   app_core/game_ticks/revenue.py (Larger Forges x0.7 inputs,
+                                   Integrated Steelmaking x1.36 inputs and +36% output,
+                                   Electric Arc Furnace x0.5 inputs and 2 energy per mill). #}
+                                {% set sm_in = (0.7 if upgrades["largerforges"] else 1) * (1.36 if upgrades["integratedsteelmaking"] else 1) * (0.5 if upgrades["electricarcfurnace"] else 1) %}
+                                {% set sm_out = infra["steel_mills_plus"]["steel"] * (1.36 if upgrades["integratedsteelmaking"] else 1) %}
+                                {% set sm_energy = 2 if upgrades["electricarcfurnace"] else 1 %}
+                                <ul>Steel Mills cost {{ infra["steel_mills_money"] | fmt }} per hour and convert {{ (infra["steel_mills_convert_minus"][1]["iron"] * sm_in) | round | int | weight_fmt }} iron and {{ (infra["steel_mills_convert_minus"][0]["coal"] * sm_in) | round | int | weight_fmt }} coal into {{ sm_out | round | int | weight_fmt }} steel per hour, as well as +{{ infra["steel_mills_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Uses -{{ sm_energy }} electricity per hour{% if upgrades["electricarcfurnace"] %} (Electric Arc Furnace){% endif %}</ul>
                                 <ul>{{ "steel_mills" | prores }}</ul>
+                                {% if industry_bonus and industry_bonus.get("steel_mills") %}{% set _ib = industry_bonus["steel_mills"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced at home){% endif %}</ul>{% endif %}
 
                                 <div class="purchasemilitarydiv">
                                     <input class="loginsignupinput" autocomplete="off" name="steel_mills" type="number" placeholder="Amount" />
@@ -2452,6 +2514,7 @@
                                 <ul>Ammunition Factories cost {{ infra["ammunition_factories_money"] | fmt }} and convert {{ infra["ammunition_factories_convert_minus"][0]["copper"]  | weight_fmt }} copper and {{ infra["ammunition_factories_convert_minus"][1]["lead"]  | weight_fmt }} lead into {{ infra["ammunition_factories_plus"]["ammunition"]  | weight_fmt }} ammunition per hour, as well as +{{ infra["ammunition_factories_effect"][0]["pollution"] }}% pollution</ul>
                                 <ul>Uses -1 electricity per hour</ul>
                                 <ul>{{ "ammunition_factories" | prores }}</ul>
+                                {% if industry_bonus and industry_bonus.get("ammunition_factories") %}{% set _ib = industry_bonus["ammunition_factories"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced at home){% endif %}</ul>{% endif %}
 
                                 <div class="purchasemilitarydiv">
                                     <input class="loginsignupinput" autocomplete="off" name="ammunition_factories" type="number" placeholder="Amount" />
@@ -2493,6 +2556,7 @@
                                 <ul>Aluminium Refineries cost {{ infra["aluminium_refineries_money"] | fmt }} and convert {{ infra["aluminium_refineries_convert_minus"][0]["bauxite"]  | weight_fmt }} bauxite into {{ infra["aluminium_refineries_plus"]["aluminium"]  | weight_fmt }} aluminium per hour, as well as +{{ infra["aluminium_refineries_effect"][0]["pollution"] }}% pollution</ul>
                                 <ul>Uses -1 electricity per hour</ul>
                                 <ul>{{ "aluminium_refineries" | prores }}</ul>
+                                {% if industry_bonus and industry_bonus.get("aluminium_refineries") %}{% set _ib = industry_bonus["aluminium_refineries"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced at home){% endif %}</ul>{% endif %}
 
                                 <div class="purchasemilitarydiv">
                                     <input class="loginsignupinput" autocomplete="off" name="aluminium_refineries" type="number" placeholder="Amount" />
@@ -2533,6 +2597,7 @@
                                 <ul>Oil Refineries cost {{ infra["oil_refineries_money"] | fmt }} and convert {{ infra["oil_refineries_convert_minus"][0]["oil"]  | weight_fmt }} oil into {{ infra["oil_refineries_plus"]["gasoline"]  | weight_fmt }} gasoline per hour, as well as +{{ infra["oil_refineries_effect"][0]["pollution"] }}% pollution</ul>
                                 <ul>Uses -1 electricity per hour</ul>
                                 <ul>{{ "oil_refineries" | prores }}</ul>
+                                {% if industry_bonus and industry_bonus.get("oil_refineries") %}{% set _ib = industry_bonus["oil_refineries"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced at home){% endif %}</ul>{% endif %}
 
                                 <div class="purchasemilitarydiv">
                                     <input class="loginsignupinput" autocomplete="off" name="oil_refineries" type="number" placeholder="Amount" />
@@ -2555,44 +2620,6 @@
                             <div class="templatedivflex2right province-card-media">
 
                                 <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename=game_asset_path('buildings', 'oil_refineries')) }}?v=2" />
-                            </div>
-                        </div>
-                    </div>
-                    <div class="menudiv">
-
-                        <h2 class="templatecontentheaderleft">Industrial District</h2>
-
-                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
-                            <div class="templatedivflex2left">
-
-                                <h3 class="templatecontentheadercenter">You have {{ units["industrial_district"] }} Industrial Districts</h3>
-
-                                <p class="templatecontentpleft">Industrial Districts are a large-scale consumer goods facility, producing far more per building than a general store.</p>
-
-                                <ul>Industrial Districts cost {{ infra["industrial_district_money"] | fmt }} per hour and produce {{ infra["industrial_district_plus"]["consumer_goods"] | weight_fmt }} consumer goods per hour, as well as +{{ infra["industrial_district_effect"][0]["pollution"] }}% pollution</ul>
-                                <ul>{{ "industrial_district" | prores }}</ul>
-
-                                <div class="purchasemilitarydiv">
-                                    <input class="loginsignupinput" autocomplete="off" name="industrial_district" type="number" placeholder="Amount" />
-
-                                    <div class="templatedivflex2 divflex2center">
-                                        <div class="templatedivflex2left flexchildvanilla">
-
-                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/industrial_district/' ~ province['id']) }}
-
-                                        </div>
-                                        <div class="templatedivflex2left flexchildvanilla">
-
-                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/industrial_district/' ~ province['id']) }}
-
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="templatedivflex2right province-card-media">
-
-                                <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename=game_asset_path('buildings', 'industrial_district')) }}?v=2" />
                             </div>
                         </div>
                     </div>

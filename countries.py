@@ -8,6 +8,13 @@ from dotenv import load_dotenv
 import logging
 from collections import defaultdict
 from app_core.policies.services import get_user_policies
+from app_core.economy.industry_bonuses import production_bonuses
+from app_core.economy.consumer_goods import (
+    allocate_consumer_goods,
+    cg_tax_multiplier,
+    load_province_cg_capacities,
+    province_cg_need,
+)
 from wars.service import target_data
 import math
 from database import (
@@ -155,7 +162,9 @@ def get_revenue(cId, db=None):
         # tick's age-weighted formula, not just the flat population).
         db.execute(
             "SELECT id, land, productivity, population, "
-            "pop_children, pop_working, pop_elderly FROM provinces WHERE userid=%s",
+            "pop_children, pop_working, pop_elderly, "
+            "COALESCE(CAST(citycount AS INTEGER), 0) "
+            "FROM provinces WHERE userid=%s",
             (cId,),
         )
         province_rows = db.fetchall()
@@ -194,6 +203,9 @@ def get_revenue(cId, db=None):
             upgrades = {}
         land_by_id = {row[0]: row[1] for row in province_rows}
         prod_by_id = {row[0]: row[2] for row in province_rows}
+        city_by_id = {
+            row[0]: (row[7] if len(row) > 7 else 0) for row in province_rows
+        }
 
         # Fetched here (not just before the tax calc further down) so the
         # building loop below can also apply POLICY_INDUSTRIAL_SUBSIDIES to
@@ -315,6 +327,14 @@ def get_revenue(cId, db=None):
                 if pension_ratio > variables.PENSION_CRISIS_RATIO:
                     pension_gold_penalty = variables.PENSION_CRISIS_GOLD_PENALTY
 
+        # Nation-wide building totals for the vertical-integration bonus
+        # (same inputs revenue.py uses).
+        nation_building_counts = defaultdict(int)
+        for p in provinces:
+            for bname, qty in (proinfra_by_id.get(p) or {}).items():
+                if bname != "id" and qty:
+                    nation_building_counts[bname] += qty
+
         # Simulated funds used while computing `net`; do not mutate DB
         simulated_funds = current_money
 
@@ -402,6 +422,16 @@ def get_revenue(cId, db=None):
                     if building == "steel_mills" and upgrades.get("integratedsteelmaking"):
                         multiplier += 0.36
 
+                    # Economies of scale + vertical integration, same helper
+                    # as the real tick.
+                    multiplier *= production_bonuses(
+                        building,
+                        buildings,
+                        land_by_id.get(province, 0),
+                        city_by_id.get(province, 0),
+                        nation_building_counts,
+                    )["multiplier"]
+
                     # PHASE 3 workforce efficiency (see above) -- applied last,
                     # exactly like revenue.py's plus_amount_multiplier *=
                     # efficiency_multiplier.
@@ -459,6 +489,8 @@ def get_revenue(cId, db=None):
         )
 
         ti_money = 0
+        total_cg_need = 0.0
+        ti_province_incomes = []
         if ti_provinces:
             for population, land, pc, pw, pe in ti_provinces:
                 land_multiplier = (land - 1) * variables.DEFAULT_LAND_TAX_MULTIPLIER
@@ -488,89 +520,34 @@ def get_revenue(cId, db=None):
                 else:
                     taxable_population = population
                 ti_money += multiplier * taxable_population
+                ti_province_incomes.append(multiplier * taxable_population)
 
-            # CG tax multiplier — mirror the actual tax_income task logic.
-            # When FEATURE_DEMOGRAPHIC_CONSUMPTION is enabled, use the
-            # demographic-based CG need and distribution-capacity check;
-            # otherwise fall back to the legacy population/CONSUMER_GOODS_PER
-            # formula.
+            # CG tax multiplier -- the same per-province allocation the
+            # tax_income tick uses (app_core/economy/consumer_goods.py), so
+            # this projection can't drift from what the tick pays out.
             if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
-                # Demographic CG need (matches tax_income)
-                total_cg_need = 0.0
-                for row in province_rows:
-                    pw = float(row[3]) if row[3] else 0.0  # population as proxy
-                    # Use per-province demographic data if available
-                    total_cg_need += (
-                        pw * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_working"]
+                healthcare = variables.POLICY_UNIVERSAL_HEALTHCARE in policies
+                cg_needs = [
+                    province_cg_need(
+                        population, pc, pw, pe, healthcare, has_demographic_data
                     )
-                # province_rows now carries per-province pc/pw/pe too, but
-                # this aggregate query is left as-is (not broken, just
-                # slightly redundant) to keep this fix scoped to the tax
-                # calc above.
-                db.execute(
-                    "SELECT COALESCE(SUM(pop_working), 0) AS pw,"
-                    "       COALESCE(SUM(pop_children), 0) AS pc,"
-                    "       COALESCE(SUM(pop_elderly), 0) AS pe "
-                    "FROM provinces WHERE userid = %s",
-                    (cId,),
+                    for population, land, pc, pw, pe in ti_provinces
+                ]
+                cg_caps_by_id = load_province_cg_capacities(
+                    db, [row[0] for row in province_rows]
                 )
-                demo_row = db.fetchone()
-                if demo_row:
-                    pw_sum = float(demo_row[0] or 0)
-                    pc_sum = float(demo_row[1] or 0)
-                    pe_sum = float(demo_row[2] or 0)
-                    # Same healthcare-policy adjustment taxes.py applies to
-                    # the real tick (POLICY_UNIVERSAL_HEALTHCARE makes
-                    # elderly consume +20% more CG) -- missing here meant
-                    # this projection understated CG need, and therefore
-                    # overstated the tax-multiplier outcome, for any player
-                    # running that policy. Same bug shape as the tax-rate
-                    # projection fix above, found by sweeping for other
-                    # duplicated tick formulas.
-                    elderly_cg_multiplier = (
-                        variables.POLICY_HEALTHCARE_ELDERLY_CG_MULTIPLIER
-                        if variables.POLICY_UNIVERSAL_HEALTHCARE in policies
-                        else 1.0
-                    )
-                    total_cg_need = (
-                        pw_sum
-                        * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_working"]
-                        + pc_sum
-                        * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_children"]
-                        + pe_sum
-                        * variables.DEMO_CONSUMER_GOODS_CONSUMPTION["pop_elderly"]
-                        * elderly_cg_multiplier
-                    )
-                # Distribution capacity check
-                db.execute(
-                    "SELECT bd.name, COALESCE(SUM(ub.quantity), 0) AS qty "
-                    "FROM user_buildings ub "
-                    "JOIN building_dictionary bd "
-                    "  ON bd.building_id = ub.building_id "
-                    "WHERE ub.user_id = %s "
-                    "  AND bd.name IN ("
-                    "    'distribution_centers','malls',"
-                    "    'general_stores','gas_stations'"
-                    "  ) "
-                    "GROUP BY bd.name",
-                    (cId,),
+                cg_alloc = allocate_consumer_goods(
+                    cg_needs,
+                    [cg_caps_by_id.get(row[0], 0.0) for row in province_rows],
+                    consumer_goods,
                 )
-                dist_capacity = 0
-                for drow in db.fetchall():
-                    bname = drow[0]
-                    qty = drow[1] or 0
-                    cap = variables.CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING.get(
-                        bname,
-                        variables.CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING_DEFAULT,
-                    )
-                    dist_capacity += qty * cap
-                available_to_consume = min(consumer_goods, dist_capacity)
-                if total_cg_need > 0:
-                    if available_to_consume >= total_cg_need:
-                        ti_money *= variables.CONSUMER_GOODS_TAX_MULTIPLIER
-                    else:
-                        cg_ratio = available_to_consume / total_cg_need
-                        ti_money *= 1 + (0.5 * cg_ratio)
+                ti_money = sum(
+                    inc * cg_tax_multiplier(cov)
+                    for inc, cov in zip(ti_province_incomes, cg_alloc["coverage"])
+                )
+                # CG the tick will pull from the stockpile when it isn't the
+                # bottleneck: everything retail can deliver (local + remote).
+                total_cg_need = sum(cg_alloc["local"]) + sum(cg_alloc["remote"])
             else:
                 total_pop_ti = sum(p for p, *_ in ti_provinces)
                 max_cg = math.ceil(total_pop_ti / variables.CONSUMER_GOODS_PER)
