@@ -670,6 +670,10 @@ def warTarget():
                         400,
                         "This attack was already resolved. Please start a new attack.",
                     )
+                # Commit the guard now: special_fight() updates this same wars
+                # row on its own connection, and an uncommitted row lock here
+                # makes it wait on us until the 30s statement timeout.
+                db.connection.commit()
 
         special_fight_result = Military.special_fight(
             attack_units, defender, defender.selected_units_list[0]
@@ -814,6 +818,14 @@ def warResult():
                     400,
                     "This attack was already resolved. Please start a new attack.",
                 )
+            # FIXED 2026-09-26: commit the guard before fighting. Military.fight()
+            # -> persist_fight_results() updates this same wars row (morale) on
+            # its own connection; leaving the guard's row lock uncommitted here
+            # made that UPDATE wait on this request until the 30s statement
+            # timeout, so every battle 500'd ("An error occurred during the
+            # battle"). Committing still rejects replays: a concurrent request's
+            # guard UPDATE re-reads the committed timestamp and matches nothing.
+            db.connection.commit()
             try:
                 winner, win_condition, attack_effects = Military.fight(
                     attacker, defender
