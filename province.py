@@ -33,9 +33,15 @@ import math
 from action_loop import build_structure, ActionLoopError
 from app_core.coalitions.repositories import can_manage_province_builds
 from app_core.economy.biome_buildings import mines_for_biome, other_biome_mines
-from app_core.economy.building_costs import enrich_building_row, get_build_cost
+from app_core.economy.building_costs import (
+    CITY_UNITS,
+    LAND_UNITS,
+    enrich_building_row,
+    get_build_cost,
+)
 from app_core.economy.building_purchase import (
     BuildingPurchaseError,
+    get_free_slots as economy_get_free_slots,
     purchase_building,
 )
 from game_ui import (
@@ -306,57 +312,8 @@ def province(pId):
             units.setdefault(bname, 0)
 
         # Calculate free slots in-memory (no extra queries)
-        city_buildings = [
-            "coal_burners",
-            "oil_burners",
-            "hydro_dams",
-            "nuclear_reactors",
-            "solar_fields",
-            "wind_farms",
-            "geothermal_plants",
-            "gas_stations",
-            "general_stores",
-            "farmers_markets",
-            "malls",
-            "banks",
-            "distribution_centers", "food_banks",
-            "city_parks",
-            "hospitals",
-            "libraries",
-            "universities",
-            "monorails",
-            "primary_school",
-            "high_school",
-            # City slot, same as the /buy route's city_units list and
-            # building_costs.CITY_UNITS -- this display list used to count it
-            # against land, so free land/city shown here disagreed with what
-            # the purchase check actually allowed.
-            "industrial_district",
-        ]
-        land_buildings = [
-            "army_bases",
-            "harbours",
-            "aerodomes",
-            "admin_buildings",
-            "silos",
-            "farms",
-            "pumpjacks",
-            "coal_mines",
-            "bauxite_mines",
-            "copper_mines",
-            "uranium_mines",
-            "lead_mines",
-            "iron_mines",
-            "lumber_mills",
-            "component_factories",
-            "steel_mills",
-            "ammunition_factories",
-            "aluminium_refineries",
-            "oil_refineries",
-        ]
-
-        used_city_slots = sum(units.get(b, 0) or 0 for b in city_buildings)
-        used_land_slots = sum(units.get(b, 0) or 0 for b in land_buildings)
+        used_city_slots = sum(units.get(b, 0) or 0 for b in CITY_UNITS)
+        used_land_slots = sum(units.get(b, 0) or 0 for b in LAND_UNITS)
 
         province["free_cityCount"] = province["citycount"] - used_city_slots
         province["free_land"] = province["land"] - used_land_slots
@@ -1637,65 +1594,13 @@ def createprovince():
 
 
 def get_free_slots(pId, slot_type, db=None):  # pId = province id
-    def _query(cursor):
-        if slot_type == "city":
-            cursor.execute(
-                """
-                SELECT COALESCE(SUM(ub.quantity), 0), CAST(p.citycount AS INTEGER)
-                FROM provinces p
-                LEFT JOIN (
-                    user_buildings ub
-                    JOIN building_dictionary bd
-                        ON bd.building_id = ub.building_id
-                        AND bd.name IN (
-                            'coal_burners', 'oil_burners', 'hydro_dams',
-                            'nuclear_reactors', 'solar_fields', 'wind_farms', 'geothermal_plants', 'gas_stations',
-                            'general_stores', 'farmers_markets', 'malls', 'banks',
-                            'distribution_centers', 'food_banks', 'city_parks', 'hospitals',
-                            'libraries', 'universities', 'monorails'
-                        )
-                ) ON ub.province_id = p.id
-                WHERE p.id = %s
-                GROUP BY p.id
-                """,
-                (pId,),
-            )
-        elif slot_type == "land":
-            cursor.execute(
-                """
-                SELECT COALESCE(SUM(ub.quantity), 0), p.land
-                FROM provinces p
-                LEFT JOIN (
-                    user_buildings ub
-                    JOIN building_dictionary bd
-                        ON bd.building_id = ub.building_id
-                        AND bd.name IN (
-                            'army_bases', 'harbours', 'aerodomes',
-                            'admin_buildings', 'silos', 'farms',
-                            'pumpjacks', 'coal_mines',
-                            'bauxite_mines', 'copper_mines',
-                            'uranium_mines', 'lead_mines',
-                            'iron_mines', 'lumber_mills',
-                            'component_factories', 'steel_mills',
-                            'ammunition_factories',
-                            'aluminium_refineries',
-                            'oil_refineries'
-                        )
-                ) ON ub.province_id = p.id
-                WHERE p.id = %s
-                GROUP BY p.id
-                """,
-                (pId,),
-            )
-        row = cursor.fetchone()
-        if not row:
-            return 0
-        return int(row[1] or 0) - int(row[0] or 0)
+    if slot_type not in ("city", "land"):
+        return 0
 
     if db is not None:
-        return _query(db)
+        return economy_get_free_slots(db, pId, slot_type)
     with get_request_cursor() as _db:
-        return _query(_db)
+        return economy_get_free_slots(_db, pId, slot_type)
 
 
 @bp.route("/<way>/<units>/<province_id>", methods=["POST"])
@@ -1793,53 +1698,9 @@ def province_sell_buy(way, units, province_id):
             "oil_refineries",
         ]
 
-        city_units = [
-            "coal_burners",
-            "oil_burners",
-            "hydro_dams",
-            "nuclear_reactors",
-            "solar_fields",
-            "wind_farms",
-            "geothermal_plants",
-            "gas_stations",
-            "general_stores",
-            "farmers_markets",
-            "malls",
-            "banks",
-            "distribution_centers", "food_banks",
-            "city_parks",
-            "hospitals",
-            "libraries",
-            "universities",
-            "monorails",
-            "primary_school",
-            "high_school",
-            "industrial_district",
-        ]
+        city_units = CITY_UNITS
 
-        land_units = [
-            "army_bases",
-            "harbours",
-            "aerodomes",
-            "admin_buildings",
-            "silos",
-            "drone_sites",
-            "missile_batteries",
-            "farms",
-            "pumpjacks",
-            "coal_mines",
-            "bauxite_mines",
-            "copper_mines",
-            "uranium_mines",
-            "lead_mines",
-            "iron_mines",
-            "lumber_mills",
-            "component_factories",
-            "steel_mills",
-            "ammunition_factories",
-            "aluminium_refineries",
-            "oil_refineries",
-        ]
+        land_units = LAND_UNITS
 
         db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
         gold_row = db.fetchone()
@@ -2284,24 +2145,24 @@ def mass_purchase_buy():
     try:
         quantity = int(request.form.get("quantity", ""))
     except (TypeError, ValueError):
-        flash("Enter a valid amount.")
+        flash("Enter a valid amount.", "error")
         return redirect("/mass_purchase")
 
     if quantity < 1:
-        flash("Amount must be at least 1.")
+        flash("Amount must be at least 1.", "error")
         return redirect("/mass_purchase")
 
     if f"{building}_price" not in variables.PROVINCE_UNIT_PRICES:
-        flash("Pick a building to buy.")
+        flash("Pick a building to buy.", "error")
         return redirect("/mass_purchase")
 
     if not province_ids:
-        flash("Select at least one province.")
+        flash("Select at least one province.", "error")
         return redirect("/mass_purchase")
 
     province_id_ints = [int(p) for p in province_ids if p.isdigit()]
     if not province_id_ints:
-        flash("Select at least one province.")
+        flash("Select at least one province.", "error")
         return redirect("/mass_purchase")
 
     with get_request_cursor() as db:
@@ -2310,7 +2171,7 @@ def mass_purchase_buy():
         # call, but filtering here keeps a tampered id list from even
         # showing up as a per-province failure in the results flash.
         db.execute(
-            "SELECT id, provinceName FROM provinces WHERE userId = %s AND id = ANY(%s)",
+            "SELECT id, provinceName FROM provinces WHERE userId = %s AND id = ANY(%s) ORDER BY id",
             (cId, province_id_ints),
         )
         owned = {row[0]: row[1] for row in db.fetchall()}
@@ -2351,12 +2212,14 @@ def mass_purchase_buy():
         # Cap how many per-province errors get flashed -- selecting 20+
         # provinces that all fail the same way (e.g. no free slots
         # anywhere) shouldn't dump 20 near-identical lines on the page.
-        shown = failures[:5]
+        shown = failures[:8]
         more = len(failures) - len(shown)
         msg = "Skipped -- " + "; ".join(shown)
         if more > 0:
             msg += f"; and {more} more"
-        flash(msg)
+        # "error" makes the toast sticky (see layout.html) -- ieb read the
+        # per-province skip reasons too slowly before a 5s toast vanished.
+        flash(msg, "error")
 
     return redirect("/mass_purchase")
 

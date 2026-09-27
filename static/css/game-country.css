@@ -291,8 +291,12 @@ body.game-page-v2 .country-demographics-chart-wrap {
     padding: 12px 14px;
     border-radius: var(--game-radius-md);
     border: 1px solid var(--game-panel-border);
-    background: linear-gradient(135deg, rgba(93, 173, 226, 0.12) 0%, rgba(0, 0, 0, 0.2) 100%);
-    color: var(--text-secondary);
+    /* Solid glass backing + primary text: the old 12%-tint box with secondary
+       grey text was unreadable over busy nation backgrounds (ieb, 2026-09-27). */
+    background: var(--game-glass-bg);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    color: var(--colorOne);
     font-size: 0.92rem;
     line-height: 1.45;
 }
@@ -1015,3 +1019,13 @@ body.page-country .revenue .stat-value {
     margin: 0 !important;
 }
 
+
+/* Country > View: full province list in the dashboard panel, capped so a
+   100-province nation doesn't push Resources off screen. */
+.country-province-scroll {
+    max-height: 320px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    margin-right: -6px;
+    padding-right: 6px;
+}

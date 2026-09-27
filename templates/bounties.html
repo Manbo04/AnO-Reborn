@@ -42,11 +42,11 @@
         </div>
 
         {% if total_pages and total_pages > 1 %}
-        <div class="game-row" style="justify-content: center; gap: 12px; align-items: center; margin-top: 14px;">
+        <div class="game-pager">
             {% if page > 1 %}
             <a class="game-btn game-btn-ghost" href="{{ url_for('bounties.view_bounties', page=page-1) }}">Previous</a>
             {% endif %}
-            <span class="game-faint">Page {{ page }} of {{ total_pages }}</span>
+            <span class="game-pager-current">Page {{ page }} of {{ total_pages }}</span>
             {% if page < total_pages %}
             <a class="game-btn game-btn-ghost" href="{{ url_for('bounties.view_bounties', page=page+1) }}">Next</a>
             {% endif %}

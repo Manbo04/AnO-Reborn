@@ -16,6 +16,12 @@ def get_unit_quantity(db, user_id, unit_name):
     return int(row[0]) if row and row[0] is not None else 0
 
 
+def get_counter_intel_agents(db, user_id):
+    """The defender's counter-intelligence strength (unit added by
+    migration 0085). 0 if the unit doesn't exist yet."""
+    return get_unit_quantity(db, user_id, "counter_intel_agents")
+
+
 def decrease_unit_quantity(db, user_id, unit_name, amount):
     db.execute("SELECT unit_id FROM unit_dictionary WHERE name = %s", (unit_name,))
     row = db.fetchone()
@@ -75,7 +81,8 @@ def get_spy_reports_for_user(db, cId):
         (
             "SELECT spyinfo.*, users.username FROM spyinfo "
             "LEFT JOIN users ON spyinfo.spyee=users.id "
-            "WHERE spyinfo.spyer=%s ORDER BY date ASC"
+            "WHERE spyinfo.spyer=%s AND NOT spyinfo.intercepted "
+            "ORDER BY date ASC"
         ),
         (cId,),
     )
@@ -90,18 +97,23 @@ def touch_defcon(db, eId):
     db.fetchone()
 
 
-def get_latest_spy_operation(db, cId):
+def get_last_spy_op_times(db, cId):
+    """Latest operation timestamp per op type for this attacker, as
+    {spy_type: date}. Rows from before migration 0085 have spy_type NULL and
+    come back under the key None - the service counts those against every
+    op type's cooldown."""
     db.execute(
-        "SELECT spyee, date FROM spyinfo WHERE spyer=%s ORDER BY date DESC",
+        "SELECT spy_type, MAX(date) FROM spyinfo WHERE spyer=%s GROUP BY spy_type",
         (cId,),
     )
-    return db.fetchone()
+    return {row[0]: row[1] for row in db.fetchall() if row[1] is not None}
 
 
-def insert_spy_operation(db, cId, eId, timestamp):
+def insert_spy_operation(db, cId, eId, timestamp, spy_type, intercepted=False):
     db.execute(
-        "INSERT INTO spyinfo (spyer, spyee, date) VALUES (%s, %s, %s) RETURNING id",
-        (cId, eId, timestamp),
+        "INSERT INTO spyinfo (spyer, spyee, date, spy_type, intercepted) "
+        "VALUES (%s, %s, %s, %s, %s) RETURNING id",
+        (cId, eId, timestamp, spy_type, intercepted),
     )
     row = db.fetchone()
     return row[0] if row else None

@@ -63,11 +63,11 @@
         </div>
 
         {% if total_pages > 1 %}
-        <div style="margin: 20px 0; display: flex; justify-content: center; gap: 10px; align-items: center; width: 100%;">
+        <div class="game-pager">
             {% if current_page > 1 %}
             <a href="?page={{ current_page - 1 }}" class="templatedivbutton" style="padding: 5px 15px; min-width: auto; height: auto;">Previous</a>
             {% endif %}
-            <span style="font-weight: bold; color: var(--colorOne);">Page {{ current_page }} of {{ total_pages }}</span>
+            <span class="game-pager-current">Page {{ current_page }} of {{ total_pages }}</span>
             {% if current_page < total_pages %}
             <a href="?page={{ current_page + 1 }}" class="templatedivbutton" style="padding: 5px 15px; min-width: auto; height: auto;">Next</a>
             {% endif %}

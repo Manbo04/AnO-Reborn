@@ -339,80 +339,22 @@
                     </div>
                 </div>
             </div>
+            {# Grouped nav (app_core/navigation.py). .dropdown floats right, so
+               sections render in reverse to read Internal / Global / Other. #}
+            {% for section in site_nav.sections | reverse %}
             <div class="dropdown">
-                <div class="dropbtn"><button class="dropbtnchild">Global Affairs<span class="material-icons-outlined iconright">
+                <div class="dropbtn"><button class="dropbtnchild">{{ section.label }}<span class="material-icons-outlined iconright">
                         keyboard_arrow_down
                     </span></button></div>
                 <div class="dropdown-content">
                     <div class="dropdown-contentchild">
-                        {% if session.get('user_id') != None %}
-                        <a class="{{ 'active' if request.path.startswith('/my_coalition') else '' }}" href="/my_coalition"><span class="material-icons-outlined">
-                            group
-                        </span>My Coalition</a> {% endif %}
-                        <a class="{{ 'active' if request.path.startswith('/establish_coalition') else '' }}" href="/establish_coalition"><span class="material-icons-outlined">
-                            group_add
-                        </span>Establish a Coalition</a>
-                        <a class="{{ 'active' if request.path.startswith('/coalitions') else '' }}" href="/coalitions"><span class="material-icons-outlined">
-                            public
-                        </span>Coalitions</a>
-                        <a class="{{ 'active' if request.path.startswith('/countries') else '' }}" href="/countries"><span class="material-icons-outlined">
-                        person_pin_circle
-                        </span>Countries</a>
-                        <a class="{{ 'active' if request.path.startswith('/rankings') else '' }}" href="/rankings"><span class="material-icons-outlined">
-                        leaderboard
-                        </span>Rankings</a>
-                        <a class="{{ 'active' if request.path.startswith('/treaties') else '' }}" href="/treaties"><span class="material-icons-outlined">
-                        handshake
-                        </span>Treaties</a>
-                        <a class="{{ 'active' if request.path.startswith('/assembly') else '' }}" href="/assembly"><span class="material-icons-outlined">
-                            chat
-                        </span>Assembly</a>
-                        <a class="{{ 'active' if request.path.startswith('/world_affairs') else '' }}" href="/world_affairs"><span class="material-icons-outlined">
-                            public
-                        </span>World Affairs</a>
-                        <a class="{{ 'active' if request.path.startswith('/bounties') else '' }}" href="/bounties"><span class="material-icons-outlined">
-                            gavel
-                        </span>Bounties</a>
+                        {% for hub in section.hubs %}
+                        <a class="nav-hub-link {{ 'active' if hub.active else '' }}" href="{{ hub.href }}"><span class="material-icons-outlined">{{ hub.icon }}</span><span class="nav-hub-text"><span class="nav-hub-label">{{ hub.label }}</span><small class="nav-hub-summary">{{ hub.summary }}</small></span></a>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
-            <div class="dropdown">
-                <div class="dropbtn"><button class="dropbtnchild">Internal Affairs<span class="material-icons-outlined iconright">
-                        keyboard_arrow_down
-                    </span></button></div>
-                <div class="dropdown-content">
-                    <div class="dropdown-contentchild">
-                        <a class="{{ 'active' if request.path.startswith('/country/') else '' }}" href="/country/id={{ session['user_id'] }}"><span class="material-icons-outlined">language</span>Country<!--<span class="menubaranotification">1</span>--></a>
-                        <a class="{{ 'active' if request.path.startswith('/upgrades') else '' }}" href="/upgrades"><span class="material-icons-outlined">
-                        engineering
-                        </span>Projects</a>
-                        <a class="{{ 'active' if request.path.startswith('/provinces') or request.path.startswith('/province/') else '' }}" href="/provinces"><span class="material-icons-outlined">
-                            account_balance
-                        </span>Provinces</a>
-                        <a class="{{ 'active' if request.path.startswith('/market') else '' }}" href="/market"><span class="material-icons-outlined">
-                            local_grocery_store
-                        </span>Market<!--<span class="menubaranotification">1</span>--></a>
-                        <a class="{{ 'active' if request.path.startswith('/trade-agreements') else '' }}" href="/trade-agreements"><span class="material-icons-outlined">
-                            handshake
-                        </span>Trade Deals</a>
-                        <a class="{{ 'active' if request.path.startswith('/loans') else '' }}" href="/loans"><span class="material-icons-outlined">
-                            account_balance_wallet
-                        </span>Loans</a>
-                        <a class="{{ 'active' if request.path.startswith('/bonds') else '' }}" href="/bonds"><span class="material-icons-outlined">
-                            request_quote
-                        </span>Bonds</a>
-                        <a class="{{ 'active' if request.path.startswith('/currency_unions') else '' }}" href="/currency_unions"><span class="material-icons-outlined">
-                            currency_exchange
-                        </span>Currency Unions</a>
-                        <a class="{{ 'active' if request.path.startswith('/war') or request.path.startswith('/declare_war') or request.path.startswith('/find_targets') or request.path.startswith('/defense') or request.path.startswith('/peace_offers') or request.path.startswith('/intelligence') else '' }}" href="/wars"><span class="material-icons-outlined">
-                            military_tech
-                        </span>Wars<!--<span class="menubaranotification">1</span>--></a>
-                        <a class="{{ 'active' if request.path.startswith('/military') else '' }}" href="/military"><span class="material-icons-outlined">
-                            shield
-                        </span>Military</a>
-                    </div>
-                </div>
-            </div>
+            {% endfor %}
             {% endif %}
         </div>
 
@@ -441,66 +383,12 @@
     {% if session.get('user_id') != None %}
     <div class="menubardiv" id="menubardiv">
 
-        <h3>Internal Affairs</h3>
-        <a class="menubara" href="/country/id={{ session['user_id'] }}"><span class="material-icons-outlined">language</span>Country<!-- <span class="menuflex2notification">1</span> --> </a>
-
-        <a class="menubara" href="/upgrades"><span class="material-icons-outlined">
-            engineering
-            </span>Projects</a>
-
-        <a class="menubara" href="/provinces"><span class="material-icons-outlined">
-                account_balance
-            </span>Provinces</a>
-        <a class="menubara" href="/market"><span class="material-icons-outlined">
-                local_grocery_store
-            </span>Market<!--<span class="menubaranotification">1</span>--></a>
-        <a class="menubara" href="/trade-agreements"><span class="material-icons-outlined">
-                handshake
-            </span>Trade Deals</a>
-        <a class="menubara" href="/loans"><span class="material-icons-outlined">
-                account_balance_wallet
-            </span>Loans</a>
-        <a class="menubara" href="/bonds"><span class="material-icons-outlined">
-                request_quote
-            </span>Bonds</a>
-        <a class="menubara" href="/currency_unions"><span class="material-icons-outlined">
-                currency_exchange
-            </span>Currency Unions</a>
-        <a class="menubara" href="/wars"><span class="material-icons-outlined">
-                military_tech
-            </span>Wars<!--<span class="menubaranotification">1</span>--></a>
-        <a class="menubara" href="/military"><span class="material-icons-outlined">
-                shield
-            </span>Military</a>
-
-        <h3>Global Affairs</h3>
-        <a class="menubara" href="/my_coalition"><span class="material-icons-outlined">
-                group
-            </span>My Coalition</a>
-        <a class="menubara" href="/establish_coalition"><span class="material-icons-outlined">
-                group_add
-            </span>Establish a Coalition</a>
-        <a class="menubara" href="/coalitions"><span class="material-icons-outlined">
-                public
-            </span>Coalitions</a>
-        <a class="menubara" href="/countries"><span class="material-icons-outlined">
-            person_pin_circle
-            </span>Countries</a>
-        <a class="menubara" href="/rankings"><span class="material-icons-outlined">
-            leaderboard
-            </span>Rankings</a>
-        <a class="menubara" href="/treaties"><span class="material-icons-outlined">
-            handshake
-            </span>Treaties</a>
-        <a class="menubara" href="/assembly"><span class="material-icons-outlined">
-                chat
-            </span>Assembly</a>
-        <a class="menubara" href="/world_affairs"><span class="material-icons-outlined">
-                public
-            </span>World Affairs</a>
-        <a class="menubara" href="/bounties"><span class="material-icons-outlined">
-                gavel
-            </span>Bounties</a>
+        {% for section in site_nav.sections %}
+        <h3>{{ section.label }}</h3>
+        {% for hub in section.hubs %}
+        <a class="menubara nav-hub-link {{ 'active' if hub.active else '' }}" href="{{ hub.href }}"><span class="material-icons-outlined">{{ hub.icon }}</span><span class="nav-hub-text"><span class="nav-hub-label">{{ hub.label }}</span><small class="nav-hub-summary">{{ hub.summary }}</small></span></a>
+        {% endfor %}
+        {% endfor %}
         <h3>Other</h3>
         <button type="button" class="menubara menubara-theme-toggle" data-theme-toggle onclick="toggleTheme()" aria-label="Switch to light mode" title="Switch to light mode">
             <span class="material-icons-outlined" data-theme-toggle-icon>light_mode</span>
@@ -669,13 +557,15 @@
     <div class="templatecontainer">
         {% include 'partials/onboarding_checklist.html' %}
         {% include 'partials/onboarding_tutorial_popup.html' %}
+        {% if session.get('user_id') %}{% include 'partials/section_tabs.html' %}{% endif %}
         {% block body %} {% endblock %}
 
-        {% with messages = get_flashed_messages() %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
         <div class="toast-container" id="toast-container" role="status" aria-live="polite">
-            {% for message in messages %}
-            <div class="toast-item">
+            {% for category, message in messages %}
+            {# error/danger toasts stay until dismissed so failure details can be read #}
+            <div class="toast-item{% if category in ('error', 'danger') %} toast-item--error{% elif category == 'warning' %} toast-item--warning{% endif %}"{% if category in ('error', 'danger') %} data-sticky="1"{% endif %}>
                 <span class="toast-message">{{ message }}</span>
                 <button type="button" class="toast-dismiss" onclick="dismissToast(this.parentElement)" aria-label="Dismiss notification">
                     <span class="material-icons-outlined">close</span>
@@ -741,21 +631,21 @@
     {% if session.get('user_id') != None %}
     <nav class="game-bottom-nav" aria-label="Main navigation" id="game-bottom-nav">
         <div class="game-bottom-nav-inner">
-            <a class="game-nav-item {% if request.path.startswith('/country/id=' + session['user_id']|string) %}is-active{% endif %}" href="/country/id={{ session['user_id'] }}">
+            <a class="game-nav-item {% if site_nav.active_hub and site_nav.active_hub.key == 'nation' and not request.path.startswith('/province') %}is-active{% endif %}" href="/country/id={{ session['user_id'] }}">
                 <span class="material-icons-outlined">language</span>
                 <span>Nation</span>
             </a>
-            <a class="game-nav-item {% if request.path == '/provinces' or 'province_view' in request.path %}is-active{% endif %}" href="/provinces">
+            <a class="game-nav-item {% if request.path.startswith('/province') %}is-active{% endif %}" href="/provinces">
                 <span class="material-icons-outlined">account_balance</span>
                 <span>Provinces</span>
             </a>
-            <a class="game-nav-item {% if request.path == '/market' %}is-active{% endif %}" href="/market">
+            <a class="game-nav-item {% if site_nav.active_hub and site_nav.active_hub.key == 'economy' %}is-active{% endif %}" href="/market">
                 <span class="material-icons-outlined">local_grocery_store</span>
-                <span>Market</span>
+                <span>Economy</span>
             </a>
-            <a class="game-nav-item {% if request.path == '/wars' or request.path == '/military' %}is-active{% endif %}" href="/wars">
+            <a class="game-nav-item {% if site_nav.active_hub and site_nav.active_hub.key == 'military' %}is-active{% endif %}" href="/wars">
                 <span class="material-icons-outlined">military_tech</span>
-                <span>Wars</span>
+                <span>Military</span>
             </a>
             <button type="button" class="game-nav-item" onclick="menubardrop()" aria-label="More navigation options">
                 <span class="material-icons-outlined">menu</span>

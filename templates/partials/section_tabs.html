@@ -1,0 +1,15 @@
+{# Hub tab strip: the pages that share one navbar entry (app_core/navigation.py).
+   Hidden for hubs with a single page and on pages outside every hub. #}
+{% set hub = site_nav.active_hub if site_nav else None %}
+{% if hub and hub.tabs | length > 1 %}
+<nav class="section-tabs" aria-label="{{ hub.label }} pages">
+    <span class="section-tabs-title"><span class="material-icons-outlined" aria-hidden="true">{{ hub.icon }}</span>{{ hub.label }}</span>
+    <div class="section-tabs-strip">
+        {% for tab in hub.tabs %}
+        <a class="section-tab {{ 'is-active' if tab.active else '' }}" href="{{ tab.href }}"{% if tab.active %} aria-current="page"{% endif %}>
+            <span class="material-icons-outlined" aria-hidden="true">{{ tab.icon }}</span>{{ tab.label }}
+        </a>
+        {% endfor %}
+    </div>
+</nav>
+{% endif %}

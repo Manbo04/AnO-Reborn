@@ -237,7 +237,8 @@ body.page-hub.theme-light .game-page-overlay {
 }
 
 .game-hero .game-hero-sub {
-    color: var(--text-secondary);
+    /* Full-contrast: grey subtitles were unreadable over hero photos (ieb, 2026-09-27). */
+    color: var(--colorOne);
     font-size: 13.5px;
     margin: 5px 0 0;
 }
@@ -682,8 +683,11 @@ body.game-page-v2 .coalitiontaxclick,
 body.game-page-v2 .coalitionsettingsclick,
 body.game-page-v2 .upgradeseconomicclick,
 body.game-page-v2 .upgradesmilitaryclick {
-    background: transparent !important;
-    border-bottom-color: var(--accent) !important;
+    /* Was transparent -- the selected tab turned see-through (ieb, 2026-09-27).
+       Solid panel colour, not --game-glass-bg: that is 55% white in light mode,
+       which still read as see-through next to the solid unselected tabs. */
+    background: var(--game-panel-bg, var(--foreground)) !important;
+    border-bottom: 3px solid var(--accent) !important;
 }
 
 body.game-page-v2 .countryviewclick h3,
@@ -1500,3 +1504,20 @@ body.game-shell-active .dropdown-content a.active {
 [hidden] {
     display: none !important;
 }
+
+/* ieb, 2026-09-27: Solid backing for tab selector buttons on Country/Military/My Coalition:
+   the tabs went see-through when selected, unreadable over nation backgrounds. */
+body.game-page-v2 .menuflex2 {
+    border-bottom: none;
+    gap: 4px;
+}
+body.game-page-v2 .menuflex2 div,
+body.game-page-v2 .menuflex2 a {
+    background: var(--game-glass-bg);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border: 1px solid var(--game-glass-border);
+    border-radius: 4px;
+    color: var(--colorOne);
+}
+

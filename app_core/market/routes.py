@@ -9,9 +9,10 @@ from .repositories import (
     get_offer_by_id, delete_offer, update_offer_amount, lock_users, get_user_gold_for_update,
     insert_offer, insert_trade, get_my_trades, get_my_offers, delete_trade, try_lock_trade,
     unlock_trade, get_trade_by_id, get_username, insert_news, delete_trade_by_id, user_exists,
-    decrement_gold, increment_gold, is_embargoed, add_embargo, remove_embargo, list_embargoes
+    decrement_gold, increment_gold, is_embargoed, add_embargo, remove_embargo, list_embargoes,
+    get_user_gold, get_user_resource_quantities
 )
-from .fees import trade_fee, trade_fee_percent
+from .fees import trade_fee, trade_fee_percent, union_partner_ids, max_affordable_amount
 from .services import give_resource, report_trade_error
 from app_core.world_affairs.services import log_event
 
@@ -49,15 +50,37 @@ def market():
 
         offers_data = get_offers(db, filter_resource, offer_type, price_type, per_page, offset)
         
+        # "Max" button per offer (ieb, 2026-09-27): the most this player can
+        # actually take -- buying is capped by gold incl. the transport fee,
+        # selling by their stock of the resource. Same checks as
+        # buy_market_offer / sell_market_offer, three queries for the page.
+        my_gold = get_user_gold(db, cId) or 0
+        my_resources = get_user_resource_quantities(db, cId)
+        union_partners = union_partner_ids(db, cId)
+
         offers = []
+        max_take = {}
+        fee_percent = {}
         for row in offers_data:
             user_id, offer_type_val, resource, amount, price, offer_id, username = row
             offers.append((user_id, offer_type_val, username, resource, amount, price, offer_id, price * amount))
+            pct = (
+                variables.UNION_TRADE_FEE_PERCENT
+                if user_id in union_partners
+                else variables.TRADE_FEE_PERCENT
+            )
+            fee_percent[offer_id] = pct
+            if offer_type_val == "sell":
+                max_take[offer_id] = min(amount, max_affordable_amount(my_gold, price, pct))
+            else:
+                max_take[offer_id] = min(amount, my_resources.get(resource, 0))
 
         template = "market_v2.html" if is_theme_v2_enabled("market") else "market.html"
         return render_template(
             template,
             offers=offers,
+            max_take=max_take,
+            fee_percent=fee_percent,
             price_type=price_type,
             cId=cId,
             current_page=page,

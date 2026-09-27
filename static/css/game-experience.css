@@ -2012,3 +2012,43 @@ body:has(> .news-ticker) {
         font-size: 14px;
     }
 }
+
+/* Market "Max" button next to each purchase input (ieb, 2026-09-27):
+   fills the most the player can take so they don't have to type it. */
+body.page-market .market-max-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    min-width: 44px;
+    min-height: 40px;
+    margin: 0;
+    padding: 6px 10px;
+    border: 1px solid var(--game-glass-border, rgba(255, 255, 255, 0.18));
+    border-radius: 8px;
+    background: var(--game-glass-bg-strong, rgba(255, 255, 255, 0.06));
+    color: var(--accent, #00a7e1);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+body.page-market .market-max-btn:hover,
+body.page-market .market-max-btn:focus-visible {
+    border-color: var(--accent, #00a7e1);
+    outline: none;
+}
+
+body.page-market .market-max-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+@media (min-width: 769px) and (pointer: fine) {
+    body.page-market .market-max-btn {
+        min-height: 32px;
+    }
+}

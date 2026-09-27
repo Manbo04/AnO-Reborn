@@ -801,6 +801,20 @@ def create_app():
         }
 
     @app.context_processor
+    def inject_site_nav():
+        """Grouped navbar + per-hub tab strip (app_core/navigation.py).
+
+        Pure in-memory work (no DB), so it's cheap on every render.
+        """
+        from app_core.navigation import build_nav
+
+        try:
+            return {"site_nav": build_nav(request.path, session.get("user_id"))}
+        except Exception:
+            logger.exception("Failed to build site navigation")
+            return {"site_nav": {"sections": [], "active_hub": None}}
+
+    @app.context_processor
     def utility_processor():
         def humanize_number(value):
             if value is None: return "0"
@@ -1012,6 +1026,17 @@ def create_app():
                 ctx["coalition_id"] = cached_user["coalition_id"]
                 ctx["coalition_name"] = cached_user["coalition_name"]
                 ctx["equipped_bg_css_class"] = cached_user.get("equipped_bg_css_class")
+
+                # Rebuild the nav with the viewer's coalition id so
+                # /coalition/<own id> keeps the "My Coalition" tab lit. This
+                # processor is registered after inject_site_nav, so its value
+                # wins the context merge.
+                if cached_user["coalition_id"] is not None:
+                    from app_core.navigation import build_nav
+
+                    ctx["site_nav"] = build_nav(
+                        request.path, user_id, cached_user["coalition_id"]
+                    )
 
                 # Store cosmetics: cosmetics/stats.equipped_background_cosmetic_id
                 # only exist once migration 0048 has run, which is exactly the

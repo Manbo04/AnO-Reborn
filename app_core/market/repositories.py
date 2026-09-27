@@ -175,6 +175,20 @@ def lock_users(db, user_ids):
     for uid in sorted(user_ids):
         db.execute("SELECT pg_advisory_xact_lock(%s)", (uid,))
 
+def get_user_resource_quantities(db, user_id):
+    """{resource name: quantity} for every active resource, one query."""
+    db.execute(
+        """
+        SELECT rd.name, COALESCE(ue.quantity, 0)
+        FROM resource_dictionary rd
+        LEFT JOIN user_economy ue
+            ON ue.resource_id = rd.resource_id AND ue.user_id = %s
+        WHERE rd.is_active=TRUE
+        """,
+        (user_id,),
+    )
+    return {row[0]: int(row[1] or 0) for row in db.fetchall()}
+
 def get_user_gold_for_update(db, user_id):
     db.execute("SELECT gold FROM stats WHERE id=%s FOR UPDATE", (user_id,))
     row = db.fetchone()

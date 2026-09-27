@@ -316,6 +316,7 @@ UNITS = [
     "soldiers",
     "tanks",
     "artillery",
+    "sam_batteries",
     "bombers",
     "fighters",
     "apaches",
@@ -633,6 +634,11 @@ MILDICT = {
         "resources": {"components": 3000, "steel": 30000, "gasoline": 1000},
         "manpower": 2,
     },
+    "sam_batteries": {
+        "price": 30000,
+        "resources": {"components": 4000, "steel": 15000, "aluminium": 5000},
+        "manpower": 3,
+    },
     # AIR -- aluminium, not steel: planes are built from aluminium, and this
     # is the only place that made aluminium a viable resource to produce
     # (player feedback, 2026-08-16, migration 0043).
@@ -672,6 +678,14 @@ MILDICT = {
         "price": 25000,
         "resources": {"rations": 100, "components": 2000},
         "manpower": 0,
+    },
+    # Counter-intelligence (2026-09-27, migration 0085): internal security
+    # force that intercepts incoming spy ops. Resource costs mirror
+    # unit_dictionary.production_cost_* (which is what's actually debited).
+    "counter_intel_agents": {
+        "price": 30000,
+        "resources": {"rations": 200, "components": 1500},
+        "manpower": 1,
     },
     "icbms": {
         "price": 16000000,

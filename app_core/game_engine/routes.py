@@ -88,7 +88,7 @@ def mass_purchase():
 
     cId = session["user_id"]
     with get_request_cursor() as db:
-        db.execute("SELECT id, provinceName as name, CAST(citycount AS INTEGER) as citycount, land FROM provinces WHERE userId=%s ORDER BY provinceName", (cId,))
+        db.execute("SELECT id, provinceName as name, CAST(citycount AS INTEGER) as citycount, land FROM provinces WHERE userId=%s ORDER BY id", (cId,))
         provinces = db.fetchall()
         province_list = []
         if provinces:
