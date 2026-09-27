@@ -390,6 +390,36 @@ def _province_count(user_id: int) -> int:
         return 0
 
 
+def _public_province_summary(user_id: int) -> Dict[str, Any]:
+    """Province aggregates shown on the public country page."""
+    try:
+        row = QueryHelper.fetch_one(
+            """
+            SELECT COUNT(id) AS province_count,
+                   COALESCE(SUM(population), 0) AS total_population,
+                   COALESCE(SUM(land), 0) AS total_land,
+                   COALESCE(SUM(citycount), 0) AS total_cities,
+                   COALESCE(AVG(happiness), 0) AS avg_happiness,
+                   COALESCE(AVG(productivity), 0) AS avg_productivity
+            FROM provinces
+            WHERE userid = %s
+            """,
+            (user_id,),
+            dict_cursor=True,
+        ) or {}
+        return {
+            "province_count": int(row.get("province_count") or 0),
+            "total_population": int(row.get("total_population") or 0),
+            "total_land": int(row.get("total_land") or 0),
+            "total_cities": int(row.get("total_cities") or 0),
+            "avg_happiness": float(row.get("avg_happiness") or 0),
+            "avg_productivity": float(row.get("avg_productivity") or 0),
+        }
+    except Exception as exc:
+        logger.warning("public province summary failed for user %s: %s", user_id, exc)
+        return {"province_count": _province_count(user_id)}
+
+
 def _user_account_meta(user_id: int) -> Dict[str, Any]:
     """Optional users columns for Discord display."""
     from database import users_table_has_column
@@ -470,8 +500,10 @@ def _nation_snapshot(user_id: int, include_resources: bool = False) -> Dict[str,
     if not row:
         return {}
 
+    # Public view: terrain only — treasury gold is owner-only (same as the
+    # country page), so it is deliberately not selected here.
     stats_row = QueryHelper.fetch_one(
-        "SELECT location, gold FROM stats WHERE id = %s",
+        "SELECT location FROM stats WHERE id = %s",
         (user_id,),
         dict_cursor=True,
     ) or {}
@@ -494,15 +526,22 @@ def _nation_snapshot(user_id: int, include_resources: bool = False) -> Dict[str,
         logger.warning("active war count failed for user %s: %s", user_id, exc)
         active_wars = 0
 
+    # Province aggregates are public on the country page (population,
+    # cities, land), so the public view includes them too.
+    provinces = _public_province_summary(user_id)
+
     snapshot: Dict[str, Any] = {
         "id": row["id"],
         "username": row["username"],
         "location": stats_row.get("location"),
-        "gold": int(stats_row.get("gold") or 0),
         "influence": influence,
         "coalition": coalition,
         "active_wars": active_wars,
-        "province_count": _province_count(user_id),
+        "province_count": provinces.get("province_count", 0),
+        "provinces": provinces,
+        # Tells the embed to render treasury/military/commodities as
+        # classified rather than as zeros.
+        "public_view": True,
     }
     if include_resources:
         try:

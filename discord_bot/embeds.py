@@ -2,7 +2,7 @@
 
 
 # Bump when embed layout changes — visible in footer so you can confirm bot deploy.
-EMBED_UI_VERSION = "2.1"
+EMBED_UI_VERSION = "2.2"
 
 import os
 from datetime import datetime, timezone
@@ -224,6 +224,9 @@ def _title_for_context(title: str, username: str) -> Tuple[str, discord.Color]:
     return f"🏛️ {username}", ANO_BLUE
 
 
+_CLASSIFIED = "🔒 _Classified — spy on them for intel._"
+
+
 def build_nation_embed(data: Dict[str, Any], title: str) -> discord.Embed:
     """Nation dashboard card: grouped stats, compact numbers, AnO theme."""
     nation_id = data.get("id")
@@ -260,12 +263,16 @@ def build_nation_embed(data: Dict[str, Any], title: str) -> discord.Embed:
     )
     embed.set_author(name=title, url=url or GAME_BASE_URL)
 
-    gold = int(data.get("gold") or 0)
-    embed.add_field(
-        name="💰 Treasury",
-        value=f"**{_fmt_compact(gold)}**\n`{_fmt_num(gold)}` gold",
-        inline=True,
-    )
+    # Another player's lookup: treasury, military and commodities are
+    # owner-only (spy for them), so show them as classified, not as zeros.
+    public_view = bool(data.get("public_view"))
+
+    if public_view:
+        treasury_value = _CLASSIFIED
+    else:
+        gold = int(data.get("gold") or 0)
+        treasury_value = f"**{_fmt_compact(gold)}**\n`{_fmt_num(gold)}` gold"
+    embed.add_field(name="💰 Treasury", value=treasury_value, inline=True)
     embed.add_field(
         name="📊 Influence",
         value=f"**{_fmt_compact(data.get('influence', 0))}**\n`{_fmt_num(data.get('influence', 0))}`",
@@ -320,13 +327,13 @@ def build_nation_embed(data: Dict[str, Any], title: str) -> discord.Embed:
 
     embed.add_field(
         name="⚔️ Military",
-        value=_format_military(data.get("military")),
+        value=_CLASSIFIED if public_view else _format_military(data.get("military")),
         inline=False,
     )
 
     embed.add_field(
         name="📦 Commodities",
-        value=_format_resources_grid(data.get("resources")),
+        value=_CLASSIFIED if public_view else _format_resources_grid(data.get("resources")),
         inline=False,
     )
 

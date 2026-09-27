@@ -57,3 +57,38 @@ def test_nation_snapshot_uses_cache():
     assert second["username"] == "x"
     assert fetch.call_count == 1
     bot_api._snapshot_cache.clear()
+
+
+def test_public_snapshot_has_province_stats_but_no_gold():
+    import bot_api
+
+    def fake_fetch_one(sql, params=None, dict_cursor=False):
+        if "FROM users" in sql:
+            return {"id": 5, "username": "Pharloom"}
+        if "FROM stats" in sql:
+            assert "gold" not in sql
+            return {"location": "Boreal Forest"}
+        if "FROM provinces" in sql:
+            return {
+                "province_count": 100,
+                "total_population": 9_000_000,
+                "total_land": 800,
+                "total_cities": 6100,
+                "avg_happiness": 55.0,
+                "avg_productivity": 60.0,
+            }
+        raise AssertionError(sql)
+
+    with patch("bot_api.QueryHelper.fetch_one", side_effect=fake_fetch_one), patch(
+        "bot_api.get_influence", return_value=10
+    ), patch("bot_api._coalition_summary", return_value={}), patch(
+        "bot_api._active_war_count", return_value=0
+    ), patch("bot_api._list_active_wars", return_value=[]):
+        snap = nation_snapshot_for_bot(5, full_detail=False)
+
+    assert snap["public_view"] is True
+    assert "gold" not in snap
+    assert "military" not in snap and "resources" not in snap
+    assert snap["province_count"] == 100
+    assert snap["provinces"]["total_cities"] == 6100
+    assert snap["provinces"]["total_population"] == 9_000_000

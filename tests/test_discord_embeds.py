@@ -56,3 +56,39 @@ def test_build_nation_embed_has_grouped_fields():
     assert "📦 Commodities" in names
     assert "👥 Population" in names
     assert embed.title == "🏛️ Testland"
+
+
+def _field(embed, name):
+    return next(f.value for f in embed.fields if f.name == name)
+
+
+def test_public_view_hides_owner_only_sections_and_keeps_public_stats():
+    embed = build_nation_embed(
+        {
+            "id": 27,
+            "username": "Testland",
+            "influence": 1000,
+            "gold": 11_919_128_893,
+            "province_count": 100,
+            "location": "Boreal Forest",
+            "provinces": {"total_population": 5_000_000, "total_cities": 6123, "total_land": 900},
+            "public_view": True,
+            "active_wars": 0,
+            "active_wars_list": [],
+        },
+        "Nation lookup",
+    )
+    for name in ("💰 Treasury", "⚔️ Military", "📦 Commodities"):
+        assert "Classified" in _field(embed, name)
+    assert "11,919,128,893" not in _field(embed, "💰 Treasury")
+    assert "6,123" in _field(embed, "🏙️ Cities")
+    assert "900" in _field(embed, "📐 Land")
+
+
+def test_owner_view_shows_treasury():
+    embed = build_nation_embed(
+        {"id": 27, "username": "Testland", "gold": 1_000_000, "military": {"soldiers": 5}},
+        "Your nation",
+    )
+    assert "1,000,000" in _field(embed, "💰 Treasury")
+    assert "Classified" not in _field(embed, "⚔️ Military")
