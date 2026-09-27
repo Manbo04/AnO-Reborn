@@ -185,7 +185,7 @@ def test_get_spy_amount_form_data_blank_username_defaults_to_empty_string(monkey
 # ---------------------------------------------------------------------------
 
 def test_resolve_spy_operation_blocks_new_target_during_cooldown(monkeypatch):
-    monkeypatch.setattr(services, "get_latest_spy_operation", lambda db, cId: (999, time.time()))
+    monkeypatch.setattr(services, "get_last_spy_op_times", lambda db, cId: {"resources": time.time()})
     ok, code, msg, entry = services.resolve_spy_operation(QueuedCursor(), 1, 2, 5, "resources")
     assert ok is False
     assert code == 400
@@ -197,7 +197,7 @@ def test_resolve_spy_operation_blocks_same_target_during_cooldown(monkeypatch):
     # (`str(spyee) != str(eId)`), so two nations in a running spy war never
     # hit it -- reported on Discord by a player spying the same rival
     # multiple times an hour. Now it applies regardless of target.
-    monkeypatch.setattr(services, "get_latest_spy_operation", lambda db, cId: (2, time.time()))
+    monkeypatch.setattr(services, "get_last_spy_op_times", lambda db, cId: {"resources": time.time()})
     ok, code, msg, entry = services.resolve_spy_operation(QueuedCursor(), 1, 2, 5, "resources")
     assert ok is False
     assert code == 400
@@ -210,16 +210,16 @@ def test_resolve_spy_operation_cooldown_message_shows_time_remaining_not_elapsed
     # cooldown clears -- backwards. A player spied 1 hour ago should see
     # ~11 hours left, not ~1 hour.
     one_hour_ago = time.time() - 3600
-    monkeypatch.setattr(services, "get_latest_spy_operation", lambda db, cId: (2, one_hour_ago))
-    ok, code, msg, entry = services.resolve_spy_operation(QueuedCursor(), 1, 2, 5, "resources")
+    monkeypatch.setattr(services, "get_last_spy_op_times", lambda db, cId: {"sabotage": one_hour_ago})
+    ok, code, msg, entry = services.resolve_spy_operation(QueuedCursor(), 1, 2, 5, "sabotage")
     assert ok is False
     secs_left = int(re.search(r"(\d+) seconds left", msg).group(1))
-    expected_remaining = services.SPY_COOLDOWN_SECONDS - 3600
+    expected_remaining = services.SPY_OP_COOLDOWNS["sabotage"] - 3600
     assert abs(secs_left - expected_remaining) < 5
 
 
 def test_resolve_spy_operation_rejects_non_positive_spies(monkeypatch):
-    monkeypatch.setattr(services, "get_latest_spy_operation", lambda db, cId: None)
+    monkeypatch.setattr(services, "get_last_spy_op_times", lambda db, cId: {})
     monkeypatch.setattr(services, "has_active_embassy", lambda db, cId, eId: False)
     # actual_spies is fetched before the spies<=0 check even runs (matches
     # the original's query order exactly), so this needs a stub too.
@@ -230,7 +230,7 @@ def test_resolve_spy_operation_rejects_non_positive_spies(monkeypatch):
 
 
 def test_resolve_spy_operation_rejects_insufficient_spies(monkeypatch):
-    monkeypatch.setattr(services, "get_latest_spy_operation", lambda db, cId: None)
+    monkeypatch.setattr(services, "get_last_spy_op_times", lambda db, cId: {})
     monkeypatch.setattr(services, "has_active_embassy", lambda db, cId, eId: False)
     monkeypatch.setattr(services, "get_unit_quantity", lambda db, uid, unit: 3)
     ok, code, msg, entry = services.resolve_spy_operation(QueuedCursor(), 1, 2, 5, "resources")
@@ -239,7 +239,7 @@ def test_resolve_spy_operation_rejects_insufficient_spies(monkeypatch):
 
 
 def test_resolve_spy_operation_blocked_by_active_embassy(monkeypatch):
-    monkeypatch.setattr(services, "get_latest_spy_operation", lambda db, cId: None)
+    monkeypatch.setattr(services, "get_last_spy_op_times", lambda db, cId: {})
     monkeypatch.setattr(services, "has_active_embassy", lambda db, cId, eId: True)
     ok, code, msg, entry = services.resolve_spy_operation(QueuedCursor(), 1, 2, 5, "resources")
     assert ok is False
@@ -248,10 +248,10 @@ def test_resolve_spy_operation_blocked_by_active_embassy(monkeypatch):
 
 
 def test_resolve_spy_operation_insert_failure_returns_500(monkeypatch):
-    monkeypatch.setattr(services, "get_latest_spy_operation", lambda db, cId: None)
+    monkeypatch.setattr(services, "get_last_spy_op_times", lambda db, cId: {})
     monkeypatch.setattr(services, "has_active_embassy", lambda db, cId, eId: False)
     monkeypatch.setattr(services, "get_unit_quantity", lambda db, uid, unit: 100)
-    monkeypatch.setattr(services, "insert_spy_operation", lambda db, cId, eId, ts: None)
+    monkeypatch.setattr(services, "insert_spy_operation", lambda db, cId, eId, ts, spy_type, intercepted=False: None)
     ok, code, msg, entry = services.resolve_spy_operation(QueuedCursor(), 1, 2, 5, "resources")
     assert ok is False
     assert code == 500
@@ -261,11 +261,11 @@ def test_resolve_spy_operation_own_side_dominant_reveals_with_no_losses(monkeypa
     # own_rand == enemy_rand (randomness neutralized) but spies=100 >> enemy_spies=1,
     # so multiplier = enemy_score/own_score = enemy_spies/spies <= 1 for every
     # object => "own wins" every time, and never > 10 => no spies executed.
-    monkeypatch.setattr(services, "get_latest_spy_operation", lambda db, cId: None)
+    monkeypatch.setattr(services, "get_last_spy_op_times", lambda db, cId: {})
     monkeypatch.setattr(services, "has_active_embassy", lambda db, cId, eId: False)
     unit_quantities = {1: 100, 2: 1}
     monkeypatch.setattr(services, "get_unit_quantity", lambda db, uid, unit: unit_quantities[uid])
-    monkeypatch.setattr(services, "insert_spy_operation", lambda db, cId, eId, ts: 777)
+    monkeypatch.setattr(services, "insert_spy_operation", lambda db, cId, eId, ts, spy_type, intercepted=False: 777)
     monkeypatch.setattr(services.rand, "uniform", lambda a, b: 0.5)
 
     revealed_calls = []
@@ -302,11 +302,11 @@ def test_resolve_spy_operation_enemy_dominant_no_reveal_and_spy_lost(monkeypatch
     # immediately, which then stops any further objects being processed
     # (spies - executed_spies hits 0) - and "enemy won" means nothing gets
     # revealed for that object either.
-    monkeypatch.setattr(services, "get_latest_spy_operation", lambda db, cId: None)
+    monkeypatch.setattr(services, "get_last_spy_op_times", lambda db, cId: {})
     monkeypatch.setattr(services, "has_active_embassy", lambda db, cId, eId: False)
     unit_quantities = {1: 1, 2: 1000}
     monkeypatch.setattr(services, "get_unit_quantity", lambda db, uid, unit: unit_quantities[uid])
-    monkeypatch.setattr(services, "insert_spy_operation", lambda db, cId, eId, ts: 888)
+    monkeypatch.setattr(services, "insert_spy_operation", lambda db, cId, eId, ts, spy_type, intercepted=False: 888)
     monkeypatch.setattr(services.rand, "uniform", lambda a, b: 0.5)
 
     monkeypatch.setattr(
@@ -329,3 +329,67 @@ def test_resolve_spy_operation_enemy_dominant_no_reveal_and_spy_lost(monkeypatch
     assert ok is True
     assert decrease_calls == [1]
     assert entry is not None
+
+def test_resolve_spy_operation_intercepted_by_counter_intel(monkeypatch):
+    monkeypatch.setattr(services, "get_last_spy_op_times", lambda db, cId: {})
+    monkeypatch.setattr(services, "has_active_embassy", lambda db, cId, eId: False)
+    monkeypatch.setattr(services, "get_unit_quantity", lambda db, uid, unit: 100)
+    monkeypatch.setattr(services, "get_counter_intel_agents", lambda db, eId: 100)
+    
+    # Force 100% interception chance
+    monkeypatch.setattr(services, "counter_intel_intercept_chance", lambda agents, spies: 1.0)
+    monkeypatch.setattr(services.rand, "random", lambda: 0.0)
+    
+    insert_calls = []
+    def mock_insert(db, cId, eId, ts, spy_type, intercepted=False):
+        insert_calls.append(intercepted)
+        return 999
+    monkeypatch.setattr(services, "insert_spy_operation", mock_insert)
+    
+    decrease_calls = []
+    monkeypatch.setattr(services, "decrease_unit_quantity", lambda db, uid, unit, amt: decrease_calls.append(amt))
+    
+    news_calls = []
+    monkeypatch.setattr(services, "insert_news", lambda db, uid, msg: news_calls.append((uid, msg)))
+    
+    ok, code, msg, entry = services.resolve_spy_operation(QueuedCursor(), 1, 2, 50, "units")
+    
+    assert ok is True
+    assert code == 200
+    assert entry["spies captured"] > 0
+    assert "intercepted" in entry["message"]
+    
+    # Should be intercepted
+    assert insert_calls == [True]
+    
+    # Should only deduct captured spies, not the entire "executed" amount from spy-vs-spy
+    assert decrease_calls == [entry["spies captured"]]
+    
+    # Should insert news for both
+    assert len(news_calls) == 2
+
+def test_resolve_spy_operation_not_intercepted_by_counter_intel(monkeypatch):
+    monkeypatch.setattr(services, "get_last_spy_op_times", lambda db, cId: {})
+    monkeypatch.setattr(services, "has_active_embassy", lambda db, cId, eId: False)
+    monkeypatch.setattr(services, "get_unit_quantity", lambda db, uid, unit: 100)
+    monkeypatch.setattr(services, "get_counter_intel_agents", lambda db, eId: 100)
+    
+    # Force 0% interception chance
+    monkeypatch.setattr(services, "counter_intel_intercept_chance", lambda agents, spies: 0.0)
+    
+    insert_calls = []
+    def mock_insert(db, cId, eId, ts, spy_type, intercepted=False):
+        insert_calls.append(intercepted)
+        return 999
+    monkeypatch.setattr(services, "insert_spy_operation", mock_insert)
+    monkeypatch.setattr(services, "update_revealed_spyinfo", lambda *a, **k: None)
+    monkeypatch.setattr(services, "get_revealed_values", lambda *a, **k: {})
+    
+    decrease_calls = []
+    monkeypatch.setattr(services, "decrease_unit_quantity", lambda db, uid, unit, amt: decrease_calls.append(amt))
+    
+    ok, code, msg, entry = services.resolve_spy_operation(QueuedCursor(), 1, 2, 50, "units")
+    
+    assert ok is True
+    # Should not be intercepted
+    assert insert_calls == [False]

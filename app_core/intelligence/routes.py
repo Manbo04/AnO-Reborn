@@ -11,6 +11,7 @@ from .services import (
     get_spy_amount_form_data,
     submit_spy_amount,
     resolve_spy_operation,
+    get_spy_op_status,
 )
 
 bp = Blueprint("intelligence", __name__)
@@ -27,12 +28,14 @@ def intelligence():
     try:
         with get_request_cursor(cursor_factory=RealDictCursor) as db:
             data = fetch_spy_reports(db, cId)
+        with get_request_cursor() as db:
+            op_status = get_spy_op_status(db, cId)
     except Exception:
         # If anything unexpected happens reading spyinfo, return an empty page
-        return render_template(template, info={})
+        return render_template(template, info={}, op_status=[])
 
     info = sort_spy_reports(data)
-    return render_template(template, info=info)
+    return render_template(template, info=info, op_status=op_status)
 
 
 @bp.route("/spyAmount", methods=["GET", "POST"])

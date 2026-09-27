@@ -1066,12 +1066,20 @@ class Military(Nation):
 
         # Special
         special_units = Military.get_special(cId)
-        spies = max(0, admin_buildings * 1 - special_units["spies"])
+        from app_core.military.services import SPIES_PER_ADMIN_BUILDING, COUNTER_INTEL_PER_ADMIN_BUILDING
+
+        spies = max(
+            0, admin_buildings * SPIES_PER_ADMIN_BUILDING - special_units["spies"]
+        )
+        counter_intel_agents = max(
+            0, admin_buildings * COUNTER_INTEL_PER_ADMIN_BUILDING - special_units.get("counter_intel_agents", 0)
+        )
         icbms = max(0, silos + 1 - special_units["icbms"])
         nukes = max(0, silos - special_units["nukes"])
 
         if increased_funding:
             spies *= 1.4
+            counter_intel_agents *= 1.4
 
         return {
             "soldiers": soldiers,
@@ -1084,6 +1092,7 @@ class Military(Nation):
             "cruisers": cruisers,
             "submarines": submarines,
             "spies": spies,
+            "counter_intel_agents": counter_intel_agents,
             "icbms": icbms,
             "nukes": nukes,
         }

@@ -11,6 +11,31 @@
     {{ game_hero('Intelligence', badge_text=(report_count ~ ' up-to-date report' ~ ('s' if report_count != 1 else '')) if report_count else None, badge_icon='person_search', subtitle='Spy reports gathered from your last successful missions. Reports go stale over time.') }}
 
     <div class="templatedivcontent">
+        {% call game_glass_panel("Operation Cooldowns", icon='timer', style='margin-bottom: var(--game-space-lg, 24px);') %}
+        <div class="templateoutertablediv">
+            <table class="templatetable">
+                <tr>
+                    <th>Operation</th>
+                    <th>Status</th>
+                    <th>Base Cooldown</th>
+                </tr>
+                {% for status in op_status %}
+                <tr>
+                    <td>{{ status.label }}</td>
+                    <td>
+                        {% if status.ready %}
+                        <span style="color: #4ade80;">Ready</span>
+                        {% else %}
+                        <span style="color: #f87171;">{{ status.remaining }} remaining</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ status.cooldown }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% endcall %}
+
         {% if info %}
             {% for user, data in info.items() %}
             {% call game_glass_panel(data["username"] ~ "'s military", icon='shield', style='margin-bottom: var(--game-space-lg, 24px);') %}
