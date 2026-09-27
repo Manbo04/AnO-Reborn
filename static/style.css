@@ -13800,10 +13800,13 @@ body.nation-bloodshed-theme .game-hero h1 {
     89% { transform: none; }
 }
 
-/* The name itself sits in the store's .nation-flair-name span, which sets
-   its own (Roboto) font -- inherit the pixel face through it. */
+/* The name renders as nested spans (.nation-name-flair > .nation-flair-name)
+   and style.css's site-wide `* { font-family: Roboto }` matches both
+   directly, so `inherit` on the inner one would just inherit Roboto from
+   the outer -- both need the face set explicitly (same as imperial theme). */
+body.nation-bloodshed-theme .game-hero h1 .nation-name-flair,
 body.nation-bloodshed-theme .game-hero h1 .nation-flair-name {
-    font-family: inherit;
+    font-family: 'VT323', 'Courier New', monospace;
     font-weight: 400;
 }
 
