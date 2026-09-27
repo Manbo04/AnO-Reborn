@@ -5154,6 +5154,14 @@ body:has(.loginsignupdiv) .footer {
     font-size: 20px;
 }
 
+.toast-item--error {
+    border-left-color: var(--danger, #e5484d);
+}
+
+.toast-item--warning {
+    border-left-color: var(--warning, #f5a524);
+}
+
 .theme-toggle-btn {
     float: right;
     margin: 16px 16px 0 0;

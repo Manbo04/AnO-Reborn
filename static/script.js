@@ -335,9 +335,25 @@ function dismissToast(el) {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
+    // Error toasts (data-sticky) stay until the X is clicked. Others stay
+    // long enough to read (scaled by length) and pause while hovered/touched.
     var toasts = document.querySelectorAll(".toast-item");
     toasts.forEach(function(toast, i) {
-        setTimeout(function() { dismissToast(toast); }, 5000 + (i * 400));
+        if (toast.getAttribute("data-sticky") === "1") return;
+        var timer = null;
+        function schedule(ms) {
+            clearTimeout(timer);
+            timer = setTimeout(function() { dismissToast(toast); }, ms);
+        }
+        function pause() { clearTimeout(timer); }
+        function resume() { schedule(4000); }
+        var len = (toast.textContent || "").trim().length;
+        schedule(Math.min(15000, Math.max(6000, 2500 + len * 60)) + (i * 400));
+        toast.addEventListener("mouseenter", pause);
+        toast.addEventListener("focusin", pause);
+        toast.addEventListener("touchstart", pause, { passive: true });
+        toast.addEventListener("mouseleave", resume);
+        toast.addEventListener("focusout", resume);
     });
     var legacy = document.querySelectorAll(".purchasediv");
     legacy.forEach(function(flash, i) {

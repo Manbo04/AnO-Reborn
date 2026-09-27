@@ -552,11 +552,12 @@
         {% if session.get('user_id') %}{% include 'partials/section_tabs.html' %}{% endif %}
         {% block body %} {% endblock %}
 
-        {% with messages = get_flashed_messages() %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
         <div class="toast-container" id="toast-container" role="status" aria-live="polite">
-            {% for message in messages %}
-            <div class="toast-item">
+            {% for category, message in messages %}
+            {# error/danger toasts stay until dismissed so failure details can be read #}
+            <div class="toast-item{% if category in ('error', 'danger') %} toast-item--error{% elif category == 'warning' %} toast-item--warning{% endif %}"{% if category in ('error', 'danger') %} data-sticky="1"{% endif %}>
                 <span class="toast-message">{{ message }}</span>
                 <button type="button" class="toast-dismiss" onclick="dismissToast(this.parentElement)" aria-label="Dismiss notification">
                     <span class="material-icons-outlined">close</span>

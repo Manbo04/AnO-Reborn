@@ -2145,24 +2145,24 @@ def mass_purchase_buy():
     try:
         quantity = int(request.form.get("quantity", ""))
     except (TypeError, ValueError):
-        flash("Enter a valid amount.")
+        flash("Enter a valid amount.", "error")
         return redirect("/mass_purchase")
 
     if quantity < 1:
-        flash("Amount must be at least 1.")
+        flash("Amount must be at least 1.", "error")
         return redirect("/mass_purchase")
 
     if f"{building}_price" not in variables.PROVINCE_UNIT_PRICES:
-        flash("Pick a building to buy.")
+        flash("Pick a building to buy.", "error")
         return redirect("/mass_purchase")
 
     if not province_ids:
-        flash("Select at least one province.")
+        flash("Select at least one province.", "error")
         return redirect("/mass_purchase")
 
     province_id_ints = [int(p) for p in province_ids if p.isdigit()]
     if not province_id_ints:
-        flash("Select at least one province.")
+        flash("Select at least one province.", "error")
         return redirect("/mass_purchase")
 
     with get_request_cursor() as db:
@@ -2171,7 +2171,7 @@ def mass_purchase_buy():
         # call, but filtering here keeps a tampered id list from even
         # showing up as a per-province failure in the results flash.
         db.execute(
-            "SELECT id, provinceName FROM provinces WHERE userId = %s AND id = ANY(%s)",
+            "SELECT id, provinceName FROM provinces WHERE userId = %s AND id = ANY(%s) ORDER BY id",
             (cId, province_id_ints),
         )
         owned = {row[0]: row[1] for row in db.fetchall()}
@@ -2212,12 +2212,14 @@ def mass_purchase_buy():
         # Cap how many per-province errors get flashed -- selecting 20+
         # provinces that all fail the same way (e.g. no free slots
         # anywhere) shouldn't dump 20 near-identical lines on the page.
-        shown = failures[:5]
+        shown = failures[:8]
         more = len(failures) - len(shown)
         msg = "Skipped -- " + "; ".join(shown)
         if more > 0:
             msg += f"; and {more} more"
-        flash(msg)
+        # "error" makes the toast sticky (see layout.html) -- ieb read the
+        # per-province skip reasons too slowly before a 5s toast vanished.
+        flash(msg, "error")
 
     return redirect("/mass_purchase")
 
