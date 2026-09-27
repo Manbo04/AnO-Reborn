@@ -13800,6 +13800,21 @@ body.nation-bloodshed-theme .game-hero h1 {
     89% { transform: none; }
 }
 
+/* The name itself sits in the store's .nation-flair-name span, which sets
+   its own (Roboto) font -- inherit the pixel face through it. */
+body.nation-bloodshed-theme .game-hero h1 .nation-flair-name {
+    font-family: inherit;
+    font-weight: 400;
+}
+
+/* Mobile drops the glass backdrop-blur for scroll performance, so panels
+   need to be near-opaque there or the text wall competes with labels. */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+    body.nation-bloodshed-theme {
+        --game-glass-bg: rgba(6, 6, 6, 0.93);
+    }
+}
+
 body.nation-bloodshed-theme .game-hero-sub,
 body.nation-bloodshed-theme .templatedivtitle,
 body.nation-bloodshed-theme .stat-value {
