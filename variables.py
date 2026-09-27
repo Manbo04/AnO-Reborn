@@ -316,6 +316,7 @@ UNITS = [
     "soldiers",
     "tanks",
     "artillery",
+    "sam_batteries",
     "bombers",
     "fighters",
     "apaches",
@@ -632,6 +633,11 @@ MILDICT = {
         "price": 14000,
         "resources": {"components": 3000, "steel": 30000, "gasoline": 1000},
         "manpower": 2,
+    },
+    "sam_batteries": {
+        "price": 30000,
+        "resources": {"components": 4000, "steel": 15000, "aluminium": 5000},
+        "manpower": 3,
     },
     # AIR -- aluminium, not steel: planes are built from aluminium, and this
     # is the only place that made aluminium a viable resource to produce

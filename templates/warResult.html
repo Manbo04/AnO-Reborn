@@ -199,6 +199,58 @@
                     <i class="fas fa-chess-rook"></i> Defender: {{ defender_result["nation_name"] }}
                 </div>
                 
+                {% if defender_result.get("supply") %}
+                    <div class="unit-card" style="margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 5px 0; font-size: 14px; display: flex; align-items: center; justify-content: space-between;">
+                            <span><i class="fas fa-box"></i> Defender Supply</span>
+                            {% if defender_result["supply"]["owned"] > defender_result["supply"]["fielded"] %}
+                                <span style="color: #ffaa00; font-size: 12px; font-weight: normal;"><i class="fas fa-exclamation-triangle"></i> Supply Shortage</span>
+                            {% endif %}
+                        </h4>
+                        <div class="casualty-counter" style="margin-bottom: 5px;">
+                            <span>Pool before: {{defender_result["supply"]["pool_before"]}}</span>
+                            <span>Spent: <span style="color:#ff4444">-{{defender_result["supply"]["spent"]}}</span></span>
+                        </div>
+                        <div class="progress-container" style="margin: 5px 0;">
+                            {% set s_pool = defender_result["supply"]["pool_after"] %}
+                            {% set s_cap = 2000 %}
+                            {% set s_pct = (s_pool / s_cap * 100)|round %}
+                            <div class="progress-fill" style="width: {{s_pct}}%; background-color: #00a7e1;"></div>
+                        </div>
+                        <div class="casualty-counter">
+                            <span>Remaining: {{s_pool}}</span>
+                            <span style="color: #888;">(Floor: {{defender_result["supply"]["floor"]}})</span>
+                        </div>
+                        {% if defender_result["supply"]["owned"] > defender_result["supply"]["fielded"] %}
+                            <div style="font-size: 12px; color: #ffaa00; margin-top: 5px; text-align: center;">
+                                Only {{defender_result["supply"]["fielded"]}} / {{defender_result["supply"]["owned"]}} units fielded.
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                {% if defender_result.get("citizen_army") %}
+                    <div class="unit-card" style="border-left: 3px solid #ffaa00; margin-bottom: 15px; padding-left: 10px;">
+                        <h4 style="margin: 0 0 5px 0; color: #ffaa00; font-size: 14px;"><i class="fas fa-users"></i> Citizen Army Activated</h4>
+                        <p style="font-size: 12px; color: #aaa; margin: 0 0 10px 0;">
+                            No standard units defending! Militia deployed ({{defender_result["citizen_army"]["pct"]}}% effectiveness).
+                        </p>
+                        {% if defender_result["citizen_army"]["losses"] %}
+                            <div style="font-size: 13px;">
+                                <strong>Inflicted on Attacker:</strong>
+                                {% for u, q in defender_result["citizen_army"]["losses"].items() %}
+                                    <div style="display: flex; justify-content: space-between; margin-top: 3px;">
+                                        <span>{{u}}</span>
+                                        <span style="color:#ff4444">-{{q}}</span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p style="text-align: center; color: #888; font-size: 13px; margin: 0;">No casualties inflicted.</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                
                 {% if defender_result.get("unit_loss") %}
                     {% for key, value in defender_result["unit_loss"].items() %}
                     <div class="unit-card">
