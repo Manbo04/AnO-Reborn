@@ -7038,10 +7038,13 @@ body.game-shell-active .dropdown-content a.active {
 
 /* Six tiles (Population breakdown) in a wrapping flex row left the 6th
    stranded alone on a second line at desktop widths. Even grid instead:
-   6 / 3 / 2 columns, with the divider dropped on each row's first tile. */
+   3 / 2 columns, with the divider dropped on each row's first tile. */
 .game-stat-row.game-stat-row--grid6 {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    /* 3 across at every desktop width: the page content is capped at ~1100px, so
+       six columns squeezed each stat to ~180px on ANY monitor (a 1500px viewport
+       breakpoint didn't help players on wide screens). */
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     row-gap: 12px;
 }
 
@@ -7050,23 +7053,9 @@ body.game-shell-active .dropdown-content a.active {
     padding: 4px 14px;
 }
 
-.game-stat-row--grid6 .game-stat:nth-child(6n+1) {
+.game-stat-row--grid6 .game-stat:nth-child(3n+1) {
     border-left: none;
     padding-left: 4px;
-}
-
-@media (max-width: 1200px) {
-    .game-stat-row.game-stat-row--grid6 {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-    .game-stat-row--grid6 .game-stat:nth-child(6n+1) {
-        border-left: 1px solid var(--game-glass-border);
-        padding-left: 14px;
-    }
-    .game-stat-row--grid6 .game-stat:nth-child(3n+1) {
-        border-left: none;
-        padding-left: 4px;
-    }
 }
 
 @media (max-width: 620px) {
@@ -7287,6 +7276,13 @@ body.game-shell-active .dropdown-content a.active {
     margin-top: 5px;
     flex-shrink: 0;
     box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+/* The `hidden` attribute loses to any class that sets display (e.g. the
+   revenue hourly/daily panels are display:flex), which made toggles that
+   flip .hidden do nothing visible. */
+[hidden] {
+    display: none !important;
 }
 
 
@@ -8443,6 +8439,33 @@ body.page-country .templatedivcontent .infodiv {
 @media (max-width: 480px) {
     /* Keep standalone buttons tappable but not enormous */
     .templatedivbutton { padding: 10px 16px !important; margin: 4px 0 !important; }
+}
+
+/* Countries filter controls: one even row, equal widths and heights, instead
+   of mixed-size controls with the search box sitting lower than the rest. */
+@media (min-width: 769px) {
+    .countries-filter-row {
+        display: grid !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+        gap: 10px !important;
+        align-items: center;
+    }
+    .countries-filter-row > div {
+        width: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .countries-filter-row select,
+    .countries-filter-row input,
+    .countries-filter-row .smallactionbutton {
+        width: 100% !important;
+        height: 40px;
+        margin: 0 !important;
+        box-sizing: border-box;
+    }
+    .countries-filter-row .smallactionbutton {
+        padding: 0 22px !important;
+    }
 }
 
 
@@ -9829,8 +9852,12 @@ body.page-rankings .rankings-table tbody td {
     vertical-align: middle;
 }
 
-body.page-rankings .rankings-table tbody td:first-child {
-    width: 44px;
+/* table-layout: fixed takes column widths from the FIRST row, which is the
+   <th> header row -- so these widths must hit the th cells too, or every
+   column comes out an equal third and the Rank column eats the space names
+   needed (names rendered as "La..."/"P..." on narrower screens). */
+body.page-rankings .rankings-table tr > :first-child {
+    width: 56px;
     text-align: center;
 }
 
@@ -9841,9 +9868,30 @@ body.page-rankings .rankings-table tbody td:first-child {
    (luciuskonst, #suggestions: "nation/alliance names do not fit into the
    space"). Also added title="" on both cells site-wide as a fallback for
    whatever still gets clipped. */
-body.page-rankings .rankings-table tbody td:last-child {
-    width: 110px;
+body.page-rankings .rankings-table tr > :last-child {
+    width: 96px;
     text-align: right;
+}
+
+/* Two leaderboards side by side leave each table ~300px on laptop-width
+   screens -- stack them so names get the full width, and let a name that
+   still doesn't fit wrap at word boundaries instead of becoming "La...". */
+@media (max-width: 1300px) {
+    body.page-rankings .game-panel-grid--2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+body.page-rankings .rankings-table tbody td:nth-child(2) {
+    white-space: normal;
+    height: auto;
+    max-height: none;
+    line-height: 1.3;
+    text-align: left;
+}
+
+body.page-rankings .rankings-table tbody td:nth-child(2) a {
+    white-space: normal;
 }
 
 body.page-rankings .rankings-table tbody td a {
@@ -10527,6 +10575,10 @@ body.game-page-v2 .country-demographics-chart-wrap {
 .country-demographics-chart-wrap .chart-canvas-responsive {
     width: 100% !important;
     height: 100% !important;
+    /* The generic .chart-canvas-responsive caps canvases at 450px; for big nations
+       the chart is taller than that and scrolls inside the wrap, so lift the cap
+       or all rows get crushed into 450px with blank scroll space below. */
+    max-height: none;
     margin: 0;
 }
 
@@ -12434,6 +12486,30 @@ body.page-military .templatedivcontent .infodiv {
     }
 }
 
+/* Wars action buttons: equal-width row like the military page's tabs instead of
+   content-sized buttons with uneven gaps (player report: "weirdly squished"). */
+@media (min-width: 769px) {
+    .wars-action-strip {
+        display: grid !important;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 10px !important;
+    }
+    .wars-action-strip > div {
+        width: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .wars-action-strip .smallactionbutton {
+        width: 100% !important;
+        margin: 0 !important;
+        box-sizing: border-box;
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        justify-content: center;
+        white-space: nowrap;
+    }
+}
+
 
 /* --- static/css/game-touch.css --- */
 /* =====================================================================
@@ -12592,7 +12668,8 @@ html.has-touch.game-reduced-motion .touch-active {
     body[class*="-theme"] .forge-embers-canvas,
     body[class*="-theme"] .cyberpunk-matrix-canvas,
     body[class*="-theme"] .imperial-gold-dust-canvas,
-    body[class*="-theme"] .bloodshed-glitch-canvas {
+    body[class*="-theme"] .bloodshed-glitch-canvas,
+    body[class*="-theme"] .frost-snow-canvas {
         mix-blend-mode: normal !important;
     }
 }
@@ -13941,6 +14018,141 @@ body.nation-imperial-theme ::-webkit-scrollbar-thumb {
         filter: none;
         transform: none;
         animation: none;
+    }
+}
+
+
+/* --- static/css/cosmetics-frost.css --- */
+/*
+ * Frost cosmetic reskin for a single nation page (ticket-0034,
+ * luciuskonst / "Aurelia", requested "like the forge page, but a blue
+ * tint slightly lighter than my flag's blue, snowflakes instead of
+ * meteors, no rolling shutter"). Aurelia's flag navy is #253477; the
+ * tint here is a notch lighter (#3a52a8) with a brighter ice-blue for
+ * glows. Scoped entirely under body.nation-frost-theme (set only in
+ * templates/country_v2.html's body_class block when cId == 69697657).
+ * Deliberately has no body::after sweeping beam -- that's the "rolling
+ * shutter" the player asked to drop. Bundled by
+ * scripts/bundle_game_css.py -- edit this file, not style.css.
+ */
+
+body.nation-frost-theme {
+    --background: #03060f;
+    --foreground: #070c1c;
+    --foregroundTwo: #0a1024;
+    --foregroundThree: #0e152e;
+    --foregroundFour: #121a38;
+    --border: #243a7a;
+    --colorOne: #e3ebff;
+    --accent: #7a93e6;
+    --accent-hover: #a3b6f2;
+    --accent-subtle: #111c44;
+    --gold: #c9d8ff;
+    --success: #7bd6b0;
+    --danger: #ff5c6c;
+    --text-secondary: #9aaad6;
+
+    --game-glass-bg: rgba(8, 14, 34, 0.55);
+    --game-glass-bg-strong: rgba(8, 14, 34, 0.84);
+    --game-glass-border: rgba(58, 82, 168, 0.45);
+
+    color-scheme: dark;
+}
+
+/* Falling snowflakes (Aurelia's flag emblem), drawn by
+   static/js/frost-snowfall.js. Same placement/paint-order reasoning as
+   .forge-embers-canvas: after .game-page-overlay, no z-index, so it sits
+   above the background layers but under the page content. */
+body.nation-frost-theme .frost-snow-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.8;
+    mix-blend-mode: screen;
+}
+
+/* Cold blue wash over the (flag) background photo, with a faint aurora
+   glow up top instead of the forge's scrolling drip lines. */
+body.nation-frost-theme .game-page-overlay {
+    background:
+        radial-gradient(ellipse at 25% 0%, rgba(90, 120, 220, 0.22) 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 15%, rgba(58, 82, 168, 0.18) 0%, transparent 50%),
+        linear-gradient(180deg, rgba(10, 18, 48, 0.6) 0%, rgba(5, 9, 24, 0.9) 65%, #03060f 100%);
+}
+
+/* Icy panel chrome, a slow soft shimmer rather than the forge's heat
+   pulse. */
+body.nation-frost-theme .game-hero,
+body.nation-frost-theme .game-glass {
+    border-color: rgba(96, 124, 214, 0.45);
+    animation: frost-shimmer 4.5s ease-in-out infinite;
+}
+
+@keyframes frost-shimmer {
+    0%, 100% { box-shadow: 0 0 0 1px rgba(58, 82, 168, 0.2), 0 0 20px rgba(58, 82, 168, 0.25), 0 0 40px rgba(160, 190, 255, 0.08); }
+    50% { box-shadow: 0 0 0 1px rgba(96, 124, 214, 0.45), 0 0 32px rgba(84, 112, 208, 0.45), 0 0 60px rgba(160, 190, 255, 0.18); }
+}
+
+body.nation-frost-theme .game-hero h1 {
+    color: #f2f6ff;
+    text-shadow: 0 0 8px rgba(122, 147, 230, 0.9), 0 0 22px rgba(58, 82, 168, 0.6);
+    animation: frost-glint 5s ease-in-out infinite;
+}
+
+@keyframes frost-glint {
+    0%, 85%, 100% {
+        text-shadow: 0 0 8px rgba(122, 147, 230, 0.9), 0 0 22px rgba(58, 82, 168, 0.6);
+    }
+    92% {
+        text-shadow: 0 0 12px rgba(220, 232, 255, 1), 0 0 30px rgba(122, 147, 230, 0.8);
+    }
+}
+
+body.nation-frost-theme .game-hero-sub,
+body.nation-frost-theme .game-hero-badge {
+    color: var(--colorOne);
+}
+
+body.nation-frost-theme .game-btn-primary,
+body.nation-frost-theme .templatedivbutton {
+    box-shadow: 0 0 12px rgba(84, 112, 208, 0.55);
+}
+
+body.nation-frost-theme .stat-card {
+    border-color: rgba(96, 124, 214, 0.3);
+}
+
+body.nation-frost-theme .stat-value {
+    color: var(--accent);
+    text-shadow: 0 0 6px rgba(122, 147, 230, 0.5);
+}
+
+body.nation-frost-theme .templatedivtitle,
+body.nation-frost-theme .templatecontentheaderleft {
+    box-shadow: 0 0 16px rgba(84, 112, 208, 0.4);
+}
+
+body.nation-frost-theme ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+body.nation-frost-theme ::-webkit-scrollbar-track {
+    background: #03060f;
+}
+
+body.nation-frost-theme ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #c9d8ff, #3a52a8);
+    border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.nation-frost-theme .game-hero,
+    body.nation-frost-theme .game-glass,
+    body.nation-frost-theme .game-hero h1 {
+        animation: none !important;
     }
 }
 

@@ -154,7 +154,8 @@ html.has-touch.game-reduced-motion .touch-active {
     body[class*="-theme"] .forge-embers-canvas,
     body[class*="-theme"] .cyberpunk-matrix-canvas,
     body[class*="-theme"] .imperial-gold-dust-canvas,
-    body[class*="-theme"] .bloodshed-glitch-canvas {
+    body[class*="-theme"] .bloodshed-glitch-canvas,
+    body[class*="-theme"] .frost-snow-canvas {
         mix-blend-mode: normal !important;
     }
 }

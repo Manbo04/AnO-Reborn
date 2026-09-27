@@ -23,6 +23,7 @@ FILES = [
     "static/css/cosmetics-forge.css",
     "static/css/cosmetics-bloodshed.css",
     "static/css/cosmetics-imperial.css",
+    "static/css/cosmetics-frost.css",
 ]
 
 

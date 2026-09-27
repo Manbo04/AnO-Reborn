@@ -1,0 +1,132 @@
+/*
+ * Frost cosmetic reskin for a single nation page (ticket-0034,
+ * luciuskonst / "Aurelia", requested "like the forge page, but a blue
+ * tint slightly lighter than my flag's blue, snowflakes instead of
+ * meteors, no rolling shutter"). Aurelia's flag navy is #253477; the
+ * tint here is a notch lighter (#3a52a8) with a brighter ice-blue for
+ * glows. Scoped entirely under body.nation-frost-theme (set only in
+ * templates/country_v2.html's body_class block when cId == 69697657).
+ * Deliberately has no body::after sweeping beam -- that's the "rolling
+ * shutter" the player asked to drop. Bundled by
+ * scripts/bundle_game_css.py -- edit this file, not style.css.
+ */
+
+body.nation-frost-theme {
+    --background: #03060f;
+    --foreground: #070c1c;
+    --foregroundTwo: #0a1024;
+    --foregroundThree: #0e152e;
+    --foregroundFour: #121a38;
+    --border: #243a7a;
+    --colorOne: #e3ebff;
+    --accent: #7a93e6;
+    --accent-hover: #a3b6f2;
+    --accent-subtle: #111c44;
+    --gold: #c9d8ff;
+    --success: #7bd6b0;
+    --danger: #ff5c6c;
+    --text-secondary: #9aaad6;
+
+    --game-glass-bg: rgba(8, 14, 34, 0.55);
+    --game-glass-bg-strong: rgba(8, 14, 34, 0.84);
+    --game-glass-border: rgba(58, 82, 168, 0.45);
+
+    color-scheme: dark;
+}
+
+/* Falling snowflakes (Aurelia's flag emblem), drawn by
+   static/js/frost-snowfall.js. Same placement/paint-order reasoning as
+   .forge-embers-canvas: after .game-page-overlay, no z-index, so it sits
+   above the background layers but under the page content. */
+body.nation-frost-theme .frost-snow-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.8;
+    mix-blend-mode: screen;
+}
+
+/* Cold blue wash over the (flag) background photo, with a faint aurora
+   glow up top instead of the forge's scrolling drip lines. */
+body.nation-frost-theme .game-page-overlay {
+    background:
+        radial-gradient(ellipse at 25% 0%, rgba(90, 120, 220, 0.22) 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 15%, rgba(58, 82, 168, 0.18) 0%, transparent 50%),
+        linear-gradient(180deg, rgba(10, 18, 48, 0.6) 0%, rgba(5, 9, 24, 0.9) 65%, #03060f 100%);
+}
+
+/* Icy panel chrome, a slow soft shimmer rather than the forge's heat
+   pulse. */
+body.nation-frost-theme .game-hero,
+body.nation-frost-theme .game-glass {
+    border-color: rgba(96, 124, 214, 0.45);
+    animation: frost-shimmer 4.5s ease-in-out infinite;
+}
+
+@keyframes frost-shimmer {
+    0%, 100% { box-shadow: 0 0 0 1px rgba(58, 82, 168, 0.2), 0 0 20px rgba(58, 82, 168, 0.25), 0 0 40px rgba(160, 190, 255, 0.08); }
+    50% { box-shadow: 0 0 0 1px rgba(96, 124, 214, 0.45), 0 0 32px rgba(84, 112, 208, 0.45), 0 0 60px rgba(160, 190, 255, 0.18); }
+}
+
+body.nation-frost-theme .game-hero h1 {
+    color: #f2f6ff;
+    text-shadow: 0 0 8px rgba(122, 147, 230, 0.9), 0 0 22px rgba(58, 82, 168, 0.6);
+    animation: frost-glint 5s ease-in-out infinite;
+}
+
+@keyframes frost-glint {
+    0%, 85%, 100% {
+        text-shadow: 0 0 8px rgba(122, 147, 230, 0.9), 0 0 22px rgba(58, 82, 168, 0.6);
+    }
+    92% {
+        text-shadow: 0 0 12px rgba(220, 232, 255, 1), 0 0 30px rgba(122, 147, 230, 0.8);
+    }
+}
+
+body.nation-frost-theme .game-hero-sub,
+body.nation-frost-theme .game-hero-badge {
+    color: var(--colorOne);
+}
+
+body.nation-frost-theme .game-btn-primary,
+body.nation-frost-theme .templatedivbutton {
+    box-shadow: 0 0 12px rgba(84, 112, 208, 0.55);
+}
+
+body.nation-frost-theme .stat-card {
+    border-color: rgba(96, 124, 214, 0.3);
+}
+
+body.nation-frost-theme .stat-value {
+    color: var(--accent);
+    text-shadow: 0 0 6px rgba(122, 147, 230, 0.5);
+}
+
+body.nation-frost-theme .templatedivtitle,
+body.nation-frost-theme .templatecontentheaderleft {
+    box-shadow: 0 0 16px rgba(84, 112, 208, 0.4);
+}
+
+body.nation-frost-theme ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+body.nation-frost-theme ::-webkit-scrollbar-track {
+    background: #03060f;
+}
+
+body.nation-frost-theme ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #c9d8ff, #3a52a8);
+    border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.nation-frost-theme .game-hero,
+    body.nation-frost-theme .game-glass,
+    body.nation-frost-theme .game-hero h1 {
+        animation: none !important;
+    }
+}
