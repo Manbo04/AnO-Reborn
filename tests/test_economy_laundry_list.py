@@ -25,7 +25,8 @@ def test_all_local_matches_old_nationwide_result():
     )
 
 
-def test_province_without_shops_is_served_remotely_at_reduced_effect():
+def test_province_without_shops_is_served_remotely_at_reduced_effect(monkeypatch):
+    monkeypatch.setattr(variables, "PER_PROVINCE_CG_GRACE_UNTIL", "")
     alloc = allocate_consumer_goods([10.0, 10.0], [100.0, 0.0], 1000)
     assert alloc["coverage"][0] == 1.0
     assert alloc["coverage"][1] == pytest.approx(variables.REMOTE_CG_EFFICIENCY)
@@ -107,3 +108,14 @@ def test_trade_fee_rounds_down():
     assert trade_fee(1000, 5) == 50
     assert trade_fee(19, 5) == 0
     assert trade_fee(1000, variables.UNION_TRADE_FEE_PERCENT) == 20
+
+
+def test_grace_period_counts_shipped_goods_in_full(monkeypatch):
+    from datetime import datetime, timezone
+    from app_core.economy import consumer_goods as cgm
+
+    monkeypatch.setattr(variables, "PER_PROVINCE_CG_GRACE_UNTIL", "2999-01-01T00:00:00+00:00")
+    alloc = allocate_consumer_goods([10.0, 10.0], [100.0, 0.0], 1000)
+    assert alloc["coverage"] == [1.0, 1.0]
+    past = datetime(3000, 1, 1, tzinfo=timezone.utc)
+    assert cgm.remote_cg_efficiency(past) == variables.REMOTE_CG_EFFICIENCY

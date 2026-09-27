@@ -18,6 +18,7 @@ can't drift apart the way the old duplicated nation-wide formulas did.
 from __future__ import annotations
 
 import math
+from datetime import datetime, timezone
 from typing import Iterable, Mapping, Sequence
 
 import variables
@@ -27,6 +28,26 @@ import variables
 CG_DISTRIBUTION_BUILDINGS: tuple[str, ...] = tuple(
     variables.CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING.keys()
 )
+
+
+def grace_period_until(now=None):
+    """End of the per-province grace period if it's still running, else None."""
+    raw = getattr(variables, "PER_PROVINCE_CG_GRACE_UNTIL", "") or ""
+    if not raw:
+        return None
+    try:
+        until = datetime.fromisoformat(raw)
+    except ValueError:
+        return None
+    now = now or datetime.now(timezone.utc)
+    return until if now < until else None
+
+
+def remote_cg_efficiency(now=None):
+    """How much shipped (remote) goods count: full during the grace period."""
+    if grace_period_until(now) is not None:
+        return 1.0
+    return variables.REMOTE_CG_EFFICIENCY
 
 
 def province_cg_need(
@@ -86,7 +107,7 @@ def allocate_consumer_goods(
 
     stock = max(float(stockpile or 0), 0.0)
     supply = min(1.0, stock / deliverable)
-    eff = variables.REMOTE_CG_EFFICIENCY
+    eff = remote_cg_efficiency()
     coverage = [
         (supply * (local[i] + eff * remote[i]) / needs[i]) if needs[i] > 0 else 0.0
         for i in range(n)

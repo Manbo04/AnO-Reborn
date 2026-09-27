@@ -32,7 +32,12 @@
             <span class="material-icons-outlined">{% if enough_consumer_goods %}check_circle{% else %}cancel{% endif %}</span>
             <span>{% if enough_consumer_goods %}Your citizens have consumer goods{% else %}Your citizens do not have consumer goods{% endif %}</span>
         </div>
-        {% if cg_status %}
+        {% if cg_status and cg_status.grace_until and cg_status.source in ("mixed", "remote") %}
+        <p class="province-status-card__detail province-status-card__detail--warn">
+            <span class="material-icons-outlined">schedule</span>
+            This province has too few shops of its own. Until {{ cg_status.grace_until.strftime("%-d %b %H:%M") }} UTC goods shipped from your other provinces still count in full; after that they count at {{ cg_status.remote_efficiency_percent }}%. Build retail here to keep the full tax bonus.
+        </p>
+        {% elif cg_status %}
         <p class="province-status-card__detail">
             {% if cg_status.source == "local" %}
             Supplied by this province's own shops ({{ cg_status.coverage_percent }}% of demand met).

@@ -145,6 +145,10 @@ CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING_DEFAULT = 1500000
 # too little, but those long-distance deliveries only count at this fraction
 # (the goods are consumed in full; the rest is lost to transport).
 REMOTE_CG_EFFICIENCY = 0.5
+# Grace period (player request, .ieb 2026-09-26): until this UTC date/time,
+# shipped goods still count in full so players have time to build retail in
+# every province. ISO-8601; empty string disables the grace period.
+PER_PROVINCE_CG_GRACE_UNTIL = "2026-10-04T12:00:00+00:00"
 
 # Feature flag for demographic-based consumption system
 FEATURE_DEMOGRAPHIC_CONSUMPTION = True  # toggle the new mechanic on/off

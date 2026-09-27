@@ -406,6 +406,7 @@ def province(pId):
             if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
                 from app_core.economy.consumer_goods import (
                     allocate_consumer_goods,
+                    grace_period_until,
                     load_province_cg_capacities,
                     province_cg_need,
                 )
@@ -458,6 +459,7 @@ def province(pId):
                     cg_status = {
                         "coverage_percent": int(round(coverage * 100)),
                         "source": source,
+                        "grace_until": grace_period_until(),
                         "remote_efficiency_percent": int(
                             round(variables.REMOTE_CG_EFFICIENCY * 100)
                         ),
