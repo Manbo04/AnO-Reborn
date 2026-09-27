@@ -325,48 +325,12 @@ MILDICT = {
     },
 }
 
-# Slot type for buildings (city slot vs land slot)
-CITY_SLOT_BUILDINGS = {
-    "coal_burners",
-    "oil_burners",
-    "hydro_dams",
-    "nuclear_reactors",
-    "solar_fields",
-    "wind_farms",
-    "geothermal_plants",
-    "gas_stations",
-    "general_stores",
-    "farmers_markets",
-    "malls",
-    "banks",
-    "distribution_centers",
-    "city_parks",
-    "hospitals",
-    "libraries",
-    "universities",
-    "monorails",
-}
-LAND_SLOT_BUILDINGS = {
-    "army_bases",
-    "harbours",
-    "aerodomes",
-    "admin_buildings",
-    "silos",
-    "farms",
-    "pumpjacks",
-    "coal_mines",
-    "bauxite_mines",
-    "copper_mines",
-    "uranium_mines",
-    "lead_mines",
-    "iron_mines",
-    "lumber_mills",
-    "component_factories",
-    "steel_mills",
-    "ammunition_factories",
-    "aluminium_refineries",
-    "oil_refineries",
-}
+# Slot type for buildings (city slot vs land slot) -- same single source of
+# truth the purchase checks use.
+from app_core.economy.building_costs import (  # noqa: E402
+    CITY_UNITS as CITY_SLOT_BUILDINGS,
+    LAND_UNITS as LAND_SLOT_BUILDINGS,
+)
 
 
 # ---------------------------------------------------------------------------

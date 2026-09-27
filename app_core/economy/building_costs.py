@@ -25,6 +25,7 @@ CITY_UNITS = frozenset(
         "malls",
         "banks",
         "distribution_centers",
+        "food_banks",
         "city_parks",
         "hospitals",
         "libraries",
