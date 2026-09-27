@@ -13675,15 +13675,25 @@ body.nation-forge-theme ::-webkit-scrollbar-thumb {
  * The reference image FikusMikus sent is a fast full-frame strobing GIF
  * (~30fps, near-black <-> dense-white-text swings) -- a genuine
  * photosensitive-seizure risk, which is why Dede told them in the ticket
- * he'd add a warning/toggle before shipping it. Rather than embedding
- * that raw GIF, static/js/bloodshed-glitch.js draws the same "wall of
- * repeating glitch text" look with a smooth continuous scroll (safe by
- * default, no toggle needed) and keeps the flashier RGB-split/static
- * "glitch pulse" beats rate-limited to a few seconds apart -- and gated
- * behind the on-page toggle (.bloodshed-fx-toggle) this file styles
- * below, which the script also auto-disables under
- * prefers-reduced-motion.
+ * he'd add a warning/toggle before shipping it. static/js/bloodshed-glitch.js
+ * recreates the GIF's composition (lone tower over a rising wall of the
+ * phrase in a bitmap font, tearing, ghost rows) using motion/displacement
+ * only, safe by default; the actual strobe is opt-in via the on-page
+ * "⚠ Strobe" toggle (.bloodshed-fx-toggle, styled below), off by default
+ * and capped under 3 flashes/s even when on.
  */
+
+/* Bitmap/terminal face matching the reference GIF's lettering. Self-hosted
+   per the site-wide font policy (fonts-local.css) -- downloaded once from
+   Google Fonts (VT323, OFL) into static/fonts/, never loaded from Google at
+   runtime. Also used by static/js/bloodshed-glitch.js for the canvas text. */
+@font-face {
+    font-family: 'VT323';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('/static/fonts/vt323-regular.woff2') format('woff2');
+}
 
 body.nation-bloodshed-theme {
     --background: #050505;
@@ -13701,8 +13711,10 @@ body.nation-bloodshed-theme {
     --danger: #ff5050;
     --text-secondary: #a3a3a3;
 
-    --game-glass-bg: rgba(10, 10, 10, 0.6);
-    --game-glass-bg-strong: rgba(10, 10, 10, 0.88);
+    /* Denser than the other themes: the text wall behind is bright and busy,
+       so panels need more opacity to keep game text readable. */
+    --game-glass-bg: rgba(6, 6, 6, 0.8);
+    --game-glass-bg-strong: rgba(6, 6, 6, 0.92);
     --game-glass-border: rgba(255, 26, 46, 0.35);
 
     color-scheme: dark;
@@ -13720,8 +13732,7 @@ body.nation-bloodshed-theme .bloodshed-glitch-canvas {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    opacity: 0.4;
-    mix-blend-mode: screen;
+    opacity: 0.85;
 }
 
 /* Static scanline texture + heavy vignette painted onto the page's
@@ -13730,8 +13741,8 @@ body.nation-bloodshed-theme .bloodshed-glitch-canvas {
 body.nation-bloodshed-theme .game-page-overlay {
     background:
         repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0px, rgba(255, 255, 255, 0.035) 1px, transparent 1px, transparent 3px),
-        radial-gradient(ellipse at center, transparent 35%, rgba(5, 5, 5, 0.7) 100%),
-        linear-gradient(180deg, rgba(5, 5, 5, 0.55) 0%, rgba(5, 5, 5, 0.92) 65%, #050505 100%);
+        radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.75) 100%),
+        #000;
 }
 
 /* Slow-roaming red scanline, purely decorative, never blocks clicks --
@@ -13767,8 +13778,37 @@ body.nation-bloodshed-theme .game-glass {
 }
 
 body.nation-bloodshed-theme .game-hero h1 {
+    position: relative;
+    font-family: 'VT323', 'Courier New', monospace;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
     color: #ffffff;
-    text-shadow: 0 0 8px rgba(255, 26, 46, 0.7), 0 0 18px rgba(255, 26, 46, 0.35);
+    /* Static chromatic split, like a misaligned CRT gun. */
+    text-shadow: -2px 0 rgba(255, 26, 46, 0.85), 2px 0 rgba(120, 220, 255, 0.6), 0 0 14px rgba(255, 26, 46, 0.35);
+    animation: bloodshed-title-tear 5.5s steps(1, end) infinite;
+}
+
+/* Title tracking-error: brief horizontal slice offsets a couple of times per
+   cycle. Displacement only (no brightness change), so safe by default. */
+@keyframes bloodshed-title-tear {
+    0%, 100% { transform: none; clip-path: none; }
+    61% { transform: translateX(-6px); clip-path: inset(10% 0 55% 0); }
+    62% { transform: translateX(5px); clip-path: inset(50% 0 12% 0); }
+    63% { transform: none; clip-path: none; }
+    88% { transform: translateX(4px) skewX(-8deg); }
+    89% { transform: none; }
+}
+
+body.nation-bloodshed-theme .game-hero-sub,
+body.nation-bloodshed-theme .templatedivtitle,
+body.nation-bloodshed-theme .stat-value {
+    font-family: 'VT323', 'Courier New', monospace;
+    letter-spacing: 0.03em;
+}
+
+body.nation-bloodshed-theme .stat-value {
+    font-size: 1.25em;
 }
 
 body.nation-bloodshed-theme .game-hero-sub,
@@ -13824,8 +13864,8 @@ body.nation-bloodshed-theme .bloodshed-fx-toggle {
     align-items: center;
     gap: 6px;
     padding: 7px 12px;
-    font-size: 12px;
-    font-weight: 600;
+    font-family: 'VT323', 'Courier New', monospace;
+    font-size: 15px;
     line-height: 1;
     color: var(--colorOne);
     background: rgba(10, 10, 10, 0.82);
@@ -13836,7 +13876,7 @@ body.nation-bloodshed-theme .bloodshed-fx-toggle {
 }
 
 body.nation-bloodshed-theme .bloodshed-fx-toggle[aria-pressed="false"] {
-    opacity: 0.6;
+    opacity: 0.75;
     border-color: rgba(255, 255, 255, 0.25);
 }
 
@@ -13847,8 +13887,17 @@ body.nation-bloodshed-theme .bloodshed-fx-toggle[aria-pressed="false"] {
     }
 }
 
+/* Strobe on: the toggle itself turns red so it's obvious the flashing mode
+   is active and where to switch it off. */
+body.nation-bloodshed-theme.bloodshed-strobe-on .bloodshed-fx-toggle {
+    color: #fff;
+    background: rgba(120, 8, 18, 0.9);
+    border-color: #ff1a2e;
+}
+
 @media (prefers-reduced-motion: reduce) {
-    body.nation-bloodshed-theme::after {
+    body.nation-bloodshed-theme::after,
+    body.nation-bloodshed-theme .game-hero h1 {
         animation: none !important;
     }
 }
