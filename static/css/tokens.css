@@ -82,7 +82,10 @@
     --game-glass-bg: rgba(22, 26, 34, 0.32);
     --game-glass-bg-strong: rgba(22, 26, 34, 0.62);
     --game-glass-border: rgba(255, 255, 255, 0.14);
-    --game-text-faint: #657289;
+    /* Was #657289: 3.4:1 on the dark panel, under WCAG AA -- the hub's stat
+       labels ("Nations online now") read as dark-on-dark. Same fix the
+       light theme above already made: reuse --text-secondary (5.4:1). */
+    --game-text-faint: var(--text-secondary);
     --game-shadow-glass: 0 16px 40px rgba(0, 0, 0, 0.45);
     /* Bright gold on a dark glass background already has plenty of
        contrast -- no separate darker text token needed here. */

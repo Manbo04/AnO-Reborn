@@ -62,7 +62,10 @@
     max-width: 300px;
     height: auto;
     border-radius: 8px;
-    margin: 0 auto;
+    /* !important: the shared ".templatedivcontent .warflexparentcolors
+       .unitimage" rule (game-layout.css) sets margin 0 with higher
+       specificity, so the photo sat flush left in its card. */
+    margin: 0 auto !important;
     display: block;
 }
 .page-military .purchasemilitarydiv {
@@ -73,6 +76,29 @@
     background: var(--foregroundTwo);
     padding: 16px;
     border-radius: 8px;
+}
+/* Buy / Sell side by side as two equal buttons. The generic phone rule
+   (game-layout.css, <=480px) turns every .templatedivflex2 into a column,
+   which stacked two small buttons of slightly different widths with ~30px
+   between them. */
+.page-military .purchasemilitarydiv > .templatedivflex2 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    justify-items: stretch !important; /* .divflex2center centres items */
+    gap: 8px;
+    margin: 0;
+}
+.page-military .purchasemilitarydiv > .templatedivflex2 > div {
+    justify-self: stretch !important;
+    width: auto !important;
+    margin: 0 !important;
+    padding: 0;
+}
+.page-military .purchasemilitarydiv > .templatedivflex2 .templatedivbutton {
+    width: 100% !important;
+    margin: 0 !important;
+    box-sizing: border-box;
+    justify-content: center;
 }
 .page-military .loginsignupinput {
     width: 100%;
@@ -122,6 +148,14 @@
     flex-wrap: wrap;
     gap: 8px;
     margin-bottom: 8px;
+}
+/* Phones: "Combat Stats:" + both badges don't fit one line, and wrapping
+   mid-row stranded the "/" at the end of line 1 with "DEF" alone below.
+   Give the label its own line so the ATK / DEF pair always stays together. */
+@media (max-width: 480px) {
+    .page-military .combat-stats-inline > strong {
+        flex-basis: 100%;
+    }
 }
 .page-military .stat-badge {
     background: var(--foregroundThree);

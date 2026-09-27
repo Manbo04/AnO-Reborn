@@ -70,6 +70,15 @@ body.game-page-v2 .templatediv {
     background: transparent !important;
 }
 
+/* The transparent wrapper above still drew its 1px border and card shadow,
+   which showed up as a faint frame line running down both sides of every
+   glass page, a few pixels outside the panels. The panels carry their own
+   borders; the invisible wrapper shouldn't. */
+body.game-page-v2 .templatediv {
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
 .game-page-bg {
     position: fixed;
     inset: -20px;
@@ -151,6 +160,10 @@ body.page-hub.theme-light .game-page-overlay {
    still on the flat/opaque design without a background photo. */
 .game-glass {
     position: relative;
+    /* Padding counts inside the width: with the default content-box, a
+       panel's min-width (e.g. hub.html's 300px) plus its 24px side padding
+       came to 348px and pushed past the 327px phone column. */
+    box-sizing: border-box;
     background: var(--game-glass-bg);
     backdrop-filter: var(--game-glass-blur);
     -webkit-backdrop-filter: var(--game-glass-blur);
@@ -1176,6 +1189,24 @@ body.game-shell-active .dropdown-content a.active {
 .game-stat-row {
     display: flex;
     flex-wrap: wrap;
+}
+
+/* Default (non-grid6) stat row: an even auto-fit grid instead of a wrapping
+   flex row. The flex version put one stat per line on phones (each tile's
+   150px basis plus padding didn't fit two across), leaving the right half of
+   the panel empty, and on tablets wrapped 3 + 1 with the 4th tile stranded
+   alone under the first. auto-fit gives 2 across on phones and all 4 across
+   from ~600px, always filling the row evenly. */
+.game-stat-row:not(.game-stat-row--grid6) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr));
+    gap: 14px 12px;
+}
+
+.game-stat-row:not(.game-stat-row--grid6) .game-stat {
+    min-width: 0;
+    padding: 4px 0;
+    border-left: none;
 }
 
 .game-stat-row .game-stat {

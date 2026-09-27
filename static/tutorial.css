@@ -856,7 +856,12 @@ html.page-tutorial .tutorial-academy .templatedivcontent {
 }
 
 .tutorial-quiz-option {
-    display: flex;
+    /* !important: style.css's global `label { display: block !important }`
+       otherwise wins, the gap below never applies, and each radio circle
+       sat flush against (and visually over) the first letter of its answer. */
+    display: flex !important;
+    width: auto;
+    text-align: left;
     align-items: center;
     gap: 12px;
     padding: 12px 14px;
@@ -1042,6 +1047,8 @@ html.page-tutorial .tutorial-academy .tutorial-btn-complete {
     text-align: center;
     border-radius: 10px;
     width: 100% !important;
+    /* 100% width + 18px padding overflowed the page by 19px on phones */
+    box-sizing: border-box;
 }
 
 .tutorial-footer p {

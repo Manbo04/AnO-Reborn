@@ -123,7 +123,7 @@
     {% endif %}
     {% if session.get('user_id') %}
     <script defer src="{{ url_for('static', filename='tutorial.js') }}?v=1"></script>
-    <link href="{{ url_for('static', filename='tutorial.css') }}?v=1" rel="stylesheet" type="text/css" />
+    <link href="{{ url_for('static', filename='tutorial.css') }}?v=2" rel="stylesheet" type="text/css" />
     {% endif %}
     
     <!-- Interactive Tooltips — self-hosted + deferred. Previously these loaded
@@ -182,8 +182,13 @@
         background: rgba(255, 255, 255, 0.25) !important;
     }
     
-    /* Device-specific visibility rules */
-    @media (max-width: 768px) {
+    /* Device-specific visibility rules. Breakpoint matches game-shell.css
+       (857/858px), which hides the navbar dropdowns and the floating $
+       button up to 857px. This block used 768/769 instead, so at tablet
+       widths (769-857px, e.g. iPad portrait 820px) the resource HUD strip
+       was hidden AND the floating $ button came back, fixed on top of the
+       page content (it covered "Enter your nation" on the hub). */
+    @media (max-width: 857px) {
         body.game-shell-active .resourcediv,
         body.game-shell-active .resourcedivcontent {
             display: none !important;
@@ -193,7 +198,7 @@
         }
     }
     
-    @media (min-width: 769px) {
+    @media (min-width: 858px) {
         .game-hud {
             display: none !important;
         }
@@ -418,16 +423,19 @@
         <a href="/logout">Log out</a>
     </div>
     <style>
+        /* Theme tokens (tokens.css) -- the --game-surface-2/--game-text-*
+           names this used before were never defined anywhere, so it always
+           fell back to hardcoded dark colours regardless of theme. */
         .identity-banner {
-            background: var(--game-surface-2, #1a2035);
-            color: var(--game-text-secondary, #a0a8c0);
+            background: var(--foreground);
+            color: var(--text-secondary);
             font-size: 0.82rem;
             text-align: center;
             padding: 4px 10px;
-            border-bottom: 1px solid var(--game-border, #2a3150);
+            border-bottom: 1px solid var(--border);
         }
-        .identity-banner strong { color: var(--game-text-primary, #fff); }
-        .identity-banner a { color: var(--game-accent, #7dd3fc); text-decoration: underline; margin-left: 4px; }
+        .identity-banner strong { color: var(--colorOne); }
+        .identity-banner a { color: var(--accent); text-decoration: underline; margin-left: 4px; }
     </style>
     {% endif %}
     {% if session.get('user_id') != None %}

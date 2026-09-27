@@ -2,8 +2,11 @@
  * Country page — mobile game hub
  */
 body.game-shell-active.page-country .templatediv {
-    /* Keep country tabs clear of fixed navbar + shell chrome */
-    margin-top: 100px;
+    /* Was 100px (90px on mobile) to clear the fixed navbar, but the content
+       column is already offset below the navbar, identity strip and HUD, so
+       this left a ~75px empty band above the nation banner that no other
+       page has. Same spacing as every other page (game-shell.css). */
+    margin-top: var(--game-space-md, 16px);
 }
 
 body.page-country .menuflex2 {
@@ -198,7 +201,7 @@ body.game-page-v2 .country-demographics-chart-wrap {
 
 @media (max-width: 857px) {
     body.game-shell-active.page-country .templatediv {
-        margin-top: 90px;
+        margin-top: var(--game-space-md, 16px);
     }
 
     body.page-country .menuflex2 {
@@ -862,7 +865,12 @@ body.page-country .revenue .stat-value {
         padding: 0 4px;
     }
     body.page-country .menuflex2 .templatedivflex2left {
-        flex: 1 1 calc(50% - 8px) !important;
+        /* Was calc(50% - 8px), meant for a 2x2 grid, but the row never wraps
+           (game-layout.css keeps tab bars on one line), so the four tabs
+           were squeezed to equal 76px and "REVENUE" was cut to "REVE…".
+           All four labels fit on one row when sized to their text. */
+        flex: 1 0 auto !important;
+        padding: 0 10px !important;
         min-width: 0 !important;
         min-height: 48px !important; /* Proper touch target height */
         background: rgba(255, 255, 255, 0.05);

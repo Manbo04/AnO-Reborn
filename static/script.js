@@ -535,3 +535,35 @@ if (document.readyState === 'loading') {
 } else {
     disableExhaustedMilitaryBuyButtons();
 }
+
+/* Mark data tables and tab rows that actually overflow sideways so only
+   those get the right-edge scroll fade (game-layout.css .is-scrollable). Re-checked on
+   resize and after taps, since tab switches reveal tables that were hidden
+   (0 width) at load. */
+function markScrollableTables() {
+    var tables = document.querySelectorAll('.templatetable, .templatetable2, .templatetable3, .templatedivflex2.menuflex2');
+    for (var i = 0; i < tables.length; i++) {
+        var t = tables[i];
+        t.classList.toggle('is-scrollable', t.scrollWidth > t.clientWidth + 1);
+    }
+}
+
+(function () {
+    var pending = false;
+    function schedule() {
+        if (pending) return;
+        pending = true;
+        window.requestAnimationFrame(function () {
+            pending = false;
+            markScrollableTables();
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', schedule);
+    } else {
+        schedule();
+    }
+    window.addEventListener('load', schedule);
+    window.addEventListener('resize', schedule);
+    document.addEventListener('click', schedule, true);
+})();

@@ -14,46 +14,22 @@
             <a class="templatelink" href="/coalition_types">here</a>.
         </p>
 
-        <div class="coalitionimagepreview">
-            <img alt="Image" id="output" />
-        </div>
-
         <form action="/establish_coalition" method="POST">
 
-            <div class="game-glass game-panel">
-                <div class="templatedivflex2 divflex2center">
-                    <div class="templatedivflex2left">
+            <div class="game-glass game-panel game-form-stack">
+                <input class="loginsignupinput" autocomplete="off" name="name" placeholder="Coalition Name" aria-label="Coalition name" required/>
 
-                        <input class="loginsignupinput" autocomplete="off" name="name" placeholder="Coalition Name" required/>
+                <select name="type" class="templateselect" aria-label="Application type">
+                    <option disabled="true" selected="selected">Application Type</option>
+                    <option class="templateoption">Open</option>
+                    <option class="templateoption">Invite Only</option>
+                </select>
 
-                    </div>
-                </div>
-                <div class="templatedivflex2 menuflex">
-                    <div class="templatedivflex2left">
+                <textarea class="templatetextarea" name="description" placeholder="Description" aria-label="Description" maxlength="240"></textarea>
 
-                        <div class="templatedivflex2 menuflex">
-                            <div class="templatedivflex2left">
+                <label class="game-form-check"><input type="checkbox" name="recruiting" /> Looking for members (show on Recruitment list)</label>
 
-                                <select name="type" class="templateselect">
-                            <option disabled="true" selected="selected">Application Type</option>
-                            <option class="templateoption">Open</option>
-                            <option class="templateoption">Invite Only</option>
-                            </select>
-
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <textarea class="templatetextarea" name="description" placeholder="Description" maxlength="240" style="min-height: 90px; max-height: 160px; min-width: 0; max-width: none; width: 100%; box-sizing: border-box;"></textarea>
-
-                <div style="margin: 12px 0;">
-                    <label><input type="checkbox" name="recruiting" /> Looking for members (show on Recruitment list)</label>
-                </div>
-
-                <button class="game-btn game-btn-primary templatecenteredbutton"><span class="material-icons-outlined">
-                group_add
-                </span>Establish</button>
+                <button class="game-btn game-btn-primary"><span class="material-icons-outlined">group_add</span>Establish</button>
             </div>
         </form>
     </div>

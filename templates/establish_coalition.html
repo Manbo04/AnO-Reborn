@@ -13,80 +13,27 @@
             <a class="templatelink" href="/coalition_types">here</a>.
         </p>
 
-        <div class="coalitionimagepreview">
-            <img alt="Image" id="output" />
-        </div>
-
         <form action="/establish_coalition" method="POST">
 
-            <div class="infodiv">
-                <div class="templatedivflex2 divflex2center">
-                    <div class="templatedivflex2left">
+            <!-- Disabled for now (see git history for the old markup):
+                 coalition flag upload, "Coalition Type" (Economic/Trade/War)
+                 select, and custom leader/member rank titles. -->
+            <div class="infodiv game-form-stack">
+                <input class="loginsignupinput" autocomplete="off" name="name" placeholder="Coalition Name" aria-label="Coalition name" required/>
 
-                        <input class="loginsignupinput" autocomplete="off" name="name" placeholder="Coalition Name" required/>
+                <select name="type" class="templateselect" aria-label="Application type">
+                    <option disabled="true" selected="selected">Application Type</option>
+                    <option class="templateoption">Open</option>
+                    <option class="templateoption">Invite Only</option>
+                </select>
 
-                    </div>
-                    <!-- <div class="templatedivflex2right">
+                <!-- CURRENT CHAR LIMIT: 240 -->
+                <textarea class="templatetextarea" name="description" placeholder="Description" aria-label="Description" maxlength="240"></textarea>
 
-                    <label for="coalitionflag">Coalition Flag</label>
-                    <input class="loginsignupinput" type="file" name="coalitionflag" accept="image/*" onchange="loadFile(event)" required/>
+                <label class="game-form-check"><input type="checkbox" name="recruiting" /> Looking for members (show on Recruitment list)</label>
 
-                </div> temporarily disabled flags because its a lot of work to add them-->
-                </div>
-                <!-- <p class="templatecontentpcenter">Flags should be in a 16:9 format.</p>-->
-                <div class="templatedivflex2 menuflex">
-                    <div class="templatedivflex2left">
-
-                        <div class="templatedivflex2 menuflex">
-                            <div class="templatedivflex2left">
-
-                                <!-- <select name="type" class="templateselect">
-
-                                <option disabled="true" selected="selected">Coalition Type</option>
-                                <option class="templateoption">Economic</option>
-                                <option class="templateoption">Trade</option>
-                                <option class="templateoption">War</option>
-
-                            </select>  will implement this later for now we'll have invite only/closed -->
-
-                                <select name="type" class="templateselect">
-                            <option disabled="true" selected="selected">Application Type</option>
-                            <option class="templateoption">Open</option>
-                            <option class="templateoption">Invite Only</option>
-                            </select>
-
-                            </div>
-                            <!-- <div class="templatedivflex2left">
-
-                            <input class="loginsignupinput" autocomplete="off" name="name" placeholder="Leader Title" required/>
-                            <input class="loginsignupinput" autocomplete="off" name="name" placeholder="2nd in Command Title" required/>
-                            <input class="loginsignupinput" autocomplete="off" name="name" placeholder="3rd In Command Title" required/>
-                            <input class="loginsignupinput" autocomplete="off" name="name" placeholder="Member Title" required/>
-
-                        </div> temporarily disabled leader types, will add later-->
-                        </div>
-                    </div>
-                    <!--
-                    <div class="templatedivflex2left">
-
-                    </div>
-                    -->
-                </div>
-
-                <textarea class="templatetextarea" name="description" placeholder="Description" maxlength="240"></textarea>
-                <!-- CURRENT CHAR LIMIT: 240 - ADDED HTML FOR IT-->
-
-                <div style="margin: 12px 0;">
-                    <label><input type="checkbox" name="recruiting" /> Looking for members (show on Recruitment list)</label>
-                </div>
-
-                <button class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">
-                group_add
-                </span>Establish</button>
-                <!--users can only create a coalition every 30 days-->
-                <!--
-                <p class="templatecontentpcenter">You can't establish a coalition for another [[countdown]]</p>
-                -->
+                <button class="templatedivbutton"><span class="material-icons-outlined">group_add</span>Establish</button>
+                <!-- users can only create a coalition every 30 days -->
             </div>
         </form>
     </div>
