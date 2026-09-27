@@ -1,7 +1,9 @@
 (function () {
     'use strict';
 
-    var FEE_RATE = 0.05;
+    // Default transport fee; each input carries its own data-fee-percent
+    // (lower between members of the same currency union).
+    var DEFAULT_FEE_PERCENT = 5;
 
     function parseAmount(value) {
         if (!value && value !== 0) return 0;
@@ -17,28 +19,32 @@
         return !!form.querySelector('button[formaction*="buy_offer"]');
     }
 
-    function buildTooltipContent(subtotal, fee, total, isPurchase, hasAmount) {
+    function buildTooltipContent(subtotal, fee, feePercent, isPurchase, hasAmount) {
         if (!hasAmount) {
-            return 'Enter an amount to see what this trade will cost.';
+            return 'Enter an amount (or tap Max) to see what this trade will cost.';
         }
         if (isPurchase) {
             return (
-                '<strong>Market transaction fee</strong><br>' +
-                'Buying adds a 5% fee on top of the listed price (paid to the national bank).<br><br>' +
+                '<strong>Transport fee</strong><br>' +
+                'Buying adds a ' + feePercent + '% transport fee on top of the listed price.<br><br>' +
                 'Subtotal: ' +
                 formatMoney(subtotal) +
-                '<br>Fee (5%): ' +
+                '<br>Fee (' + feePercent + '%): ' +
                 formatMoney(fee) +
                 '<br><strong>Total you pay: ' +
-                formatMoney(total) +
+                formatMoney(subtotal + fee) +
                 '</strong>'
             );
         }
         return (
             '<strong>Sale proceeds</strong><br>' +
-            'Selling to a buy offer has no market fee.<br><br>' +
-            '<strong>You receive: ' +
+            'Selling takes a ' + feePercent + '% transport fee out of the proceeds.<br><br>' +
+            'Price: ' +
             formatMoney(subtotal) +
+            '<br>Fee (' + feePercent + '%): ' +
+            formatMoney(fee) +
+            '<br><strong>You receive: ' +
+            formatMoney(subtotal - fee) +
             '</strong>'
         );
     }
@@ -80,9 +86,11 @@
             amount = maxAmount;
             input.value = String(maxAmount);
         }
+        var feeAttr = parseInt(input.getAttribute('data-fee-percent'), 10);
+        var feePercent = isNaN(feeAttr) ? DEFAULT_FEE_PERCENT : feeAttr;
         var subtotal = Math.round(amount * unitPrice);
-        var fee = Math.round(subtotal * FEE_RATE);
-        var total = subtotal + fee;
+        // Server rounds the fee down (app_core/market/fees.py trade_fee).
+        var fee = Math.floor((subtotal * feePercent) / 100);
         var isPurchase = isPurchaseForm(form);
         var hasAmount = amount >= 1 && unitPrice > 0;
         var hint = form.querySelector('.market-offer-hint');
@@ -90,7 +98,7 @@
 
         bindTooltip(
             hint,
-            buildTooltipContent(subtotal, fee, total, isPurchase, hasAmount)
+            buildTooltipContent(subtotal, fee, feePercent, isPurchase, hasAmount)
         );
     }
 
@@ -104,6 +112,19 @@
         input.addEventListener('change', function () {
             updateOfferTotal(input);
         });
+        // "Max" button (ieb, 2026-09-27): data-max is computed server-side
+        // (offer amount capped by the player's gold incl. fee, or by their
+        // stock when selling). Dispatch input so the cost tooltip refreshes.
+        var maxBtn = form.querySelector('.market-max-btn');
+        if (maxBtn) {
+            maxBtn.addEventListener('click', function () {
+                var max = parseAmount(maxBtn.getAttribute('data-max'));
+                if (max < 1) return;
+                input.value = String(max);
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.focus();
+            });
+        }
         updateOfferTotal(input);
     }
 

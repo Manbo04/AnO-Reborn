@@ -722,7 +722,7 @@ class Military(Nation):
     cruisers beat destroyers, fighters, apaches | submarines
     submarines beat cruisers | destroyers, bombers
     bombers beat soldiers, tanks, destroyers, submarines | fighters, apaches
-    apaches beat soldiers, tanks, bombers, fighters | soldiers
+    apaches beat soldiers, tanks | soldiers
     fighters beat bombers | apaches, cruisers
 
     resource control: soldiers can now loot enemy munitions (minimum between 1 per 100 soldiers and 50% of their total munitions)
@@ -734,7 +734,11 @@ class Military(Nation):
 
     @staticmethod
     # attacker, defender means the attacker and the defender user JUST in this particular fight not in the whole war
-    def fight(attacker, defender):  # Units, Units -> int
+    def fight(attacker, defender, citizen_army_pct=None):  # Units, Units -> int
+        # citizen_army_pct: when given (see wars/supply.py) and the defender
+        # fields no combat-capable units, a citizen militia inflicts that
+        # share of casualties on every attacking unit type sent. The
+        # attacker still wins the battle; it just isn't free anymore.
         # IMPORTANT: Here you can change the values for the fight chances, bonuses and even can controll casualties (in this whole funciton)
         # If you want to change the bonuses given by a particular unit then go to `units.py` and you can find those in the classes
         attacker_roll = random.uniform(1, 5)
@@ -868,6 +872,31 @@ class Military(Nation):
             winner.selected_units,
             loser.selected_units,
         )
+
+        citizen_losses = None
+        if (
+            citizen_army_pct is not None
+            and winner is attacker
+            and defender_unit_amount_bonuses == 0
+        ):
+            from wars.supply import citizen_army_losses
+
+            citizen_losses = citizen_army_losses(
+                attacker.selected_units, citizen_army_pct
+            )
+            winner_pairs = [(u, q) for u, q in citizen_losses.items() if q > 0]
+        setattr(attacker, "_citizen_army_losses", citizen_losses)
+
+        # Expose the casualties actually applied so the battle report can
+        # show real losses (selected_units itself is never mutated here).
+        def _pairs_to_dict(pairs):
+            out = {}
+            for unit_name, amount in pairs:
+                out[unit_name] = out.get(unit_name, 0) + max(0, int(amount))
+            return out
+
+        setattr(winner, "_fight_losses", _pairs_to_dict(winner_pairs))
+        setattr(loser, "_fight_losses", _pairs_to_dict(loser_pairs))
 
         # Persist casualties + morale change in a single transactional operation
         win_condition = persist_fight_results(
@@ -1066,12 +1095,20 @@ class Military(Nation):
 
         # Special
         special_units = Military.get_special(cId)
-        spies = max(0, admin_buildings * 1 - special_units["spies"])
+        from app_core.military.services import SPIES_PER_ADMIN_BUILDING, COUNTER_INTEL_PER_ADMIN_BUILDING
+
+        spies = max(
+            0, admin_buildings * SPIES_PER_ADMIN_BUILDING - special_units["spies"]
+        )
+        counter_intel_agents = max(
+            0, admin_buildings * COUNTER_INTEL_PER_ADMIN_BUILDING - special_units.get("counter_intel_agents", 0)
+        )
         icbms = max(0, silos + 1 - special_units["icbms"])
         nukes = max(0, silos - special_units["nukes"])
 
         if increased_funding:
             spies *= 1.4
+            counter_intel_agents *= 1.4
 
         return {
             "soldiers": soldiers,
@@ -1084,6 +1121,7 @@ class Military(Nation):
             "cruisers": cruisers,
             "submarines": submarines,
             "spies": spies,
+            "counter_intel_agents": counter_intel_agents,
             "icbms": icbms,
             "nukes": nukes,
         }

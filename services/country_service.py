@@ -466,7 +466,7 @@ class CountryService:
             if CountryService._is_same_country(cId, current_user_id):
                 try:
                     db.execute(
-                        "SELECT message,date,id FROM news WHERE destination_id=(%s)",
+                        "SELECT message,date,id FROM news WHERE destination_id=(%s) ORDER BY id DESC",
                         (cId,),
                     )
                     news = db.fetchall()

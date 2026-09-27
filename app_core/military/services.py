@@ -24,6 +24,10 @@ from app_core.upgrades.services import get_upgrades
 # for soldiers, rather than being a pure stat-stick.
 CARRIER_AIR_CAPACITY_BONUS = 500
 
+# Spy/counter-intel capacity per admin building (see compute_display_limits).
+SPIES_PER_ADMIN_BUILDING = 10
+COUNTER_INTEL_PER_ADMIN_BUILDING = 10
+
 def compute_display_limits(cId, db, units_row=None, stockpile_row=None):
     """Return limits as shown on the military page."""
     army_bases, harbours, aerodomes, admin_buildings, silos = get_building_counts(db, cId)
@@ -57,7 +61,15 @@ def compute_display_limits(cId, db, units_row=None, stockpile_row=None):
     aircraft_carriers = max(0, harbours - military["aircraft_carriers"])
 
     # Specials
-    spies = max(0, admin_buildings * 1 - military["spies"])
+    # Discord #military-recommendations 2026-09-16: one admin building now
+    # oversees SPIES_PER_ADMIN_BUILDING spies (was 1). Counter-intelligence
+    # agents share the same building-based ratio, as a separate pool.
+    spies = max(0, admin_buildings * SPIES_PER_ADMIN_BUILDING - military["spies"])
+    counter_intel_agents = max(
+        0,
+        admin_buildings * COUNTER_INTEL_PER_ADMIN_BUILDING
+        - military["counter_intel_agents"],
+    )
     icbms = max(0, silos + 1 - military["icbms"])
     nukes = max(0, silos - military["nukes"])
 
@@ -89,6 +101,7 @@ def compute_display_limits(cId, db, units_row=None, stockpile_row=None):
         "cruisers": cruisers,
         "submarines": submarines,
         "spies": spies,
+        "counter_intel_agents": counter_intel_agents,
         "icbms": icbms,
         "nukes": nukes,
         "aircraft_carriers": aircraft_carriers,

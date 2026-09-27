@@ -44,7 +44,7 @@ NAV_SECTIONS: list[dict[str, Any]] = [
                 "tabs": [
                     ("Market", "local_grocery_store", "/market", ("/market",)),
                     (
-                        "Trade Deals",
+                        "Trade Agreements",
                         "handshake",
                         "/trade-agreements",
                         ("/trade-agreements",),

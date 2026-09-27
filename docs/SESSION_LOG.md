@@ -605,7 +605,7 @@ DATABASE_PUBLIC_URL=... python3 scripts/apply_all_pending_migrations.py
 
 **What was done**:
 - Navbar dropdowns listed every page flat (10 under Internal Affairs, 9 under Global Affairs). Pages are now grouped into 6 hubs, and each hub's pages share a tab strip above the page content, the same idea as the country page's View/Revenue/News/Edit tabs:
-  - Internal Affairs: **Nation** (Overview · Provinces · Projects), **Economy** (Market · Trade Deals · Loans · Bonds · Currency Unions), **Military** (Forces · Wars · Bounties)
+  - Internal Affairs: **Nation** (Overview · Provinces · Projects), **Economy** (Market · Trade Agreements · Loans · Bonds · Currency Unions), **Military** (Forces · Wars · Bounties)
   - Global Affairs: **Coalitions** (My Coalition · All Coalitions · Establish), **Nations** (Countries · Rankings), **Diplomacy** (Treaties · Assembly · World Affairs)
   - Other: unchanged.
 - `app_core/navigation.py` (new) is the single source of truth: `NAV_SECTIONS` plus `build_nav(path, user_id, coalition_id)`. It drives the desktop dropdowns, the mobile hamburger menu, the tab strip and the bottom-nav active state. Add or move pages there, not in `layout.html`.

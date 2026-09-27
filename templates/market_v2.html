@@ -1,6 +1,6 @@
 {% extends "layout.html" %} {% block title %} Market {% endblock %}{% block body_class %} page-market game-page-v2{% endblock %}
 {% block extra_head %}
-<script defer src="{{ url_for('static', filename='market-offer-calc.js') }}?v=6"></script>
+<script defer src="{{ url_for('static', filename='market-offer-calc.js') }}?v=7"></script>
 {% endblock %}
 {% block body %}
 {% from 'macros/game_ui.html' import game_hero, game_glass_panel %}
@@ -81,9 +81,11 @@
                 </div>
                 <form method="POST" class="game-row market-purchase-form" style="margin-top: 10px;">
                     <span class="market-input-wrap game-row" style="gap: 6px;">
-                        <input class="game-purchase-input market-purchase-input" name="amount_{{ offer_id }}" type="text" placeholder="{{ amount }}" data-unit-price="{{ price }}" data-max-amount="{{ amount }}" required/>
+                        <input class="game-purchase-input market-purchase-input" name="amount_{{ offer_id }}" type="text" placeholder="{{ amount }}" data-unit-price="{{ price }}" data-max-amount="{{ amount }}" data-fee-percent="{{ fee_percent.get(offer_id, trade_fee_percent) }}" required/>
                         <button type="button" class="market-offer-hint game-btn-ghost game-btn-sm" aria-label="Transaction cost info" style="border: none; background: none; cursor: pointer;"><span class="material-icons-outlined" aria-hidden="true">info</span></button>
                     </span>
+                    {% set take = max_take.get(offer_id, amount) %}
+                    <button type="button" class="market-max-btn" data-max="{{ take }}"{% if take < 1 %} disabled title="{{ 'Not enough gold for even one' if type == 'sell' else 'You have none of this resource' }}"{% endif %} aria-label="Fill in the most you can {{ 'buy' if type == 'sell' else 'sell' }}">Max</button>
                     {% if type == "sell" %}
                     <button type="submit" formaction="/buy_offer/{{ offer_id }}" class="game-btn game-btn-secondary game-btn-sm">Buy</button>
                     {% elif type == "buy" %}
@@ -127,9 +129,11 @@
                         <td>
                             <form method="POST" class="game-row market-purchase-form">
                                 <span class="market-input-wrap game-row" style="gap: 6px;">
-                                    <input class="game-purchase-input market-purchase-input" autocomplete="on" name="amount_{{ offer_id }}" type="text" placeholder="{{ amount }}" data-unit-price="{{ price }}" data-max-amount="{{ amount }}" required/>
+                                    <input class="game-purchase-input market-purchase-input" autocomplete="on" name="amount_{{ offer_id }}" type="text" placeholder="{{ amount }}" data-unit-price="{{ price }}" data-max-amount="{{ amount }}" data-fee-percent="{{ fee_percent.get(offer_id, trade_fee_percent) }}" required/>
                                     <button type="button" class="market-offer-hint game-btn-ghost game-btn-sm" aria-label="Transaction cost info" style="border: none; background: none; cursor: pointer;"><span class="material-icons-outlined" aria-hidden="true">info</span></button>
                                 </span>
+                                {% set take = max_take.get(offer_id, amount) %}
+                                <button type="button" class="market-max-btn" data-max="{{ take }}"{% if take < 1 %} disabled title="{{ 'Not enough gold for even one' if type == 'sell' else 'You have none of this resource' }}"{% endif %} aria-label="Fill in the most you can {{ 'buy' if type == 'sell' else 'sell' }}">Max</button>
                                 {% if type == "sell" %}
                                 <button type="submit" formaction="/buy_offer/{{ offer_id }}" class="game-btn game-btn-secondary game-btn-sm"><span class="material-icons-outlined">check</span>Buy</button>
                                 {% elif type == "buy" %}

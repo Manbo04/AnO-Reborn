@@ -460,7 +460,7 @@
                             {% endif %}
                         </div>
 
-                        <p class="templatecontentpleft">Attack Helicopters are devastating helicopters that can take on both land and air. They counter tanks, bombers, and fighter jets. Furthermore, they are capable of obtaining city control.</p>
+                        <p class="templatecontentpleft">Attack Helicopters are devastating helicopters that can take on both land and air. They counter tanks and soldiers. Furthermore, they are capable of obtaining city control.</p>
 
                         <ul>{{ "apaches" | milres }}
                         </ul>
@@ -711,7 +711,7 @@
                             {% endif %}
                         </div>
 
-                        <p class="templatecontentpleft">Spies are agents for your country that allow you to acquire information on your adversaries.</p>
+                        <p class="templatecontentpleft">Spies are agents for your country that allow you to acquire information on your adversaries. Each admin building supports 10 spies.</p>
 
                         <ul>{{ "spies" | milres }}
                         </ul>
@@ -741,6 +741,51 @@
 
 
                         <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'spies')) }}?v=2" loading="lazy" />
+                    </div>
+                </div>
+            </div>
+            <div class="menudiv">
+
+                <h2 class="templatecontentheaderleft">Counter-Intelligence Agents</h2>
+
+                <div class="templatedivflex2 menuflex warflexparentcolors">
+                    <div class="templatedivflex2left">
+
+                        <h3 class="templatecontentheadercenter">You have {{ units["counter_intel_agents"]["quantity"] }} Counter-Intelligence Agents</h3>
+
+                        <div class="combat-stats-box">
+                            {% if units["counter_intel_agents"]["maintenance_per_tick"] > 0 %}
+                            <p><strong>Maintenance:</strong> {{ units["counter_intel_agents"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["counter_intel_agents"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["counter_intel_agents"]["maintenance_resource"] }} per tick</p>
+                            {% endif %}
+                        </div>
+
+                        <p class="templatecontentpleft">Your internal security force. Every enemy spy operation against you has a chance to be intercepted before it happens: the operation fails, some of their spies are captured and the rest are driven off. More agents means a higher chance, with diminishing returns (never above 60%), and big operations with many spies are harder to stop. Each admin building supports 10 agents. They don't fight in wars.</p>
+
+                        <ul>{{ "counter_intel_agents" | milres }}
+                        </ul>
+                        <form action="/military" method="POST">
+                            <div class="purchasemilitarydiv">
+                                <input class="loginsignupinput" autocomplete="off" name="counter_intel_agents" type="number" placeholder="Amount" required />
+
+                                <div class="templatedivflex2 divflex2center">
+                                    <div class="templatedivflex2left flexchildvanilla">
+
+                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/counter_intel_agents') }}
+
+                                    </div>
+                                    <div class="templatedivflex2left flexchildvanilla">
+
+                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/counter_intel_agents') }}
+
+                                    </div>
+                                </div>
+                                <span class="limit-text">You can purchase {{ limits["counter_intel_agents"] }} more Counter-Intelligence Agents</span>
+                            </div>
+                        </form>
+
+                    </div>
+                    <div class="templatedivflex2left">
+                        <img alt="Counter-intelligence operations center" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'counter_intel_agents')) }}?v=2" loading="lazy" />
                     </div>
                 </div>
             </div>

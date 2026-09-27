@@ -740,8 +740,7 @@ def warResult():
             war_domain = session.get("war_domain")
             defenselst, defenseunits = resolve_defender_composition(eId, war_domain)
 
-            defender = Units(eId, defenseunits, selected_units_list=defenselst)
-            prev_defender = dict(defender.selected_units)
+            defender = Units(eId, dict(defenseunits), selected_units_list=defenselst)
             prev_attacker = dict(attacker.selected_units)
             db.execute(
                 (
@@ -761,6 +760,39 @@ def warResult():
             if not war_rows:
                 return error(500, "Something went wrong")
             war_id_for_guard, war_type = war_rows[-1]
+
+            # War supply asymmetry fix (wars/supply.py): the defender now
+            # pays supply for the units it fields, from its own pool on this
+            # war, with a flat 200 floor. If the full army costs more than
+            # that, every unit type defends at the same reduced share. With
+            # nothing combat-capable left in this domain, a Citizen Army
+            # (no supply) fights instead and bleeds the attacker.
+            from wars import supply as war_supply
+
+            defense_pool = war_supply.read_supply_pool(db, war_id_for_guard, eId)
+            defense_budget = war_supply.defense_supply_budget(defense_pool)
+            fielded_units, defense_spend = war_supply.ration_defenders(
+                defenseunits, defense_budget, unusable=defender.unusable_units
+            )
+            defender.selected_units = fielded_units
+            prev_defender = dict(fielded_units)
+            citizen_pct = None
+            if sum(fielded_units.values()) == 0:
+                pop_total, prov_count = war_supply.get_population_and_provinces(
+                    db, eId
+                )
+                citizen_pct = war_supply.citizen_army_pct(pop_total, prov_count)
+            defender_result["supply"] = {
+                "pool_before": defense_pool,
+                "budget": defense_budget,
+                "spent": defense_spend,
+                "pool_after": war_supply.pool_after_defense(
+                    defense_pool, defense_spend
+                ),
+                "owned": sum(int(v or 0) for v in defenseunits.values()),
+                "fielded": sum(fielded_units.values()),
+                "floor": war_supply.DEFENDER_SUPPLY_FLOOR,
+            }
 
             # FIXED 2026-09-23: found live while auditing wars/ during the
             # account cross-contamination investigation -- unrelated bug,
@@ -827,9 +859,14 @@ def warResult():
             # guard UPDATE re-reads the committed timestamp and matches nothing.
             db.connection.commit()
             try:
-                winner, win_condition, attack_effects = Military.fight(
-                    attacker, defender
-                )
+                if citizen_pct is not None:
+                    winner, win_condition, attack_effects = Military.fight(
+                        attacker, defender, citizen_army_pct=citizen_pct
+                    )
+                else:
+                    winner, win_condition, attack_effects = Military.fight(
+                        attacker, defender
+                    )
             except Exception:
                 rollback_db_cursor(db)
                 logger.exception(
@@ -843,6 +880,29 @@ def warResult():
                 return error(
                     500, "An error occurred during the battle. Please try again."
                 )
+            # Charge the defense AFTER the fight: persist_fight_results()
+            # updates this same wars row on its own connection, so locking it
+            # here first would stall that update (see the 2026-09-26 note).
+            try:
+                new_pool = war_supply.spend_defense_supplies(
+                    db, war_id_for_guard, eId, defense_spend
+                )
+                if new_pool is not None:
+                    defender_result["supply"]["pool_after"] = new_pool
+            except Exception:
+                logger.exception(
+                    "defense supply spend failed war=%s defender=%s",
+                    war_id_for_guard,
+                    eId,
+                )
+            citizen_losses = getattr(attacker, "_citizen_army_losses", None)
+            if citizen_pct is not None:
+                defender_result["citizen_army"] = {
+                    "pct": round(citizen_pct * 100, 1),
+                    "losses": {
+                        u: q for u, q in (citizen_losses or {}).items() if q > 0
+                    },
+                }
             if war_type:
                 attack_effects = list(attack_effects)
                 if war_type == "Raze":
@@ -922,18 +982,23 @@ def warResult():
             defender_remaining = {}
             attacker_initial = {}
             attacker_remaining = {}
+            # Real losses come from the casualty pairs Military.fight()
+            # applied (selected_units is never mutated by the fight, so the
+            # old "initial - remaining" diff always showed 0 losses).
+            d_losses = getattr(defender, "_fight_losses", None) or {}
+            a_losses = getattr(attacker, "_fight_losses", None) or {}
             for unit in defender.selected_units_list:
                 d_init = prev_defender.get(unit, 0)
-                d_rem = defender.selected_units.get(unit, 0)
+                d_lost = min(d_init, int(d_losses.get(unit, 0)))
                 defender_initial[unit] = d_init
-                defender_remaining[unit] = d_rem
-                defender_loss[unit] = d_init - d_rem
+                defender_remaining[unit] = d_init - d_lost
+                defender_loss[unit] = d_lost
             for unit in attacker.selected_units_list:
                 a_init = prev_attacker.get(unit, 0)
-                a_rem = attacker.selected_units.get(unit, 0)
+                a_lost = min(a_init, int(a_losses.get(unit, 0)))
                 attacker_initial[unit] = a_init
-                attacker_remaining[unit] = a_rem
-                attacker_loss[unit] = a_init - a_rem
+                attacker_remaining[unit] = a_init - a_lost
+                attacker_loss[unit] = a_lost
             defender_result["unit_loss"] = defender_loss
             defender_result["initial_units"] = defender_initial
             defender_result["remaining_units"] = defender_remaining
@@ -1998,8 +2063,7 @@ def drone_strike():
             (drones_count, attacker_id, unit_id),
         )
 
-        # Interception: defending fighters + apaches (cheap slow drones are
-        # a point-defense target for more of the roster than bombers are).
+        # Interception: SAM batteries + defending fighters + apaches
         db.execute(
             """
             SELECT COALESCE(SUM(um.quantity), 0)
@@ -2011,8 +2075,26 @@ def drone_strike():
         )
         defender_interceptors = int(db.fetchone()[0] or 0)
 
+        db.execute(
+            """
+            SELECT COALESCE(SUM(um.quantity), 0)
+            FROM user_military um
+            JOIN unit_dictionary ud ON um.unit_id = ud.unit_id
+            WHERE um.user_id = %s AND ud.name = 'sam_batteries'
+            """,
+            (target_id,),
+        )
+        sam_count = int(db.fetchone()[0] or 0)
+        from wars.air_defense import calculate_sam_interception
+        sam_intercept_pct = calculate_sam_interception(sam_count, 'kamikaze_drones')
+
+        sam_intercepted = min(drones_count, int(drones_count * sam_intercept_pct))
+        remaining_after_sam = drones_count - sam_intercepted
+
         intercept_effectiveness = random.uniform(0.5, 1.5)
-        intercepted = min(drones_count, int(defender_interceptors * intercept_effectiveness))
+        fighter_intercepted = min(remaining_after_sam, int(defender_interceptors * intercept_effectiveness))
+        
+        intercepted = sam_intercepted + fighter_intercepted
         surviving_drones = drones_count - intercepted
 
         hits = int(surviving_drones * random.uniform(0.5, 0.9))

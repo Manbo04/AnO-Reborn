@@ -224,7 +224,9 @@ body.game-shell-active .templatecontainer {
 }
 
 .resourceicon.material-icons-outlined {
-    margin-left: 0;
+    /* margin: 0, not just margin-left -- the icon font's global margin-right:5px
+       left the $ off-centre in the circle (ieb, 2026-09-27). */
+    margin: 0;
 }
 
 @media all and (max-width: 500px) {
@@ -296,7 +298,11 @@ body.page-country .templatedivcontent .infodiv {
 
 @media (min-width: 1500px) and (pointer: fine) {
     .side-tip-rail { display: block; }
-    body.has-side-tips .templatediv { width: calc(90% - 380px); }
+    /* The rails sit in the viewport gutters; only shrink the card when the
+       gutter is too narrow to hold them (~196px each side). A flat
+       calc(90% - 380px) squeezed every page to 700px on wide monitors even
+       though the 1200px-capped container never reaches the rails. */
+    body.has-side-tips .templatediv { width: min(90%, calc(100vw - 400px)); }
 }
 
 @media (max-width: 1499px), (pointer: coarse) {
@@ -803,4 +809,47 @@ body.game-shell-active .section-tabs + .templatediv {
     background: rgba(0, 167, 225, 0.15);
     border-left: 3px solid var(--accent);
     padding-left: 17px;
+}
+
+/* Prev / "Page X of Y" / Next pagers (World Affairs, Bounties, Provinces): the
+   bare ghost buttons and faint text were unreadable over page backgrounds
+   (ieb, 2026-09-27). Countries/Coalitions use .modern-pagination instead. */
+.game-pager {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 18px auto;
+    padding: 8px 10px;
+    width: fit-content;
+    max-width: 100%;
+    box-sizing: border-box;
+    background: var(--game-glass-bg);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border: 1px solid var(--game-glass-border);
+    border-radius: var(--game-radius-lg);
+}
+.game-pager > a {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    min-width: 40px;
+    padding: 0 16px !important;
+    margin: 0 !important;
+    color: var(--colorOne) !important;
+    border: 1px solid var(--game-glass-border) !important;
+    border-radius: 8px;
+}
+.game-pager > a:hover,
+.game-pager > a:focus-visible {
+    border-color: var(--accent) !important;
+}
+.game-pager > .game-pager-current {
+    color: var(--colorOne);
+    font-weight: 700;
+    opacity: 1;
+    padding: 0 6px;
 }

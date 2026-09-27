@@ -12,6 +12,7 @@ ALL_UNITS = [
     "cruisers",
     "submarines",
     "spies",
+    "counter_intel_agents",
     "icbms",
     "nukes",
     "aircraft_carriers",
