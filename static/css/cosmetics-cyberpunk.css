@@ -24,6 +24,11 @@ body.nation-cyberpunk-theme {
     --success: #39ff8f;
     --danger: #ff2b4d;
     --text-secondary: #8b8fc7;
+    /* Mobile tables pin their label column with a solid zebra background
+       (game-layout.css) -- without these, light-theme visitors got white
+       cells in the middle of this dark page. */
+    --tableOne: var(--foreground);
+    --tableTwo: var(--foregroundTwo);
 
     --game-glass-bg: rgba(14, 8, 38, 0.55);
     --game-glass-bg-strong: rgba(14, 8, 38, 0.84);

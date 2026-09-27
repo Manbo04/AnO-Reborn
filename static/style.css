@@ -13334,6 +13334,11 @@ body.nation-cyberpunk-theme {
     --success: #39ff8f;
     --danger: #ff2b4d;
     --text-secondary: #8b8fc7;
+    /* Mobile tables pin their label column with a solid zebra background
+       (game-layout.css) -- without these, light-theme visitors got white
+       cells in the middle of this dark page. */
+    --tableOne: var(--foreground);
+    --tableTwo: var(--foregroundTwo);
 
     --game-glass-bg: rgba(14, 8, 38, 0.55);
     --game-glass-bg-strong: rgba(14, 8, 38, 0.84);
@@ -13511,6 +13516,11 @@ body.nation-forge-theme {
     --success: #7bd66a;
     --danger: #ff3b3b;
     --text-secondary: #d1907a;
+    /* Mobile tables pin their label column with a solid zebra background
+       (game-layout.css) -- without these, light-theme visitors got white
+       cells in the middle of this dark page. */
+    --tableOne: var(--foreground);
+    --tableTwo: var(--foregroundTwo);
 
     --game-glass-bg: rgba(30, 8, 3, 0.55);
     --game-glass-bg-strong: rgba(30, 8, 3, 0.84);
@@ -13967,6 +13977,11 @@ body.nation-imperial-theme {
     --success: #7bd66a;
     --danger: #ff3b3b;
     --text-secondary: #c9a227;
+    /* Mobile tables pin their label column with a solid zebra background
+       (game-layout.css) -- without these, light-theme visitors got white
+       cells in the middle of this dark page. */
+    --tableOne: var(--foreground);
+    --tableTwo: var(--foregroundTwo);
 
     --game-glass-bg: rgba(18, 14, 8, 0.55);
     --game-glass-bg-strong: rgba(18, 14, 8, 0.86);
@@ -14123,6 +14138,11 @@ body.nation-frost-theme {
     --success: #7bd6b0;
     --danger: #ff5c6c;
     --text-secondary: #9aaad6;
+    /* Mobile tables pin their label column with a solid zebra background
+       (game-layout.css) -- without these, light-theme visitors got white
+       cells in the middle of this dark page. */
+    --tableOne: var(--foreground);
+    --tableTwo: var(--foregroundTwo);
 
     --game-glass-bg: rgba(8, 14, 34, 0.55);
     --game-glass-bg-strong: rgba(8, 14, 34, 0.84);

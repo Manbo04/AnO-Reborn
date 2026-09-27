@@ -27,6 +27,11 @@ body.nation-forge-theme {
     --success: #7bd66a;
     --danger: #ff3b3b;
     --text-secondary: #d1907a;
+    /* Mobile tables pin their label column with a solid zebra background
+       (game-layout.css) -- without these, light-theme visitors got white
+       cells in the middle of this dark page. */
+    --tableOne: var(--foreground);
+    --tableTwo: var(--foregroundTwo);
 
     --game-glass-bg: rgba(30, 8, 3, 0.55);
     --game-glass-bg-strong: rgba(30, 8, 3, 0.84);

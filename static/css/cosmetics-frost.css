@@ -26,6 +26,11 @@ body.nation-frost-theme {
     --success: #7bd6b0;
     --danger: #ff5c6c;
     --text-secondary: #9aaad6;
+    /* Mobile tables pin their label column with a solid zebra background
+       (game-layout.css) -- without these, light-theme visitors got white
+       cells in the middle of this dark page. */
+    --tableOne: var(--foreground);
+    --tableTwo: var(--foregroundTwo);
 
     --game-glass-bg: rgba(8, 14, 34, 0.55);
     --game-glass-bg-strong: rgba(8, 14, 34, 0.84);
