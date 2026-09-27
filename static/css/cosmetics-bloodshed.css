@@ -48,6 +48,11 @@ body.nation-bloodshed-theme {
     --success: #6bffb0;
     --danger: #ff5050;
     --text-secondary: #a3a3a3;
+    /* Mobile tables pin their label column with a solid zebra background
+       (game-layout.css) -- without these, light-theme visitors got white
+       cells with grey text in the middle of a black page. */
+    --tableOne: #0d0d0d;
+    --tableTwo: #131313;
 
     /* Denser than the other themes: the text wall behind is bright and busy,
        so panels need more opacity to keep game text readable. */
