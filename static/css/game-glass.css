@@ -224,7 +224,8 @@ body.page-hub.theme-light .game-page-overlay {
 }
 
 .game-hero .game-hero-sub {
-    color: var(--text-secondary);
+    /* Full-contrast: grey subtitles were unreadable over hero photos (ieb, 2026-09-27). */
+    color: var(--colorOne);
     font-size: 13.5px;
     margin: 5px 0 0;
 }

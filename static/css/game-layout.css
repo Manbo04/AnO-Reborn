@@ -219,14 +219,25 @@ body.game-shell-active .templatecontainer {
 }
 
 .resourcedivchild {
+    position: relative;
     align-items: center;
     justify-content: center;
 }
 
 .resourceicon.material-icons-outlined {
-    /* margin: 0, not just margin-left -- the icon font's global margin-right:5px
-       left the $ off-centre in the circle (ieb, 2026-09-27). */
+    /* Centred geometrically, not via the line box: the icon font's global
+       margin-right:5px + padding-bottom:2px (and platform font metrics) left
+       the $ off-centre in the circle (ieb, 2026-09-27). */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: block;
+    width: 1em;
+    height: 1em;
     margin: 0;
+    padding: 0;
+    line-height: 1;
 }
 
 @media all and (max-width: 500px) {
@@ -695,7 +706,16 @@ body.game-shell-active .section-tabs + .templatediv {
     font-weight: 600;
     letter-spacing: 1px;
     text-transform: uppercase;
-    color: var(--text-secondary);
+    /* Solid pill like the tabs beside it: bare secondary-grey text was
+       unreadable over page backgrounds (ieb, 2026-09-27). */
+    align-self: flex-start;
+    min-height: 32px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: var(--foreground);
+    border: 1px solid var(--border);
+    color: var(--colorOne);
+    box-sizing: border-box;
 }
 
 .section-tabs-title .material-icons-outlined {
@@ -774,7 +794,8 @@ body.game-shell-active .section-tabs + .templatediv {
 }
 
 @media (min-width: 1500px) and (pointer: fine) {
-    body.has-side-tips .section-tabs { width: calc(90% - 380px); }
+    /* Rails sit in the gutters -- same fix as .templatediv above (ieb, 2026-09-27). */
+    body.has-side-tips .section-tabs { width: min(90%, calc(100vw - 400px)); }
 }
 
 /* Navbar dropdown / hamburger hub entries: label + list of the hub's pages */
