@@ -216,7 +216,10 @@
                         </div>
                         <a class="game-btn game-btn-ghost game-btn-sm" href="/provinces">View all &rarr;</a>
                     </div>
-                    {% for province in provinces[:3] %}
+                    {# Was provinces[:3] -- useless past three provinces (ieb, 2026-09-27).
+                       Now every province in a capped scroll box. #}
+                    <div class="country-province-scroll">
+                    {% for province in provinces %}
                     <a class="game-list-row" href="/province/{{ province[1] }}">
                         <div class="game-row">
                             <span class="material-icons-outlined" style="color: var(--accent);">account_balance</span>
@@ -237,6 +240,7 @@
                     {% else %}
                     <p class="game-faint">No provinces yet.</p>
                     {% endfor %}
+                    </div>
                 </div>
 
                 <div class="game-glass game-panel">
@@ -325,44 +329,6 @@
             </div>
             {% endif %}
 
-            {% if status and currency_status %}
-            <div class="game-glass game-panel" style="margin-bottom: 20px;">
-                <div class="game-panel-title" style="margin-bottom: 12px;">
-                    <span class="material-icons-outlined" style="vertical-align: -6px;">account_balance</span>
-                    National Central Bank{% if currency_name %} — {{ currency_name }}{% endif %}
-                </div>
-                <div class="stat-grid">
-                    <div class="templatedivflex2left stat-card">
-                        <strong class="stat-label"><span class="material-icons-outlined">payments</span>Gold Treasury</strong>
-                        <span class="stat-value">${{ currency_status.gold | fmt }}</span>
-                    </div>
-                    <div class="templatedivflex2left stat-card">
-                        <strong class="stat-label"><span class="material-icons-outlined">account_balance_wallet</span>{{ currency_name if currency_name else 'National Currency' }} Balance</strong>
-                        <span class="stat-value">{{ currency_status.currency_balance | fmt }}</span>
-                    </div>
-                    <div class="templatedivflex2left stat-card">
-                        <strong class="stat-label"><span class="material-icons-outlined">sync_alt</span>Fixed Exchange Rate</strong>
-                        <span class="stat-value">{{ currency_status.rate }} gold = 1</span>
-                    </div>
-                </div>
-                <p class="templatecontentpleft" style="margin-top: 12px;">
-                    Convert gold from your treasury into
-                    {{ currency_name if currency_name else 'your national currency' }}, or back, at this fixed rate.
-                    Round-tripping never gains or loses gold — the rate never changes.
-                    {% if not currency_name %}Give your currency a name in the form below to replace this generic label.{% endif %}
-                </p>
-                <div class="game-row" style="flex-wrap: wrap; gap: 16px; margin-top: 14px;">
-                    <form action="/currency/mint" method="post" class="game-row" style="flex-wrap: wrap; flex: 1; min-width: 240px;">
-                        <input type="number" name="units" placeholder="Units to mint" class="loginsignupinput" style="flex: 1; min-width: 140px;" min="0.01" step="0.01" required>
-                        <button type="submit" class="game-btn game-btn-primary">Mint from Gold</button>
-                    </form>
-                    <form action="/currency/redeem" method="post" class="game-row" style="flex-wrap: wrap; flex: 1; min-width: 240px;">
-                        <input type="number" name="units" placeholder="Units to redeem" class="loginsignupinput" style="flex: 1; min-width: 140px;" min="0.01" step="0.01" max="{{ currency_status.currency_balance }}" required>
-                        <button type="submit" class="game-btn game-btn-secondary">Redeem to Gold</button>
-                    </form>
-                </div>
-            </div>
-            {% endif %}
 
             {% include 'partials/distribution_alert.html' %}
 
@@ -737,6 +703,46 @@
             </div>
             {% endif %}
 
+            {# Central bank sits last: owners scrolled past it on every visit (ieb, 2026-09-27). #}
+            {% if status and currency_status %}
+            <div class="game-glass game-panel" style="margin-bottom: 20px;">
+                <div class="game-panel-title" style="margin-bottom: 12px;">
+                    <span class="material-icons-outlined" style="vertical-align: -6px;">account_balance</span>
+                    National Central Bank{% if currency_name %} — {{ currency_name }}{% endif %}
+                </div>
+                <div class="stat-grid">
+                    <div class="templatedivflex2left stat-card">
+                        <strong class="stat-label"><span class="material-icons-outlined">payments</span>Gold Treasury</strong>
+                        <span class="stat-value">${{ currency_status.gold | fmt }}</span>
+                    </div>
+                    <div class="templatedivflex2left stat-card">
+                        <strong class="stat-label"><span class="material-icons-outlined">account_balance_wallet</span>{{ currency_name if currency_name else 'National Currency' }} Balance</strong>
+                        <span class="stat-value">{{ currency_status.currency_balance | fmt }}</span>
+                    </div>
+                    <div class="templatedivflex2left stat-card">
+                        <strong class="stat-label"><span class="material-icons-outlined">sync_alt</span>Fixed Exchange Rate</strong>
+                        <span class="stat-value">{{ currency_status.rate }} gold = 1</span>
+                    </div>
+                </div>
+                <p class="templatecontentpleft" style="margin-top: 12px;">
+                    Convert gold from your treasury into
+                    {{ currency_name if currency_name else 'your national currency' }}, or back, at this fixed rate.
+                    Round-tripping never gains or loses gold — the rate never changes.
+                    {% if not currency_name %}Give your currency a name in the form below to replace this generic label.{% endif %}
+                </p>
+                <div class="game-row" style="flex-wrap: wrap; gap: 16px; margin-top: 14px;">
+                    <form action="/currency/mint" method="post" class="game-row" style="flex-wrap: wrap; flex: 1; min-width: 240px;">
+                        <input type="number" name="units" placeholder="Units to mint" class="loginsignupinput" style="flex: 1; min-width: 140px;" min="0.01" step="0.01" required>
+                        <button type="submit" class="game-btn game-btn-primary">Mint from Gold</button>
+                    </form>
+                    <form action="/currency/redeem" method="post" class="game-row" style="flex-wrap: wrap; flex: 1; min-width: 240px;">
+                        <input type="number" name="units" placeholder="Units to redeem" class="loginsignupinput" style="flex: 1; min-width: 140px;" min="0.01" step="0.01" max="{{ currency_status.currency_balance }}" required>
+                        <button type="submit" class="game-btn game-btn-secondary">Redeem to Gold</button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
             {# The full province list that used to live here is gone -- it duplicated the
                top-of-page Provinces preview panel (added 2026-09-01), and the full list with
                every real stat is already one click away via that panel's "View all" link to
@@ -762,7 +768,9 @@
                     <span class="material-icons-outlined">calendar_today</span> Show daily figures
                 </button>
             </div>
-            <p class="game-faint" style="margin: 0 0 12px; font-size: 13px;">
+            {# Boxed rather than bare faint text: on busy/animated nation backgrounds
+               the grey paragraph was unreadable (ieb, 2026-09-27). #}
+            <p class="game-glass game-panel" style="margin: 0 0 12px; font-size: 13px; padding: 12px 16px; line-height: 1.55;">
                 Gross shows what your buildings could make at full capacity. <strong>Projected</strong> is what the next tick
                 will actually produce after workers, productivity, power and upkeep money are taken into account &mdash;
                 if it's lower, one of those is holding your buildings back.
@@ -871,6 +879,13 @@
         <strong class="stat-label">Coalition tax</strong>
         <span class="stat-value">-{{ revenue.get("coalition_tax", 0) | fmt }}</span>
     </div>
+    {# Mirrors the Gross column so both columns keep the same row order (ieb, 2026-09-27). #}
+    {% if bond_interest and (bond_interest.received or bond_interest.paid) %}
+    <div class="templatedivflex2left stat-card" data-tippy-content="Interest on your active bonds, paid once a day (not hourly). Received is from bonds you funded; paid is on bonds you issued.<br><br><a href='/bonds' style='color:#4da8da;text-decoration:underline;'>&#128214; View bonds</a>">
+        <strong class="stat-label">Bond interest <small class="font-normal-sub">(per day)</small></strong>
+        <span class="stat-value">{% if bond_interest.received %}<span class="text-success">+{{ bond_interest.received | fmt }}</span>{% endif %}{% if bond_interest.received and bond_interest.paid %} / {% endif %}{% if bond_interest.paid %}<span class="text-danger">-{{ bond_interest.paid | fmt }}</span>{% endif %}</span>
+    </div>
+    {% endif %}
     <div class="templatedivflex2left stat-card">
         <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Rations</strong>
         <span class="stat-value">{{ revenue["net"]["rations"] | fmt }}</span>
@@ -1050,6 +1065,13 @@
         <strong class="stat-label">Coalition tax</strong>
         <span class="stat-value">-{{ revenue_daily.get("coalition_tax", 0) | fmt }}</span>
     </div>
+    {# Mirrors the Gross column so both columns keep the same row order (ieb, 2026-09-27). #}
+    {% if bond_interest and (bond_interest.received or bond_interest.paid) %}
+    <div class="templatedivflex2left stat-card" data-tippy-content="Interest on your active bonds, paid once a day (not hourly). Received is from bonds you funded; paid is on bonds you issued.<br><br><a href='/bonds' style='color:#4da8da;text-decoration:underline;'>&#128214; View bonds</a>">
+        <strong class="stat-label">Bond interest <small class="font-normal-sub">(per day)</small></strong>
+        <span class="stat-value">{% if bond_interest.received %}<span class="text-success">+{{ bond_interest.received | fmt }}</span>{% endif %}{% if bond_interest.received and bond_interest.paid %} / {% endif %}{% if bond_interest.paid %}<span class="text-danger">-{{ bond_interest.paid | fmt }}</span>{% endif %}</span>
+    </div>
+    {% endif %}
     <div class="templatedivflex2left stat-card">
         <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Rations</strong>
         <span class="stat-value">{{ revenue_daily["net"]["rations"] | fmt }}</span>

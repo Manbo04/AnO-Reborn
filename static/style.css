@@ -6484,8 +6484,11 @@ body.game-page-v2 .coalitiontaxclick,
 body.game-page-v2 .coalitionsettingsclick,
 body.game-page-v2 .upgradeseconomicclick,
 body.game-page-v2 .upgradesmilitaryclick {
-    background: transparent !important;
-    border-bottom-color: var(--accent) !important;
+    /* Was transparent -- the selected tab turned see-through (ieb, 2026-09-27). */
+    background: var(--game-glass-bg) !important;
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border-bottom: 3px solid var(--accent) !important;
 }
 
 body.game-page-v2 .countryviewclick h3,
@@ -7285,6 +7288,23 @@ body.game-shell-active .dropdown-content a.active {
     display: none !important;
 }
 
+/* ieb, 2026-09-27: Solid backing for tab selector buttons on Country/Military/My Coalition:
+   the tabs went see-through when selected, unreadable over nation backgrounds. */
+body.game-page-v2 .menuflex2 {
+    border-bottom: none;
+    gap: 4px;
+}
+body.game-page-v2 .menuflex2 div,
+body.game-page-v2 .menuflex2 a {
+    background: var(--game-glass-bg);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border: 1px solid var(--game-glass-border);
+    border-radius: 4px;
+    color: var(--colorOne);
+}
+
+
 
 /* --- static/css/game-shell.css --- */
 /**
@@ -8034,7 +8054,9 @@ body.game-shell-active .templatecontainer {
 }
 
 .resourceicon.material-icons-outlined {
-    margin-left: 0;
+    /* margin: 0, not just margin-left -- the icon font's global margin-right:5px
+       left the $ off-centre in the circle (ieb, 2026-09-27). */
+    margin: 0;
 }
 
 @media all and (max-width: 500px) {
@@ -8106,7 +8128,11 @@ body.page-country .templatedivcontent .infodiv {
 
 @media (min-width: 1500px) and (pointer: fine) {
     .side-tip-rail { display: block; }
-    body.has-side-tips .templatediv { width: calc(90% - 380px); }
+    /* The rails sit in the viewport gutters; only shrink the card when the
+       gutter is too narrow to hold them (~196px each side). A flat
+       calc(90% - 380px) squeezed every page to 700px on wide monitors even
+       though the 1200px-capped container never reaches the rails. */
+    body.has-side-tips .templatediv { width: min(90%, calc(100vw - 400px)); }
 }
 
 @media (max-width: 1499px), (pointer: coarse) {
@@ -8466,6 +8492,49 @@ body.page-country .templatedivcontent .infodiv {
     .countries-filter-row .smallactionbutton {
         padding: 0 22px !important;
     }
+}
+
+/* Prev / "Page X of Y" / Next pagers (World Affairs, Bounties, Provinces): the
+   bare ghost buttons and faint text were unreadable over page backgrounds
+   (ieb, 2026-09-27). Countries/Coalitions use .modern-pagination instead. */
+.game-pager {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 18px auto;
+    padding: 8px 10px;
+    width: fit-content;
+    max-width: 100%;
+    box-sizing: border-box;
+    background: var(--game-glass-bg);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    border: 1px solid var(--game-glass-border);
+    border-radius: var(--game-radius-lg);
+}
+.game-pager > a {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    min-width: 40px;
+    padding: 0 16px !important;
+    margin: 0 !important;
+    color: var(--colorOne) !important;
+    border: 1px solid var(--game-glass-border) !important;
+    border-radius: 8px;
+}
+.game-pager > a:hover,
+.game-pager > a:focus-visible {
+    border-color: var(--accent) !important;
+}
+.game-pager > .game-pager-current {
+    color: var(--colorOne);
+    font-weight: 700;
+    opacity: 1;
+    padding: 0 6px;
 }
 
 
@@ -10461,6 +10530,46 @@ body:has(> .news-ticker) {
     }
 }
 
+/* Market "Max" button next to each purchase input (ieb, 2026-09-27):
+   fills the most the player can take so they don't have to type it. */
+body.page-market .market-max-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    min-width: 44px;
+    min-height: 40px;
+    margin: 0;
+    padding: 6px 10px;
+    border: 1px solid var(--game-glass-border, rgba(255, 255, 255, 0.18));
+    border-radius: 8px;
+    background: var(--game-glass-bg-strong, rgba(255, 255, 255, 0.06));
+    color: var(--accent, #00a7e1);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+body.page-market .market-max-btn:hover,
+body.page-market .market-max-btn:focus-visible {
+    border-color: var(--accent, #00a7e1);
+    outline: none;
+}
+
+body.page-market .market-max-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+@media (min-width: 769px) and (pointer: fine) {
+    body.page-market .market-max-btn {
+        min-height: 32px;
+    }
+}
+
 
 /* --- static/css/game-country.css --- */
 /**
@@ -10753,8 +10862,12 @@ body.game-page-v2 .country-demographics-chart-wrap {
     padding: 12px 14px;
     border-radius: var(--game-radius-md);
     border: 1px solid var(--game-panel-border);
-    background: linear-gradient(135deg, rgba(93, 173, 226, 0.12) 0%, rgba(0, 0, 0, 0.2) 100%);
-    color: var(--text-secondary);
+    /* Solid glass backing + primary text: the old 12%-tint box with secondary
+       grey text was unreadable over busy nation backgrounds (ieb, 2026-09-27). */
+    background: var(--game-glass-bg);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    color: var(--colorOne);
     font-size: 0.92rem;
     line-height: 1.45;
 }
@@ -11472,6 +11585,16 @@ body.page-country .revenue .stat-value {
     margin: 0 !important;
 }
 
+
+/* Country > View: full province list in the dashboard panel, capped so a
+   100-province nation doesn't push Resources off screen. */
+.country-province-scroll {
+    max-height: 320px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    margin-right: -6px;
+    padding-right: 6px;
+}
 
 
 /* --- static/css/game-mechanics.css --- */
@@ -12506,8 +12629,59 @@ body.page-military .templatedivcontent .infodiv {
         padding-left: 10px !important;
         padding-right: 10px !important;
         justify-content: center;
-        white-space: nowrap;
+        /* Wrap inside the box instead of spilling out of it when the row is
+           narrow (ieb, 2026-09-27: "text goes out of the button box"). */
+        white-space: normal;
+        min-width: 0;
+        text-align: center;
+        line-height: 1.2;
+        overflow-wrap: anywhere;
     }
+}
+
+/* Wars page empty state + Combat Mechanics in solid glass boxes: the bare grey
+   text was hard to read over busy nation backgrounds (ieb, 2026-09-27). */
+.wars-readable-panel {
+    margin: 18px 0;
+    padding: 18px 20px;
+    color: var(--colorOne);
+}
+.wars-readable-panel h2 {
+    margin-top: 0 !important;
+}
+.wars-empty-panel {
+    text-align: center;
+}
+.wars-empty-panel > .material-icons-outlined {
+    font-size: 32px;
+    color: var(--accent);
+}
+.wars-empty-panel p {
+    margin: 6px 0 0;
+    color: var(--colorOne);
+    opacity: 0.85;
+}
+.wars-mechanics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+    margin-top: 10px;
+}
+.wars-mechanics-item {
+    padding: 14px 16px;
+    border-radius: var(--game-radius-md);
+    border: 1px solid var(--game-glass-border);
+    background: rgba(0, 0, 0, 0.18);
+}
+.wars-mechanics-item h3 {
+    margin: 0 0 6px;
+    font-size: 1rem;
+    color: var(--colorOne);
+}
+.wars-mechanics-item p {
+    margin: 0;
+    line-height: 1.55;
+    color: var(--colorOne);
 }
 
 

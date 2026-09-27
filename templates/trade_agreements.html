@@ -16,6 +16,20 @@
             Create automatic recurring trades with other players. Once accepted, trades execute automatically at the interval you set.
         </p>
 
+        {# Plain-language walkthrough (ieb, 2026-09-27: "I don't fully know how they
+           work"). Mirrors app_core/trade_agreements/services.py and the 15-minute
+           execute_trade_agreements tick -- keep in sync if those rules change. #}
+        <div class="game-glass game-panel" style="margin-bottom: 18px;">
+            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">help_outline</span> How Trade Agreements work</h2>
+            <ol class="templatecontentpleft" style="margin: 6px 0 0 18px; line-height: 1.6;">
+                <li><strong>You propose a swap</strong> to another nation: what you give, what you get back (any resource or gold), how often, and optionally how many times.</li>
+                <li><strong>They accept or reject it.</strong> Nothing moves until they accept &mdash; when they do, the first swap happens straight away.</li>
+                <li><strong>After that it repeats automatically</strong> at the interval you picked (every 1 hour up to once a week). Swaps are checked every 15 minutes, so one can land a few minutes late.</li>
+                <li><strong>It ends</strong> once it hits the max number of trades, or as soon as either side cancels &mdash; either nation can cancel at any time.</li>
+            </ol>
+            <p class="templatecontentpleft" style="margin-top: 10px; opacity: .8; font-size: .9em;"><strong>Not enough resources?</strong> If either side can't cover their half when a swap is due, nothing moves and the agreement is paused. Either nation can resume it once both sides have enough again. There's no fee &mdash; both sides get the full amounts.</p>
+        </div>
+
         <style>
             .trade-exchange-zone {
                 display: flex;

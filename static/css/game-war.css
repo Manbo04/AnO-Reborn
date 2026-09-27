@@ -301,6 +301,57 @@ body.page-military .templatedivcontent .infodiv {
         padding-left: 10px !important;
         padding-right: 10px !important;
         justify-content: center;
-        white-space: nowrap;
+        /* Wrap inside the box instead of spilling out of it when the row is
+           narrow (ieb, 2026-09-27: "text goes out of the button box"). */
+        white-space: normal;
+        min-width: 0;
+        text-align: center;
+        line-height: 1.2;
+        overflow-wrap: anywhere;
     }
+}
+
+/* Wars page empty state + Combat Mechanics in solid glass boxes: the bare grey
+   text was hard to read over busy nation backgrounds (ieb, 2026-09-27). */
+.wars-readable-panel {
+    margin: 18px 0;
+    padding: 18px 20px;
+    color: var(--colorOne);
+}
+.wars-readable-panel h2 {
+    margin-top: 0 !important;
+}
+.wars-empty-panel {
+    text-align: center;
+}
+.wars-empty-panel > .material-icons-outlined {
+    font-size: 32px;
+    color: var(--accent);
+}
+.wars-empty-panel p {
+    margin: 6px 0 0;
+    color: var(--colorOne);
+    opacity: 0.85;
+}
+.wars-mechanics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+    margin-top: 10px;
+}
+.wars-mechanics-item {
+    padding: 14px 16px;
+    border-radius: var(--game-radius-md);
+    border: 1px solid var(--game-glass-border);
+    background: rgba(0, 0, 0, 0.18);
+}
+.wars-mechanics-item h3 {
+    margin: 0 0 6px;
+    font-size: 1rem;
+    color: var(--colorOne);
+}
+.wars-mechanics-item p {
+    margin: 0;
+    line-height: 1.55;
+    color: var(--colorOne);
 }

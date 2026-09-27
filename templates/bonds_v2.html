@@ -6,12 +6,13 @@
 
 <div class="templatediv">
 
-    {{ game_hero('Bonds Market', badge_icon='request_quote', subtitle='Borrow directly from other players. List a Bond with your own rate and term — interest is paid to your investor automatically every day, and the principal comes due at maturity. Missing too many interest payments, or failing to cover principal at maturity, defaults the Bond: the game keeps collecting what you still owe and you\'re locked out of issuing a new one for a while.') }}
+    {{ game_hero('Bonds Market', badge_icon='request_quote', subtitle='Borrow directly from other players, or lend to them for daily interest.') }}
 
     <div class="templatedivcontent">
 
         {# Plain-language walkthrough: players (ieb and others) were confused about
-           who pays what and when from the hero paragraph alone. #}
+           who pays what and when from the hero paragraph alone. The hero used to repeat
+           all of this in prose -- ieb flagged the double explanation, so it's only here now. #}
         <div class="game-glass game-panel" style="margin-bottom: 18px;">
             <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">help_outline</span> How a Bond works</h2>
             <ol class="templatecontentpleft" style="margin: 6px 0 0 18px; line-height: 1.6;">
@@ -21,6 +22,7 @@
                 <li><strong>At the end of the term you pay the principal back</strong> in one go (or bit by bit each day if you tick auto-escrow).</li>
             </ol>
             <p class="templatecontentpleft" style="margin-top: 10px; opacity: .8; font-size: .9em;">Example: a $1,000,000 Bond at 1%/day for 10 days gives you $1,000,000 now, costs you $10,000 every day, and you repay the $1,000,000 on day 10 &mdash; $1,100,000 paid back in total. Buying a Bond is the same deal from the other side.</p>
+            <p class="templatecontentpleft" style="margin-top: 8px; opacity: .8; font-size: .9em;"><strong>Defaults:</strong> missing too many interest payments, or not covering the principal at maturity, defaults the Bond &mdash; the game keeps collecting what you still owe and you can't issue a new Bond for a while.</p>
         </div>
 
         <div class="game-glass game-panel" style="margin-bottom: 18px;">

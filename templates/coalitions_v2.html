@@ -12,7 +12,10 @@
 
         <div class="game-glass game-panel" style="margin-bottom: 18px;">
         <form action="/coalitions" method="GET">
-            <div class="templatedivflex2 divflex2full">
+            {#- Same even filter-row preset as the Countries page (game-layout.css
+                .countries-filter-row); the loose flex row let the controls overlap
+                on desktop widths (ieb, 2026-09-27). -#}
+            <div class="templatedivflex2 divflex2full countries-filter-row coalitions-filter-row">
 
                 <div class="templatedivflex2left">
 
