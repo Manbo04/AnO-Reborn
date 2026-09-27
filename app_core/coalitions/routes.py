@@ -1461,6 +1461,7 @@ def delete_coalition(coalition_id):
         db.execute("DELETE FROM colNames WHERE id=(%s)", (coalition_id,))
         members_tbl = _members_tbl()
         db.execute(f"DELETE FROM {members_tbl} WHERE colid=%s", (coalition_id,))
+        db.execute("DELETE FROM col_role_names WHERE coalition_id=%s", (coalition_id,))
 
     flash(f"{coalition_name} coalition was deleted.")
 
