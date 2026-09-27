@@ -600,3 +600,23 @@ DATABASE_PUBLIC_URL=... python3 scripts/apply_all_pending_migrations.py
 - Monitor player feedback on revenue accuracy
 - Consider adding coalition tax rate to the revenue breakdown tooltip or info panel
 - Legacy table references still exist in test files and scripts — update when exercised
+
+### Session: 2026-09-27 — Grouped navigation (hubs + section tabs)
+
+**What was done**:
+- Navbar dropdowns listed every page flat (10 under Internal Affairs, 9 under Global Affairs). Pages are now grouped into 6 hubs, and each hub's pages share a tab strip above the page content, the same idea as the country page's View/Revenue/News/Edit tabs:
+  - Internal Affairs: **Nation** (Overview · Provinces · Projects), **Economy** (Market · Trade Deals · Loans · Bonds · Currency Unions), **Military** (Forces · Wars · Bounties)
+  - Global Affairs: **Coalitions** (My Coalition · All Coalitions · Establish), **Nations** (Countries · Rankings), **Diplomacy** (Treaties · Assembly · World Affairs)
+  - Other: unchanged.
+- `app_core/navigation.py` (new) is the single source of truth: `NAV_SECTIONS` plus `build_nav(path, user_id, coalition_id)`. It drives the desktop dropdowns, the mobile hamburger menu, the tab strip and the bottom-nav active state. Add or move pages there, not in `layout.html`.
+- `templates/partials/section_tabs.html` (new) is included in `layout.html` just before `{% block body %}`. It only renders for logged-in users on a page that belongs to a hub with more than one page.
+- `app.py`: added an `inject_site_nav` context processor (in-memory only, no DB). `inject_layout_context` rebuilds the nav with the viewer's coalition id, because `/my_coalition` redirects to `/coalition/<id>` and that page should keep the "My Coalition" tab lit.
+- CSS in `static/css/game-layout.css` (bundled): the strip is one horizontally scrolling row of 44px pills with an edge fade on phones, and wraps inline with the hub title from 768px up.
+
+**What to watch**:
+- Rendered through the real `layout.html` with a stubbed session, and screenshotted at 390px (dark and light) and 1440px, including the hamburger and the dropdown hover. Not yet checked on live pages whose `.templatediv` is not the first child of the body block. Spacing there may need a per-page tweak.
+- `/country/id=<own id>` goes to the Nation hub; other players' country pages go to Nations → Countries.
+- `tests/test_layout_navbar_structure.py` fails both before and after this change. It slices hard-coded line ranges out of `layout.html`, and those ranges no longer contain complete markup.
+
+**Next steps**:
+- `templates/partials/quick_nav.html` (logged-in home grid) still lists pages individually. It could be regrouped by hub if players want that.
