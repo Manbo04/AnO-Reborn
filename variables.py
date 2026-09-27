@@ -1033,6 +1033,21 @@ LOAN_COOLDOWN_HOURS = 24  # can't take a new loan until this long after fully re
 # amortize principal daily instead of owing it as a lump sum at maturity.
 # See app_core/bonds/ and migration 0079_add_bonds_market.sql.
 BOND_CAP_PER_POPULATION = 30  # $ of total outstanding (listed+active) bond principal per population point
+
+# Market / trade fees (app_core/market/fees.py). Charged to whoever completes
+# a money trade (buying from a sell offer, filling a buy offer, accepting a
+# direct trade) on top of / out of the traded amount, and removed from the
+# economy -- simulates transport costs.
+TRADE_FEE_PERCENT = 5
+# Reduced fee between two members of the same currency union.
+UNION_TRADE_FEE_PERCENT = 2
+
+# Currency unions (app_core/currency_unions). Benefits only apply while the
+# union has at least CURRENCY_UNION_MIN_MEMBERS members.
+CURRENCY_UNION_MIN_MEMBERS = 2
+CURRENCY_UNION_BOND_CAP_MULTIPLIER = 1.25  # +25% bond issuance cap
+CURRENCY_UNION_NAME_MAX = 60
+CURRENCY_UNION_CURRENCY_MAX = 40
 BOND_MIN_PRINCIPAL = 50_000
 BOND_MIN_INTEREST_RATE = 0.001  # 0.1%/day
 BOND_MAX_INTEREST_RATE = 0.02   # 2%/day

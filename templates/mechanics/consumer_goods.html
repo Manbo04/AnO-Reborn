@@ -26,7 +26,7 @@
                     <tr><td><strong>Elderly</strong></td><td>2 CG per 80,000 elderly citizens per hour</td></tr>
                     <tr><td><strong>Tax Bonus</strong></td><td>+50% when fully supplied</td></tr>
                     <tr><td><strong>If Undersupplied</strong></td><td>Proportionally reduced bonus</td></tr>
-                    <tr><td><strong>Distribution</strong></td><td>Depends on building: Food Banks 250k, Gas Stations 1.0M, Distribution Centers 1.5M, General Stores 2.5M, Malls 5.0M population served</td></tr>
+                    <tr><td><strong>Distribution</strong></td><td>Per province: each province is supplied by its own retail buildings (Food Banks, Gas Stations, General Stores, Malls, Distribution Centers)</td></tr>
                 </table>
             </div>
             <div class="templatedivflex2left">
@@ -40,6 +40,33 @@
             </div>
         </div>
 
+        <!-- Distribution -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">local_shipping</span> Distribution Is Per Province</th>
+            </tr>
+        </table>
+
+        <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">storefront</span> Local Shops First</h3>
+                <p class="templatecontentpleft">Consumer goods come from your national stockpile, but they reach citizens through shops. A province's own retail buildings supply that province at full effect, and each province gets its own tax bonus based on how well it was supplied.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Province has enough shops</strong></td><td>Full +50% tax bonus</td></tr>
+                    <tr><td><strong>Province has no shops</strong></td><td>Goods are shipped in from other provinces' spare capacity, but only count at 50% (the rest is lost in transport): about +25%</td></tr>
+                    <tr><td><strong>No spare capacity anywhere</strong></td><td>No bonus in that province</td></tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">tips_and_updates</span> What To Do</h3>
+                <ul class="templatecontentpleft">
+                    <li>Put at least one retail building in every province</li>
+                    <li>Each province page shows whether it is supplied locally or by shipping</li>
+                    <li>Shipped goods still use up your stockpile in full</li>
+                </ul>
+            </div>
+        </div>
+
         <!-- Production -->
         <table class="templatetable">
             <tr>
@@ -50,21 +77,19 @@
         <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">precision_manufacturing</span> Production Chain</h3>
-                <p class="templatecontentpleft">Consumer goods are produced by retail buildings (gas stations, general stores, farmers markets, banks, malls). They do not require components.</p>
+                <p class="templatecontentpleft">Consumer goods are produced by retail buildings (gas stations, general stores, farmers markets, banks, malls) and by Industrial Districts, the largest producer. They do not need any input resources.</p>
                 <table class="templatetable">
-                    <tr><td><strong>Step 1</strong></td><td>Build Component Factories</td></tr>
-                    <tr><td><strong>Step 2</strong></td><td>Component Factories produce components</td></tr>
-                    <tr><td><strong>Step 3</strong></td><td>Factories convert components → consumer goods</td></tr>
+                    <tr><td><strong>Where</strong></td><td>City &gt; Retail on the province page</td></tr>
+                    <tr><td><strong>Biggest producer</strong></td><td>Industrial District: 50 CG/hour each</td></tr>
+                    <tr><td><strong>Specialisation</strong></td><td>Industrial Districts get the specialisation bonus (see Revenue &amp; Taxes)</td></tr>
                 </table>
             </div>
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">tips_and_updates</span> Tips</h3>
                 <ul class="templatecontentpleft">
-                    <li>Balance component production with factory consumption</li>
                     <li>Check net production on your country page</li>
                     <li>Buy consumer goods on market if short</li>
                     <li>Sell surplus for gold when prices are high</li>
-                    <li>Advanced Machinery upgrade boosts production</li>
                 </ul>
             </div>
         </div>

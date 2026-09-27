@@ -65,6 +65,67 @@
             </div>
         </div>
 
+        <!-- Specialisation & integration -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">hub</span> Specialisation &amp; Vertical Integration</th>
+            </tr>
+        </table>
+
+        <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">stacked_bar_chart</span> Specialisation (economies of scale)</h3>
+                <p class="templatecontentpleft">Mines, farms, lumber mills, processing buildings and Industrial Districts produce more the bigger the share of a province's slots they fill. Returns diminish: the first buildings count most.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Formula</strong></td><td>+15% &times; (1 &minus; e<sup>&minus;4 &times; share</sup>)</td></tr>
+                    <tr><td><strong>10% of slots</strong></td><td>about +5% output</td></tr>
+                    <tr><td><strong>25% of slots</strong></td><td>about +9.5% output</td></tr>
+                    <tr><td><strong>50% of slots</strong></td><td>about +13% output</td></tr>
+                    <tr><td><strong>Maximum</strong></td><td>+15% output</td></tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">link</span> Vertical Integration</h3>
+                <p class="templatecontentpleft">Steel mills, refineries and factories produce more when your nation produces its own inputs. The bonus scales with how self-sufficient you are in the scarcest input (your mines' base output compared with what those buildings consume).</p>
+                <table class="templatetable">
+                    <tr><td><strong>Fully self-sufficient</strong></td><td>+10% output</td></tr>
+                    <tr><td><strong>Half self-sufficient</strong></td><td>+5% output</td></tr>
+                    <tr><td><strong>Imports everything</strong></td><td>No bonus</td></tr>
+                    <tr><td><strong>Where to see it</strong></td><td>Each building card on the province page</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Trade -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">local_shipping</span> Trade Fees &amp; Currency Unions</th>
+            </tr>
+        </table>
+
+        <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">sell</span> Transport Fee</h3>
+                <p class="templatecontentpleft">Whoever completes a money trade pays a transport fee. It leaves the economy rather than going to anyone.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Standard fee</strong></td><td>{{ trade_fee_percent }}% of the price</td></tr>
+                    <tr><td><strong>Within a currency union</strong></td><td>{{ union_trade_fee_percent }}% of the price</td></tr>
+                    <tr><td><strong>Buying</strong></td><td>Paid on top of the price</td></tr>
+                    <tr><td><strong>Selling</strong></td><td>Taken from the proceeds</td></tr>
+                    <tr><td><strong>Trade agreements (barter)</strong></td><td>No fee</td></tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">currency_exchange</span> Currency Unions</h3>
+                <p class="templatecontentpleft">Nations can share a currency. Benefits switch on once a union has at least 2 members. <a href="/currency_unions">Open Currency Unions</a></p>
+                <table class="templatetable">
+                    <tr><td><strong>Trade between members</strong></td><td>{{ union_trade_fee_percent }}% fee instead of {{ trade_fee_percent }}%</td></tr>
+                    <tr><td><strong>Bonds</strong></td><td>+25% issuance limit</td></tr>
+                    <tr><td><strong>Membership</strong></td><td>One union at a time; founder approves members</td></tr>
+                </table>
+            </div>
+        </div>
+
         <!-- Operating Costs -->
         <table class="templatetable">
             <tr>

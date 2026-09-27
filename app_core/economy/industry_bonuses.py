@@ -15,6 +15,7 @@ This is the single implementation used by the hourly production tick
 (``app_core.game_ticks.revenue``), the revenue projection (``countries.py``)
 and the province page, so the displayed numbers match what the tick pays.
 """
+
 from __future__ import annotations
 
 import math

@@ -287,7 +287,7 @@
             </div>
             {% endif %}
 
-            {% if leader_name or currency_name or ruling_party or capital_province_name %}
+            {% if leader_name or currency_name or ruling_party or capital_province_name or currency_union %}
             <div class="game-glass game-panel" style="margin-bottom: 20px;">
                 <div class="game-panel-title" style="margin-bottom: 12px;">National Profile</div>
                 <div class="stat-grid">
@@ -307,6 +307,12 @@
                     <div class="templatedivflex2left stat-card">
                         <strong class="stat-label"><span class="material-icons-outlined">payments</span>Currency</strong>
                         <span class="stat-value">{{ currency_name }}</span>
+                    </div>
+                    {% endif %}
+                    {% if currency_union %}
+                    <div class="templatedivflex2left stat-card">
+                        <strong class="stat-label"><span class="material-icons-outlined">currency_exchange</span>Currency Union</strong>
+                        <span class="stat-value"><a href="/currency_unions">{{ currency_union.name }}</a> <small class="game-faint">({{ currency_union.currency_name }})</small></span>
                     </div>
                     {% endif %}
                     {% if capital_province_name %}
@@ -2849,6 +2855,7 @@
                     </div>
                 </div>
 
+                <p class="templatecontentpleft" style="opacity:.8;font-size:.9em;margin:6px 0 0;"><span class="material-icons-outlined" style="font-size:1em;vertical-align:-2px;">local_shipping</span> Transport fee: whoever completes a trade pays {{ trade_fee_percent }}% of the price ({{ union_trade_fee_percent }}% between members of the same <a href="/currency_unions">currency union</a>). Buyers pay it on top; sellers have it taken from the proceeds.</p>
                 <div class="templatedivflex2 divflex2center ">
                     <div class="templatedivflex2left ">
 

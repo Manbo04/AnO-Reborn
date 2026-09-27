@@ -1,0 +1,155 @@
+{% extends "layout.html" %} {% block title %} Currency Unions {% endblock %}{% block body_class %} page-currency-unions game-page-v2{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/coalition.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {{ game_hero('Currency Unions', badge_icon='currency_exchange', subtitle='Share one currency with other nations. A union needs at least ' ~ status.min_members ~ ' members before its benefits switch on.') }}
+
+    <div class="templatedivcontent">
+
+        <div class="game-glass game-panel" style="margin-bottom: 18px;">
+            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">help_outline</span> What a union gives you</h2>
+            <ul class="templatecontentpleft" style="margin: 6px 0 0 18px; line-height: 1.6;">
+                <li><strong>Cheaper trade:</strong> trades between members pay a {{ status.union_fee }}% transport fee instead of {{ status.fee }}%.</li>
+                <li><strong>Looser bond limits:</strong> members can have {{ status.bond_bonus_percent }}% more bond principal outstanding.</li>
+                <li><strong>One currency:</strong> every member uses the union's currency, and the union's combined and average stats are shown below.</li>
+            </ul>
+            <p class="templatecontentpleft" style="margin-top: 10px; opacity: .8; font-size: .9em;">You can be in one union at a time. The founder approves new members and can remove them. If the founder leaves, the longest-standing member takes over; if the last member leaves, the union is dissolved.</p>
+        </div>
+
+        {% if status.mine %}
+        {% set u = status.mine %}
+        <div class="game-glass game-panel" style="margin-bottom: 18px;">
+            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">account_balance</span> {{ u.name }}</h2>
+            <p class="templatecontentpleft" style="margin-top: 0;">Currency: <strong>{{ u.currency_name }}</strong>
+                {% if u.active %}<span class="game-badge game-badge-good" style="margin-left: 6px;">Benefits active</span>
+                {% else %}<span class="game-badge game-badge-warn" style="margin-left: 6px;">Needs {{ status.min_members - u.member_count }} more member{{ '' if status.min_members - u.member_count == 1 else 's' }}</span>{% endif %}
+            </p>
+            <div class="stat-grid">
+                <div class="templatedivflex2left stat-card">
+                    <strong class="stat-label"><span class="material-icons-outlined">groups</span>Members</strong>
+                    <span class="stat-value">{{ u.member_count }}</span>
+                </div>
+                <div class="templatedivflex2left stat-card">
+                    <strong class="stat-label"><span class="material-icons-outlined">people</span>Total Population</strong>
+                    <span class="stat-value">{{ u.total_population | fmt }}</span>
+                </div>
+                <div class="templatedivflex2left stat-card">
+                    <strong class="stat-label"><span class="material-icons-outlined">person</span>Average Population</strong>
+                    <span class="stat-value">{{ u.avg_population | fmt }}</span>
+                </div>
+                <div class="templatedivflex2left stat-card">
+                    <strong class="stat-label"><span class="material-icons-outlined">map</span>Average Provinces</strong>
+                    <span class="stat-value">{{ u.avg_provinces }}</span>
+                </div>
+            </div>
+
+            <div class="templateoutertablediv" style="margin-top: 14px;">
+            <table class="templatetable templatetable2">
+                <tr>
+                    <th>Nation</th>
+                    <th>Population</th>
+                    <th>Provinces</th>
+                    <th></th>
+                </tr>
+                {% for m in u.members %}
+                <tr>
+                    <td><a href="/country/id={{ m.id }}">{{ m.username }}</a>{% if m.id == u.founder_id %} <span class="game-faint">(founder)</span>{% endif %}</td>
+                    <td>{{ m.population | fmt }}</td>
+                    <td>{{ m.provinces }}</td>
+                    <td>
+                        {% if u.is_founder and m.id != u.founder_id %}
+                        <form action="/currency_unions/{{ u.id }}/kick/{{ m.id }}" method="post" style="display:inline;" onsubmit="return confirm('Remove {{ m.username }} from the union?')">
+                            <button type="submit" class="game-btn game-btn-secondary">Remove</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            </div>
+
+            {% if u.is_founder %}
+            <h3 class="templatecontentheaderleft" style="margin-top: 18px;">Applications</h3>
+            {% if u.applications %}
+            <div class="templateoutertablediv">
+            <table class="templatetable templatetable2">
+                {% for a in u.applications %}
+                <tr>
+                    <td><a href="/country/id={{ a.id }}">{{ a.username }}</a></td>
+                    <td style="white-space: nowrap;">
+                        <form action="/currency_unions/{{ u.id }}/applications/{{ a.id }}/approve" method="post" style="display:inline;">
+                            <button type="submit" class="game-btn game-btn-primary">Approve</button>
+                        </form>
+                        <form action="/currency_unions/{{ u.id }}/applications/{{ a.id }}/decline" method="post" style="display:inline;">
+                            <button type="submit" class="game-btn game-btn-secondary">Decline</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            </div>
+            {% else %}
+            <p class="templatecontentpleft game-faint">No pending applications.</p>
+            {% endif %}
+            {% endif %}
+
+            <form action="/currency_unions/leave" method="post" style="margin-top: 16px;" onsubmit="return confirm('Leave the {{ u.name }}?')">
+                <button type="submit" class="game-btn game-btn-secondary">Leave union</button>
+            </form>
+        </div>
+        {% else %}
+        <div class="game-glass game-panel" style="margin-bottom: 18px;">
+            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">add_circle</span> Found a union</h2>
+            <form action="/currency_unions/create" method="post" class="game-row" style="flex-wrap: wrap; margin-top: 10px; gap: 10px;">
+                <input type="text" name="name" placeholder="Union name" maxlength="{{ status.name_max }}" class="loginsignupinput" style="flex: 1; min-width: 180px;" required>
+                <input type="text" name="currency_name" placeholder="Currency name (e.g. Euro)" maxlength="{{ status.currency_max }}" class="loginsignupinput" style="flex: 1; min-width: 160px;" required>
+                <button type="submit" class="game-btn game-btn-primary">Found union</button>
+            </form>
+        </div>
+        {% endif %}
+
+        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">public</span> All unions</h2>
+        {% if status.unions %}
+        <div class="templateoutertablediv" style="margin-bottom: 18px;">
+        <table class="templatetable templatetable2">
+            <tr>
+                <th>Union</th>
+                <th>Currency</th>
+                <th>Members</th>
+                <th>Avg. population</th>
+                <th></th>
+            </tr>
+            {% for un in status.unions %}
+            <tr>
+                <td>{{ un.name }}<br><small class="game-faint">founded by <a href="/country/id={{ un.founder_id }}">{{ un.founder_name }}</a></small></td>
+                <td>{{ un.currency_name }}</td>
+                <td>{{ un.members }}{% if not un.active %} <small class="game-faint">(inactive)</small>{% endif %}</td>
+                <td>{{ un.avg_population | fmt }}</td>
+                <td>
+                    {% if not status.mine %}
+                    {% if un.id in status.my_applications %}
+                    <form action="/currency_unions/{{ un.id }}/withdraw" method="post" style="display:inline;">
+                        <button type="submit" class="game-btn game-btn-secondary">Withdraw</button>
+                    </form>
+                    {% else %}
+                    <form action="/currency_unions/{{ un.id }}/apply" method="post" style="display:inline;">
+                        <button type="submit" class="game-btn game-btn-primary">Apply</button>
+                    </form>
+                    {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        </div>
+        {% else %}
+        <p class="templatecontentpleft game-faint">No currency unions yet. Found the first one.</p>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

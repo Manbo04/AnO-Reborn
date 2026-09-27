@@ -29,7 +29,14 @@ def compute_bond_cap(db, user_id):
     compute_loan_cap(), kept as an independent cap rather than sharing the
     national loan's, since these are separate systems."""
     population = get_total_population(db, user_id)
-    return int(population * variables.BOND_CAP_PER_POPULATION)
+    # Currency-union members get a larger cap (app_core/currency_unions).
+    from app_core.currency_unions.services import bond_cap_multiplier
+
+    return int(
+        population
+        * variables.BOND_CAP_PER_POPULATION
+        * bond_cap_multiplier(db, user_id)
+    )
 
 
 def default_cooldown_remaining(db, user_id):

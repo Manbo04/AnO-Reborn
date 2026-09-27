@@ -865,9 +865,28 @@ def country(cId):
         with get_request_cursor(read_only=True) as db:
             currency_status = get_currency_status(db, cId)
 
+    # Public: which currency union (if any) this nation belongs to.
+    currency_union = None
+    try:
+        from database import get_request_cursor
+        from app_core.currency_unions.repositories import get_membership
+
+        with get_request_cursor(read_only=True) as db:
+            membership = get_membership(db, cId)
+        if membership:
+            currency_union = {
+                "id": membership[0],
+                "name": membership[1],
+                "currency_name": membership[2],
+                "members": membership[4],
+            }
+    except Exception:
+        currency_union = None
+
     template = "country_v2.html" if is_theme_v2_enabled("country") else "country.html"
     return render_template(
         template,
+        currency_union=currency_union,
         can_invite_to_coalition=can_invite_to_coalition,
         bounty_total=bounty_total,
         relations=relations,

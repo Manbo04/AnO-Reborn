@@ -22,6 +22,7 @@ from app_core.treaties import bp as treaties_bp
 from app_core.loans import bp as loans_bp
 from app_core.bonds import bp as bonds_bp
 from app_core.coalition_bank import bp as coalition_bank_bp
+from app_core.currency_unions import bp as currency_unions_bp
 from app_core.currency import bp as currency_bp
 from app_core.world_affairs import bp as world_affairs_bp
 from app_core.bounties import bp as bounties_bp
@@ -31,7 +32,7 @@ import statistics
 import requests
 from app_core.trade_agreements import register_trade_agreement_routes
 import logging
-from variables import MILDICT, PROVINCE_UNIT_PRICES
+from variables import MILDICT, PROVINCE_UNIT_PRICES, TRADE_FEE_PERCENT, UNION_TRADE_FEE_PERCENT
 from psycopg2.extras import RealDictCursor
 from datetime import datetime as dt
 import string
@@ -682,6 +683,7 @@ def create_app():
     app.register_blueprint(loans_bp)
     app.register_blueprint(bonds_bp)
     app.register_blueprint(coalition_bank_bp)
+    app.register_blueprint(currency_unions_bp)
     app.register_blueprint(currency_bp)
     app.register_blueprint(world_affairs_bp)
     app.register_blueprint(bounties_bp)
@@ -789,6 +791,14 @@ def create_app():
             return {"rotating_ads": load_rotating_ads(get_db_cursor)}
         except Exception:
             return {"rotating_ads": {}}
+
+    @app.context_processor
+    def inject_trade_fees():
+        """Trade fee percents for market/trade forms (app_core/market/fees.py)."""
+        return {
+            "trade_fee_percent": TRADE_FEE_PERCENT,
+            "union_trade_fee_percent": UNION_TRADE_FEE_PERCENT,
+        }
 
     @app.context_processor
     def utility_processor():

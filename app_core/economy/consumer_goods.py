@@ -14,6 +14,7 @@ This is the single implementation shared by the hourly tax tick
 page (``countries.py``) and the province page status card, so the three
 can't drift apart the way the old duplicated nation-wide formulas did.
 """
+
 from __future__ import annotations
 
 import math

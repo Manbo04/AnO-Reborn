@@ -11,6 +11,7 @@ from .repositories import (
     unlock_trade, get_trade_by_id, get_username, insert_news, delete_trade_by_id, user_exists,
     decrement_gold, increment_gold, is_embargoed, add_embargo, remove_embargo, list_embargoes
 )
+from .fees import trade_fee, trade_fee_percent
 from .services import give_resource, report_trade_error
 from app_core.world_affairs.services import log_event
 
@@ -106,7 +107,8 @@ def buy_market_offer(offer_id):
             return error(500, "Your nation data could not be found")
 
         total_price = amount_wanted * price_for_one
-        market_fee = total_price * 5 // 100
+        # Transport fee (app_core/market/fees.py): buyer pays it on top.
+        market_fee = trade_fee(total_price, trade_fee_percent(db, cId, seller_id))
         total_cost_to_buyer = total_price + market_fee
 
         if total_cost_to_buyer > buyers_gold:
@@ -202,6 +204,11 @@ def sell_market_offer(offer_id):
             return error(400, "You don't have enough of that resource")
 
         total_price = price_for_one * amount_wanted
+        # Transport fee (app_core/market/fees.py): the buyer's escrow already
+        # holds total_price, so the seller is paid the price minus the fee and
+        # the fee stays out of circulation.
+        market_fee = trade_fee(total_price, trade_fee_percent(db, seller_id, buyer_id))
+        seller_proceeds = total_price - market_fee
 
         res = give_resource(seller_id, buyer_id, resource, amount_wanted, cursor=db)
         if res is not True:
@@ -209,7 +216,7 @@ def sell_market_offer(offer_id):
             report_trade_error(f"sell_market_offer: give_resource(seller -> buyer) failed: {res}")
             return error(400, str(res))
 
-        res = give_resource("bank", seller_id, "money", total_price, cursor=db)
+        res = give_resource("bank", seller_id, "money", seller_proceeds, cursor=db)
         if res is not True:
             rollback_db_cursor(db)
             report_trade_error(f"sell_market_offer: give_resource(bank -> seller money) failed: {res}")
@@ -468,9 +475,15 @@ def accept_trade(trade_id):
 
             lock_users(db, [cId, offerer])
 
+            # Transport fee (app_core/market/fees.py), paid by the accepting
+            # nation: on top of the price when it's buying, out of the
+            # proceeds when it's selling.
+            trade_total = amount * price
+            accept_fee = trade_fee(trade_total, trade_fee_percent(db, offeree, offerer))
+
             if trade_type == "sell":
                 buyer_gold = get_user_gold_for_update(db, offeree)
-                if buyer_gold is None or buyer_gold < (amount * price):
+                if buyer_gold is None or buyer_gold < (trade_total + accept_fee):
                     return error(400, "Buyer doesn't have enough money")
 
                 try:
@@ -489,7 +502,7 @@ def accept_trade(trade_id):
                         return error(400, gr_ret or (gr_ret2 or "Trade acceptance failed"))
 
                 try:
-                    if not decrement_gold(db, offeree, amount * price):
+                    if not decrement_gold(db, offeree, trade_total + accept_fee):
                         return error(400, "Buyer doesn't have enough money")
                     if not increment_gold(db, offerer, amount * price):
                         raise Exception("Failed to credit seller")
@@ -507,7 +520,7 @@ def accept_trade(trade_id):
                     return error(400, gr_ret or "Trade acceptance failed")
 
                 try:
-                    if not increment_gold(db, offeree, amount * price):
+                    if not increment_gold(db, offeree, trade_total - accept_fee):
                         raise Exception("Failed to credit seller")
                 except Exception as exc:
                     report_trade_error("accept_trade: transactional buy failed", exc=exc)

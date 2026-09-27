@@ -396,6 +396,9 @@
                         <a class="{{ 'active' if request.path.startswith('/bonds') else '' }}" href="/bonds"><span class="material-icons-outlined">
                             request_quote
                         </span>Bonds</a>
+                        <a class="{{ 'active' if request.path.startswith('/currency_unions') else '' }}" href="/currency_unions"><span class="material-icons-outlined">
+                            currency_exchange
+                        </span>Currency Unions</a>
                         <a class="{{ 'active' if request.path.startswith('/war') or request.path.startswith('/declare_war') or request.path.startswith('/find_targets') or request.path.startswith('/defense') or request.path.startswith('/peace_offers') or request.path.startswith('/intelligence') else '' }}" href="/wars"><span class="material-icons-outlined">
                             military_tech
                         </span>Wars<!--<span class="menubaranotification">1</span>--></a>
@@ -452,6 +455,9 @@
         <a class="menubara" href="/bonds"><span class="material-icons-outlined">
                 request_quote
             </span>Bonds</a>
+        <a class="menubara" href="/currency_unions"><span class="material-icons-outlined">
+                currency_exchange
+            </span>Currency Unions</a>
         <a class="menubara" href="/wars"><span class="material-icons-outlined">
                 military_tech
             </span>Wars<!--<span class="menubaranotification">1</span>--></a>

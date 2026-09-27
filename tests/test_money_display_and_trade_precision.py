@@ -59,6 +59,11 @@ def test_sell_trade_credits_exact_amount(monkeypatch):
     assert state["resources"][seller]["copper"] == 124
     assert state["resources"][buyer]["copper"] == 124
 
-    # Money transferred: buyer gold decreased by 100*100, seller increased same
-    assert state["stats"][buyer]["gold"] == 90000
+    # Money transferred: seller gets exactly 100*100; the accepting buyer also
+    # pays the transport fee (variables.TRADE_FEE_PERCENT) on top, which
+    # leaves the economy (app_core/market/fees.py).
+    import variables
+
+    fee = 100 * 100 * variables.TRADE_FEE_PERCENT // 100
+    assert state["stats"][buyer]["gold"] == 100000 - 10000 - fee
     assert state["stats"][seller]["gold"] == 10000
