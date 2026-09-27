@@ -108,6 +108,9 @@ UNIT_LEGACY_IMAGES: dict[str, str] = {
     "cruisers": "cruiser.jpg",
     "destroyers": "destroyer.jpg",
     "spies": "spy.jpg",
+    # Public domain (US DoD): CSpOC staff monitor workstations, Wikimedia
+    # Commons file 9237945.
+    "counter_intel_agents": "counter_intel.jpg",
     "icbms": "icbm.jpg",
     "nukes": "nuke.jpg",
     "aircraft_carriers": "aircraft_carrier.jpg",

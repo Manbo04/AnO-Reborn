@@ -10,6 +10,31 @@
     </div>
 
     <div class="templatedivcontent">
+        <h2 class="templatecontentheaderleft">Operation Cooldowns</h2>
+        <div class="templateoutertablediv">
+            <table class="templatetable">
+                <tr>
+                    <th>Operation</th>
+                    <th>Status</th>
+                    <th>Base Cooldown</th>
+                </tr>
+                {% for status in op_status %}
+                <tr>
+                    <td>{{ status.label }}</td>
+                    <td>
+                        {% if status.ready %}
+                        <span style="color: #4ade80;">Ready</span>
+                        {% else %}
+                        <span style="color: #f87171;">{{ status.remaining }} remaining</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ status.cooldown }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <br>
         <!-- if you have up-to-date intelligence -->
         {% if info %}
             {% for user, data in info.items() %}

@@ -309,3 +309,52 @@ def test_buy_apaches_does_not_block_buying_fighters():
             )
 
         db.connection.commit()
+
+def test_spy_capacity_limits():
+    """Verify spy and counter-intel limits per admin building."""
+    TEST_UID = 16
+    import uuid
+    transient_province = 3000000 + (uuid.uuid4().int % 1000000)
+
+    from app_core.military.services import compute_display_limits, SPIES_PER_ADMIN_BUILDING, COUNTER_INTEL_PER_ADMIN_BUILDING
+
+    with get_db_cursor() as db:
+        # Save old values
+        db.execute("SELECT * FROM military WHERE id=%s", (TEST_UID,))
+        orig_military = db.fetchone()
+
+        db.execute("INSERT INTO military (id) VALUES (%s) ON CONFLICT DO NOTHING", (TEST_UID,))
+        db.execute("UPDATE military SET spies=5, counter_intel_agents=2 WHERE id=%s", (TEST_UID,))
+
+        # Add transient infra
+        db.execute(
+            "INSERT INTO provinces (id, userId, provincename) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
+            (transient_province, TEST_UID, "TestProvinceSpy")
+        )
+        db.execute(
+            "INSERT INTO proInfra (id, admin_buildings) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+            (transient_province, 2)
+        )
+        db.connection.commit()
+
+        # Pre-calculate what it should be:
+        # total admin buildings before this transient added, plus 2
+        # So we can just fetch the current count directly from limits computation
+        limits = compute_display_limits(TEST_UID, db)
+        
+        # We can't know exact total admin buildings because test DB has other rows, 
+        # but we know it's >= 2. Let's fetch building count directly:
+        db.execute("SELECT COALESCE(SUM(admin_buildings), 0) FROM proInfra pi JOIN provinces p ON p.id = pi.id WHERE p.userId = %s", (TEST_UID,))
+        admin_bldgs = db.fetchone()[0]
+
+        assert limits["spies"] == max(0, admin_bldgs * SPIES_PER_ADMIN_BUILDING - 5)
+        assert limits["counter_intel_agents"] == max(0, admin_bldgs * COUNTER_INTEL_PER_ADMIN_BUILDING - 2)
+
+        # Cleanup
+        db.execute("DELETE FROM proInfra WHERE id=%s", (transient_province,))
+        db.execute("DELETE FROM provinces WHERE id=%s", (transient_province,))
+        
+        if orig_military:
+            db.execute("UPDATE military SET spies=%s, counter_intel_agents=%s WHERE id=%s", (orig_military[9], orig_military[12] if len(orig_military) > 12 else 0, TEST_UID))
+        
+        db.connection.commit()

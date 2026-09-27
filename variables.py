@@ -673,6 +673,14 @@ MILDICT = {
         "resources": {"rations": 100, "components": 2000},
         "manpower": 0,
     },
+    # Counter-intelligence (2026-09-27, migration 0085): internal security
+    # force that intercepts incoming spy ops. Resource costs mirror
+    # unit_dictionary.production_cost_* (which is what's actually debited).
+    "counter_intel_agents": {
+        "price": 30000,
+        "resources": {"rations": 200, "components": 1500},
+        "manpower": 1,
+    },
     "icbms": {
         "price": 16000000,
         "resources": {"aluminium": 80000, "components": 50000, "gasoline": 15000},

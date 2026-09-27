@@ -91,6 +91,7 @@ MIGRATION_FILES = [
     "0081_add_war_last_attack_resolved_at.sql",
     "0082_coalition_bank_trades_and_bond_insurance.sql",
     "0083_add_currency_unions.sql",
+    "0085_spy_op_types_and_counter_intel.sql",
 ]
 
 
