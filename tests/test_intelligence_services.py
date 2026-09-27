@@ -393,3 +393,37 @@ def test_resolve_spy_operation_not_intercepted_by_counter_intel(monkeypatch):
     assert ok is True
     # Should not be intercepted
     assert insert_calls == [False]
+
+
+def test_resolve_spy_operation_strategic_sabotage_destroys_one_unit(monkeypatch):
+    # Regression: the destroy branch for sabotage_strategic used to sit in the
+    # object_list selection (unreachable, duplicate elif), so the op fell into
+    # the reveal branch and destroyed nothing.
+    monkeypatch.setattr(services, "get_last_spy_op_times", lambda db, cId: {})
+    monkeypatch.setattr(services, "has_active_embassy", lambda db, cId, eId: False)
+    monkeypatch.setattr(services, "get_counter_intel_agents", lambda db, eId: 0)
+    monkeypatch.setattr(services, "get_username", lambda db, uid: f"n{uid}")
+    quantities = {(1, "spies"): 100, (2, "spies"): 1, (2, "nukes"): 4}
+    monkeypatch.setattr(
+        services, "get_unit_quantity", lambda db, uid, unit: quantities.get((uid, unit), 0)
+    )
+    monkeypatch.setattr(services, "insert_spy_operation", lambda db, cId, eId, ts, spy_type, intercepted=False: 5)
+    monkeypatch.setattr(services.rand, "uniform", lambda a, b: 0.5)
+    monkeypatch.setattr(services.rand, "choice", lambda seq: seq[0])
+    monkeypatch.setattr(services, "insert_news", lambda db, uid, msg: None)
+    monkeypatch.setattr(services, "log_event", lambda *a, **k: None)
+    monkeypatch.setattr(
+        services,
+        "get_revealed_values",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError("strategic sabotage must not reveal")),
+    )
+    decrease_calls = []
+    monkeypatch.setattr(
+        services, "decrease_unit_quantity", lambda db, uid, unit, amt: decrease_calls.append((uid, unit, amt))
+    )
+
+    ok, code, msg, entry = services.resolve_spy_operation(QueuedCursor(), 1, 2, 100, "sabotage_strategic")
+
+    assert (ok, code) == (True, 200)
+    assert (2, "nukes", 1) in decrease_calls
+    assert entry.get("nukes destroyed") == 1

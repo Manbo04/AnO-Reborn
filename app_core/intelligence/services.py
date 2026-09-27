@@ -303,33 +303,6 @@ def resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=False):
         object_list = variables.RESOURCES
     elif spy_type == "sabotage_strategic":
         object_list = list(STRATEGIC_SABOTAGE_TARGETS)
-    elif spy_type == "sabotage_strategic":
-        # Only among the strategic unit types the spies got to (won the
-        # contest for) and the target actually has; destroys at most
-        # STRATEGIC_SABOTAGE_MAX_DESTROYED of a single type.
-        candidates = [
-            (unit, qty) for unit in uncovered_objects
-            for qty in [get_unit_quantity(db, eId, unit)] if qty > 0
-        ]
-        if candidates:
-            unit, qty = rand.choice(candidates)
-            destroyed = min(qty, STRATEGIC_SABOTAGE_MAX_DESTROYED)
-            decrease_unit_quantity(db, eId, unit, destroyed)
-            label = unit.replace("_", " ")
-            news_message = (
-                f"Your nation was sabotaged by {attacker_name}! "
-                f"{destroyed} of your {label} were destroyed."
-            )
-            spy_entry = {f"{label} destroyed": destroyed}
-            if not keep_private:
-                log_event(
-                    db, "sabotage",
-                    f"{attacker_name} sabotaged {target_name}'s strategic arsenal, "
-                    f"destroying {destroyed} {label}.",
-                    actor_id=cId, target_id=eId,
-                )
-        else:
-            spy_entry = {"message": "Your spies couldn't get to any missiles or nukes."}
     elif spy_type == "assassinate_spies":
         object_list = ["spies"]
     elif spy_type == "units":
@@ -388,6 +361,33 @@ def resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=False):
                 )
         else:
             spy_entry = {"message": "Your spies attempted sabotage but couldn't inflict any damage."}
+    elif spy_type == "sabotage_strategic":
+        # Only among the strategic unit types the spies got to (won the
+        # contest for) and the target actually has; destroys at most
+        # STRATEGIC_SABOTAGE_MAX_DESTROYED of a single type.
+        candidates = [
+            (unit, qty) for unit in uncovered_objects
+            for qty in [get_unit_quantity(db, eId, unit)] if qty > 0
+        ]
+        if candidates:
+            unit, qty = rand.choice(candidates)
+            destroyed = min(qty, STRATEGIC_SABOTAGE_MAX_DESTROYED)
+            decrease_unit_quantity(db, eId, unit, destroyed)
+            label = unit.replace("_", " ")
+            news_message = (
+                f"Your nation was sabotaged by {attacker_name}! "
+                f"{destroyed} of your {label} were destroyed."
+            )
+            spy_entry = {f"{label} destroyed": destroyed}
+            if not keep_private:
+                log_event(
+                    db, "sabotage",
+                    f"{attacker_name} sabotaged {target_name}'s strategic arsenal, "
+                    f"destroying {destroyed} {label}.",
+                    actor_id=cId, target_id=eId,
+                )
+        else:
+            spy_entry = {"message": "Your spies couldn't get to any missiles or nukes."}
     elif spy_type == "assassinate_spies":
         if uncovered.get("spies"):
             enemy_spy_count = get_unit_quantity(db, eId, "spies")
