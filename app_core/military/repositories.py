@@ -13,6 +13,7 @@ ALL_UNITS = [
     "submarines",
     "spies",
     "counter_intel_agents",
+    "sam_batteries",
     "icbms",
     "nukes",
     "aircraft_carriers",

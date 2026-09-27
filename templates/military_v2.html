@@ -934,6 +934,51 @@ body.game-page-v2 .page-military .purchasemilitarydiv {
             </div>
             <div class="menudiv">
 
+                <h2 class="templatecontentheaderleft">SAM Batteries</h2>
+
+                <div class="templatedivflex2 menuflex warflexparentcolors">
+                    <div class="templatedivflex2left">
+
+                        <h3 class="templatecontentheadercenter">You have {{ units["sam_batteries"]["quantity"] }} SAM Batteries</h3>
+
+                        <div class="combat-stats-box">
+                            {% if units["sam_batteries"]["maintenance_per_tick"] > 0 %}
+                            <p><strong>Maintenance:</strong> {{ units["sam_batteries"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["sam_batteries"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["sam_batteries"]["maintenance_resource"] }} per tick</p>
+                            {% endif %}
+                        </div>
+
+                        <p class="templatecontentpleft">Surface-to-air missile batteries. They don't fight in normal battles, but they shoot down part of every incoming kamikaze drone and cruise missile strike before it hits. More batteries means more interceptions, with diminishing returns (never 100%). Each army base supports 20 batteries.</p>
+
+                        <ul>{{ "sam_batteries" | milres }}
+                        </ul>
+                        <form action="/military" method="POST">
+                            <div class="purchasemilitarydiv">
+                                <input class="loginsignupinput" autocomplete="off" name="sam_batteries" type="number" placeholder="Amount" required />
+
+                                <div class="templatedivflex2 divflex2center">
+                                    <div class="templatedivflex2left flexchildvanilla">
+
+                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/sam_batteries') }}
+
+                                    </div>
+                                    <div class="templatedivflex2left flexchildvanilla">
+
+                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/sam_batteries') }}
+
+                                    </div>
+                                </div>
+                                <span class="limit-text">You can purchase {{ limits["sam_batteries"] }} more SAM Batteries</span>
+                            </div>
+                        </form>
+
+                    </div>
+                    <div class="templatedivflex2left">
+                        <img alt="Surface-to-air missile battery" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'sam_batteries')) }}?v=2" loading="lazy" />
+                    </div>
+                </div>
+            </div>
+            <div class="menudiv">
+
                 <h2 class="templatecontentheaderleft">Ballistic Missiles</h2>
 
                 <div class="templatedivflex2 menuflex warflexparentcolors">

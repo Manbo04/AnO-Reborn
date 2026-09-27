@@ -1095,13 +1095,16 @@ class Military(Nation):
 
         # Special
         special_units = Military.get_special(cId)
-        from app_core.military.services import SPIES_PER_ADMIN_BUILDING, COUNTER_INTEL_PER_ADMIN_BUILDING
+        from app_core.military.services import SPIES_PER_ADMIN_BUILDING, COUNTER_INTEL_PER_ADMIN_BUILDING, SAM_BATTERIES_PER_ARMY_BASE
 
         spies = max(
             0, admin_buildings * SPIES_PER_ADMIN_BUILDING - special_units["spies"]
         )
         counter_intel_agents = max(
             0, admin_buildings * COUNTER_INTEL_PER_ADMIN_BUILDING - special_units.get("counter_intel_agents", 0)
+        )
+        sam_batteries = max(
+            0, army_bases * SAM_BATTERIES_PER_ARMY_BASE - special_units.get("sam_batteries", 0)
         )
         icbms = max(0, silos + 1 - special_units["icbms"])
         nukes = max(0, silos - special_units["nukes"])
@@ -1122,6 +1125,7 @@ class Military(Nation):
             "submarines": submarines,
             "spies": spies,
             "counter_intel_agents": counter_intel_agents,
+            "sam_batteries": sam_batteries,
             "icbms": icbms,
             "nukes": nukes,
         }
@@ -1139,13 +1143,15 @@ class Military(Nation):
                        ON um.unit_id = ud.unit_id AND um.user_id = %s
                    WHERE ud.is_active = TRUE
                      AND LOWER(ud.name) = ANY(%s)""",
-                (cId, ["spies", "icbms", "nukes"]),
+                (cId, ["spies", "counter_intel_agents", "sam_batteries", "icbms", "nukes"]),
             )
             rows = db.fetchall()
             result = {row["name"]: int(row["quantity"]) for row in rows}
             result.setdefault("spies", 0)
             result.setdefault("icbms", 0)
             result.setdefault("nukes", 0)
+            result.setdefault("counter_intel_agents", 0)
+            result.setdefault("sam_batteries", 0)
             return result
 
     # Check and set default_defense in stats table

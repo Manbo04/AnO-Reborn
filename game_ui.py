@@ -111,6 +111,7 @@ UNIT_LEGACY_IMAGES: dict[str, str] = {
     # Public domain (US DoD): CSpOC staff monitor workstations, Wikimedia
     # Commons file 9237945.
     "counter_intel_agents": "counter_intel.jpg",
+    "sam_batteries": "sam_batteries.jpg",
     "icbms": "icbm.jpg",
     "nukes": "nuke.jpg",
     "aircraft_carriers": "aircraft_carrier.jpg",
