@@ -63,7 +63,7 @@ def assembly():
         # --- Assembly Data ---
         # Fetch active sanctions/effects
         db.execute('''
-            SELECT ae.*, u.name as target_name
+            SELECT ae.*, u.username as target_name
             FROM assembly_effects ae
             LEFT JOIN users u ON ae.target_nation_id = u.id
             WHERE ae.active = TRUE AND (ae.expires_at IS NULL OR ae.expires_at > NOW())
