@@ -661,180 +661,30 @@ def record_war_event(
 
 
 def get_influence(country_id, db=None):
-    # Check cache first
+    """Influence score for one nation (see influence_formula for the blend)."""
     cache_key = f"influence_{country_id}"
     cached = query_cache.get(cache_key)
     if cached is not None:
         return cached
 
-    cId = country_id
+    from influence_formula import influence_subquery_sql
 
     with reuse_or_new_cursor(db) as db:
-        # OPTIMIZED: Single query with filtered subqueries
-        # Each subquery filters to the target user to avoid full-table scans
         db.execute(
-            """
-            SELECT
-                COALESCE(m.soldiers, 0) as soldiers,
-                COALESCE(m.artillery, 0) as artillery,
-                COALESCE(m.tanks, 0) as tanks,
-                COALESCE(m.fighters, 0) as fighters,
-                COALESCE(m.bombers, 0) as bombers,
-                COALESCE(m.apaches, 0) as apaches,
-                COALESCE(m.submarines, 0) as submarines,
-                COALESCE(m.destroyers, 0) as destroyers,
-                COALESCE(m.cruisers, 0) as cruisers,
-                COALESCE(m.ICBMs, 0) as icbms,
-                COALESCE(m.nukes, 0) as nukes,
-                COALESCE(m.spies, 0) as spies,
-                COALESCE(s.gold, 0) as gold,
-                COALESCE(prov.city_count, 0) as city_count,
-                COALESCE(prov.province_count, 0) as province_count,
-                COALESCE(prov.total_land, 0) as total_land,
-                COALESCE(r.total_resources, 0) as total_resources
-            FROM users u
-            LEFT JOIN (
-                SELECT
-                    um.user_id,
-                    SUM(CASE WHEN ud.name = 'soldiers'
-                        THEN um.quantity ELSE 0 END) as soldiers,
-                    SUM(CASE WHEN ud.name = 'artillery'
-                        THEN um.quantity ELSE 0 END) as artillery,
-                    SUM(CASE WHEN ud.name = 'tanks'
-                        THEN um.quantity ELSE 0 END) as tanks,
-                    SUM(CASE WHEN ud.name = 'fighters'
-                        THEN um.quantity ELSE 0 END) as fighters,
-                    SUM(CASE WHEN ud.name = 'bombers'
-                        THEN um.quantity ELSE 0 END) as bombers,
-                    SUM(CASE WHEN ud.name = 'apaches'
-                        THEN um.quantity ELSE 0 END) as apaches,
-                    SUM(CASE WHEN ud.name = 'submarines'
-                        THEN um.quantity ELSE 0 END) as submarines,
-                    SUM(CASE WHEN ud.name = 'destroyers'
-                        THEN um.quantity ELSE 0 END) as destroyers,
-                    SUM(CASE WHEN ud.name = 'cruisers'
-                        THEN um.quantity ELSE 0 END) as cruisers,
-                    SUM(CASE WHEN ud.name = 'icbms'
-                        THEN um.quantity ELSE 0 END) as icbms,
-                    SUM(CASE WHEN ud.name = 'nukes'
-                        THEN um.quantity ELSE 0 END) as nukes,
-                    SUM(CASE WHEN ud.name = 'spies'
-                        THEN um.quantity ELSE 0 END) as spies
-                FROM user_military um
-                JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
-                WHERE um.user_id = %s
-                GROUP BY um.user_id
-            ) m ON u.id = m.user_id
-            LEFT JOIN stats s ON u.id = s.id
-            LEFT JOIN (
-                SELECT userId,
-                       SUM(citycount) as city_count,
-                       COUNT(id) as province_count,
-                       SUM(land) as total_land
-                FROM provinces
-                WHERE userId = %s
-                GROUP BY userId
-            ) prov ON u.id = prov.userId
-            LEFT JOIN (
-                SELECT user_id, SUM(quantity) as total_resources
-                FROM user_economy
-                WHERE user_id = %s
-                GROUP BY user_id
-            ) r ON u.id = r.user_id
-            WHERE u.id = %s
-            """,
-            (cId, cId, cId, cId),
+            "SELECT inf.influence FROM "
+            + influence_subquery_sql("SELECT %s::int")
+            + " inf",
+            (int(country_id),),
         )
-        result = db.fetchone()
+        row = db.fetchone()
 
-        if not result:
-            query_cache.set(cache_key, 0)
-            return 0
+    if not row:
+        influence = 0
+    else:
+        value = row["influence"] if isinstance(row, dict) else row[0]
+        influence = int(value or 0)
 
-        if isinstance(result, dict):
-            soldiers = result.get("soldiers", 0)
-            artillery = result.get("artillery", 0)
-            tanks = result.get("tanks", 0)
-            fighters = result.get("fighters", 0)
-            bombers = result.get("bombers", 0)
-            apaches = result.get("apaches", 0)
-            submarines = result.get("submarines", 0)
-            destroyers = result.get("destroyers", 0)
-            cruisers = result.get("cruisers", 0)
-            icbms = result.get("icbms", 0)
-            nukes = result.get("nukes", 0)
-            spies = result.get("spies", 0)
-            gold = result.get("gold", 0)
-            city_count = result.get("city_count", 0)
-            province_count = result.get("province_count", 0)
-            total_land = result.get("total_land", 0)
-            total_resources = result.get("total_resources", 0)
-        else:
-            (
-                soldiers,
-                artillery,
-                tanks,
-                fighters,
-                bombers,
-                apaches,
-                submarines,
-                destroyers,
-                cruisers,
-                icbms,
-                nukes,
-                spies,
-                gold,
-                city_count,
-                province_count,
-                total_land,
-                total_resources,
-            ) = result
-
-        soldiers = float(soldiers or 0)
-        artillery = float(artillery or 0)
-        tanks = float(tanks or 0)
-        fighters = float(fighters or 0)
-        bombers = float(bombers or 0)
-        apaches = float(apaches or 0)
-        submarines = float(submarines or 0)
-        destroyers = float(destroyers or 0)
-        cruisers = float(cruisers or 0)
-        icbms = float(icbms or 0)
-        nukes = float(nukes or 0)
-        spies = float(spies or 0)
-        gold = float(gold or 0)
-        city_count = float(city_count or 0)
-        province_count = float(province_count or 0)
-        total_land = float(total_land or 0)
-        total_resources = float(total_resources or 0)
-
-    from influence_formula import compute_influence
-
-    influence = compute_influence(
-        {
-            "provinces": province_count,
-            "soldiers": soldiers,
-            "artillery": artillery,
-            "tanks": tanks,
-            "fighters": fighters,
-            "bombers": bombers,
-            "apaches": apaches,
-            "submarines": submarines,
-            "destroyers": destroyers,
-            "cruisers": cruisers,
-            "icbms": icbms,
-            "nukes": nukes,
-            "spies": spies,
-            "cities": city_count,
-            "land": total_land,
-            "resources": total_resources,
-            "gold": gold,
-        }
-    )
-
-    # Cache the result
     query_cache.set(cache_key, influence)
-
     return influence
 
 
@@ -844,17 +694,15 @@ def get_bulk_influence(user_ids):
     Returns a dict mapping user_id -> influence score.
     Much faster than calling get_influence() in a loop.
     """
-    from influence_formula import compute_influence
+    from influence_formula import influence_subquery_sql
 
     if not user_ids:
         return {}
 
-    # Check cache first for all users
     results = {}
     uncached_ids = []
     for uid in user_ids:
-        cache_key = f"influence_{uid}"
-        cached = query_cache.get(cache_key)
+        cached = query_cache.get(f"influence_{uid}")
         if cached is not None:
             results[uid] = cached
         else:
@@ -864,145 +712,22 @@ def get_bulk_influence(user_ids):
         return results
 
     with get_request_cursor() as db:
-        # Bulk query for all uncached users at once
         db.execute(
-            """
-            SELECT
-                u.id,
-                COALESCE(m.soldiers, 0) as soldiers,
-                COALESCE(m.artillery, 0) as artillery,
-                COALESCE(m.tanks, 0) as tanks,
-                COALESCE(m.fighters, 0) as fighters,
-                COALESCE(m.bombers, 0) as bombers,
-                COALESCE(m.apaches, 0) as apaches,
-                COALESCE(m.submarines, 0) as submarines,
-                COALESCE(m.destroyers, 0) as destroyers,
-                COALESCE(m.cruisers, 0) as cruisers,
-                COALESCE(m.ICBMs, 0) as icbms,
-                COALESCE(m.nukes, 0) as nukes,
-                COALESCE(m.spies, 0) as spies,
-                COALESCE(s.gold, 0) as gold,
-                COALESCE(prov.city_count, 0) as city_count,
-                COALESCE(prov.province_count, 0) as province_count,
-                COALESCE(prov.total_land, 0) as total_land,
-                COALESCE(r.total_resources, 0) as total_resources
-            FROM users u
-            LEFT JOIN (
-                SELECT
-                    um.user_id,
-                    SUM(CASE WHEN ud.name = 'soldiers'
-                        THEN um.quantity ELSE 0 END) as soldiers,
-                    SUM(CASE WHEN ud.name = 'artillery'
-                        THEN um.quantity ELSE 0 END) as artillery,
-                    SUM(CASE WHEN ud.name = 'tanks'
-                        THEN um.quantity ELSE 0 END) as tanks,
-                    SUM(CASE WHEN ud.name = 'fighters'
-                        THEN um.quantity ELSE 0 END) as fighters,
-                    SUM(CASE WHEN ud.name = 'bombers'
-                        THEN um.quantity ELSE 0 END) as bombers,
-                    SUM(CASE WHEN ud.name = 'apaches'
-                        THEN um.quantity ELSE 0 END) as apaches,
-                    SUM(CASE WHEN ud.name = 'submarines'
-                        THEN um.quantity ELSE 0 END) as submarines,
-                    SUM(CASE WHEN ud.name = 'destroyers'
-                        THEN um.quantity ELSE 0 END) as destroyers,
-                    SUM(CASE WHEN ud.name = 'cruisers'
-                        THEN um.quantity ELSE 0 END) as cruisers,
-                    SUM(CASE WHEN ud.name = 'icbms'
-                        THEN um.quantity ELSE 0 END) as icbms,
-                    SUM(CASE WHEN ud.name = 'nukes'
-                        THEN um.quantity ELSE 0 END) as nukes,
-                    SUM(CASE WHEN ud.name = 'spies'
-                        THEN um.quantity ELSE 0 END) as spies
-                FROM user_military um
-                JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
-                GROUP BY um.user_id
-            ) m ON u.id = m.user_id
-            LEFT JOIN stats s ON u.id = s.id
-            LEFT JOIN (
-                SELECT userId,
-                       SUM(citycount) as city_count,
-                       COUNT(id) as province_count,
-                       SUM(land) as total_land
-                FROM provinces
-                GROUP BY userId
-            ) prov ON u.id = prov.userId
-            LEFT JOIN (
-                SELECT user_id, SUM(quantity) as total_resources
-                FROM user_economy
-                GROUP BY user_id
-            ) r ON u.id = r.user_id
-            WHERE u.id = ANY(%s)
-            """,
-            (uncached_ids,),
+            "SELECT inf.user_id, inf.influence FROM "
+            + influence_subquery_sql("SELECT unnest(%s::int[])")
+            + " inf",
+            (list(uncached_ids),),
         )
         rows = db.fetchall()
 
-        for row in rows:
-            (
-                user_id,
-                soldiers,
-                artillery,
-                tanks,
-                fighters,
-                bombers,
-                apaches,
-                submarines,
-                destroyers,
-                cruisers,
-                icbms,
-                nukes,
-                spies,
-                gold,
-                city_count,
-                province_count,
-                total_land,
-                total_resources,
-            ) = row
-
-            soldiers = float(soldiers or 0)
-            artillery = float(artillery or 0)
-            tanks = float(tanks or 0)
-            fighters = float(fighters or 0)
-            bombers = float(bombers or 0)
-            apaches = float(apaches or 0)
-            submarines = float(submarines or 0)
-            destroyers = float(destroyers or 0)
-            cruisers = float(cruisers or 0)
-            icbms = float(icbms or 0)
-            nukes = float(nukes or 0)
-            spies = float(spies or 0)
-            gold = float(gold or 0)
-            city_count = float(city_count or 0)
-            province_count = float(province_count or 0)
-            total_land = float(total_land or 0)
-            total_resources = float(total_resources or 0)
-
-            # Calculate influence
-            influence = compute_influence(
-                {
-                    "provinces": province_count,
-                    "soldiers": soldiers,
-                    "artillery": artillery,
-                    "tanks": tanks,
-                    "fighters": fighters,
-                    "bombers": bombers,
-                    "apaches": apaches,
-                    "submarines": submarines,
-                    "destroyers": destroyers,
-                    "cruisers": cruisers,
-                    "icbms": icbms,
-                    "nukes": nukes,
-                    "spies": spies,
-                    "cities": city_count,
-                    "land": total_land,
-                    "resources": total_resources,
-                    "gold": gold,
-                }
-            )
-
-            results[user_id] = influence
-            query_cache.set(f"influence_{user_id}", influence)
+    for row in rows:
+        if isinstance(row, dict):
+            user_id, value = row["user_id"], row["influence"]
+        else:
+            user_id, value = row[0], row[1]
+        influence = int(value or 0)
+        results[user_id] = influence
+        query_cache.set(f"influence_{user_id}", influence)
 
     return results
 

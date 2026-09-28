@@ -2741,29 +2741,16 @@
         </form>
         {% endif %}
 
-        {% if (nuke_count and nuke_count > 0) or (icbm_count and icbm_count > 0) %}
-        <form action="/nuclear_strike" method="POST" onsubmit="return confirm('WARNING: Launching a nuclear strike will wipe out a massive portion of the target\'s population and infrastructure, but will reduce your own happiness to 0 and incur a massive diplomatic penalty. Are you absolutely sure?');">
+        {% if nuke_count and nuke_count > 0 %}
+        <form action="/nuclear_strike" method="POST">
             <input type="hidden" name="target_id" value="{{ cId }}">
+            <input type="hidden" name="weapon_type" value="nuke">
             <h2 class="templatecontentheaderleft " style="color: #ff4444;">Nuclear Strike</h2>
             <div class="infodiv">
-                <div class="templatedivflex2 menuflex">
-                    <div class="templatedivflex2left">
-                        <label for="weapon_type">Weapon</label>
-                        <select class="templateselect" name="weapon_type">
-                            {% if icbm_count and icbm_count > 0 %}
-                            <option value="icbm" class="templateoption">ICBM ({{ icbm_count }} available) - Ignore Distance</option>
-                            {% endif %}
-                            {% if nuke_count and nuke_count > 0 %}
-                            <option value="nuke" class="templateoption">Nuke ({{ nuke_count }} available) - Requires War</option>
-                            {% endif %}
-                        </select>
-                    </div>
-                    <div class="templatedivflex2left" style="display: flex; align-items: flex-end;">
-                        <button type="submit" class="templatedivbutton templatecenteredbutton" style="background-color: #ff4444; border-color: #cc0000; color: white;">
-                            <span class="material-icons-outlined">warning</span> LAUNCH
-                        </button>
-                    </div>
-                </div>
+                <p>You have {{ nuke_count }} nuke{{ 's' if nuke_count != 1 else '' }}. A nuke hits one province you pick. You'll see the expected damage and the influence cost before anything launches.</p>
+                <button type="submit" class="templatedivbutton templatecenteredbutton" style="background-color: #ff4444; border-color: #cc0000; color: white;">
+                    <span class="material-icons-outlined">warning</span> Plan nuclear strike
+                </button>
             </div>
         </form>
         {% endif %}

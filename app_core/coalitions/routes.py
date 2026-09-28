@@ -39,7 +39,7 @@ import datetime  # noqa: E402
 from database import cache_response, rollback_db_cursor, get_request_cursor, invalidate_view_cache  # noqa: E402
 from database import get_coalition_members_table  # noqa: E402
 from typing import Optional  # noqa: E402
-from influence_formula import influence_sql_expr, STANDARD_INFLUENCE_ALIASES  # noqa: E402
+from influence_formula import influence_subquery_sql  # noqa: E402
 
 
 RECENT_LOG_LIMIT = 50
@@ -928,6 +928,7 @@ def coalitions():
         # Main query with pagination - all filtering/sorting in SQL
         # flag_data is fetched here so templates can inline it as a data URI
         # and avoid 22 separate /flag/coalition/X sub-requests per page.
+        member_influence_sql = influence_subquery_sql(f"SELECT userid FROM {_members_tbl()}")
         main_query_flag = f"""
             SELECT
                 cn.id AS coalition_id,
@@ -941,48 +942,8 @@ def coalitions():
             FROM colNames cn
             LEFT JOIN {_members_tbl()} cm ON cn.id = cm.colid
             LEFT JOIN (
-                SELECT
-                    u.id AS userid,
-                    {influence_sql_expr(STANDARD_INFLUENCE_ALIASES)} AS influence
-                FROM users u
-                LEFT JOIN stats s ON s.id = u.id
-                LEFT JOIN (
-                    SELECT
-                        userid AS user_id,
-                        COUNT(id) AS provinces_count,
-                        COALESCE(SUM(citycount), 0) AS city_count,
-                        COALESCE(SUM(land), 0) AS total_land
-                    FROM provinces
-                    WHERE userid IN (SELECT userid FROM {_members_tbl()})
-                    GROUP BY userid
-                ) p ON p.user_id = u.id
-                LEFT JOIN (
-                    SELECT
-                        um.user_id,
-                        SUM(CASE WHEN ud.name='soldiers' THEN um.quantity ELSE 0 END) AS soldiers,
-                        SUM(CASE WHEN ud.name='artillery' THEN um.quantity ELSE 0 END) AS artillery,
-                        SUM(CASE WHEN ud.name='tanks' THEN um.quantity ELSE 0 END) AS tanks,
-                        SUM(CASE WHEN ud.name='fighters' THEN um.quantity ELSE 0 END) AS fighters,
-                        SUM(CASE WHEN ud.name='bombers' THEN um.quantity ELSE 0 END) AS bombers,
-                        SUM(CASE WHEN ud.name='apaches' THEN um.quantity ELSE 0 END) AS apaches,
-                        SUM(CASE WHEN ud.name='submarines' THEN um.quantity ELSE 0 END) AS submarines,
-                        SUM(CASE WHEN ud.name='destroyers' THEN um.quantity ELSE 0 END) AS destroyers,
-                        SUM(CASE WHEN ud.name='cruisers' THEN um.quantity ELSE 0 END) AS cruisers,
-                        SUM(CASE WHEN ud.name='icbms' THEN um.quantity ELSE 0 END) AS icbms,
-                        SUM(CASE WHEN ud.name='nukes' THEN um.quantity ELSE 0 END) AS nukes,
-                        SUM(CASE WHEN ud.name='spies' THEN um.quantity ELSE 0 END) AS spies
-                    FROM user_military um
-                    JOIN unit_dictionary ud ON um.unit_id = ud.unit_id
-                    WHERE um.user_id IN (SELECT userid FROM {_members_tbl()})
-                    GROUP BY um.user_id
-                ) m ON m.user_id = u.id
-                LEFT JOIN (
-                    SELECT user_id, COALESCE(SUM(quantity), 0) AS total_resources
-                    FROM user_economy
-                    WHERE user_id IN (SELECT userid FROM {_members_tbl()})
-                    GROUP BY user_id
-                ) r ON r.user_id = u.id
-                WHERE u.id IN (SELECT userid FROM {_members_tbl()})
+                SELECT inf.user_id AS userid, inf.influence
+                FROM {member_influence_sql} inf
             ) prov ON cm.userid = prov.userid
             {where_clause}
             GROUP BY cn.id, cn.name, cn.type, cn.flag, cn.date, cn.flag_data
@@ -1002,48 +963,8 @@ def coalitions():
             FROM colNames cn
             LEFT JOIN {_members_tbl()} cm ON cn.id = cm.colid
             LEFT JOIN (
-                SELECT
-                    u.id AS userid,
-                    {influence_sql_expr(STANDARD_INFLUENCE_ALIASES)} AS influence
-                FROM users u
-                LEFT JOIN stats s ON s.id = u.id
-                LEFT JOIN (
-                    SELECT
-                        userid AS user_id,
-                        COUNT(id) AS provinces_count,
-                        COALESCE(SUM(citycount), 0) AS city_count,
-                        COALESCE(SUM(land), 0) AS total_land
-                    FROM provinces
-                    WHERE userid IN (SELECT userid FROM {_members_tbl()})
-                    GROUP BY userid
-                ) p ON p.user_id = u.id
-                LEFT JOIN (
-                    SELECT
-                        um.user_id,
-                        SUM(CASE WHEN ud.name='soldiers' THEN um.quantity ELSE 0 END) AS soldiers,
-                        SUM(CASE WHEN ud.name='artillery' THEN um.quantity ELSE 0 END) AS artillery,
-                        SUM(CASE WHEN ud.name='tanks' THEN um.quantity ELSE 0 END) AS tanks,
-                        SUM(CASE WHEN ud.name='fighters' THEN um.quantity ELSE 0 END) AS fighters,
-                        SUM(CASE WHEN ud.name='bombers' THEN um.quantity ELSE 0 END) AS bombers,
-                        SUM(CASE WHEN ud.name='apaches' THEN um.quantity ELSE 0 END) AS apaches,
-                        SUM(CASE WHEN ud.name='submarines' THEN um.quantity ELSE 0 END) AS submarines,
-                        SUM(CASE WHEN ud.name='destroyers' THEN um.quantity ELSE 0 END) AS destroyers,
-                        SUM(CASE WHEN ud.name='cruisers' THEN um.quantity ELSE 0 END) AS cruisers,
-                        SUM(CASE WHEN ud.name='icbms' THEN um.quantity ELSE 0 END) AS icbms,
-                        SUM(CASE WHEN ud.name='nukes' THEN um.quantity ELSE 0 END) AS nukes,
-                        SUM(CASE WHEN ud.name='spies' THEN um.quantity ELSE 0 END) AS spies
-                    FROM user_military um
-                    JOIN unit_dictionary ud ON um.unit_id = ud.unit_id
-                    WHERE um.user_id IN (SELECT userid FROM {_members_tbl()})
-                    GROUP BY um.user_id
-                ) m ON m.user_id = u.id
-                LEFT JOIN (
-                    SELECT user_id, COALESCE(SUM(quantity), 0) AS total_resources
-                    FROM user_economy
-                    WHERE user_id IN (SELECT userid FROM {_members_tbl()})
-                    GROUP BY user_id
-                ) r ON r.user_id = u.id
-                WHERE u.id IN (SELECT userid FROM {_members_tbl()})
+                SELECT inf.user_id AS userid, inf.influence
+                FROM {member_influence_sql} inf
             ) prov ON cm.userid = prov.userid
             {where_clause}
             GROUP BY cn.id, cn.name, cn.type, cn.flag, cn.date

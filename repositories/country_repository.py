@@ -1,6 +1,6 @@
 from database import get_request_cursor
 from psycopg2.extras import RealDictCursor
-from influence_formula import influence_sql_expr, STANDARD_INFLUENCE_ALIASES
+from influence_formula import influence_subquery_sql
 
 class CountryRepository:
     @staticmethod
@@ -34,7 +34,7 @@ class CountryRepository:
                         c.name,
                         COALESCE(p.provinces_count, 0) AS provinces_count,
                         u.join_number,
-                        {influence_sql_expr(STANDARD_INFLUENCE_ALIASES)} AS influence,
+                        COALESCE(inf.influence, 0) AS influence,
                         COALESCE(EXTRACT(EPOCH FROM (CASE WHEN u.date ~ '^\\d{{4}}-\\d{{2}}-\\d{{2}}' THEN u.date ELSE '1970-01-01' END)::timestamp)::bigint, 0) AS unix
                     FROM users u
                     JOIN user_ids ui ON u.id = ui.id
@@ -42,35 +42,12 @@ class CountryRepository:
                     LEFT JOIN LATERAL (
                         SELECT
                             COUNT(id) AS provinces_count,
-                            COALESCE(SUM(population), 0) AS province_population,
-                            COALESCE(SUM(citycount), 0) AS city_count,
-                            COALESCE(SUM(land), 0) AS total_land
+                            COALESCE(SUM(population), 0) AS province_population
                         FROM provinces
                         WHERE userid = u.id
                     ) p ON true
-                    LEFT JOIN LATERAL (
-                        SELECT
-                            SUM(CASE WHEN ud.name='soldiers' THEN um.quantity ELSE 0 END) AS soldiers,
-                            SUM(CASE WHEN ud.name='artillery' THEN um.quantity ELSE 0 END) AS artillery,
-                            SUM(CASE WHEN ud.name='tanks' THEN um.quantity ELSE 0 END) AS tanks,
-                            SUM(CASE WHEN ud.name='fighters' THEN um.quantity ELSE 0 END) AS fighters,
-                            SUM(CASE WHEN ud.name='bombers' THEN um.quantity ELSE 0 END) AS bombers,
-                            SUM(CASE WHEN ud.name='apaches' THEN um.quantity ELSE 0 END) AS apaches,
-                            SUM(CASE WHEN ud.name='submarines' THEN um.quantity ELSE 0 END) AS submarines,
-                            SUM(CASE WHEN ud.name='destroyers' THEN um.quantity ELSE 0 END) AS destroyers,
-                            SUM(CASE WHEN ud.name='cruisers' THEN um.quantity ELSE 0 END) AS cruisers,
-                            SUM(CASE WHEN ud.name='icbms' THEN um.quantity ELSE 0 END) AS icbms,
-                            SUM(CASE WHEN ud.name='nukes' THEN um.quantity ELSE 0 END) AS nukes,
-                            SUM(CASE WHEN ud.name='spies' THEN um.quantity ELSE 0 END) AS spies
-                        FROM user_military um
-                        JOIN unit_dictionary ud ON um.unit_id = ud.unit_id
-                        WHERE um.user_id = u.id
-                    ) m ON true
-                    LEFT JOIN LATERAL (
-                        SELECT COALESCE(SUM(quantity), 0) AS total_resources
-                        FROM user_economy
-                        WHERE user_id = u.id
-                    ) r ON true
+                    LEFT JOIN {influence_subquery_sql("SELECT id FROM user_ids")} inf
+                        ON inf.user_id = u.id
                     LEFT JOIN {coalition_src} cm ON cm.userid = u.id
                     LEFT JOIN colNames c ON c.id = cm.colid
                 )

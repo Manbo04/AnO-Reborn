@@ -1,0 +1,121 @@
+{% extends "layout.html" %}
+{% block title %}Nuclear Strike{% endblock %}
+{% block body_class %} page-war game-page-v2{% endblock %}
+{% block body %}
+{% from 'macros/game_ui.html' import game_button, game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/war.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<style>
+    .nuke-wrap { max-width: 760px; margin: 0 auto; padding: 0 16px; box-sizing: border-box; }
+    .nuke-panel { padding: 18px 16px; margin-bottom: 16px; }
+    .nuke-panel h2 { margin-top: 0; }
+    .nuke-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+    .nuke-stat { padding: 10px 12px; border-radius: 10px; background: rgba(0, 0, 0, 0.25); }
+    .nuke-stat strong { display: block; font-size: 0.8rem; opacity: 0.8; font-weight: 600; }
+    .nuke-stat span { font-size: 1.1rem; font-weight: 700; overflow-wrap: anywhere; }
+    .nuke-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+    .nuke-prov { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border-radius: 10px;
+        background: rgba(0, 0, 0, 0.25); border: 2px solid transparent; cursor: pointer; min-height: 44px; }
+    .nuke-prov:has(input:checked) { border-color: #ff4444; }
+    .nuke-prov input { margin-top: 4px; width: 20px; height: 20px; flex-shrink: 0; }
+    .nuke-prov-body { flex: 1; min-width: 0; }
+    .nuke-prov-name { font-weight: 700; overflow-wrap: anywhere; }
+    .nuke-prov-meta { font-size: 0.85rem; opacity: 0.85; margin-top: 2px; }
+    .nuke-warn { color: #ff6464; font-weight: 700; }
+    .nuke-note { font-size: 0.9rem; opacity: 0.9; }
+    .nuke-check { display: flex; gap: 10px; align-items: flex-start; margin: 14px 0; min-height: 44px; }
+    .nuke-check input { width: 22px; height: 22px; flex-shrink: 0; }
+    .nuke-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+    .nuke-launch { background-color: #cc2222 !important; border-color: #aa0000 !important; color: #fff !important; }
+    @media (max-width: 420px) { .nuke-stats { grid-template-columns: 1fr; } }
+</style>
+
+<div class="templatediv">
+{% if step == 'result' %}
+    {{ game_hero('Nuclear Strike Report', badge_icon='dangerous', badge_text=('Retaliation' if result.is_retaliation else 'First strike'), subtitle=result.enemy_name ~ ' — ' ~ result.province_name) }}
+    <div class="nuke-wrap">
+        <div class="game-glass nuke-panel">
+            <h2 class="templatecontentheaderleft">Impact on {{ result.province_name }}</h2>
+            <div class="nuke-stats">
+                <div class="nuke-stat"><strong>Killed</strong><span>{{ "{:,}".format(result.deaths) }} ({{ "%.1f"|format(result.death_pct) }}%)</span></div>
+                <div class="nuke-stat"><strong>Cities destroyed</strong><span>{{ "{:,}".format(result.cities_destroyed) }}</span></div>
+                <div class="nuke-stat"><strong>Buildings destroyed</strong><span>{{ "{:,}".format(result.buildings_destroyed) }}</span></div>
+                <div class="nuke-stat"><strong>Happiness lost</strong><span>-{{ result.happiness_lost }}</span></div>
+            </div>
+            {% if result.multiplier < 0.999 %}
+            <p class="nuke-note">This province was already hit recently, so the blast did only {{ "%.0f"|format(result.multiplier * 100) }}% of full damage.</p>
+            {% endif %}
+            <p class="nuke-note">Your influence took a <b>{{ "{:,}".format(result.cost) }}</b> penalty. It fades away over {{ result.recovery_days }} days as the province recovers. {{ result.enemy_name }} has been notified.</p>
+            <div class="nuke-actions">
+                {{ game_button('Back to war', icon='arrow_back', href='/wars') }}
+                {{ game_button('View ' ~ result.enemy_name, icon='flag', href='/country/id=' ~ result.enemy_id, variant='secondary') }}
+            </div>
+        </div>
+    </div>
+{% else %}
+    {{ game_hero('Nuclear Strike', badge_icon='dangerous', badge_text=('Retaliation available' if plan.is_retaliation else 'First strike'), subtitle='Target: ' ~ plan.enemy_name) }}
+    <div class="nuke-wrap">
+        <div class="game-glass nuke-panel">
+            <h2 class="templatecontentheaderleft">Launch status</h2>
+            <div class="nuke-stats">
+                <div class="nuke-stat"><strong>Nukes ready</strong><span>{{ plan.nukes }}</span></div>
+                <div class="nuke-stat"><strong>Your influence</strong><span>{{ "{:,}".format(plan.influence) }}</span></div>
+                <div class="nuke-stat"><strong>Influence cost</strong><span>{{ "{:,}".format(plan.cost) }} ({{ "%.0f"|format(plan.cost_rate * 100) }}%)</span></div>
+                <div class="nuke-stat"><strong>Influence after</strong><span>{{ "{:,}".format(plan.influence_after) }}</span></div>
+            </div>
+            {% if plan.is_retaliation %}
+            <p class="nuke-note">{{ plan.enemy_name }} nuked you first in this war, so this counts as retaliation: it costs 25% of your influence and needs no minimum.</p>
+            {% else %}
+            <p class="nuke-note">A first strike costs 50% of your current influence (further launches compound) and needs at least {{ "{:,}".format(plan.min_influence) }} influence. The penalty fades over {{ plan.recovery_days }} days. Nukes can't be intercepted.</p>
+            {% endif %}
+            {% if plan.blocked %}<p class="nuke-warn">{{ plan.blocked }}</p>{% endif %}
+        </div>
+
+        {% if step == 'confirm' %}
+        {% set t = plan.target %}
+        <form class="game-glass nuke-panel" method="POST" action="/nuclear_strike/{{ plan.war_id }}/launch">
+            <h2 class="templatecontentheaderleft nuke-warn">Confirm launch on {{ t.name }}</h2>
+            <div class="nuke-stats">
+                <div class="nuke-stat"><strong>Expected deaths</strong><span>{{ "{:,}".format(t.damage.deaths) }} ({{ "%.1f"|format(t.damage.death_frac * 100) }}%)</span></div>
+                <div class="nuke-stat"><strong>Cities destroyed</strong><span>{{ "{:,}".format(t.damage.cities_destroyed) }}</span></div>
+                <div class="nuke-stat"><strong>Buildings destroyed</strong><span>~{{ "%.0f"|format(t.damage.infra_frac * 100) }}%</span></div>
+                <div class="nuke-stat"><strong>Happiness</strong><span>-{{ t.damage.happiness_lost }}</span></div>
+            </div>
+            {% if t.recent_strikes %}<p class="nuke-note">Hit {{ t.recent_strikes }} time(s) in the last 72h: damage reduced to {{ "%.0f"|format(t.damage.multiplier * 100) }}%.</p>{% endif %}
+            <input type="hidden" name="province_id" value="{{ t.id }}">
+            <input type="hidden" name="token" value="{{ token }}">
+            <label class="nuke-check"><input type="checkbox" name="confirm_launch" value="yes" required>
+                <span>I understand this kills about {{ "{:,}".format(t.damage.deaths) }} people and costs me {{ "{:,}".format(plan.cost) }} influence. Launch the nuke.</span></label>
+            <div class="nuke-actions">
+                <button type="submit" class="templatedivbutton nuke-launch"><span class="material-icons-outlined">warning</span>LAUNCH</button>
+                {{ game_button('Cancel', icon='close', href='/nuclear_strike/' ~ plan.war_id, variant='secondary') }}
+            </div>
+        </form>
+        {% else %}
+        <form class="game-glass nuke-panel" method="POST" action="/nuclear_strike/{{ plan.war_id }}/review">
+            <h2 class="templatecontentheaderleft">Pick a province</h2>
+            <p class="nuke-note">Dense provinces (many cities on little land) suffer the most. Big, spread-out provinces lose only a small share.</p>
+            <ul class="nuke-list">
+                {% for p in plan.provinces %}
+                <li><label class="nuke-prov">
+                    <input type="radio" name="province_id" value="{{ p.id }}" required {% if loop.first %}checked{% endif %}>
+                    <div class="nuke-prov-body">
+                        <div class="nuke-prov-name">{{ p.name }}</div>
+                        <div class="nuke-prov-meta">Pop {{ "{:,}".format(p.population) }} · {{ "{:,}".format(p.citycount) }} cities · {{ "{:,}".format(p.land) }} land</div>
+                        <div class="nuke-prov-meta">Est. {{ "{:,}".format(p.damage.deaths) }} killed ({{ "%.1f"|format(p.damage.death_frac * 100) }}%){% if p.recent_strikes %} · recently hit, {{ "%.0f"|format(p.damage.multiplier * 100) }}% damage{% endif %}</div>
+                    </div>
+                </label></li>
+                {% endfor %}
+            </ul>
+            <div class="nuke-actions" style="margin-top: 14px;">
+                {% if not plan.blocked %}{{ game_button('Review strike', icon='arrow_forward') }}{% endif %}
+                {{ game_button('Back to wars', icon='arrow_back', href='/wars', variant='secondary') }}
+            </div>
+        </form>
+        {% endif %}
+    </div>
+{% endif %}
+</div>
+{% endblock %}
