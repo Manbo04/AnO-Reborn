@@ -785,18 +785,23 @@ body.game-page-v2 .templateoutertablediv {
    border and shadow from the rule above). Result: a box inset in a box
    inset in a box, and on a 390px phone only ~250px left for the table,
    which clipped the value column. Inside a panel, the panel is the frame --
-   the wrapper and table go full-width and frameless. Reported on /rankings,
+   the wrapper and table go full-width and frameless. Direct children only:
+   a table nested inside its own card within a panel (e.g. the Country
+   page's General table beside the Demographics card) keeps its frame. Reported on /rankings,
    2026-09-28 ("most of the game's UI is a big fat mess"). */
-body.game-page-v2 .game-glass .templateoutertablediv {
+body.game-page-v2 .game-glass > .templateoutertablediv {
     width: 100%;
     margin: 0;
     padding: 0;
     border-radius: 0;
 }
 
-body.game-page-v2 .game-glass .templatetable,
-body.game-page-v2 .game-glass .templatetable2,
-body.game-page-v2 .game-glass .templatetable3 {
+body.game-page-v2 .game-glass > .templatetable,
+body.game-page-v2 .game-glass > .templatetable2,
+body.game-page-v2 .game-glass > .templatetable3,
+body.game-page-v2 .game-glass > .templateoutertablediv > .templatetable,
+body.game-page-v2 .game-glass > .templateoutertablediv > .templatetable2,
+body.game-page-v2 .game-glass > .templateoutertablediv > .templatetable3 {
     width: 100%;
     margin: 0;
     background: transparent;
@@ -807,10 +812,44 @@ body.game-page-v2 .game-glass .templatetable3 {
     -webkit-backdrop-filter: none;
 }
 
-body.game-page-v2 .game-glass .templatetable tr:last-child td,
-body.game-page-v2 .game-glass .templatetable2 tr:last-child td,
-body.game-page-v2 .game-glass .templatetable3 tr:last-child td {
+body.game-page-v2 .game-glass > .templatetable tr:last-child td,
+body.game-page-v2 .game-glass > .templatetable2 tr:last-child td,
+body.game-page-v2 .game-glass > .templatetable3 tr:last-child td,
+body.game-page-v2 .game-glass > .templateoutertablediv > .templatetable tr:last-child td,
+body.game-page-v2 .game-glass > .templateoutertablediv > .templatetable2 tr:last-child td,
+body.game-page-v2 .game-glass > .templateoutertablediv > .templatetable3 tr:last-child td {
     border-bottom: none;
+}
+
+/* Phones: game-layout.css pins each wide table's first column (sticky)
+   and backs it with opaque --tableOne/--tableTwo so scrolled cells don't
+   show through. Over glass that paints a solid dark stripe down the table,
+   (header cells are already transparent on v2 and stay that way -- a
+   frosted first <th>, often colspan'd, read as a stray half-width block),
+   and an empty-state row ("No active treaties.", one colspan cell) became a
+   full-width dark slab. Back the pinned cell with frosted glass instead, and
+   don't pin a lone colspan cell at all. Rankings opts out of scroll mode
+   entirely (game-experience.css). */
+@media (max-width: 768px) {
+    body.game-page-v2 .templatetable:not(.rankings-table) tr td:first-child,
+    body.game-page-v2 .templatetable2 tr td:first-child,
+    body.game-page-v2 .templatetable3 tr td:first-child {
+        background: var(--game-glass-bg-strong);
+        backdrop-filter: var(--game-glass-blur);
+        -webkit-backdrop-filter: var(--game-glass-blur);
+    }
+
+    body.game-page-v2 .templatetable tr td[colspan]:first-child,
+    body.game-page-v2 .templatetable2 tr td[colspan]:first-child,
+    body.game-page-v2 .templatetable3 tr td[colspan]:first-child,
+    body.game-page-v2 .templatetable:has(td[colspan]:only-child) tr th:first-child,
+    body.game-page-v2 .templatetable2:has(td[colspan]:only-child) tr th:first-child,
+    body.game-page-v2 .templatetable3:has(td[colspan]:only-child) tr th:first-child {
+        position: static;
+        background: transparent;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
 }
 
 /* The panel's own title (game_glass_panel() renders it as the first child)
