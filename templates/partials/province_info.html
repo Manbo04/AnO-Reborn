@@ -123,6 +123,14 @@
             <tr>
                 <th colspan="2"><span class="material-icons-outlined">account_balance</span>Education Capacity (This Tick)</th>
             </tr>
+            {% if education_stats['grace_until'] and education_stats['true_primary_capacity'] == 0 %}
+            <tr>
+                <td colspan="2" style="color: #ffaa00; padding: 10px; background-color: rgba(255, 170, 0, 0.1);">
+                    <span class="material-icons-outlined" style="vertical-align: middle; margin-right: 4px; font-size: 18px;">warning</span>
+                    Primary schools become required for higher education on Oct 5. This province has no primary school yet.
+                </td>
+            </tr>
+            {% endif %}
             <tr>
                 <td>Graduating:</td>
                 <td>{{ education_stats['can_graduate'] | commas }} children</td>

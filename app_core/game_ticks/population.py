@@ -51,18 +51,34 @@ from app_core.game_ticks.common import should_skip_task, handle_exception, log_v
 from app_core.game_ticks.locks import try_pg_advisory_lock, release_pg_advisory_lock
 from app_core.game_ticks.food import rations_needed
 
-def calc_education_graduation(pop_children, policies, primary_buildings, hs_buildings, uni_buildings):
+def calc_education_graduation(pop_children, policies, primary_buildings, hs_buildings, uni_buildings, now=None):
     """Computes tier-chained education graduation for a province. Shared between tick and display."""
+    from datetime import datetime, timezone
+    
     graduation_rate = variables.DEMO_AGING_RATES["children_to_working"]
     if variables.POLICY_MANDATORY_SCHOOLING in policies:
         graduation_rate *= variables.POLICY_SCHOOLING_GRADUATION_MULTIPLIER
 
     can_graduate = min(pop_children, int(round(pop_children * graduation_rate)))
     
-    primary_capacity = primary_buildings * 500
+    true_primary_capacity = primary_buildings * 500
     hs_capacity = hs_buildings * 500
     uni_capacity = uni_buildings * 500
     
+    primary_capacity = true_primary_capacity
+    grace_until = None
+    
+    raw_grace = getattr(variables, "EDUCATION_CHAIN_GRACE_UNTIL", "")
+    if raw_grace:
+        try:
+            grace_dt = datetime.fromisoformat(raw_grace)
+            now_dt = now or datetime.now(timezone.utc)
+            if now_dt < grace_dt:
+                grace_until = grace_dt
+                primary_capacity = max(primary_capacity, hs_capacity + uni_capacity)
+        except ValueError:
+            pass
+
     passed_primary = min(can_graduate, primary_capacity)
     passed_hs = min(passed_primary, hs_capacity)
     passed_uni = min(passed_hs, uni_capacity)
@@ -76,8 +92,11 @@ def calc_education_graduation(pop_children, policies, primary_buildings, hs_buil
         "edu_highschool_new": passed_hs - passed_uni,
         "edu_none_new": can_graduate - passed_hs,
         "primary_capacity": primary_capacity,
+        "true_primary_capacity": true_primary_capacity,
         "hs_capacity": hs_capacity,
-        "uni_capacity": uni_capacity
+        "uni_capacity": uni_capacity,
+        "grace_until": grace_until
+
     }
 
 

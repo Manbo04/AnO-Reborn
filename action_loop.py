@@ -258,20 +258,23 @@ def start_research(user_id: int, tech_id: int) -> ActionResult:
         # Education Rework: Universities requirement for late-game tech
         LATE_TECHS = {"integrated_steelmaking", "electric_arc_furnace", "nuclear_testing_facility", "icbm_silo"}
         if tech_name_internal in LATE_TECHS:
-            db.execute(
-                """
-                SELECT COALESCE(SUM(ub.quantity), 0)
-                FROM user_buildings ub
-                JOIN building_dictionary bd ON bd.building_id = ub.building_id
-                WHERE ub.user_id = %s AND bd.name = 'universities'
-                """,
-                (user_id,),
-            )
-            uni_count = db.fetchone()[0]
-            if uni_count < 2:
-                raise ActionLoopError(
-                    f"You need at least 2 Universities nationwide to research {display_name}."
+            db.execute("SELECT 1 FROM user_tech WHERE user_id=%s AND tech_id=%s", (user_id, tech_id))
+            has_record = bool(db.fetchone())
+            if not has_record:
+                db.execute(
+                    """
+                    SELECT COALESCE(SUM(ub.quantity), 0)
+                    FROM user_buildings ub
+                    JOIN building_dictionary bd ON bd.building_id = ub.building_id
+                    WHERE ub.user_id = %s AND bd.name = 'universities'
+                    """,
+                    (user_id,),
                 )
+                uni_count = db.fetchone()[0]
+                if uni_count < 2:
+                    raise ActionLoopError(
+                        f"You need at least 2 Universities nationwide to research {display_name}."
+                    )
 
         resource_id = _get_resource_id(db, RESEARCH_COST_RESOURCE)
         if resource_id is None:
