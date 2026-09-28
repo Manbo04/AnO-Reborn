@@ -116,7 +116,9 @@ body.page-mechanics .templatedivflex2right {
 
 body.page-mechanics .templatecontentpleft {
     width: 100%;
-    text-align: left;
+    /* !important to beat style.css's centred-below-1050px rule, which left
+       the intro text centred between a left-aligned heading and button */
+    text-align: left !important;
     margin: 8px 0 18px;
 }
 

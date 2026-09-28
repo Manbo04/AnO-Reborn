@@ -188,7 +188,7 @@ body.page-provinces .game-province-card-thumb img {
     border-radius: var(--game-radius-md, 12px);
     border: 1px solid var(--border);
     background: var(--foregroundThree);
-    min-height: 72px;
+    box-sizing: border-box;
 }
 
 .province-status-card__head {
@@ -218,7 +218,7 @@ body.page-provinces .game-province-card-thumb img {
     display: flex;
     align-items: flex-start;
     gap: 6px;
-    color: var(--warning, #c9a227);
+    color: var(--game-warn-text); /* --warning was never defined */
 }
 
 .province-status-card__detail--warn .material-icons-outlined {
@@ -251,9 +251,10 @@ body.page-provinces .game-province-card-thumb img {
         align-items: stretch;
     }
 
-    .province-status-card {
-        height: 100%;
-    }
+    /* No height:100% here: the grid's align-items:stretch already makes
+       the three cards equal height, and height:100% on a content-box card
+       added its padding on top, so every card overflowed the row by ~34px
+       and the Edit button below landed on top of the middle card. */
 }
 
 /* Province info two-column layout.

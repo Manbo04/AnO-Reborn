@@ -620,3 +620,63 @@ DATABASE_PUBLIC_URL=... python3 scripts/apply_all_pending_migrations.py
 
 **Next steps**:
 - `templates/partials/quick_nav.html` (logged-in home grid) still lists pages individually. It could be regrouped by hub if players want that.
+
+---
+
+### Session: 2026-09-27 — Mobile layout clean-up ("sutvarkyti the UI")
+
+**Task**: Fix the overlapping, off-centre and misaligned UI found in a screenshot audit
+(390px phone, 820px tablet, 1440px desktop; light + dark; v1 templates and every
+`THEME_V2_PAGES` page), without redesigning.
+
+**How it was verified**: branch run locally against a fresh Postgres built with CI's
+bootstrap steps (`init_db_railway.py` + migrations), one throwaway local account, headless
+Chromium with touch emulation. A detector script measured page overflow, overlapping text,
+clipped text and off-centre buttons before/after; every fix below was confirmed with
+`getBoundingClientRect()` numbers, not just by eye. Production data was never touched.
+
+**Root causes and fixes**:
+1. **Identity strip under the navbar** (every page): `.identity-banner` sat at y 0-24 under
+   the fixed navbar, "Log out" untappable. Now offset below the navbar with the same amount
+   taken off `.templatecontainer` (`game-layout.css`). Its colours used undefined
+   `--game-surface-2`/`--game-accent`/... tokens; switched to real ones (`layout.html`).
+2. **Floating $ button over content at 769-857px** (e.g. over "Enter your nation" on iPad):
+   `layout.html` used 768/769 while `game-shell.css` used 857/858. Aligned to 857/858 so
+   tablets get the HUD strip, desktop keeps the button.
+3. **content-box overflow** (the most common cause): `.game-glass`, military/upgrade
+   `.warflexparentcolors` cards, `.tutorial-footer`, `.province-status-card`, stat cards and
+   `.smalltable` cells had `width:100%`/`height:100%` plus padding. Added `box-sizing:
+   border-box`. Fixed military's 3px page scroll, tutorial's 19px, hub panels past the
+   column, province status cards spilling onto the Edit button, the province building
+   table's cut-off third column.
+4. **Tabs truncated to "EC…"/"REVE…"**: equal-width `flex: 1 1 0` + ellipsis. Tabs now size
+   to their label (`flex: 1 0 auto`) and the row scrolls sideways when they don't fit. Country
+   page's 2x2 `calc(50% - 8px)` rule never wrapped; now one row.
+5. **Right-edge fade on every table**: now only on tables/tab rows that really scroll
+   (`.is-scrollable`, set by `markScrollableTables()` in `static/script.js`). Short
+   tables' `<tbody>` fills the width (tables without `<thead>` only).
+6. **Things not filling their box**: `.stat-grid` 95% → 100%; `.stat-card` reset from the
+   ≤1055px `.templatedivflex2left { width: 90% }`; `.infodiv` full width on phones too;
+   v2 `game_hero` inset to the content gutter; invisible v2 `.templatediv` frame border removed.
+7. **Text**: global `p { line-height: 30px; font-weight: 200 }` → `1.6 / 400`; dark
+   `--game-text-faint` 3.4:1 → `--text-secondary` 5.4:1; province hint no longer a word grid.
+8. **Per page**: hub stats 2x2 grid, onboarding checklist as an aligned card, market Submit
+   full row + equal Create/My Offers, military Buy/Sell side by side + centred photos +
+   combat stats on one line, upgrades/mechanics text alignment, establish-coalition form
+   rewritten as one stacked column (`.game-form-stack`), tutorial radios no longer overlap
+   their labels, hidden tooltips no longer widen tables, `<img>` without `src` hidden.
+
+**Tests**: CI static checks pass. Full `pytest tests` locally: 159 failures/errors both
+before and after (identical lists, diffed with `git stash`) — all local-environment gaps.
+Establish-coalition form re-submitted end to end (name/type/recruiting all saved).
+
+**What to watch**:
+- Look at a few pages on a real phone after deploy, especially with `THEME_V2_PAGES` on.
+- The `.is-scrollable` fade needs JS; without it tables just don't fade (no breakage).
+- Full-page screenshots mislead on glass pages (fixed background only covers the first
+  viewport) and with `loading="lazy"` images (blank cards) — scroll first, or use
+  viewport screenshots.
+
+**Next steps**: primary button contrast (white on `#00a7e1` is 2.76:1) and focus rings are
+still open from the design audit; the global `.templatecontentpleft { text-align: center
+!important }` below 1050px forced several pages to add their own `!important`.
