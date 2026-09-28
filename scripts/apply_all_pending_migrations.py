@@ -98,6 +98,7 @@ MIGRATION_FILES = [
     "0089_nuclear_strikes.sql",
     "0091_currency_market.sql",
     "0093.sql",
+    "0094.sql",
 ]
 
 

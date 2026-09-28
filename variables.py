@@ -373,6 +373,8 @@ ENERGY_CONSUMERS = [
     "libraries",
     "universities",
     "monorails",
+    "railways",
+    "metros",
     "component_factories",
     "steel_mills",
     "ammunition_factories",
@@ -418,6 +420,11 @@ INFRA_TYPE_BUILDINGS = {
         "high_school",
         "city_parks",
         "monorails",
+        "railways",
+        "metros",
+        "firewatch_towers",
+        "levees",
+        "seismic_reinforcements",
     ],
     "military": [
         "army_bases",
@@ -491,7 +498,12 @@ BUILDINGS = [
     "drone_sites",
     "missile_batteries",
     "city_parks",
-    "monorails",  # Had to put them here so pollution would be minused at the end
+    "monorails",
+    "railways",
+    "metros",
+    "firewatch_towers",
+    "levees",
+    "seismic_reinforcements",  # Had to put them here so pollution would be minused at the end
 ]
 
 UPGRADES = {"oil_burners"}
@@ -559,6 +571,14 @@ INFRA = {  # Display values — synced to NEW_INFRA engine values (units/hr per 
     "monorails_effect": [{"productivity": 16}],
     "monorails_effect_minus": {"pollution": 20},
     "monorails_money": 270000,
+    "railways_effect": [{"productivity": 8, "pollution": 2}],
+    "railways_money": 67500,
+    "metros_effect": [{"productivity": 12}],
+    "metros_effect_minus": {"pollution": 10},
+    "metros_money": 150000,
+    "firewatch_towers_money": 1000,
+    "levees_money": 3000,
+    "seismic_reinforcements_money": 5000,
     ###################
     # Military (Done)
     "army_bases_money": 25000,  # Costs $25k
@@ -799,6 +819,16 @@ PROVINCE_UNIT_PRICES = {
     "universities_resource": {"steel": 150000, "aluminium": 80000},
     "monorails_price": 250000000,
     "monorails_resource": {"steel": 600000, "aluminium": 300000},
+    "railways_price": 62500000,
+    "railways_resource": {"steel": 150000, "aluminium": 75000},
+    "metros_price": 150000000,
+    "metros_resource": {"steel": 300000, "aluminium": 150000},
+    "firewatch_towers_price": 15000,
+    "firewatch_towers_resource": {"steel": 200, "lumber": 1000},
+    "levees_price": 75000,
+    "levees_resource": {"steel": 3000},
+    "seismic_reinforcements_price": 150000,
+    "seismic_reinforcements_resource": {"steel": 5000, "aluminium": 1000},
     # Education Buildings (Tier 2)
     "primary_school_price": 4000000,
     "primary_school_resource": {"steel": 25000, "aluminium": 15000, "lumber": 40000},
@@ -946,6 +976,24 @@ NEW_INFRA = {  # (NEW INFRA)
         "eff": {"productivity": 16},
         "effminus": {"pollution": 20},
         "money": 270000,
+    },
+    "railways": {
+        "eff": {"productivity": 8, "pollution": 2},
+        "money": 67500,
+    },
+    "metros": {
+        "eff": {"productivity": 12},
+        "effminus": {"pollution": 10},
+        "money": 150000,
+    },
+    "firewatch_towers": {
+        "money": 1000,
+    },
+    "levees": {
+        "money": 3000,
+    },
+    "seismic_reinforcements": {
+        "money": 5000,
     },
     # MILITARY
     "army_bases": {"money": 25000},

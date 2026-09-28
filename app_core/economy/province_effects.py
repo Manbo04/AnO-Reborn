@@ -50,7 +50,7 @@ def building_effects_per_unit(unit, upgrades, policies):
     if unit == "hospitals" and upgrades.get("nationalhealthinstitution"):
         eff["happiness"] = int(eff["happiness"] * 1.3)
 
-    if unit == "monorails" and upgrades.get("highspeedrail"):
+    if unit in ("monorails", "railways", "metros") and upgrades.get("highspeedrail"):
         eff["productivity"] = int(eff["productivity"] * 1.2)
 
     if "pollution" in eff:

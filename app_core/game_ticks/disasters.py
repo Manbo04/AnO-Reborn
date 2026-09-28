@@ -69,23 +69,74 @@ BIOME_DISASTERS = {
 }
 
 
-def roll_struck_nations(nations, rng=rand):
-    """Pure helper (no DB) -- which (user_id, biome) pairs get struck this
-    run, given [(user_id, biome_lowercase), ...]. Split out from
-    run_natural_disasters for deterministic testing."""
-    return [
-        (user_id, biome)
-        for user_id, biome in nations
-        if biome in BIOME_DISASTERS and rng.random() < DISASTER_CHANCE_PER_NATION
-    ]
+def mitigation_multiplier(qty):
+    """Return a damage/chance multiplier in [0.1, 1.0] given building count.
+
+    Uses a simple hyperbolic decay: 100 / (100 + qty).  At qty=0 → 1.0
+    (no mitigation); at qty=100 → ~0.5; floor at 0.1 so no building count
+    completely nullifies a disaster.
+    """
+    return max(0.1, 100.0 / (100.0 + qty))
 
 
-def compute_disaster_loss(current_quantity):
-    """Pure helper -- kg lost given a current stockpile. 0 if nothing to lose."""
+BIOME_MITIGATION_BUILDING = {
+    "boreal forest": "firewatch_towers",
+    "grassland": "levees",
+    "jungle": "levees",
+    "mountain range": "seismic_reinforcements",
+}
+
+
+def roll_struck_nations(nations, mitigations=None, rng=rand):
+    """Pure helper (no DB) — which (user_id, biome) pairs get struck this run.
+
+    Args:
+        nations:     iterable of (user_id, biome_lowercase) pairs, as returned
+                     by ``SELECT id, LOWER(location) FROM stats``.
+        mitigations: nested dict ``{user_id: {building_name: qty}}`` containing
+                     mitigation building counts per user.  Absent keys are
+                     treated as 0.  Pass ``None`` (or omit) to skip mitigation.
+        rng:         random-number source; must expose ``.random()`` returning
+                     a float in [0, 1).  Defaults to the stdlib ``random``
+                     module.  Override in tests for determinism.
+
+    Returns:
+        List of (user_id, biome) tuples that are struck this tick.
+    """
+    mitigations = mitigations or {}
+    struck = []
+    for user_id, biome in nations:
+        if biome not in BIOME_DISASTERS:
+            continue
+        chance = DISASTER_CHANCE_PER_NATION
+        bname = BIOME_MITIGATION_BUILDING.get(biome)
+        if bname:
+            qty = mitigations.get(user_id, {}).get(bname, 0)
+            if qty > 0:
+                chance *= mitigation_multiplier(qty)
+        if rng.random() < chance:
+            struck.append((user_id, biome))
+    return struck
+
+
+def compute_disaster_loss(current_quantity, mitigation_qty=0):
+    """Pure helper — kg lost given a current stockpile.  Returns 0 if nothing to lose.
+
+    Args:
+        current_quantity: Current resource stockpile in kg (int or float).
+        mitigation_qty:   Number of the relevant mitigation building owned by
+                          this nation.  A non-zero value reduces the damage
+                          fraction using :func:`mitigation_multiplier`.
+
+    Returns:
+        Integer kg lost, capped at ``DAMAGE_CAP_KG``.
+    """
     if current_quantity <= 0:
         return 0
-    return min(int(current_quantity * DAMAGE_FRACTION), DAMAGE_CAP_KG)
-
+    fraction = DAMAGE_FRACTION
+    if mitigation_qty > 0:
+        fraction *= mitigation_multiplier(mitigation_qty)
+    return min(int(current_quantity * fraction), DAMAGE_CAP_KG)
 
 def run_natural_disasters():
     from database import get_db_connection
@@ -117,15 +168,29 @@ def run_natural_disasters():
             if should_skip_task(row, TASK_NAME):
                 return
 
-            db.execute(
-                "SELECT id, LOWER(location) FROM stats WHERE location IS NOT NULL"
-            )
+            db.execute("SELECT id, LOWER(location) FROM stats WHERE location IS NOT NULL")
             nations = [(uid, loc) for uid, loc in db.fetchall()]
 
-            struck = roll_struck_nations(nations)
+            db.execute("""
+                SELECT ub.user_id, bd.name, SUM(ub.quantity)
+                FROM user_buildings ub
+                JOIN building_dictionary bd ON bd.building_id = ub.building_id
+                WHERE bd.name IN ('firewatch_towers', 'levees', 'seismic_reinforcements')
+                GROUP BY ub.user_id, bd.name
+            """)
+            mitigations = {}
+            for uid, bname, qty in db.fetchall():
+                if uid not in mitigations:
+                    mitigations[uid] = {}
+                mitigations[uid][bname] = int(qty)
+
+            struck = roll_struck_nations(nations, mitigations)
 
             for user_id, biome in struck:
                 label, resource_name, template = BIOME_DISASTERS[biome]
+                
+                bname = BIOME_MITIGATION_BUILDING.get(biome)
+                mitigation_qty = mitigations.get(user_id, {}).get(bname, 0) if bname else 0
 
                 db.execute(
                     """
@@ -137,7 +202,7 @@ def run_natural_disasters():
                 )
                 res_row = db.fetchone()
                 current = int(res_row[0]) if res_row and res_row[0] else 0
-                loss = compute_disaster_loss(current)
+                loss = compute_disaster_loss(current, mitigation_qty)
                 if loss <= 0:
                     continue
 
