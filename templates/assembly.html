@@ -89,8 +89,11 @@
 
     /* World-name poll */
     .vote-options { display: flex; flex-direction: column; gap: 10px; }
-    .vote-option-label {
-        display: flex;
+    /* style.css has a global label { display:block !important; width:fit-content; margin:auto } */
+    .vote-options .vote-option-label {
+        display: flex !important;
+        width: auto;
+        margin: 0;
         align-items: center;
         justify-content: space-between;
         gap: 10px;
