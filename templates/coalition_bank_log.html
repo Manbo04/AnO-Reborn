@@ -1,5 +1,6 @@
 {% extends "layout.html" %} {% block title %} {{ coalition_name }} · {{ "Tax Log" if kind == "tax" else "Bank Log" }} {% endblock %}{% block body_class %} page-coalition game-page-v2{% endblock %} {% block body %}
 {% from 'macros/game_ui.html' import game_hero %}
+{% set vq = ("&view=" ~ view) if kind == "tax" else "" %}
 
 <style>
 .banklog-toolbar {
@@ -44,13 +45,20 @@
                 <a href="/coalition/{{ colId }}/bank_log?kind=bank" class="game-btn game-btn-sm {% if kind == 'bank' %}game-btn-primary{% endif %}">Bank transactions</a>
                 <a href="/coalition/{{ colId }}/bank_log?kind=tax" class="game-btn game-btn-sm {% if kind == 'tax' %}game-btn-primary{% endif %}">Tax income</a>
             </div>
-            <a href="/coalition/{{ colId }}/bank_log.csv?kind={{ kind }}" class="game-btn game-btn-sm">
+            {% if kind == "tax" %}
+            <div class="banklog-tabs" role="group" aria-label="Tax log view">
+                <a href="/coalition/{{ colId }}/bank_log?kind=tax&view=daily" class="game-btn game-btn-sm {% if view == 'daily' %}game-btn-primary{% endif %}">Daily per member</a>
+                <a href="/coalition/{{ colId }}/bank_log?kind=tax&view=hourly" class="game-btn game-btn-sm {% if view == 'hourly' %}game-btn-primary{% endif %}">Hourly</a>
+            </div>
+            {% endif %}
+            <a href="/coalition/{{ colId }}/bank_log.csv?kind={{ kind }}{{ vq }}" class="game-btn game-btn-sm">
                 <span class="material-icons-outlined">download</span>Download CSV
             </a>
         </div>
 
         <p class="text-muted" style="margin-bottom:12px; font-size:0.9em;">
-            {% if kind == "tax" %}Hourly alliance tax paid into the bank, newest first.
+            {% if kind == "tax" and view == "daily" %}Alliance tax each member paid into the bank per day (UTC), newest first.
+            {% elif kind == "tax" %}Hourly alliance tax paid into the bank, newest first.
             {% elif own_only %}Your own deposits and withdrawals, newest first.
             {% else %}Every deposit and withdrawal across the coalition, newest first.{% endif %}
             Page {{ page }}, {{ rows|length }} row{{ '' if rows|length == 1 else 's' }}.
@@ -58,6 +66,25 @@
 
         {% if not rows %}
         <p class="text-muted text-center mt-sm">Nothing logged here yet.</p>
+        {% elif kind == "tax" and view == "daily" %}
+        <div class="templateoutertablediv">
+            <table class="templatetable templatetable2">
+                <tr>
+                    <th>Day (UTC)</th>
+                    <th>Member</th>
+                    <th>Tax paid</th>
+                    <th>Payments</th>
+                </tr>
+                {% for day, uname, uid, total, payments in rows %}
+                <tr>
+                    <td>{{ day.strftime('%Y-%m-%d') }}</td>
+                    <td>{% if uname %}<a href="/country/id={{ uid }}">{{ uname }}</a>{% else %}Deleted nation{% endif %}</td>
+                    <td>{{ total | commas }}</td>
+                    <td>{{ payments }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
         {% else %}
         <div class="templateoutertablediv">
             <table class="templatetable templatetable2">
@@ -85,12 +112,12 @@
 
         <div class="banklog-pager">
             {% if page > 1 %}
-            <a href="/coalition/{{ colId }}/bank_log?kind={{ kind }}&page={{ page - 1 }}" class="game-btn game-btn-sm">
+            <a href="/coalition/{{ colId }}/bank_log?kind={{ kind }}{{ vq }}&page={{ page - 1 }}" class="game-btn game-btn-sm">
                 <span class="material-icons-outlined">chevron_left</span>Newer
             </a>
             {% endif %}
             {% if has_next %}
-            <a href="/coalition/{{ colId }}/bank_log?kind={{ kind }}&page={{ page + 1 }}" class="game-btn game-btn-sm">
+            <a href="/coalition/{{ colId }}/bank_log?kind={{ kind }}{{ vq }}&page={{ page + 1 }}" class="game-btn game-btn-sm">
                 Older<span class="material-icons-outlined">chevron_right</span>
             </a>
             {% endif %}

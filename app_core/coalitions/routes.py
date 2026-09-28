@@ -81,6 +81,34 @@ def _fetch_bank_log(db, coalition_id, kind, only_user_id=None, limit=50, offset=
     return db.fetchall()
 
 
+TAX_LOG_VIEWS = ("daily", "hourly")
+
+
+def _fetch_tax_rollup(db, coalition_id, limit=50, offset=0):
+    """Tax income rolled up per UTC day per member (the tax log's default
+    view). The raw hourly rows stay in col_bank_transactions untouched.
+    Row shape: (day, username, user_id, total, payments)"""
+    db.execute(
+        """
+        SELECT (cbt.created_at AT TIME ZONE 'UTC')::date AS day,
+               u.username, cbt.user_id, SUM(cbt.amount), COUNT(*)
+        FROM col_bank_transactions cbt
+        LEFT JOIN users u ON u.id = cbt.user_id
+        WHERE cbt.coalition_id = %s AND cbt.resource = 'tax'
+        GROUP BY day, cbt.user_id, u.username
+        ORDER BY day DESC, SUM(cbt.amount) DESC, cbt.user_id
+        LIMIT %s OFFSET %s
+        """,
+        (coalition_id, limit, offset),
+    )
+    return db.fetchall()
+
+
+def _tax_log_view():
+    view = request.args.get("view", "daily")
+    return view if view in TAX_LOG_VIEWS else "daily"
+
+
 # Route for viewing a coalition's page
 def coalition(coalition_id):
     with get_request_cursor() as db:
@@ -2658,14 +2686,23 @@ def bank_log(coalition_id):
             return denied
         db.execute("SELECT name FROM colNames WHERE id=%s", (coalition_id,))
         name_row = db.fetchone()
-        rows = _fetch_bank_log(
-            db,
-            coalition_id,
-            kind,
-            only_user_id,
-            limit=FULL_LOG_PAGE_SIZE + 1,
-            offset=(page - 1) * FULL_LOG_PAGE_SIZE,
-        )
+        view = _tax_log_view() if kind == "tax" else None
+        if view == "daily":
+            rows = _fetch_tax_rollup(
+                db,
+                coalition_id,
+                limit=FULL_LOG_PAGE_SIZE + 1,
+                offset=(page - 1) * FULL_LOG_PAGE_SIZE,
+            )
+        else:
+            rows = _fetch_bank_log(
+                db,
+                coalition_id,
+                kind,
+                only_user_id,
+                limit=FULL_LOG_PAGE_SIZE + 1,
+                offset=(page - 1) * FULL_LOG_PAGE_SIZE,
+            )
 
     has_next = len(rows) > FULL_LOG_PAGE_SIZE
     return render_template(
@@ -2673,6 +2710,7 @@ def bank_log(coalition_id):
         colId=coalition_id,
         coalition_name=name_row[0] if name_row else "Coalition",
         kind=kind,
+        view=view,
         rows=rows[:FULL_LOG_PAGE_SIZE],
         page=page,
         has_next=has_next,
@@ -2689,9 +2727,16 @@ def bank_log_csv(coalition_id):
         denied, only_user_id = _bank_log_access(db, cId, coalition_id, kind)
         if denied:
             return denied
-        rows = _fetch_bank_log(
-            db, coalition_id, kind, only_user_id, limit=CSV_EXPORT_MAX_ROWS
-        )
+        view = _tax_log_view() if kind == "tax" else None
+        if view == "daily":
+            rows = _fetch_tax_rollup(db, coalition_id, limit=CSV_EXPORT_MAX_ROWS)
+        else:
+            rows = _fetch_bank_log(
+                db, coalition_id, kind, only_user_id, limit=CSV_EXPORT_MAX_ROWS
+            )
+
+    if view == "daily":
+        return _tax_rollup_csv(coalition_id, rows)
 
     out = io.StringIO()
     writer = csv.writer(out)
@@ -2718,6 +2763,25 @@ def bank_log_csv(coalition_id):
         )
 
     filename = f"coalition_{int(coalition_id)}_{kind}_log.csv"
+    return Response(
+        out.getvalue(),
+        mimetype="text/csv",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "no-store",
+        },
+    )
+
+
+def _tax_rollup_csv(coalition_id, rows):
+    out = io.StringIO()
+    writer = csv.writer(out)
+    writer.writerow(["date_utc", "type", "member", "member_id", "resource", "amount", "payments"])
+    for day, uname, uid, total, payments in rows:
+        writer.writerow(
+            [day.isoformat(), "tax", _csv_safe(uname), uid, "money", total, payments]
+        )
+    filename = f"coalition_{int(coalition_id)}_tax_daily.csv"
     return Response(
         out.getvalue(),
         mimetype="text/csv",
