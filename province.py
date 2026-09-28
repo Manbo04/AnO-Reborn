@@ -263,6 +263,11 @@ def province(pId):
             "pop_children": result["pop_children"],
             "pop_working": result["pop_working"],
             "pop_elderly": result["pop_elderly"],
+            # Were missing, so the Education Breakdown always rendered 0
+            # (Unknown Identity, staff-chat 09-28).
+            "edu_none": result.get("edu_none") or 0,
+            "edu_highschool": result.get("edu_highschool") or 0,
+            "edu_college": result.get("edu_college") or 0,
             "pollution": result["pollution"],
             "happiness": result["happiness"],
             "productivity": result["productivity"],

@@ -422,3 +422,39 @@ def test_province_builds_role_follows_settings(client, coalition):
         assert can_manage_province_builds(db, c["banker"], c["member"]) is False
         assert can_manage_province_builds(db, c["member2"], c["member"]) is True
         assert can_manage_province_builds(db, c["leader"], c["member"]) is True
+
+
+# ---- share build access: shared provinces reachable from the nation page --
+
+def test_shared_member_provinces_listed_on_nation_page(client, coalition, monkeypatch):
+    """A member who shares builds must have their provinces linked on their
+    nation page for leadership -- before, the list only showed for
+    public_province_info nations, so shared provinces were unreachable."""
+    monkeypatch.setenv("THEME_V2_PAGES", "coalition,country")
+    c = coalition
+    _exec(
+        "INSERT INTO provinces (userId, provinceName) VALUES (%s, %s) RETURNING id",
+        (c["member"], "SharedProvTest"),
+    )
+    pid = _q("SELECT id FROM provinces WHERE userId=%s", (c["member"],))[0][0]
+
+    # Not sharing yet: leader sees no link.
+    _login(client, c["leader"])
+    body = client.get(f"/country/id={c['member']}").get_data(as_text=True)
+    assert f"/province/{pid}" not in body
+
+    _login(client, c["member"])
+    client.post("/coalition/build-sharing", data={"enabled": "on"})
+
+    # Sharing: leader gets the link, and the province page gives build tools.
+    _login(client, c["leader"])
+    from database import query_cache
+    query_cache.clear() if hasattr(query_cache, "clear") else None
+    body = client.get(f"/country/id={c['member']}?r=1").get_data(as_text=True)
+    assert f"/province/{pid}" in body
+    assert "shared with your coalition" in body
+
+    # A plain member of the same coalition has no build role: no link.
+    _login(client, c["member2"])
+    body = client.get(f"/country/id={c['member']}?r=2").get_data(as_text=True)
+    assert f"/province/{pid}" not in body

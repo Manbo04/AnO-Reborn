@@ -431,6 +431,21 @@ class CountryService:
             at_risk_provinces = sum(1 for prov in provinces if (prov[5] or 0) < 35)
 
             status = CountryService._is_same_country(cId, session.get("user_id"))
+            # Coalition "share-build": leadership roles a member opted in to
+            # sharing with need a way into that member's provinces -- without
+            # this the Provinces list only showed for public_province_info
+            # nations, so shared provinces were unreachable (Cheesar, 09-28).
+            shared_build_access = False
+            if not status and session.get("user_id"):
+                try:
+                    from app_core.coalitions.repositories import can_manage_province_builds
+
+                    shared_build_access = can_manage_province_builds(
+                        db, session.get("user_id"), cId
+                    )
+                except Exception:
+                    rollback_db_cursor(db)
+                    shared_build_access = False
             spy = {"count": 0}
             nuke_count = 0
             icbm_count = 0
@@ -775,6 +790,7 @@ class CountryService:
             ) if expenses else 0,
             "expenses_count": len(expenses) if expenses else 0,
             "public_province_info": public_province_info,
+            "shared_build_access": shared_build_access,
             "statistics": statistics,
             "policies": policies,
             "resource_rows": resource_rows,

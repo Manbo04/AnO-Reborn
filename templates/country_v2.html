@@ -96,15 +96,15 @@
 
         </div>
 
-        {% if not status and public_province_info %}
+        {% if not status and (public_province_info or shared_build_access) %}
         <div class="game-glass game-panel" style="margin-bottom: 20px;">
             <div class="game-panel-head">
                 <div>
                     <div class="game-panel-title">Provinces</div>
-                    <p class="game-faint" style="margin-top: 2px;">{{ provinceCount }} province{{ 's' if provinceCount != 1 }} &middot; made public by this nation</p>
+                    <p class="game-faint" style="margin-top: 2px;">{{ provinceCount }} province{{ 's' if provinceCount != 1 }} &middot; {% if shared_build_access %}shared with your coalition &mdash; open one to build{% else %}made public by this nation{% endif %}</p>
                 </div>
             </div>
-            {% for province in provinces[:10] %}
+            {% for province in (provinces if shared_build_access else provinces[:10]) %}
             <a class="game-list-row" href="/province/{{ province[1] }}">
                 <div class="game-row">
                     <span class="material-icons-outlined" style="color: var(--accent);">account_balance</span>
