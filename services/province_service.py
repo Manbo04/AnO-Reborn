@@ -41,9 +41,26 @@ class ProvinceService:
                 for pid, used_city, used_land in db.fetchall():
                     slots_used[pid] = {"city": int(used_city), "land": int(used_land)}
 
+        # Projected population change per province next tick -- the same
+        # cached projection (and shared tick formula) the nation page uses.
+        growth_rates = {}
+        if page_ids:
+            try:
+                from app_core.game_ticks.population import get_population_growth
+
+                per_province = get_population_growth(user_id).get("per_province") or {}
+                growth_rates = {
+                    pid: per_province[str(pid)]
+                    for pid in page_ids
+                    if str(pid) in per_province
+                }
+            except Exception:
+                growth_rates = {}
+
         return {
             "provinces": provinces,
             "slots_used": slots_used,
+            "growth_rates": growth_rates,
             "provinces_with_images": provinces_with_images,
             "current_page": current_page,
             "total_pages": total_pages,

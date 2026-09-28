@@ -55,6 +55,10 @@ from app_core.game_ticks.common import (
 from app_core.game_ticks.locks import try_pg_advisory_lock, release_pg_advisory_lock
 from app_core.game_ticks.population import find_unit_category
 from app_core.economy.industry_bonuses import production_bonuses
+from app_core.economy.province_effects import (
+    apply_effect,
+    building_effects_per_unit,
+)
 
 
 
@@ -860,21 +864,11 @@ def generate_province_revenue():  # Runs each hour
                         if unit == "nuclear_reactors" and upgrades.get("betterengineering"):
                             plus["energy"] += 6
 
-                        eff = dict(infra[unit].get("eff", {}))
-
-                        if unit == "universities" and 3 in policies:
-                            eff["productivity"] *= 1.10
-                            eff["happiness"] *= 1.10
-
-                        if unit == "hospitals":
-                            if upgrades.get("nationalhealthinstitution"):
-                                eff["happiness"] *= 1.3
-                                eff["happiness"] = int(eff["happiness"])
-
-                        if unit == "monorails":
-                            if upgrades.get("highspeedrail"):
-                                eff["productivity"] *= 1.2
-                                eff["productivity"] = int(eff["productivity"])
+                        # Per-unit effects with every upgrade/policy modifier
+                        # (shared with the province page breakdown).
+                        eff, effminus = building_effects_per_unit(
+                            unit, upgrades, policies
+                        )
 
                         """
                         print(f"Unit: {unit}")
@@ -983,25 +977,9 @@ def generate_province_revenue():  # Runs each hour
                             prov_data = provinces_data.get(province_id, {})
                             current_effect = prov_data.get(eff_name, 0)
 
-                            # GOVERNMENT REGULATION
-                            if (
-                                unit_category == "retail"
-                                and upgrades.get("governmentregulation")
-                                and eff_name == "pollution"
-                                and sign == "+"
-                            ):
-                                eff_amount *= 0.75
-
-                            # INDUSTRIAL SUBSIDIES POLICY
-                            if (
-                                variables.POLICY_INDUSTRIAL_SUBSIDIES in policies
-                                and unit in variables.POLICY_SUBSIDIES_AFFECTED_BUILDINGS
-                                and eff_name == "pollution"
-                                and sign == "+"
-                            ):
-                                eff_amount *= (
-                                    variables.POLICY_SUBSIDIES_POLLUTION_MULTIPLIER
-                                )
+                            # Government Regulation / Industrial Subsidies
+                            # pollution modifiers are already folded into the
+                            # per-unit amounts by building_effects_per_unit().
 
                             # Round effect amounts to nearest integer instead of always
                             # rounding up. Using `round` prevents an upward bias when
@@ -1011,19 +989,16 @@ def generate_province_revenue():  # Runs each hour
                             # to oscillation near high pollution values.
                             eff_amount = int(round(eff_amount))
 
-                            if sign == "+":
-                                new_effect = current_effect + eff_amount
-                            elif sign == "-":
-                                new_effect = current_effect - eff_amount
-
-                            if eff_name in percentage_based:
-                                if new_effect > 100:
-                                    new_effect = 100
-                                if new_effect < 0:
-                                    new_effect = 0
-                            else:
-                                if new_effect < 0:
-                                    new_effect = 0
+                            # Pollution stays uncapped until the batch write
+                            # below clamps it, so reductions (parks, monorails)
+                            # act on the real total instead of on 100.
+                            new_effect = apply_effect(
+                                current_effect,
+                                eff_name,
+                                eff_amount,
+                                sign,
+                                percentage_based,
+                            )
 
                             # Update local cache for batch write later
                             if province_id in provinces_data:
@@ -1145,6 +1120,23 @@ def generate_province_revenue():  # Runs each hour
                             page_size=100,
                         )
                         log_verbose(f"Batch updated gold for {len(gold_updates)} users")
+                        # Revenue history ledger: one batched INSERT per
+                        # chunk in its own savepoint (never fails the tick).
+                        from app_core.game_ticks.revenue_history import (
+                            record_gold_ledger,
+                        )
+
+                        ledger_rows = []
+                        for amount, user_id in gold_updates:
+                            pension = pension_penalties.get(user_id, 0)
+                            ledger_rows.append(
+                                (user_id, "building_upkeep", -(amount - pension))
+                            )
+                            if pension:
+                                ledger_rows.append(
+                                    (user_id, "pension_crisis", -pension)
+                                )
+                        record_gold_ledger(db, ledger_rows)
                         if pension_penalties:
                             log_verbose(
                                 f"Applied pension crisis penalties "

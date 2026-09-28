@@ -11,7 +11,12 @@
                         <span class="material-icons-outlined">people_alt</span>Population:
                     </strong>
                 </td>
-                <td>{{ province['population'] | commas }}</td>
+                <td>{{ province['population'] | commas }}
+                    {% if province.get('own') and province.get('growth_rate') is not none %}
+                    {% set g = province['growth_rate'] %}
+                    <span title="Projected population change at the next hourly tick" style="font-size: 0.85em; margin-left: 4px; color: {% if g > 0 %}var(--success){% elif g < 0 %}var(--danger){% else %}inherit{% endif %};">({% if g > 0 %}+{% endif %}{{ g | commas }}/h)</span>
+                    {% endif %}
+                </td>
             </tr>
             {% if province['happiness'] < 50 %}
             <tr>
@@ -57,13 +62,13 @@
             </tr>
             <tr>
                 <td><strong class="tooltipparent" tabindex="0">
-                    <div class="tooltip">Each city slot allows construction of one additional city infrastructure, and increases max population by 750,000</div>
+                    <div class="tooltip">Each city slot allows one more city building and raises max population, with diminishing returns: {% if pop_cap_info %}your next city adds about {{ pop_cap_info.city_next | commas }} max population. Cities can add up to {{ pop_cap_info.city_cap | commas }} in total; you reach ~63% of that at {{ pop_cap_info.city_soft }} cities and ~95% at {{ pop_cap_info.city_95 }}, after which extra cities barely raise it. City prices stop rising after 200 cities.{% else %}each extra city adds a bit less than the last.{% endif %}</div>
                     <span class="material-icons-outlined">business</span>City slots:</strong></td>
                 <td>{{ province['citycount'] - province['free_cityCount'] }} used / {{ province['citycount'] }}</td>
             </tr>
             <tr>
                 <td><strong class="tooltipparent" tabindex="0">
-                    <div class="tooltip">Each land slot allows construction of one additional land infrastructure, increases max population by 120,000 and increases tax income by 2%</div>
+                    <div class="tooltip">Each land slot allows one more land building, adds 2% tax income (up to +100% at {% if pop_cap_info %}{{ pop_cap_info.land_tax_max }}{% else %}51{% endif %} land) and raises max population with diminishing returns: {% if pop_cap_info %}your next land adds about {{ pop_cap_info.land_next | commas }} max population. Land can add up to {{ pop_cap_info.land_cap | commas }} in total; ~63% of that at {{ pop_cap_info.land_soft }} land and ~95% at {{ pop_cap_info.land_95 }}. Land prices stop rising after 100 land.{% else %}each extra land adds a bit less than the last.{% endif %}</div>
                     <span class="material-icons-outlined">landscape</span>Land slots:</strong></td>
                 <td>{{ province['land'] - province['free_land'] }} used / {{ province['land'] }}</td>
             </tr>
@@ -74,6 +79,38 @@
                 <td>{{ energy['production'] }} produced / {{ energy['consumption'] }} needed</td>
             </tr>
         </table>
+        {% if stat_breakdown %}
+        {% set stat_meta = [('happiness', 'Happiness', 'sentiment_satisfied'), ('pollution', 'Pollution', 'cloud'), ('productivity', 'Productivity', 'trending_up')] %}
+        <div class="province-stat-breakdown">
+            <p class="game-faint" style="font-size: 12px; margin: 10px 0 4px;">What changes these each hour (tap to expand):</p>
+            {% for key, label, icon in stat_meta %}
+            {% set b = stat_breakdown[key] %}
+            {% set good = (b.net > 0 and key != 'pollution') or (b.net < 0 and key == 'pollution') %}
+            <details class="province-stat-breakdown-item">
+                <summary>
+                    <span class="material-icons-outlined">{{ icon }}</span>
+                    <span>{{ label }}</span>
+                    <span class="game-mono province-stat-breakdown-net" style="color: {% if b.net == 0 %}inherit{% elif good %}var(--success){% else %}var(--danger){% endif %};">{% if b.net > 0 %}+{% endif %}{{ b.net }}/h</span>
+                </summary>
+                {% if b.sources %}
+                <table class="templatetable" style="font-size: 12.5px;">
+                    {% for src in b.sources %}
+                    <tr>
+                        <td>{% if src.name %}{{ src.count | commas }} &times; {{ src.name.replace('_', ' ') | title }}{% else %}{{ src.label }}{% endif %}</td>
+                        <td class="game-mono" style="text-align: right;">{% if src.total > 0 %}+{% endif %}{{ src.total }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                {% else %}
+                <p class="game-faint" style="font-size: 12px; margin: 6px 0;">Nothing in this province changes {{ label | lower }} right now.</p>
+                {% endif %}
+                <p class="game-faint" style="font-size: 11.5px; margin: 6px 0 0;">
+                    Now {{ b.current }}%, about {{ b.projected }}% after the next tick.{% if key == 'pollution' %} Pollution adds up uncapped first and is limited to 0&ndash;100% only at the end, so parks and monorails cut the real total, not just the part above 100.{% endif %}{% if key == 'happiness' %} High unemployment can also cost happiness each tick.{% endif %} Buildings sitting idle (no money, power or inputs) don't count.
+                </p>
+            </details>
+            {% endfor %}
+        </div>
+        {% endif %}
     </div>
     <div class="templatedivflex2right province-info-demographics">
         <h3 class="templatecontentheaderleft"><span class="material-icons-outlined">groups</span> Demographic Shape</h3>

@@ -777,6 +777,39 @@
                 <small class="muted" title="Projected (applies productivity & rounding): {{ revenue_daily['gross'].get(resource, 0) | fmt }}">&nbsp;Projected: {{ revenue_daily['gross'].get(resource, 0) | fmt }}</small>
             {% endmacro %}
 
+            {# Revenue history: gold actually gained/spent by the hourly ticks
+               (nation_revenue_history ledger), self-contained block. #}
+            {% if status and revenue_history_totals %}
+            {% set rh = revenue_history_totals %}
+            <div class="game-glass game-panel revenue-history" style="margin-bottom: 16px;">
+                <div class="game-panel-head">
+                    <div>
+                        <div class="game-panel-title">Revenue history</div>
+                        <p class="game-faint" style="margin-top: 2px; font-size: 12px;">Gold your nation actually gained and spent each hourly tick.</p>
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="templatetable revenue-history-table" style="width: 100%; font-size: 12.5px;">
+                        <tr>
+                            <th style="text-align: left;"></th>
+                            {% for key in ['24h', '7d', '30d'] %}<th style="text-align: right;">{{ key }}</th>{% endfor %}
+                        </tr>
+                        {% for row in rh['rows'] %}
+                        <tr>
+                            <td>{{ row['label'] }}</td>
+                            {% for key in ['24h', '7d', '30d'] %}<td class="game-mono" style="text-align: right; color: {% if row['kind'] == 'income' %}var(--success){% else %}var(--danger){% endif %};">{% if row[key] %}{% if row['kind'] == 'income' %}+{% else %}-{% endif %}{% endif %}{{ row[key] | fmt }}</td>{% endfor %}
+                        </tr>
+                        {% endfor %}
+                        <tr style="font-weight: 700;">
+                            <td>Net</td>
+                            {% for key in ['24h', '7d', '30d'] %}{% set n = rh['net'][key] %}<td class="game-mono" style="text-align: right; color: {% if n >= 0 %}var(--success){% else %}var(--danger){% endif %};">{% if n > 0 %}+{% endif %}{{ n | fmt }}</td>{% endfor %}
+                        </tr>
+                    </table>
+                </div>
+                <p class="game-faint" style="font-size: 11.5px; margin: 8px 0 0;">Covers taxes, building upkeep, coalition tax and pension-crisis costs. One-off actions (buying, trading, loans, bonds) aren't included. Kept for 30 days.</p>
+            </div>
+            {% endif %}
+
             {% if status %}
             <div class="game-row" style="gap: 8px; margin-bottom: 10px;">
                 <button type="button" class="game-btn game-btn-secondary game-btn-sm" id="revenuePeriodToggle">
@@ -1762,6 +1795,23 @@
                             <input type="text" name="leader_name" class="loginsignupinput" value="{{ leader_name|e if leader_name else '' }}" placeholder="Nation leader's name" maxlength="60">
                             <input type="text" name="currency_name" class="loginsignupinput" value="{{ currency_name|e if currency_name else '' }}" placeholder="National currency name" maxlength="40">
                             <input type="text" name="ruling_party" class="loginsignupinput" value="{{ ruling_party|e if ruling_party else '' }}" placeholder="Ruling party or ideology" maxlength="60">
+                        </div>
+                    </section>
+
+                    <section class="country-customize-section" aria-labelledby="country-privacy-heading">
+                        <div class="country-customize-section-head">
+                            <span class="material-icons-outlined country-customize-section-icon" aria-hidden="true">visibility</span>
+                            <div>
+                                <h3 id="country-privacy-heading" class="country-customize-section-title">Province visibility</h3>
+                                <p class="country-customize-section-hint">Let other players see a list of your provinces and their population on your nation page.</p>
+                            </div>
+                        </div>
+                        <div class="country-lore-editor-wrap" style="padding: 15px 20px;">
+                            <input type="hidden" name="public_province_info_present" value="1">
+                            <label style="display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer;">
+                                <input type="checkbox" name="public_province_info" value="1" style="width: 20px; height: 20px;"{% if public_province_info %} checked{% endif %}>
+                                <span>Show my province info to other players</span>
+                            </label>
                         </div>
                     </section>
 

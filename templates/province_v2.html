@@ -27,7 +27,10 @@
 
 <div class="templatediv">
 
-    {% if not (FEATURE_PROVINCE_BASE_VIEW and province_base_layout) %}
+    {# Province header: rendered in every layout (CSS hides it while the
+       district-map base view is active, which has its own header). The
+       province picture sits behind it with a dark readability overlay. #}
+    <div class="province-photo-header{% if province.has_image %} province-photo-header--custom{% endif %}"{% if province.has_image %} style="--province-photo: url('{{ province.image_url }}');"{% endif %}>
     {% if province["own"] %}
     {% call game_hero(province['name'], badge_icon='account_balance', image_url=province.flag_url if province.has_flag else None) %}
         <div class="game-row" style="gap: 10px;">
@@ -65,7 +68,7 @@
     {% else %}
     {{ game_hero(province['name'], badge_icon='account_balance', image_url=province.flag_url if province.has_flag else None) }}
     {% endif %}
-    {% endif %}
+    </div>
 
     <div class="templatedivcontent">
         {% include 'partials/distribution_alert.html' %}
