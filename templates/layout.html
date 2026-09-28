@@ -492,19 +492,19 @@
             </div>
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'silver') ) }}?v=2" alt="Silver" class="resource" loading="lazy" />
-                <p class="resourcetag">{{ resources["silver"] | weight_fmt }}</p>
+                <p class="resourcetag">{{ (resources.get("silver") or 0) | weight_fmt }}</p>
                 <div class="resourceinfo">Silver is a precious metal mined in tundra and mountain biomes, used in luxury jewelry production.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'diamonds') ) }}?v=2" alt="Diamonds" class="resource" loading="lazy" />
-                <p class="resourcetag">{{ resources["diamonds"] | weight_fmt }}</p>
+                <p class="resourcetag">{{ (resources.get("diamonds") or 0) | weight_fmt }}</p>
                 <div class="resourceinfo">Diamonds are rare gemstones mined in desert and savanna biomes, used in luxury jewelry and consumer goods.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'bullion') ) }}?v=2" alt="Bullion" class="resource" loading="lazy" />
-                <p class="resourcetag">{{ resources["bullion"] | weight_fmt }}</p>
+                <p class="resourcetag">{{ (resources.get("bullion") or 0) | weight_fmt }}</p>
                 <div class="resourceinfo">Bullion is refined gold mined in boreal forest and jungle biomes, used in jewelry and national reserves.</div>
 
             </div>

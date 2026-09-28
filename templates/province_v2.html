@@ -1094,7 +1094,7 @@
                             <div class="templatedivflex2left">
                                 <h3 class="templatecontentheadercenter">You have {{ units["workshops"] }} Workshops</h3>
                                 <p class="templatecontentpleft">Small artisan workshops producing entry-level consumer goods from steel.</p>
-                                <ul>Workshops cost {{ infra["workshops_money"] | fmt }} per hour and consume {{ infra["workshops_minus"]["steel"] | weight_fmt }} steel to produce {{ infra["workshops_plus"]["consumer_goods"] | weight_fmt }} consumer goods per hour, as well as +{{ infra["workshops_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Workshops cost {{ infra["workshops_money"] | fmt }} per hour and consume {{ infra["workshops_convert_minus"][0]["steel"] | weight_fmt }} steel to produce {{ infra["workshops_plus"]["consumer_goods"] | weight_fmt }} consumer goods per hour, as well as +{{ infra["workshops_effect"][0]["pollution"] }}% pollution</ul>
                                 <ul>{{ "workshops" | prores }}</ul>
                                 <div class="purchasemilitarydiv">
                                     <input class="loginsignupinput" autocomplete="off" name="workshops" type="number" placeholder="Amount" />
@@ -1120,7 +1120,7 @@
                             <div class="templatedivflex2left">
                                 <h3 class="templatecontentheadercenter">You have {{ units["jewelry_stores"] }} Jewelry Stores</h3>
                                 <p class="templatecontentpleft">High-end luxury jewelry stores crafting exquisite consumer goods from silver, diamonds, and bullion.</p>
-                                <ul>Jewelry Stores cost {{ infra["jewelry_stores_money"] | fmt }} per hour and consume {{ infra["jewelry_stores_minus"]["silver"] | weight_fmt }} silver, {{ infra["jewelry_stores_minus"]["diamonds"] | weight_fmt }} diamonds, and {{ infra["jewelry_stores_minus"]["bullion"] | weight_fmt }} bullion to produce {{ infra["jewelry_stores_plus"]["consumer_goods"] | weight_fmt }} consumer goods per hour, as well as +{{ infra["jewelry_stores_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Jewelry Stores cost {{ infra["jewelry_stores_money"] | fmt }} per hour and consume {{ infra["jewelry_stores_convert_minus"][0]["silver"] | weight_fmt }} silver, {{ infra["jewelry_stores_convert_minus"][1]["diamonds"] | weight_fmt }} diamonds, and {{ infra["jewelry_stores_convert_minus"][2]["bullion"] | weight_fmt }} bullion to produce {{ infra["jewelry_stores_plus"]["consumer_goods"] | weight_fmt }} consumer goods per hour, as well as +{{ infra["jewelry_stores_effect"][0]["pollution"] }}% pollution</ul>
                                 <ul>{{ "jewelry_stores" | prores }}</ul>
                                 <div class="purchasemilitarydiv">
                                     <input class="loginsignupinput" autocomplete="off" name="jewelry_stores" type="number" placeholder="Amount" />
@@ -1146,7 +1146,7 @@
                             <div class="templatedivflex2left">
                                 <h3 class="templatecontentheadercenter">You have {{ units["automotive_plants"] }} Automotive Plants</h3>
                                 <p class="templatecontentpleft">Large-scale automotive manufacturing plants producing high volumes of consumer goods from steel, aluminium, and components.</p>
-                                <ul>Automotive Plants cost {{ infra["automotive_plants_money"] | fmt }} per hour and consume {{ infra["automotive_plants_minus"]["steel"] | weight_fmt }} steel, {{ infra["automotive_plants_minus"]["aluminium"] | weight_fmt }} aluminium, and {{ infra["automotive_plants_minus"]["components"] | weight_fmt }} components to produce {{ infra["automotive_plants_plus"]["consumer_goods"] | weight_fmt }} consumer goods per hour, as well as +{{ infra["automotive_plants_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Automotive Plants cost {{ infra["automotive_plants_money"] | fmt }} per hour and consume {{ infra["automotive_plants_convert_minus"][0]["steel"] | weight_fmt }} steel, {{ infra["automotive_plants_convert_minus"][1]["aluminium"] | weight_fmt }} aluminium, and {{ infra["automotive_plants_convert_minus"][2]["components"] | weight_fmt }} components to produce {{ infra["automotive_plants_plus"]["consumer_goods"] | weight_fmt }} consumer goods per hour, as well as +{{ infra["automotive_plants_effect"][0]["pollution"] }}% pollution</ul>
                                 <ul>{{ "automotive_plants" | prores }}</ul>
                                 <div class="purchasemilitarydiv">
                                     <input class="loginsignupinput" autocomplete="off" name="automotive_plants" type="number" placeholder="Amount" />
