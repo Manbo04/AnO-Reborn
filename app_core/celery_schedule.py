@@ -38,6 +38,7 @@ TASK_RUN_THRESHOLDS = {
     # basis") -- generous buffer under 24h so scheduler drift can't skip a
     # whole day.
     "bond_tick": int(os.getenv("BOND_TICK_MIN_INTERVAL", "82800")),
+    "assembly_tick": int(os.getenv("ASSEMBLY_TICK_MIN_INTERVAL", "300")),
 }
 
 CELERY_BEAT_SCHEDULE = {
@@ -110,6 +111,10 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": get_crontab_env("BACKUP_CRON", crontab(minute="10", hour="3")),
     },
     # Dormant until FEATURE_PATREON_GEMS=true -- see app_core/patreon/service.py.
+        "assembly_tick": {
+        "task": "tasks.task_assembly_tick",
+        "schedule": get_crontab_env("ASSEMBLY_TICK_CRON", crontab(minute="*/5")),
+    },
     "patreon_gem_grant": {
         "task": "tasks.task_patreon_gem_grant",
         "schedule": get_crontab_env(

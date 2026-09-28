@@ -93,6 +93,7 @@ MIGRATION_FILES = [
     "0083_add_currency_unions.sql",
     "0084_add_sam_battery.sql",
     "0085_spy_op_types_and_counter_intel.sql",
+    "0093.sql",
 ]
 
 
