@@ -85,6 +85,12 @@ CELERY_BEAT_SCHEDULE = {
         "task": "tasks.task_cleanup_orphan_user_rows",
         "schedule": get_crontab_env("ORPHAN_CLEANUP_CRON", crontab(minute="10", hour="1")),
     },
+    # Recurring coalition bank trades (migration 0086): each trade keeps its
+    # own schedule; this just picks up whatever is due.
+    "recurring_bank_trades": {
+        "task": "tasks.task_recurring_bank_trades",
+        "schedule": get_crontab_env("RECURRING_BANK_TRADES_CRON", crontab(minute="7,22,37,52")),
+    },
     "execute_trade_agreements": {
         "task": "tasks.task_execute_trade_agreements",
         "schedule": get_crontab_env("TRADE_AGR_CRON", crontab(minute="*/15")),

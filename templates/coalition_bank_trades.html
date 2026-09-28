@@ -1,4 +1,22 @@
 {% extends "layout.html" %} {% block title %} Bank Trades {% endblock %}{% block body_class %} page-coalition-bank-trades game-page-v2{% endblock %} {% block body %}
+<style>
+.rbt-summary { cursor: pointer; margin: 0; min-height: 44px; display: flex; align-items: center; gap: 6px; }
+.rbt-form { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.rbt-form label { display: flex; flex-direction: column; gap: 4px; }
+@media (min-width: 640px) { .rbt-form { grid-template-columns: 1fr 1fr; } .rbt-wide { grid-column: 1 / -1; } }
+.rbt-list { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 18px; }
+@media (min-width: 900px) { .rbt-list { grid-template-columns: 1fr 1fr; } }
+.rbt-card { padding: 12px 14px; }
+.rbt-card-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+.rbt-status { font-weight: 600; font-size: .9em; }
+.rbt-status.active { color: #4CAF50; } .rbt-status.pending { color: #FFC107; } .rbt-status.paused { color: #FF9800; }
+.rbt-status.completed, .rbt-status.cancelled, .rbt-status.declined { opacity: .7; }
+.rbt-meta { font-size: .88em; opacity: .8; margin-top: 4px; }
+.rbt-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.rbt-actions form { margin: 0; }
+.rbt-actions .game-btn { min-height: 44px; }
+</style>
+
 {% from 'macros/game_ui.html' import game_hero %}
 
 <div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/coalition.jpg') }}');"></div>
@@ -36,6 +54,40 @@
             </form>
             <p class="templatecontentpleft" style="margin-top: 10px; opacity: .75; font-size: .9em;">Up to {{ page.max_pending }} trades can wait at once. Bankers get a notification when you send one.</p>
         </div>
+
+        <details class="game-glass game-panel rbt-panel" style="margin-bottom: 18px;">
+            <summary class="templatecontentheaderleft rbt-summary"><span class="material-icons-outlined">event_repeat</span> Set up a recurring trade</summary>
+            <p class="templatecontentpleft" style="margin: 8px 0 10px;">Same swap on a schedule. A leader, deputy or banker approves it once, then it runs by itself. Nothing is held in advance: each run needs you to have your side and the bank to have its side, otherwise that run is skipped and you get a notification. After {{ page.max_failures }} skipped runs in a row it pauses.</p>
+            <form action="/coalition/{{ coalition_id }}/bank-trades/recurring" method="post" class="rbt-form">
+                <label>You give
+                    <select name="give_resource" class="loginsignupinput" required>
+                        {% for key, label in page.resources %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
+                    </select>
+                </label>
+                <label>Amount each time
+                    <input type="number" name="give_amount" class="loginsignupinput" min="1" step="1" inputmode="numeric" required>
+                </label>
+                <label>Bank gives you
+                    <select name="want_resource" class="loginsignupinput" required>
+                        {% for key, label in page.resources %}<option value="{{ key }}"{% if loop.index == 2 %} selected{% endif %}>{{ label }}</option>{% endfor %}
+                    </select>
+                </label>
+                <label>Amount each time
+                    <input type="number" name="want_amount" class="loginsignupinput" min="1" step="1" inputmode="numeric" required>
+                </label>
+                <label>How often
+                    <select name="interval_hours" class="loginsignupinput" required>
+                        {% for hours, label in page.interval_choices %}<option value="{{ hours }}"{% if hours == 24 %} selected{% endif %}>{{ label | capitalize }}</option>{% endfor %}
+                    </select>
+                </label>
+                <label>How many times
+                    <input type="number" name="max_repetitions" class="loginsignupinput" min="1" max="1000" step="1" inputmode="numeric" placeholder="Until cancelled">
+                </label>
+                <input type="text" name="note" maxlength="200" placeholder="Note for the banker (optional)" class="loginsignupinput rbt-wide">
+                <button type="submit" class="game-btn game-btn-primary rbt-wide" style="min-height: 44px;">Send for approval</button>
+            </form>
+            <p class="templatecontentpleft" style="margin-top: 10px; opacity: .75; font-size: .9em;">Up to {{ page.max_recurring }} recurring trades at once. You or an officer can cancel any time.</p>
+        </details>
 
         {% if page.is_officer and page.bank %}
         <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">account_balance</span> Bank holdings</h2>
@@ -91,6 +143,62 @@
             {% endif %}
         </table>
         </div>
+
+        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">event_repeat</span> Recurring trades</h2>
+        {% if page.recurring %}
+        <div class="rbt-list">
+            {% for t in page.recurring %}
+            <div class="game-glass game-panel rbt-card">
+                <div class="rbt-card-head">
+                    <strong>#{{ t.id }}{% if page.is_officer %} · <a href="/country/id={{ t.user_id }}">{{ t.username }}</a>{% endif %}</strong>
+                    <span class="rbt-status {{ t.status }}">{{ t.status | capitalize }}</span>
+                </div>
+                <div style="margin-top: 6px;">Gives <strong>{{ t.give_amount | fmt }} {{ t.give_label }}</strong> for <strong>{{ t.want_amount | fmt }} {{ t.want_label }}</strong>, {{ t.interval_label }}</div>
+                <div class="rbt-meta">
+                    Runs done: {{ t.repetitions_done }}{% if t.max_repetitions %} of {{ t.max_repetitions }}{% endif %}
+                    {% if t.status == 'active' and t.next_execution_at %} · next {{ t.next_execution_at.strftime('%b %d, %H:%M') }} UTC{% endif %}
+                    {% if t.consecutive_failures and t.status in ('active', 'paused') %} · {{ t.consecutive_failures }} skipped in a row{% endif %}
+                    {% if t.approved_by %} · approved by {{ t.approved_by }}{% endif %}
+                </div>
+                {% if t.note %}<div class="rbt-meta">&ldquo;{{ t.note }}&rdquo;</div>{% endif %}
+                {% set mine = t.user_id == session['user_id'] %}
+                {% if t.status in ('pending', 'active', 'paused') and (mine or page.is_officer) %}
+                <div class="rbt-actions">
+                    {% if t.status == 'pending' and page.is_officer %}
+                    <form action="/coalition/bank-trades/recurring/{{ t.id }}/accept" method="post"><button type="submit" class="game-btn game-btn-primary">Approve</button></form>
+                    <form action="/coalition/bank-trades/recurring/{{ t.id }}/decline" method="post"><button type="submit" class="game-btn game-btn-secondary">Decline</button></form>
+                    {% endif %}
+                    {% if t.status == 'paused' %}
+                    <form action="/coalition/bank-trades/recurring/{{ t.id }}/resume" method="post"><button type="submit" class="game-btn game-btn-primary">Resume</button></form>
+                    {% endif %}
+                    {% if mine or t.status != 'pending' %}
+                    <form action="/coalition/bank-trades/recurring/{{ t.id }}/cancel" method="post"><button type="submit" class="game-btn game-btn-secondary">Cancel</button></form>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="templatecontentpleft" style="opacity: .75;">No recurring trades yet.</p>
+        {% endif %}
+
+        {% if page.recurring_runs %}
+        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">history</span> Recent recurring runs</h2>
+        <div class="templateoutertablediv">
+        <table class="templatetable templatetable2">
+            <tr><th>When (UTC)</th><th>Trade</th>{% if page.is_officer %}<th>Member</th>{% endif %}<th>Result</th></tr>
+            {% for r in page.recurring_runs %}
+            <tr>
+                <td>{{ r.executed_at.strftime('%b %d, %H:%M') }}</td>
+                <td>#{{ r.trade_id }}</td>
+                {% if page.is_officer %}<td>{{ r.username }}</td>{% endif %}
+                <td>{% if r.outcome == 'success' %}Done{% elif r.outcome == 'member_short' %}Skipped: member short{% else %}Skipped: bank short{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
