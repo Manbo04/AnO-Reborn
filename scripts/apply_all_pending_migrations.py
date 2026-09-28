@@ -94,6 +94,7 @@ MIGRATION_FILES = [
     "0084_add_sam_battery.sql",
     "0085_spy_op_types_and_counter_intel.sql",
     "0086_coalition_recurring_trades_etc.sql",
+    "0087_add_nation_revenue_history.sql",
 ]
 
 

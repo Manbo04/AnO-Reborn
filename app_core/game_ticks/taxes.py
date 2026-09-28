@@ -468,6 +468,7 @@ def tax_income():
             money_updates = []
             cg_updates = []
             coalition_bank_deposits = {}  # colId -> total_gold_to_deposit
+            ledger_rows = []  # (user_id, category, signed gold) -> revenue history
             tax_transaction_rows = []  # (colId, user_id, user_id, 'tax', amount, 'deposit')
 
             for user_id in all_user_ids:
@@ -594,6 +595,9 @@ def tax_income():
                 print(msg)
 
                 money_updates.append((money, user_id))
+                ledger_rows.append((user_id, "tax", money + tax_deducted))
+                if tax_deducted:
+                    ledger_rows.append((user_id, "coalition_tax", -tax_deducted))
                 if removed_consumer_goods and removed_consumer_goods != 0:
                     cg_updates.append((abs(removed_consumer_goods), user_id))
             # Execute batch updates
@@ -640,6 +644,12 @@ def tax_income():
                         # Non-critical: the actual gold movement above already
                         # succeeded, this only affects the visibility log.
                         print(f"Alliance tax transaction log failed: {e}")
+            # Revenue history ledger: one batched INSERT, own savepoint, never
+            # fails the tick. The hourly tax tick also prunes >30-day rows.
+            if money_updates:
+                from app_core.game_ticks.revenue_history import record_gold_ledger
+
+                record_gold_ledger(db, ledger_rows, prune=True)
             if cg_updates:
                 try:
                     # Get consumer_goods resource_id

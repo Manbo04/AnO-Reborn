@@ -1120,6 +1120,23 @@ def generate_province_revenue():  # Runs each hour
                             page_size=100,
                         )
                         log_verbose(f"Batch updated gold for {len(gold_updates)} users")
+                        # Revenue history ledger: one batched INSERT per
+                        # chunk in its own savepoint (never fails the tick).
+                        from app_core.game_ticks.revenue_history import (
+                            record_gold_ledger,
+                        )
+
+                        ledger_rows = []
+                        for amount, user_id in gold_updates:
+                            pension = pension_penalties.get(user_id, 0)
+                            ledger_rows.append(
+                                (user_id, "building_upkeep", -(amount - pension))
+                            )
+                            if pension:
+                                ledger_rows.append(
+                                    (user_id, "pension_crisis", -pension)
+                                )
+                        record_gold_ledger(db, ledger_rows)
                         if pension_penalties:
                             log_verbose(
                                 f"Applied pension crisis penalties "
