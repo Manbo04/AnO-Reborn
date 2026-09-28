@@ -1035,6 +1035,192 @@ def bot_post_devlog():
     return jsonify({"ok": True, "id": entry["id"], "created_at": entry["created_at"].isoformat()})
 
 
+# ---------------------------------------------------------------------------
+# /bank-summary (Kurai, #suggestions 2026-09-26): per-member coalition bank
+# activity over the last N hours, for the coalition's leader/deputies/bankers.
+# ---------------------------------------------------------------------------
+
+BANK_SUMMARY_ROLES = ("leader", "deputy_leader", "banker")
+BANK_SUMMARY_MAX_HOURS = 720  # 30 days
+
+
+def _new_member_summary(user_id: int, username: Optional[str]) -> Dict[str, Any]:
+    return {
+        "user_id": user_id,
+        "username": username or f"Nation #{user_id}",
+        "deposits": {},
+        "withdrawals": {},
+        "tax": 0,
+        "trades": 0,
+        "trade_gave": {},
+        "trade_got": {},
+    }
+
+
+def aggregate_bank_summary(
+    rows: List[Tuple[Any, ...]], trade_counts: Dict[int, int]
+) -> List[Dict[str, Any]]:
+    """Pure: fold grouped col_bank_transactions rows into one entry per member.
+
+    rows: (user_id, username, category, direction, resource, total) where
+    category is 'tax' | 'trade' | 'manual'. Tax rows are logged by the tax
+    tick with resource='tax' (they are money). Trade legs: 'deposit' = the
+    member gave the bank that resource, 'withdraw' = the member received it.
+    trade_counts: {user_id: executed bank trades in the window}.
+    Sorted busiest first (bank moves + trades, then tax paid), then by name.
+    """
+    members: Dict[int, Dict[str, Any]] = {}
+    for user_id, username, category, direction, resource, total in rows:
+        m = members.setdefault(user_id, _new_member_summary(user_id, username))
+        total = int(total or 0)
+        if category == "tax":
+            m["tax"] += total
+            continue
+        if category == "trade":
+            bucket = m["trade_gave"] if direction == "deposit" else m["trade_got"]
+        else:
+            bucket = m["deposits"] if direction == "deposit" else m["withdrawals"]
+        bucket[resource] = bucket.get(resource, 0) + total
+    for user_id, count in trade_counts.items():
+        if user_id in members:
+            members[user_id]["trades"] = int(count)
+    def _sort_key(m):
+        kinds = len(m["deposits"]) + len(m["withdrawals"]) + m["trades"]
+        return (-kinds, -m["tax"], m["username"].lower())
+
+    return sorted(members.values(), key=_sort_key)
+
+
+def _col_bank_txn_has_kind(db) -> bool:
+    db.execute(
+        """
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'col_bank_transactions'
+          AND column_name = 'kind'
+        """
+    )
+    return db.fetchone() is not None
+
+
+def coalition_bank_summary(discord_user_id: Optional[str], hours: Any) -> Tuple[int, Dict[str, Any]]:
+    """Shared by the HTTP endpoint and the direct-DB bot backend.
+    Returns (http_status, payload). Permission is enforced HERE (server side):
+    the Discord account must be linked to a nation that is leader, deputy or
+    banker of a coalition, and only that coalition's data is ever returned."""
+    from database import get_db_cursor
+
+    if not discord_user_id:
+        return 400, {"error": "X-Discord-User-Id header required"}
+    try:
+        hours = int(hours)
+    except (TypeError, ValueError):
+        return 400, {"error": "hours must be a whole number."}
+    if hours < 1 or hours > BANK_SUMMARY_MAX_HOURS:
+        return 400, {"error": f"hours must be between 1 and {BANK_SUMMARY_MAX_HOURS}."}
+
+    user_id = resolve_user_id_by_discord(discord_user_id)
+    if user_id is None:
+        return 404, {"error": "Not registered. Link your nation with /register first."}
+    members_tbl = get_coalition_members_table()
+    if not members_tbl:
+        return 503, {"error": "Coalitions are unavailable right now."}
+
+    with get_db_cursor() as db:
+        db.execute(
+            f"""
+            SELECT m.colid, m.role, c.name
+            FROM {members_tbl} m LEFT JOIN colNames c ON c.id = m.colid
+            WHERE m.userid = %s
+            """,
+            (user_id,),
+        )
+        row = db.fetchone()
+        if not row:
+            return 403, {"error": "You're not in a coalition."}
+        col_id, role, col_name = row
+        if role not in BANK_SUMMARY_ROLES:
+            return 403, {"error": "Only your coalition's leader, deputies and bankers can see the bank summary."}
+
+        category = (
+            "CASE WHEN t.resource = 'tax' THEN 'tax' "
+            "WHEN t.kind = 'trade' THEN 'trade' ELSE 'manual' END"
+            if _col_bank_txn_has_kind(db)
+            else "CASE WHEN t.resource = 'tax' THEN 'tax' ELSE 'manual' END"
+        )
+        db.execute(
+            f"""
+            SELECT t.user_id, u.username, {category} AS category,
+                   t.direction, t.resource, SUM(t.amount)
+            FROM col_bank_transactions t
+            LEFT JOIN users u ON u.id = t.user_id
+            WHERE t.coalition_id = %s
+              AND t.created_at >= NOW() - make_interval(hours => %s)
+            GROUP BY t.user_id, u.username, 3, t.direction, t.resource
+            """,
+            (col_id, hours),
+        )
+        rows = db.fetchall()
+
+        # Executed trades per member: one-off accepted trades + successful
+        # recurring runs (to_regclass guards pre-0082/0086 databases).
+        trade_counts: Dict[int, int] = {}
+        db.execute(
+            "SELECT to_regclass('public.col_bank_trades'), "
+            "to_regclass('public.col_bank_recurring_trade_runs')"
+        )
+        has_trades, has_runs = db.fetchone()
+        if has_trades:
+            db.execute(
+                """
+                SELECT user_id, COUNT(*) FROM col_bank_trades
+                WHERE coalition_id = %s AND status = 'accepted'
+                  AND resolved_at >= NOW() - make_interval(hours => %s)
+                GROUP BY user_id
+                """,
+                (col_id, hours),
+            )
+            for uid, n in db.fetchall():
+                trade_counts[uid] = trade_counts.get(uid, 0) + int(n)
+        if has_runs:
+            db.execute(
+                """
+                SELECT t.user_id, COUNT(*)
+                FROM col_bank_recurring_trade_runs r
+                JOIN col_bank_recurring_trades t ON t.id = r.recurring_trade_id
+                WHERE t.coalition_id = %s AND r.outcome = 'success'
+                  AND r.executed_at >= NOW() - make_interval(hours => %s)
+                GROUP BY t.user_id
+                """,
+                (col_id, hours),
+            )
+            for uid, n in db.fetchall():
+                trade_counts[uid] = trade_counts.get(uid, 0) + int(n)
+
+    members = aggregate_bank_summary(rows, trade_counts)
+    return 200, {
+        "coalition_id": col_id,
+        "coalition_name": col_name,
+        "hours": hours,
+        "members": members,
+        "total_tax": sum(m["tax"] for m in members),
+    }
+
+
+@bp.route("/api/bot/coalition_bank_summary", methods=["GET"])
+def bot_coalition_bank_summary():
+    err = _require_bot_secret()
+    if err:
+        return err
+    try:
+        status, payload = coalition_bank_summary(
+            _discord_user_id_from_request(), request.args.get("hours", "24")
+        )
+    except Exception:
+        logger.exception("/api/bot/coalition_bank_summary failed")
+        return jsonify({"error": "Could not load the bank summary."}), 500
+    return jsonify(payload), status
+
+
 def register_bot_api_routes(app_instance):
   app_instance.register_blueprint(bp)
 

@@ -6,7 +6,11 @@ import discord
 from discord import app_commands
 
 from discord_bot.backend import BotBackend, BotBackendError, backend_mode_label
-from discord_bot.embeds import EMBED_UI_VERSION, build_nation_embed
+from discord_bot.embeds import (
+    EMBED_UI_VERSION,
+    build_bank_summary_embed,
+    build_nation_embed,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -156,6 +160,37 @@ def register_commands(
             )
         except BotBackendError as exc:
             await interaction.followup.send(str(exc), ephemeral=True)
+
+    @tree.command(
+        name="bank-summary",
+        description="Your coalition bank activity per member (leader/deputy/banker only)",
+    )
+    @app_commands.describe(
+        hours="How many hours back to look (default 24, max 720)",
+        public="Post it in the channel instead of only to you (default: only you)",
+    )
+    async def bank_summary_cmd(
+        interaction: discord.Interaction,
+        hours: app_commands.Range[int, 1, 720] = 24,
+        public: bool = False,
+    ) -> None:
+        await interaction.response.defer(ephemeral=not public)
+        try:
+            uid = str(interaction.user.id)
+            data = await asyncio.to_thread(
+                lambda: backend.coalition_bank_summary(uid, int(hours))
+            )
+            await interaction.followup.send(
+                embed=build_bank_summary_embed(data), ephemeral=not public
+            )
+        except BotBackendError as exc:
+            await interaction.followup.send(str(exc), ephemeral=True)
+        except Exception:
+            logger.exception("/bank-summary failed for discord user %s", interaction.user.id)
+            await interaction.followup.send(
+                "Could not load the bank summary. Please try again later.",
+                ephemeral=True,
+            )
 
     @tree.command(
         name="bot_version",

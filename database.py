@@ -1880,6 +1880,12 @@ def ensure_schema_compat() -> None:
                 ON col_bank_transactions (coalition_id, created_at DESC)
                 """
             )
+            # 'trade' = one leg of a coalition bank trade, 'manual' = a plain
+            # deposit/withdrawal (migration 0086; lets /bank-summary split them).
+            db.execute(
+                "ALTER TABLE col_bank_transactions "
+                "ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT 'manual'"
+            )
 
         _run_schema_step("col_bank_transactions", _create_col_bank_transactions)
 

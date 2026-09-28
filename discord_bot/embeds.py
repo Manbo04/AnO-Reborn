@@ -389,3 +389,75 @@ def build_reengagement_view() -> discord.ui.View:
         )
     )
     return view
+
+
+# ---------------------------------------------------------------------------
+# /bank-summary (coalition bank activity per member)
+# ---------------------------------------------------------------------------
+
+BANK_SUMMARY_MAX_MEMBER_FIELDS = 20  # Discord allows 25 fields; keep room for totals
+
+
+def _bank_res_label(resource: str) -> str:
+    if resource == "money":
+        return "💰 money"
+    emoji = RESOURCE_EMOJI.get(resource, "")
+    return f"{emoji} {resource.replace('_', ' ')}".strip()
+
+
+def _bank_res_list(amounts: Dict[str, Any]) -> str:
+    # money first, then biggest amounts
+    items = sorted(amounts.items(), key=lambda kv: (kv[0] != "money", -int(kv[1] or 0)))
+    return ", ".join(f"{_fmt_compact(v)} {_bank_res_label(k)}" for k, v in items)
+
+
+def build_bank_summary_embed(data: Dict[str, Any]) -> discord.Embed:
+    """Readable per-member breakdown of GET /api/bot/coalition_bank_summary."""
+    hours = int(data.get("hours") or 24)
+    col_name = data.get("coalition_name") or f"Coalition #{data.get('coalition_id')}"
+    members = data.get("members") or []
+    window = f"last {hours}h" if hours % 24 else ("last 24h" if hours == 24 else f"last {hours // 24} days")
+    embed = discord.Embed(
+        title=f"🏦 {col_name} · bank summary",
+        description=(
+            f"Bank activity per member, {window}."
+            + (f"\n**Tax collected:** 💰 {_fmt_num(data.get('total_tax') or 0)}" if data.get("total_tax") else "")
+        ),
+        color=ANO_GOLD,
+    )
+    if not members:
+        embed.description += "\n\nNo deposits, withdrawals, trades or tax in this window."
+    shown = 0
+    budget = 5400 - len(embed.title) - len(embed.description or "")  # Discord caps an embed at 6000 chars
+    for m in members[:BANK_SUMMARY_MAX_MEMBER_FIELDS]:
+        lines = []
+        if m.get("deposits"):
+            lines.append(f"**⬆ Deposited:** {_bank_res_list(m['deposits'])}")
+        if m.get("withdrawals"):
+            lines.append(f"**⬇ Withdrew:** {_bank_res_list(m['withdrawals'])}")
+        if m.get("tax"):
+            lines.append(f"**🧾 Tax paid:** 💰 {_fmt_num(m['tax'])}")
+        if m.get("trades") or m.get("trade_gave") or m.get("trade_got"):
+            count = int(m.get("trades") or 0)
+            trade = f"**🔁 Bank trades:** {count}" if count else "**🔁 Bank trades**"
+            if m.get("trade_gave"):
+                trade += f" · gave {_bank_res_list(m['trade_gave'])}"
+            if m.get("trade_got"):
+                trade += f" · got {_bank_res_list(m['trade_got'])}"
+            lines.append(trade)
+        name = _truncate(str(m.get("username") or "?"), 250)
+        value = _truncate("\n".join(lines) or "—")
+        if len(name) + len(value) > budget:
+            break
+        budget -= len(name) + len(value)
+        embed.add_field(name=name, value=value, inline=False)
+        shown += 1
+    hidden = len(members) - shown
+    if hidden > 0:
+        embed.add_field(
+            name="…and more",
+            value=f"{hidden} more member(s). Full history: {GAME_BASE_URL}/coalition/{data.get('coalition_id')}/bank_log",
+            inline=False,
+        )
+    embed.set_footer(text="Leader / deputies / bankers only · amounts are totals for the window")
+    return embed

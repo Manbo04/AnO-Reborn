@@ -104,3 +104,11 @@ class BotApiClient:
             discord_user_id=discord_user_id,
             params=params or None,
         )
+
+    def coalition_bank_summary(self, discord_user_id: str, hours: int) -> Dict[str, Any]:
+        return self._request(
+            "GET",
+            "/api/bot/coalition_bank_summary",
+            discord_user_id=discord_user_id,
+            params={"hours": str(int(hours))},
+        )

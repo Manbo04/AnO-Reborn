@@ -89,3 +89,6 @@ class WebEmbedBackend(BotBackend):
                 params={"title": "Resources"},
             )
         raise BotBackendError("Register first or provide a nation name/id", 400)
+
+    def coalition_bank_summary(self, discord_user_id: str, hours: int) -> Dict[str, Any]:
+        return self._wrap(self._client.coalition_bank_summary, discord_user_id, hours)

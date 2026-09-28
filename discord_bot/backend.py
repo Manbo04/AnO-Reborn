@@ -26,6 +26,8 @@ class BotBackend(Protocol):
         self, discord_user_id: Optional[str] = None, nation: Optional[str] = None
     ) -> Dict[str, Any]: ...
 
+    def coalition_bank_summary(self, discord_user_id: str, hours: int) -> Dict[str, Any]: ...
+
 
 class BotBackendError(Exception):
     def __init__(self, message: str, status_code: int = 0):
@@ -148,6 +150,14 @@ class DirectDatabaseBackend:
             raise BotBackendError("Could not load nation statistics.", 500)
         return snap
 
+    def coalition_bank_summary(self, discord_user_id: str, hours: int) -> Dict[str, Any]:
+        from bot_api import coalition_bank_summary
+
+        status, payload = coalition_bank_summary(discord_user_id, hours)
+        if status != 200:
+            raise BotBackendError(payload.get("error") or "Could not load the bank summary.", status)
+        return payload
+
 
 class HttpApiBackend:
     """Call web service /api/bot/* (needs BOT_API_BASE_URL + auth secret)."""
@@ -195,6 +205,9 @@ class HttpApiBackend:
         self, discord_user_id: Optional[str] = None, nation: Optional[str] = None
     ) -> Dict[str, Any]:
         return self._wrap(self._client.resources, discord_user_id, nation)
+
+    def coalition_bank_summary(self, discord_user_id: str, hours: int) -> Dict[str, Any]:
+        return self._wrap(self._client.coalition_bank_summary, discord_user_id, hours)
 
 
 def _has_database_url() -> bool:
