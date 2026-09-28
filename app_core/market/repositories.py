@@ -277,6 +277,27 @@ def delete_trade(db, trade_id, user_id):
     )
     return db.fetchone()
 
+def refund_trades_offered_to(db, user_id):
+    """Delete direct trades other nations offered to ``user_id``, returning
+    their escrow (goods for sell offers, gold for buy offers).
+
+    Used when a nation is reset/deleted: its incoming trades used to be
+    deleted outright, so the offering nation's escrow vanished.
+    """
+    from .services import give_resource
+
+    db.execute(
+        "DELETE FROM trades WHERE offeree=%s AND offerer<>%s "
+        "RETURNING offerer, type, resource, amount, price",
+        (user_id, user_id),
+    )
+    for offerer, type_, resource, amount, price in db.fetchall() or []:
+        if type_ == "sell":
+            give_resource("bank", offerer, resource, amount, cursor=db)
+        elif type_ == "buy":
+            give_resource("bank", offerer, "money", int(amount) * int(price), cursor=db)
+
+
 def delete_trade_by_id(db, trade_id):
     db.execute("DELETE FROM trades WHERE offer_id=%s", (trade_id,))
 

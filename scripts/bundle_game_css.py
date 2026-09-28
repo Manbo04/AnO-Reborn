@@ -24,6 +24,7 @@ FILES = [
     "static/css/cosmetics-bloodshed.css",
     "static/css/cosmetics-imperial.css",
     "static/css/cosmetics-frost.css",
+    "static/css/cosmetics-nebula.css",
 ]
 
 

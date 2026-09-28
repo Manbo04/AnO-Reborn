@@ -13963,24 +13963,23 @@ body.nation-forge-theme .forge-embers-canvas {
     height: 100%;
     pointer-events: none;
     opacity: 0.55;
-    mix-blend-mode: screen;
+    /* No mix-blend-mode: with "screen" the canvas's dark fading trail
+       vanished on desktop, the drips went faint and the overlay stripes
+       showed through as static bars, while touch devices (game-touch.css
+       forces blend "normal" for scroll performance) saw proper molten
+       drips. Normal blending everywhere makes desktop match mobile and is
+       cheaper to composite. */
 }
 
-/* Slow-scrolling molten streaks + warm ember glow painted onto the
-   page's existing darkening overlay (game-glass.css .game-page-overlay),
-   which already sits fixed between the background photo and all
-   content. */
+/* Warm ember glow painted onto the page's existing darkening overlay
+   (game-glass.css .game-page-overlay), fixed between the background
+   photo and all content. Static: the drips come from the canvas above.
+   The old 36px repeating stripe + background-position scroll read as
+   static bars on desktop and repainted the whole viewport every frame. */
 body.nation-forge-theme .game-page-overlay {
     background:
-        repeating-linear-gradient(180deg, rgba(255, 140, 43, 0.07) 0px, rgba(255, 140, 43, 0.07) 2px, transparent 2px, transparent 36px),
         radial-gradient(circle at 20% 10%, rgba(255, 140, 43, 0.18) 0%, transparent 45%),
         linear-gradient(180deg, rgba(13, 4, 2, 0.55) 0%, rgba(13, 4, 2, 0.9) 65%, #0d0402 100%);
-    animation: forge-drip-scroll 3.2s linear infinite;
-}
-
-@keyframes forge-drip-scroll {
-    0% { background-position: 0 0, 0 0, 0 0; }
-    100% { background-position: 0 36px, 0 0, 0 0; }
 }
 
 /* Roaming downward ember flare, purely decorative, never blocks clicks --
@@ -14664,6 +14663,190 @@ body.nation-frost-theme ::-webkit-scrollbar-thumb {
     body.nation-frost-theme .game-hero,
     body.nation-frost-theme .game-glass,
     body.nation-frost-theme .game-hero h1 {
+        animation: none !important;
+    }
+}
+
+
+/* --- static/css/cosmetics-nebula.css --- */
+/*
+ * Deep-space nebula cosmetic reskin for a single nation page (Kurai,
+ * nation 69697637 "Algland"). Inspired by the market's "Midnight Nebula"
+ * background (#3a1c71 -> #17123a -> #05040f), taken further: a layered
+ * nebula glow, slow parallax star layers and a rare shooting star
+ * (static/js/nebula-starfield.js), a soft nebula glow on every panel and a
+ * matching nation-name flair. Tinted from Kurai's flag, an orbital photo of
+ * a coastline: deep ocean blue (#1f4fa0), shallow-water cyan (#4fb3d9) and
+ * sand cream (#f0e2c0), with the Midnight Nebula violet for depth.
+ * Scoped entirely under body.nation-nebula-theme (set only in
+ * templates/country_v2.html's body_class block when cId == 69697637).
+ * Perf: nothing here animates box-shadow or background-position (both
+ * repaint every frame); the only animations are opacity/transform, and
+ * they stop under prefers-reduced-motion. Bundled by
+ * scripts/bundle_game_css.py -- edit this file, not style.css.
+ */
+
+body.nation-nebula-theme {
+    --background: #03040d;
+    --foreground: #070a1a;
+    --foregroundTwo: #0a0e22;
+    --foregroundThree: #0e132c;
+    --foregroundFour: #131936;
+    --border: #28366e;
+    --colorOne: #e8eefc;
+    --accent: #6fc3e6;
+    --accent-hover: #9ad8f0;
+    --accent-subtle: #0f1d3d;
+    --gold: #f0e2c0;
+    --success: #7bd6b0;
+    --danger: #ff6b7d;
+    --text-secondary: #a3b2d6;
+    /* Mobile tables pin their label column with a solid zebra background
+       (game-layout.css) -- without these, light-theme visitors got white
+       cells in the middle of this dark page. */
+    --tableOne: var(--foreground);
+    --tableTwo: var(--foregroundTwo);
+
+    --game-glass-bg: rgba(8, 11, 30, 0.6);
+    --game-glass-bg-strong: rgba(8, 11, 30, 0.86);
+    --game-glass-border: rgba(111, 195, 230, 0.3);
+
+    color-scheme: dark;
+}
+
+/* Starfield canvas. Same placement/paint-order as .forge-embers-canvas:
+   right after .game-page-overlay, no z-index, so it sits above the
+   background layers but under the page content. Normal blending (no
+   mix-blend-mode) so desktop and mobile look the same. */
+body.nation-nebula-theme .nebula-starfield-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.9;
+}
+
+/* The nebula itself: layered soft clouds over the flag photo, static. */
+body.nation-nebula-theme .game-page-overlay {
+    background:
+        radial-gradient(ellipse 60% 45% at 18% 22%, rgba(58, 28, 113, 0.55) 0%, transparent 70%),
+        radial-gradient(ellipse 55% 40% at 82% 30%, rgba(31, 79, 160, 0.45) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 35% at 60% 78%, rgba(79, 179, 217, 0.18) 0%, transparent 70%),
+        radial-gradient(ellipse 35% 25% at 30% 70%, rgba(240, 226, 192, 0.07) 0%, transparent 70%),
+        linear-gradient(180deg, rgba(5, 4, 15, 0.82) 0%, rgba(3, 4, 13, 0.92) 60%, #03040d 100%);
+}
+
+/* A second, slowly breathing cloud layer, drawn inside the overlay's own
+   stacking context (above its clouds, below all content). Opacity and
+   transform only: composited, no repaint. */
+body.nation-nebula-theme .game-page-overlay::after {
+    content: "";
+    position: absolute;
+    inset: -10%;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 40% 30% at 70% 60%, rgba(111, 70, 190, 0.22) 0%, transparent 70%),
+        radial-gradient(ellipse 45% 30% at 25% 40%, rgba(79, 179, 217, 0.12) 0%, transparent 70%);
+    opacity: 0.6;
+    animation: nebula-breathe 18s ease-in-out infinite;
+}
+
+@keyframes nebula-breathe {
+    0%, 100% { opacity: 0.45; transform: translate3d(0, 0, 0) scale(1); }
+    50% { opacity: 0.85; transform: translate3d(-1.5%, 1%, 0) scale(1.04); }
+}
+
+/* Soft nebula glow on the hero and every glass panel -- static. */
+body.nation-nebula-theme .game-hero,
+body.nation-nebula-theme .game-glass {
+    border-color: rgba(111, 195, 230, 0.32);
+    box-shadow:
+        0 0 0 1px rgba(111, 195, 230, 0.12),
+        0 0 24px rgba(58, 28, 113, 0.45),
+        0 0 48px rgba(31, 79, 160, 0.22);
+}
+
+body.nation-nebula-theme .game-hero-sub,
+body.nation-nebula-theme .game-hero-badge {
+    color: var(--colorOne);
+}
+
+/* Nation-name flair: sand -> shallow-sea cyan -> ocean blue, like the
+   coastline in his flag seen from orbit, with a soft starlight glow.
+   The render_nation_name spans get their own rules (a site-wide `*` rule
+   beats inherited styles -- see cosmetics-imperial.css). A player-chosen
+   name colour from the store is overridden here on purpose: this is his
+   bespoke page. */
+body.nation-nebula-theme .game-hero h1 .nation-flair-name {
+    background: linear-gradient(100deg, #f0e2c0 0%, #9ad8f0 45%, #6fa8ff 75%, #b79cff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent !important;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 6px rgba(111, 195, 230, 0.55));
+    letter-spacing: 0.4px;
+}
+
+/* A small four-point star beside the name that slowly brightens and dims
+   (opacity only, 6 s cycle -- well under any flashing threshold). */
+body.nation-nebula-theme .game-hero h1 .nation-name-flair::after {
+    content: "\2726";
+    display: inline-block;
+    margin-left: 0.35em;
+    font-size: 0.55em;
+    vertical-align: super;
+    color: #f0f6ff;
+    text-shadow: 0 0 6px rgba(154, 216, 240, 0.9);
+    opacity: 0.55;
+    animation: nebula-star-glow 6s ease-in-out infinite;
+}
+
+@keyframes nebula-star-glow {
+    0%, 100% { opacity: 0.45; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.1); }
+}
+
+body.nation-nebula-theme .game-hero h1 .nation-flair-title {
+    color: var(--gold);
+}
+
+body.nation-nebula-theme .game-btn-primary,
+body.nation-nebula-theme .templatedivbutton {
+    box-shadow: 0 0 12px rgba(111, 195, 230, 0.45);
+}
+
+body.nation-nebula-theme .stat-card {
+    border-color: rgba(111, 195, 230, 0.22);
+}
+
+body.nation-nebula-theme .stat-value {
+    color: var(--accent);
+    text-shadow: 0 0 6px rgba(111, 195, 230, 0.45);
+}
+
+body.nation-nebula-theme .templatedivtitle,
+body.nation-nebula-theme .templatecontentheaderleft {
+    box-shadow: 0 0 16px rgba(58, 28, 113, 0.5);
+}
+
+body.nation-nebula-theme ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+body.nation-nebula-theme ::-webkit-scrollbar-track {
+    background: #03040d;
+}
+
+body.nation-nebula-theme ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #9ad8f0, #3a1c71);
+    border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.nation-nebula-theme .game-page-overlay::after,
+    body.nation-nebula-theme .game-hero h1 .nation-name-flair::after {
         animation: none !important;
     }
 }

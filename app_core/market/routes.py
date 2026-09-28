@@ -20,6 +20,9 @@ from .currency_pricing import (
 from app_core.currency.repositories import take_currency, give_currency
 from app_core.world_affairs.services import log_event
 
+# trades.amount/price/offeree/offer_id are Postgres INTEGER columns.
+MAX_TRADE_INT = 2_147_483_647
+
 market_bp = Blueprint("market_bp", __name__)
 logger = logging.getLogger(__name__)
 
@@ -458,8 +461,22 @@ def post_trade_offer(offer_type, offeree_id):
         if amount < 1:
             return error(400, "Amount must be greater than 0")
 
-        if offeree_id == str(cId):
+        # trades.amount / trades.price / trades.offeree are INTEGER columns:
+        # anything past 2,147,483,647 raised NumericValueOutOfRange on the
+        # INSERT (a 500, after the escrow had already been taken).
+        if amount > MAX_TRADE_INT or price > MAX_TRADE_INT:
+            return error(
+                400, f"Amount and price can be at most {MAX_TRADE_INT:,} per offer"
+            )
+        offeree_int = int(offeree_id)
+        if offeree_int == cId:
             return error(400, "You cannot send a direct trade to yourself!")
+
+        # A deleted/nonexistent nation failed the trades.offeree foreign key
+        # on INSERT -- another 500 after escrow.
+        if offeree_int > MAX_TRADE_INT or not user_exists(db, offeree_int):
+            return error(404, "That nation does not exist")
+        offeree_id = str(offeree_int)
 
         currency_id, cur_err = parse_currency_choice(db, request.form.get("currency_id"))
         if cur_err:
@@ -555,6 +572,10 @@ def decline_trade_endpoint(trade_id):
 @market_bp.route("/accept_trade/<trade_id>", methods=["POST"])
 @login_required
 def accept_trade(trade_id):
+    # int(trade_id) in try_lock_trade raised on a non-numeric id and the
+    # lookup below then 500'd on the bad SQL parameter.
+    if not str(trade_id).isnumeric() or int(trade_id) > MAX_TRADE_INT:
+        return error(400, "Trade id must be numeric")
     cId = session["user_id"]
     with get_request_cursor() as db:
         lock_blocked = False
@@ -628,7 +649,7 @@ def accept_trade(trade_id):
                 try:
                     gr_ret = give_resource(source, offeree, resource, amount, cursor=db)
                 except Exception as exc:
-                    report_trade_error("accept_trade: give_resource raised exception during sell", exc=exc)
+                    report_trade_error("accept_trade: escrow delivery raised exception", exc=exc)
                     return error(400, "Trade acceptance failed")
                 if gr_ret is not True:
                     return error(400, gr_ret or "Trade acceptance failed")

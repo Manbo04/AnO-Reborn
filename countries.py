@@ -9,6 +9,8 @@ import logging
 from collections import defaultdict
 from app_core.policies.services import get_user_policies
 from app_core.economy.industry_bonuses import production_bonuses
+from app_core.economy.tick_order import upkeep_budget
+from app_core.economy.project_bonuses import project_output_bonus
 from app_core.economy.consumer_goods import (
     allocate_consumer_goods,
     cg_tax_multiplier,
@@ -335,8 +337,9 @@ def get_revenue(cId, db=None):
                 if bname != "id" and qty:
                     nation_building_counts[bname] += qty
 
-        # Simulated funds used while computing `net`; do not mutate DB
-        simulated_funds = current_money
+        # Per-building (upkeep, net effect) in tick order; applied against
+        # the simulated treasury once the tax projection is known.
+        upkeep_queue = []
 
         for province in provinces:
             buildings = proinfra_by_id.get(province)
@@ -377,11 +380,12 @@ def get_revenue(cId, db=None):
                 # reflects a simple money-constrained simulation similar to the
                 # actual task runner so UI `net` is consistent with what will
                 # actually happen.
-                will_operate = simulated_funds >= operating_costs
-
-                if will_operate:
-                    simulated_funds -= operating_costs
-                    revenue["net"]["money"] -= operating_costs
+                #
+                # Whether it operates is decided after the tax projection
+                # below (see upkeep_queue), because the hourly tax payout can
+                # land before the next upkeep charge (tick_order.py).
+                upkeep_op = {"cost": operating_costs, "net": defaultdict(float)}
+                upkeep_queue.append(upkeep_op)
 
                 plus = infra[building].get("plus", {})
                 for resource, amount in plus.items():
@@ -415,12 +419,7 @@ def get_revenue(cId, db=None):
 
                     # Production project multipliers (mirror app_core/game_ticks/
                     # revenue.py so the projection matches actual generation).
-                    if building == "bauxite_mines" and upgrades.get("strongerexplosives"):
-                        multiplier += 0.45
-                    if building == "farms" and upgrades.get("advancedmachinery"):
-                        multiplier += 0.5
-                    if building == "steel_mills" and upgrades.get("integratedsteelmaking"):
-                        multiplier += 0.36
+                    multiplier += project_output_bonus(building, upgrades)
 
                     # Economies of scale + vertical integration, same helper
                     # as the real tick.
@@ -446,8 +445,7 @@ def get_revenue(cId, db=None):
                     revenue["gross"][resource] += adjusted_total
 
                     # Only add to `net` if the building will operate
-                    if will_operate:
-                        revenue["net"][resource] += adjusted_total
+                    upkeep_op["net"][resource] += adjusted_total
 
                 minus = infra[building].get("minus", {})
                 for resource, amount in minus.items():
@@ -469,8 +467,7 @@ def get_revenue(cId, db=None):
 
                     total = build_count * amount
                     # Only subtract upkeep from net if building operates
-                    if will_operate:
-                        revenue["net"][resource] -= total
+                    upkeep_op["net"][resource] -= total
 
         # Reuse already-fetched province data for tax income calculation.
         # province_rows is (id, land, productivity, population, pop_children,
@@ -628,6 +625,22 @@ def get_revenue(cId, db=None):
         if coalition_tax_deducted:
             revenue["coalition_tax"] = coalition_tax_deducted
 
+        # Money-constrained simulation of the upkeep tick, like the real
+        # task runner: buildings run in order while the treasury covers their
+        # upkeep. Right after the :25 upkeep tick the treasury is at its
+        # hourly low but the :00 tax payout arrives before the next upkeep
+        # bill, so count it -- otherwise a nation that just spent its gold
+        # saw every net at 0 until taxes landed (ieb, 2026-09-22).
+        next_tax_income = ti_money - coalition_tax_deducted
+        simulated_funds = upkeep_budget(current_money, next_tax_income)
+        for upkeep_op in upkeep_queue:
+            if simulated_funds < upkeep_op["cost"]:
+                continue
+            simulated_funds -= upkeep_op["cost"]
+            revenue["net"]["money"] -= upkeep_op["cost"]
+            for resource, delta in upkeep_op["net"].items():
+                revenue["net"][resource] += delta
+
         # Pension-crisis gold penalty (see workforce block above) -- a flat
         # per-tick gold cost the real tick deducts once elderly population
         # exceeds PENSION_CRISIS_RATIO of the working population. `net` only
@@ -713,6 +726,9 @@ def get_revenue(cId, db=None):
         }
         if "coalition_tax" in revenue:
             filtered_revenue["coalition_tax"] = revenue["coalition_tax"]
+        # Tax the nation receives at the next payout (after coalition tax);
+        # the province page uses it for the same upkeep-budget check.
+        filtered_revenue["next_tax_income"] = next_tax_income
 
         # Cache the result for 60 seconds (revenue doesn't change often)
         query_cache.set(cache_key, filtered_revenue, ttl_seconds=60)
@@ -1252,6 +1268,9 @@ def reset_account():
                 placeholders = ",".join(["%s"] * len(ids))
                 db.execute(f"DELETE FROM provinces WHERE id IN ({placeholders})", tuple(ids))
             db.execute("DELETE FROM user_buildings WHERE user_id=%s", (cId,))
+            from app_core.market.repositories import refund_trades_offered_to
+
+            refund_trades_offered_to(db, cId)
             db.execute("DELETE FROM trades WHERE offeree=%s OR offerer=%s", (cId, cId))
             db.execute("DELETE FROM spyinfo WHERE spyer=%s OR spyee=%s", (cId, cId))
             db.execute("DELETE FROM requests WHERE reqId=%s", (cId,))

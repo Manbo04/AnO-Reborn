@@ -59,6 +59,7 @@ from app_core.economy.province_effects import (
     apply_effect,
     building_effects_per_unit,
 )
+from app_core.economy.project_bonuses import project_output_bonus
 
 
 
@@ -876,21 +877,16 @@ def generate_province_revenue():  # Runs each hour
                         print(f"Remove ${operating_costs} as operating costs")
                         print(f"\n")
                         """
-                        if unit == "bauxite_mines" and upgrades.get("strongerexplosives"):
-                            # TODO: fix this plus_amount variable
-                            plus_amount_multiplier += 0.45
+                        # National-project output bonuses (Stronger Explosives,
+                        # Advanced Machinery, Integrated Steelmaking): a share
+                        # of base output added to the productivity multiplier.
+                        # Shared with countries.py and the province page.
+                        plus_amount_multiplier += project_output_bonus(unit, upgrades)
 
                         if unit == "farms":
-                            if upgrades.get("advancedmachinery"):
-                                plus_amount_multiplier += 0.5
-
                             plus_amount += int(
                                 land * variables.LAND_FARM_PRODUCTION_ADDITION
                             )
-                            
-                        if unit == "steel_mills":
-                            if upgrades.get("integratedsteelmaking"):
-                                plus_amount_multiplier += 0.36
 
                         # Economies of scale + vertical integration
                         # (app_core/economy/industry_bonuses.py).

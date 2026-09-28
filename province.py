@@ -32,6 +32,8 @@ import os
 import math
 from action_loop import build_structure, ActionLoopError
 from app_core.coalitions.repositories import can_manage_province_builds
+from app_core.economy.tick_order import tax_due_before_next_upkeep, upkeep_budget
+from app_core.economy.project_bonuses import project_output_bonus
 from app_core.economy.biome_buildings import mines_for_biome, other_biome_mines
 from app_core.economy.building_costs import (
     CITY_UNITS,
@@ -479,7 +481,11 @@ def province(pId):
                     province.get("citycount") or 0,
                     nation_counts,
                 )
-                entry = {"scale": round(b["scale"] * 100, 1), "integration": None}
+                entry = {
+                    "scale": round(b["scale"] * 100, 1),
+                    "integration": None,
+                    "multiplier": b["multiplier"],
+                }
                 if bname in PROCESSING_BUILDINGS:
                     entry["integration"] = round(b["integration"] * 100, 1)
                     entry["self_sufficiency"] = int(
@@ -591,6 +597,28 @@ def province(pId):
                 )
         production_multiplier = productivity_multiplier * efficiency_multiplier
 
+        # Real per-building hourly output in this province, built exactly like
+        # generate_province_revenue(): (productivity + national-project bonus)
+        # x specialisation x integration x workforce. The static card text
+        # only shows base x project, which read far below what the tick pays
+        # (Kurai: 65 steel/mill shown vs ~104 actually produced).
+        for bname, entry in industry_bonus.items():
+            qty = units.get(bname, 0) or 0
+            if qty <= 0:
+                continue
+            mult = (
+                productivity_multiplier + project_output_bonus(bname, upgrades)
+            ) * entry.get("multiplier", 1.0) * efficiency_multiplier
+            flat = (
+                int((province.get("land") or 0) * variables.LAND_FARM_PRODUCTION_ADDITION)
+                if bname == "farms"
+                else 0
+            )
+            entry["unit_outputs"] = [
+                (res, round((amt * qty + flat) * mult / qty, 1))
+                for res, amt in (new_infra.get(bname, {}).get("plus") or {}).items()
+            ]
+
         # Per-building consumption breakdown (each consumer building uses 1
         # energy/hour, except Electric Arc Furnace steel mills which use 2 —
         # matches the real per-unit cost applied in generate_province_revenue()).
@@ -619,6 +647,23 @@ def province(pId):
         theoretical_production = 0
         affordable_production = 0
         gold_remaining = national_gold
+        # Right after the :25 upkeep tick the treasury is at its hourly low,
+        # but the :00 tax payout lands before the next upkeep bill. Without
+        # counting it, a nation that just spent its gold saw its provinces
+        # "unpowered" until taxes arrived (ieb, 2026-09-22). Only pay for the
+        # (cached) revenue projection when the treasury alone falls short.
+        producer_upkeep = sum(
+            (new_infra.get(p, {}).get("money", 0) or 0) * (units.get(p, 0) or 0)
+            for p in producers
+        )
+        if producer_upkeep > national_gold and tax_due_before_next_upkeep():
+            try:
+                from countries import get_revenue
+
+                next_tax = get_revenue(user_id).get("next_tax_income", 0) or 0
+                gold_remaining = upkeep_budget(national_gold, next_tax)
+            except Exception:
+                gold_remaining = national_gold
         for p in producers:
             qty = units.get(p, 0) or 0
             if qty <= 0:
