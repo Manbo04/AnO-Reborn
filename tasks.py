@@ -399,3 +399,9 @@ def task_send_login_verification(user_id, ip, fingerprint, auth_type):
         start_login_verification(user_id, ip, fingerprint, auth_type)
     except Exception as e:
         print(f"send_login_verification: failed for user_id={user_id} — {e}")
+
+@celery.task()
+@leader_only(ttl_seconds=300)
+def task_check_achievements():
+    from app_core.game_ticks.achievements import check_achievements
+    _run_with_deadlock_retries(check_achievements, "check_achievements")
