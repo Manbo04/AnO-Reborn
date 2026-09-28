@@ -131,6 +131,15 @@ def buy_market_offer(offer_id):
         if is_embargoed(db, seller_id, cId):
             return error(403, "This nation has embargoed you and will not sell to you.")
 
+        db.execute(
+            "SELECT 1 FROM assembly_effects WHERE target_nation_id IN (%s, %s)"
+            " AND effect_type = 'sanction' AND active = TRUE"
+            " AND (expires_at IS NULL OR expires_at > NOW())",
+            (seller_id, cId),
+        )
+        if db.fetchone():
+            return error(403, "Trade blocked by active World Assembly sanctions on one of the nations.")
+
         if not is_active_resource(db, resource):
             return error(400, "This resource is not currently tradable.")
 
@@ -240,6 +249,15 @@ def sell_market_offer(offer_id):
 
         if is_embargoed(db, buyer_id, seller_id):
             return error(403, "This nation has embargoed you and will not buy from you.")
+
+        db.execute(
+            "SELECT 1 FROM assembly_effects WHERE target_nation_id IN (%s, %s)"
+            " AND effect_type = 'sanction' AND active = TRUE"
+            " AND (expires_at IS NULL OR expires_at > NOW())",
+            (buyer_id, seller_id),
+        )
+        if db.fetchone():
+            return error(403, "Trade blocked by active World Assembly sanctions on one of the nations.")
 
         lock_users(db, [seller_id, buyer_id])
 
@@ -351,6 +369,14 @@ def post_offer(offer_type):
         currency_id, cur_err = parse_currency_choice(db, request.form.get("currency_id"))
         if cur_err:
             return error(400, cur_err)
+        db.execute(
+            "SELECT 1 FROM assembly_effects WHERE target_nation_id = %s"
+            " AND effect_type = 'sanction' AND active = TRUE"
+            " AND (expires_at IS NULL OR expires_at > NOW())",
+            (cId,),
+        )
+        if db.fetchone():
+            return error(403, "You cannot post market offers while under World Assembly sanctions.")
 
         if offer_type == "sell":
             realAmount = get_user_resource_quantity(db, cId, resource)

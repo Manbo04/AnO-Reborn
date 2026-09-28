@@ -1,0 +1,113 @@
+{% extends "game_layout.html" %}
+
+{% block content %}
+<style>
+    .assembly-container {
+        padding: 20px;
+        max-width: 800px;
+        margin: 0 auto;
+        color: #e2e8f0;
+    }
+    .poll-section {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 30px;
+        backdrop-filter: blur(10px);
+    }
+    .poll-section-title {
+        font-size: 1.5rem;
+        color: #e2e8f0;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 15px;
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+    }
+    .form-control {
+        width: 100%;
+        padding: 12px;
+        background: rgba(0,0,0,0.2);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #fff;
+        border-radius: 8px;
+    }
+    .submit-btn {
+        margin-top: 25px;
+        width: 100%;
+        padding: 15px;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        cursor: pointer;
+    }
+</style>
+
+<div class="assembly-container">
+    <div class="poll-section">
+        <h2 class="poll-section-title">
+            <span class="material-icons-outlined">gavel</span> Submit Global Proposal
+        </h2>
+        <form action="/assembly/propose" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label>Proposal Type</label>
+                <select name="type" class="form-control" id="proposal-type" required onchange="toggleFields()">
+                    <option value="sanction">Sanction Nation</option>
+                    <option value="condemn">Condemn Nation</option>
+                    <option value="lift_sanction">Lift Sanction</option>
+                    <option value="currency_cap">Cap Currency</option>
+                    <option value="free_text">Free Text Resolution</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="target-nation-group">
+                <label>Target Nation ID</label>
+                <input type="number" name="target_nation_id" class="form-control" placeholder="e.g. 16">
+            </div>
+            
+            <div class="form-group" id="target-currency-group" style="display:none;">
+                <label>Target Currency ID</label>
+                <input type="number" name="target_currency_id" class="form-control" placeholder="Currency ID">
+            </div>
+            
+            <div class="form-group" id="currency-cap-group" style="display:none;">
+                <label>Currency Cap Amount</label>
+                <input type="number" name="currency_cap_amount" class="form-control" placeholder="Max circulation">
+            </div>
+            
+            <div class="form-group">
+                <label>Resolution Text (Description)</label>
+                <textarea name="text" class="form-control" rows="4" required placeholder="Explain why this should pass..."></textarea>
+            </div>
+            
+            <button type="submit" class="submit-btn">Submit Proposal</button>
+        </form>
+        <div style="margin-top: 20px; text-align: center;">
+            <a href="/assembly" style="color: #94a3b8; text-decoration: none;">&larr; Back to Assembly</a>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleFields() {
+    var type = document.getElementById('proposal-type').value;
+    document.getElementById('target-nation-group').style.display = (type === 'free_text' || type === 'currency_cap') ? 'none' : 'block';
+    document.getElementById('target-currency-group').style.display = (type === 'currency_cap') ? 'block' : 'none';
+    document.getElementById('currency-cap-group').style.display = (type === 'currency_cap') ? 'block' : 'none';
+}
+toggleFields();
+</script>
+{% endblock %}

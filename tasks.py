@@ -399,3 +399,11 @@ def task_send_login_verification(user_id, ip, fingerprint, auth_type):
         start_login_verification(user_id, ip, fingerprint, auth_type)
     except Exception as e:
         print(f"send_login_verification: failed for user_id={user_id} — {e}")
+
+from app_core.game_ticks.assembly_tick import run_assembly_tick
+
+@celery.task()
+@leader_only(ttl_seconds=300)
+def task_assembly_tick():
+    run_assembly_tick()
+

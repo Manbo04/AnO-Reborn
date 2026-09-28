@@ -53,6 +53,19 @@ def mint_currency(db, user_id, units_raw):
     gold_cost = units * rate
 
     gold, _currency = get_gold_and_currency(db, user_id)
+
+    db.execute(
+        "SELECT currency_cap_amount FROM assembly_effects"
+        " WHERE target_currency_id = %s AND effect_type = 'currency_cap'"
+        " AND active = TRUE AND (expires_at IS NULL OR expires_at > NOW())",
+        (user_id,),
+    )
+    cap_row = db.fetchone()
+    if cap_row:
+        cap_amount = cap_row[0]
+        if _currency + units > cap_amount:
+            return False, f"World Assembly limits this currency to {cap_amount:,.0f} units. You cannot mint this much.", "danger"
+
     if gold_cost > gold:
         return False, "You don't have enough gold for that.", "danger"
 
