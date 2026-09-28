@@ -4,7 +4,7 @@
 {% block body %}
 {% from 'macros/game_ui.html' import game_hero %}
 <style>
-    .assembly-form-wrap { max-width: 720px; margin: 0 auto; }
+    .assembly-form-wrap { max-width: 720px; margin: 0 auto; text-align: left; }
     .form-group { margin-bottom: 16px; }
     .form-group label {
         display: block;
@@ -15,7 +15,10 @@
         color: var(--colorOne);
     }
     .form-control {
+        display: block;
         width: 100%;
+        max-width: none;
+        margin: 0;
         box-sizing: border-box;
         min-height: 44px;
         padding: 10px 12px;
