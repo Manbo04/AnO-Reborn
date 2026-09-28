@@ -95,7 +95,8 @@ def test_compute_loan_cap_scales_with_population():
 
 def test_get_loan_status_no_active_loan(monkeypatch):
     monkeypatch.setattr(services, "get_active_loan", lambda db, uid: None)
-    monkeypatch.setattr(services, "compute_loan_cap", lambda db, uid: 40_000_000)
+    monkeypatch.setattr(services, "compute_base_loan_cap", lambda db, uid: 40_000_000)
+    monkeypatch.setattr(services, "get_recent_loans_for_credit", lambda db, uid, limit: [])
     monkeypatch.setattr(services, "cooldown_remaining", lambda db, uid: None)
     status = services.get_loan_status(None, 1)
     assert status["has_active_loan"] is False
@@ -109,7 +110,8 @@ def test_get_loan_status_no_active_loan_reports_cooldown(monkeypatch):
     from datetime import timedelta
 
     monkeypatch.setattr(services, "get_active_loan", lambda db, uid: None)
-    monkeypatch.setattr(services, "compute_loan_cap", lambda db, uid: 40_000_000)
+    monkeypatch.setattr(services, "compute_base_loan_cap", lambda db, uid: 40_000_000)
+    monkeypatch.setattr(services, "get_recent_loans_for_credit", lambda db, uid, limit: [])
     monkeypatch.setattr(services, "cooldown_remaining", lambda db, uid: timedelta(hours=5))
     status = services.get_loan_status(None, 1)
     assert status["cooldown_hours_remaining"] == 5.0
@@ -120,7 +122,8 @@ def test_get_loan_status_with_active_loan(monkeypatch):
         services, "get_active_loan",
         lambda db, uid: (7, 1_000_000, 1_100_000, 0, "2026-09-01"),
     )
-    monkeypatch.setattr(services, "compute_loan_cap", lambda db, uid: 40_000_000)
+    monkeypatch.setattr(services, "compute_base_loan_cap", lambda db, uid: 40_000_000)
+    monkeypatch.setattr(services, "get_recent_loans_for_credit", lambda db, uid, limit: [])
     status = services.get_loan_status(None, 1)
     assert status["has_active_loan"] is True
     assert status["loan_id"] == 7
@@ -172,7 +175,7 @@ def test_cooldown_remaining_positive_within_window(monkeypatch):
 
 def test_take_loan_rejects_when_already_active(monkeypatch):
     monkeypatch.setattr(services, "get_active_loan", lambda db, uid: (1, 1, 1, 0, "x"))
-    ok, err, category = services.take_loan(None, 1, 500000)
+    ok, err, category = services.take_loan(QueuedCursor(), 1, 500000)
     assert ok is False
     assert "already have an active loan" in err
 
@@ -182,7 +185,7 @@ def test_take_loan_rejects_during_cooldown(monkeypatch):
 
     monkeypatch.setattr(services, "get_active_loan", lambda db, uid: None)
     monkeypatch.setattr(services, "cooldown_remaining", lambda db, uid: timedelta(hours=3))
-    ok, err, category = services.take_loan(None, 1, 500000)
+    ok, err, category = services.take_loan(QueuedCursor(), 1, 500000)
     assert ok is False
     assert "cooldown" in err
 
@@ -190,7 +193,7 @@ def test_take_loan_rejects_during_cooldown(monkeypatch):
 def test_take_loan_rejects_invalid_amount(monkeypatch):
     monkeypatch.setattr(services, "get_active_loan", lambda db, uid: None)
     monkeypatch.setattr(services, "cooldown_remaining", lambda db, uid: None)
-    ok, err, category = services.take_loan(None, 1, "not-a-number")
+    ok, err, category = services.take_loan(QueuedCursor(), 1, "not-a-number")
     assert ok is False
     assert category == "danger"
 
@@ -198,7 +201,7 @@ def test_take_loan_rejects_invalid_amount(monkeypatch):
 def test_take_loan_rejects_below_minimum(monkeypatch):
     monkeypatch.setattr(services, "get_active_loan", lambda db, uid: None)
     monkeypatch.setattr(services, "cooldown_remaining", lambda db, uid: None)
-    ok, err, category = services.take_loan(None, 1, 1)
+    ok, err, category = services.take_loan(QueuedCursor(), 1, 1)
     assert ok is False
     assert "Minimum loan amount" in err
 
@@ -207,7 +210,7 @@ def test_take_loan_rejects_above_cap(monkeypatch):
     monkeypatch.setattr(services, "get_active_loan", lambda db, uid: None)
     monkeypatch.setattr(services, "cooldown_remaining", lambda db, uid: None)
     monkeypatch.setattr(services, "compute_loan_cap", lambda db, uid: 1_000_000)
-    ok, err, category = services.take_loan(None, 1, 2_000_000)
+    ok, err, category = services.take_loan(QueuedCursor(), 1, 2_000_000)
     assert ok is False
     assert "exceeds your borrowing capacity" in err
 
@@ -215,18 +218,19 @@ def test_take_loan_rejects_above_cap(monkeypatch):
 def test_take_loan_success_charges_base_fee(monkeypatch):
     monkeypatch.setattr(services, "get_active_loan", lambda db, uid: None)
     monkeypatch.setattr(services, "cooldown_remaining", lambda db, uid: None)
-    monkeypatch.setattr(services, "compute_loan_cap", lambda db, uid: 40_000_000)
+    monkeypatch.setattr(services, "compute_base_loan_cap", lambda db, uid: 40_000_000)
+    monkeypatch.setattr(services, "get_recent_loans_for_credit", lambda db, uid, limit: [])
     insert_calls = []
     credit_calls = []
     monkeypatch.setattr(
         services, "insert_loan",
-        lambda db, uid, principal, balance: insert_calls.append((uid, principal, balance)),
+        lambda db, uid, principal, balance, **kw: insert_calls.append((uid, principal, balance)),
     )
     monkeypatch.setattr(
         services, "credit_gold",
         lambda db, uid, amount: credit_calls.append((uid, amount)),
     )
-    ok, err, category = services.take_loan(None, 1, 500_000)
+    ok, err, category = services.take_loan(QueuedCursor(), 1, 500_000)
     assert ok is True
     # 500_000 is well under 70% of the 40M cap -> base 10% fee
     assert insert_calls == [(1, 500_000, 550_000)]
@@ -238,14 +242,15 @@ def test_take_loan_success_charges_high_utilization_fee(monkeypatch):
     amount = 800_000  # > 70% of cap
     monkeypatch.setattr(services, "get_active_loan", lambda db, uid: None)
     monkeypatch.setattr(services, "cooldown_remaining", lambda db, uid: None)
-    monkeypatch.setattr(services, "compute_loan_cap", lambda db, uid: cap)
+    monkeypatch.setattr(services, "compute_base_loan_cap", lambda db, uid: cap)
+    monkeypatch.setattr(services, "get_recent_loans_for_credit", lambda db, uid, limit: [])
     insert_calls = []
     monkeypatch.setattr(
         services, "insert_loan",
-        lambda db, uid, principal, balance: insert_calls.append((uid, principal, balance)),
+        lambda db, uid, principal, balance, **kw: insert_calls.append((uid, principal, balance)),
     )
     monkeypatch.setattr(services, "credit_gold", lambda db, uid, amount: None)
-    ok, err, category = services.take_loan(None, 1, amount)
+    ok, err, category = services.take_loan(QueuedCursor(), 1, amount)
     assert ok is True
     assert insert_calls == [(1, amount, int(round(amount * (1 + variables.LOAN_HIGH_UTILIZATION_FEE))))]
 
@@ -256,7 +261,7 @@ def test_take_loan_success_charges_high_utilization_fee(monkeypatch):
 
 def test_repay_loan_rejects_when_no_active_loan(monkeypatch):
     monkeypatch.setattr(services, "get_active_loan", lambda db, uid: None)
-    ok, err, category = services.repay_loan(None, 1, 100)
+    ok, err, category = services.repay_loan(QueuedCursor(), 1, 100)
     assert ok is False
     assert "don't have an active loan" in err
 
@@ -264,7 +269,7 @@ def test_repay_loan_rejects_when_no_active_loan(monkeypatch):
 def test_repay_loan_rejects_insufficient_gold(monkeypatch):
     monkeypatch.setattr(services, "get_active_loan", lambda db, uid: (1, 1000, 1000, 0.01, "x"))
     monkeypatch.setattr(services, "get_gold", lambda db, uid: 50)
-    ok, err, category = services.repay_loan(None, 1, 100)
+    ok, err, category = services.repay_loan(QueuedCursor(), 1, 100)
     assert ok is False
     assert "enough gold" in err
 
@@ -276,7 +281,7 @@ def test_repay_loan_partial_updates_balance(monkeypatch):
     update_calls = []
     monkeypatch.setattr(services, "debit_gold", lambda db, uid, amt: debit_calls.append((uid, amt)))
     monkeypatch.setattr(services, "update_loan_balance", lambda db, loan_id, bal: update_calls.append((loan_id, bal)))
-    ok, err, category = services.repay_loan(None, 1, 400)
+    ok, err, category = services.repay_loan(QueuedCursor(), 1, 400)
     assert ok is True
     assert debit_calls == [(1, 400)]
     assert update_calls == [(1, 600)]
@@ -288,7 +293,7 @@ def test_repay_loan_full_marks_repaid(monkeypatch):
     repaid_calls = []
     monkeypatch.setattr(services, "debit_gold", lambda db, uid, amt: None)
     monkeypatch.setattr(services, "mark_loan_repaid", lambda db, loan_id: repaid_calls.append(loan_id))
-    ok, err, category = services.repay_loan(None, 1, 1000)
+    ok, err, category = services.repay_loan(QueuedCursor(), 1, 1000)
     assert ok is True
     assert repaid_calls == [1]
 
@@ -300,7 +305,85 @@ def test_repay_loan_overpayment_caps_at_balance(monkeypatch):
     repaid_calls = []
     monkeypatch.setattr(services, "debit_gold", lambda db, uid, amt: debit_calls.append(amt))
     monkeypatch.setattr(services, "mark_loan_repaid", lambda db, loan_id: repaid_calls.append(loan_id))
-    ok, err, category = services.repay_loan(None, 1, 5000)  # tries to overpay
+    ok, err, category = services.repay_loan(QueuedCursor(), 1, 5000)  # tries to overpay
     assert ok is True
     assert debit_calls == [1000]  # capped at the outstanding balance, not 5000
     assert repaid_calls == [1]
+
+
+# ---------------------------------------------------------------------------
+# credit score, live quote, capacity indicator (Kurai + ieb, 2026-09-27)
+# ---------------------------------------------------------------------------
+
+from datetime import datetime, timedelta, timezone  # noqa: E402
+
+_NOW = datetime(2026, 9, 27, 12, 0, tzinfo=timezone.utc)
+
+
+def _loan(principal, days_held=None, age_days=None, cap=1_000_000):
+    """days_held -> repaid loan; age_days -> still active."""
+    if days_held is not None:
+        taken = _NOW - timedelta(days=days_held + 1)
+        return (principal, "repaid", taken, taken + timedelta(days=days_held), cap)
+    return (principal, "active", _NOW - timedelta(days=age_days), None, cap)
+
+
+def test_credit_score_neutral_with_no_history():
+    c = services.score_loan_history([], 1_000_000, now=_NOW)
+    assert c["points"] == 0 and c["multiplier"] == 1 and c["score"] == 50
+
+
+def test_credit_score_on_time_bounded_at_plus_max():
+    loans = [_loan(500_000, days_held=2)] * 10  # 10 full-size on-time loans
+    c = services.score_loan_history(loans, 1_000_000, now=_NOW)
+    assert c["points"] == variables.LOAN_CREDIT_MAX_POINTS
+    assert c["multiplier"] == pytest.approx(1.25)
+
+
+def test_credit_score_token_loans_earn_proportional_points():
+    # 1% of cap vs. the 25% full-size bar -> 4% of the on-time points
+    c = services.score_loan_history([_loan(10_000, days_held=1)], 1_000_000, now=_NOW)
+    assert c["points"] == pytest.approx(round(variables.LOAN_CREDIT_ON_TIME_POINTS * 0.04, 1))
+
+
+def test_credit_score_defaults_bounded_at_minus_max():
+    loans = [_loan(500_000, days_held=30)] * 10
+    c = services.score_loan_history(loans, 1_000_000, now=_NOW)
+    assert c["points"] == -variables.LOAN_CREDIT_MAX_POINTS
+    assert c["multiplier"] == pytest.approx(0.75)
+    open_default = services.score_loan_history([_loan(500_000, age_days=30)], 1_000_000, now=_NOW)
+    assert open_default["counts"]["in_default"] == 1
+    assert open_default["points"] == variables.LOAN_CREDIT_IN_DEFAULT_POINTS
+
+
+def test_credit_window_only_counts_recent_loans():
+    loans = [_loan(500_000, days_held=2)] * variables.LOAN_CREDIT_WINDOW + [_loan(500_000, days_held=40)] * 5
+    c = services.score_loan_history(loans, 1_000_000, now=_NOW)
+    assert c["counts"]["defaulted_repaid"] == 0
+
+
+def test_loan_quote_matches_take_loan_fee_rules():
+    cap = 1_000_000
+    q = services.loan_quote(700_000, cap)  # exactly on the line -> base fee
+    assert q["valid"] and q["fee_rate"] == variables.LOAN_ORIGINATION_FEE
+    assert q["total_repay"] == int(round(700_000 * (1 + variables.LOAN_ORIGINATION_FEE)))
+    assert q["threshold_value"] == 700_000
+    q = services.loan_quote(700_001, cap)
+    assert q["fee_rate"] == variables.LOAN_HIGH_UTILIZATION_FEE and q["over_threshold"]
+    assert not services.loan_quote(cap + 1, cap)["valid"]
+    assert not services.loan_quote(None, cap)["valid"]
+
+
+def test_status_shows_cap_after_repaying_now(monkeypatch):
+    """ieb's indicator: an on-time open loan, repaid now, would earn points."""
+    monkeypatch.setattr(services, "get_active_loan",
+                        lambda db, uid: (3, 500_000, 550_000, 0, datetime.now(timezone.utc) - timedelta(days=1)))
+    monkeypatch.setattr(services, "compute_base_loan_cap", lambda db, uid: 2_000_000)
+    monkeypatch.setattr(
+        services, "get_recent_loans_for_credit",
+        lambda db, uid, limit: [(500_000, "active", datetime.now(timezone.utc) - timedelta(days=1), None, 2_000_000)],
+    )
+    status = services.get_loan_status(None, 1)
+    assert status["cap"] == 2_000_000
+    assert status["cap_used_pct"] == pytest.approx(25.0)
+    assert status["cap_after_repay"] == int(2_000_000 * (1 + variables.LOAN_CREDIT_ON_TIME_POINTS / 100))

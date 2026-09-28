@@ -1042,6 +1042,20 @@ LOAN_HIGH_UTILIZATION_THRESHOLD = 0.70  # fraction of borrowing cap
 LOAN_HIGH_UTILIZATION_FEE = 0.15  # fee charged instead of LOAN_ORIGINATION_FEE above the threshold
 LOAN_COOLDOWN_HOURS = 24  # can't take a new loan until this long after fully repaying the last one
 
+# Loan credit score (Kurai, #suggestions 2026-09-07): repaying on time raises
+# the borrowing cap a little, paying late / sitting in default lowers it.
+# Scored over the nation's last LOAN_CREDIT_WINDOW loans, see
+# app_core/loans/services.py::score_loan_history. Points are percent of cap.
+LOAN_TERM_DAYS = 7  # a loan repaid within this many days counts as "on time"
+LOAN_DEFAULT_DAYS = 21  # outstanding longer than this = in default
+LOAN_CREDIT_WINDOW = 10  # only the most recent N loans count
+LOAN_CREDIT_ON_TIME_POINTS = 5  # per full-size on-time loan
+LOAN_CREDIT_FULL_SIZE_SHARE = 0.25  # loan must be >= 25% of cap to earn full on-time points
+LOAN_CREDIT_LATE_POINTS = -5  # repaid after LOAN_TERM_DAYS, or currently overdue
+LOAN_CREDIT_DEFAULT_REPAID_POINTS = -10  # repaid only after LOAN_DEFAULT_DAYS
+LOAN_CREDIT_IN_DEFAULT_POINTS = -15  # still outstanding past LOAN_DEFAULT_DAYS
+LOAN_CREDIT_MAX_POINTS = 25  # cap multiplier bounded to [0.75, 1.25]
+
 # Player-to-player Bonds market (Discord #suggestions "Bonds market" from
 # Kurai, 2026-09-16) -- deliberately separate from the national-loan system
 # above: here one player funds another player's bond directly. The issuer

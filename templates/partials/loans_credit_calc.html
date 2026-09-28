@@ -1,0 +1,118 @@
+{# Loans page: credit score, capacity indicator and live calculator.
+   Kurai (09-07 credit score, 09-14 calculator) + ieb (capacity indicator
+   while a loan is active). Self-contained so loans_v2.html only includes it.
+   Every number comes from app_core/loans/services.py -- the calculator asks
+   /loans/quote, which runs the same loan_quote() take_loan uses. #}
+{% set credit = status.credit %}
+<style>
+.loancalc-score { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+.loancalc-score-num { font-size:1.8em; font-weight:700; line-height:1; }
+.loancalc-score-num.good { color:#4CAF50; } .loancalc-score-num.bad { color:#F44336; } .loancalc-score-num.neutral { color:var(--text-primary, #eee); }
+.loancalc-bar { position:relative; height:12px; border-radius:6px; background:rgba(255,255,255,0.12); overflow:hidden; margin:6px 0 4px; }
+.loancalc-bar-fill { position:absolute; top:0; left:0; bottom:0; background:#FF9800; }
+.loancalc-bar-mark { position:absolute; top:-2px; bottom:-2px; width:2px; background:#fff; opacity:0.8; }
+.loancalc-legend { display:flex; justify-content:space-between; font-size:0.8em; color:var(--text-secondary); gap:8px; flex-wrap:wrap; }
+.loancalc-rows { display:grid; grid-template-columns:1fr auto; gap:6px 12px; margin-top:10px; font-size:0.95em; }
+.loancalc-rows span:nth-child(even) { text-align:right; font-weight:600; white-space:nowrap; }
+.loancalc-warn { color:#FF9800; } .loancalc-err { color:#F44336; }
+.loancalc-input { width:100%; box-sizing:border-box; }
+.loancalc-rules { font-size:0.85em; color:var(--text-secondary); margin-top:10px; }
+.loancalc-rules li { margin-bottom:3px; }
+</style>
+
+<div class="game-glass game-panel" id="loanCreditBlock" style="margin-bottom: 18px;">
+    <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">verified</span> Credit &amp; Capacity</h2>
+
+    <div class="loancalc-score">
+        <span class="loancalc-score-num {{ 'good' if credit.points > 0 else ('bad' if credit.points < 0 else 'neutral') }}">{{ credit.score }}</span>
+        <div>
+            <strong>{{ credit.label }} credit</strong><br>
+            <span style="font-size:0.9em; color: var(--text-secondary);">
+                {% if credit.points > 0 %}+{{ credit.points }}% borrowing capacity{% elif credit.points < 0 %}{{ credit.points }}% borrowing capacity{% else %}No capacity bonus or penalty yet{% endif %}
+            </span>
+        </div>
+    </div>
+
+    <div class="loancalc-rows">
+        <span>Base capacity (population)</span><span>${{ credit.base_cap | commas }}</span>
+        <span>Your capacity (after credit)</span><span>${{ status.cap | commas }}</span>
+        <span>{{ (credit_rules.threshold * 100) | int }}% line (borrow above it and the fee is {{ (credit_rules.high_fee * 100) | int }}% instead of {{ (credit_rules.base_fee * 100) | int }}%)</span><span>${{ status.threshold_value | commas }}</span>
+    </div>
+
+    {% if status.has_active_loan %}
+    {# ieb: capacity indicator while already on a loan #}
+    <h3 style="margin: 16px 0 4px; font-size:1em;">Current loan vs. capacity</h3>
+    <div class="loancalc-bar" aria-hidden="true">
+        <div class="loancalc-bar-fill" style="width: {{ [status.cap_used_pct, 100] | min }}%;"></div>
+        <div class="loancalc-bar-mark" style="left: {{ (credit_rules.threshold * 100) | round(1) }}%;"></div>
+    </div>
+    <div class="loancalc-legend">
+        <span>Borrowed ${{ status.principal | commas }} ({{ status.cap_used_pct | round(0) | int }}% of cap)</span>
+        <span>Cap ${{ status.cap | commas }}</span>
+    </div>
+    <div class="loancalc-rows">
+        <span>Still owed</span><span>${{ status.balance | commas }}</span>
+        <span>You could borrow after repaying (if repaid now)</span><span>up to ${{ status.cap_after_repay | commas }}</span>
+        {% if status.due_at %}
+        <span>Repay on time by (UTC)</span><span>{{ status.due_at.strftime('%Y-%m-%d %H:%M') }}</span>
+        {% endif %}
+    </div>
+    <p class="loancalc-rules">One loan at a time: once this one is fully repaid you can borrow again after a {{ status.cooldown_hours }}h cooldown.
+    {% if credit.counts.in_default %}<span class="loancalc-err">This loan is in default and is hurting your credit.</span>
+    {% elif credit.counts.overdue %}<span class="loancalc-warn">This loan is overdue &mdash; repaying soon limits the credit penalty.</span>{% endif %}</p>
+    {% endif %}
+
+    <h3 style="margin: 16px 0 6px; font-size:1em;">Loan calculator</h3>
+    <input type="number" inputmode="numeric" id="loanCalcAmount" class="loginsignupinput loancalc-input" min="1" step="1" placeholder="Amount to borrow" aria-label="Amount to borrow">
+    <div class="loancalc-rows" id="loanCalcOut" hidden>
+        <span>One-time fee</span><span id="loanCalcFee">&mdash;</span>
+        <span>Total to repay</span><span id="loanCalcTotal">&mdash;</span>
+        <span>Over the {{ (credit_rules.threshold * 100) | int }}% line?</span><span id="loanCalcOver">&mdash;</span>
+    </div>
+    <p id="loanCalcMsg" class="loancalc-rules" aria-live="polite"></p>
+
+    <details class="loancalc-rules">
+        <summary>How credit works</summary>
+        <ul>
+            <li>Repaid within {{ credit_rules.term_days }} days: up to +{{ credit_rules.on_time }}% (full points for loans of at least {{ (credit_rules.full_share * 100) | int }}% of your cap).</li>
+            <li>Repaid late (after {{ credit_rules.term_days }} days): {{ credit_rules.late }}%. A loan still open past {{ credit_rules.term_days }} days counts as overdue.</li>
+            <li>Open past {{ credit_rules.default_days }} days = default: {{ credit_rules.in_default }}% while it stays open, {{ credit_rules.default_repaid }}% once repaid.</li>
+            <li>Only your last {{ credit_rules.window }} loans count, and the total is capped at &plusmn;{{ credit_rules.max }}%.</li>
+        </ul>
+    </details>
+</div>
+
+<script>
+(function () {
+    var input = document.getElementById('loanCalcAmount');
+    if (!input) return;
+    var out = document.getElementById('loanCalcOut');
+    var msg = document.getElementById('loanCalcMsg');
+    var fmt = function (n) { return '$' + Math.round(n).toLocaleString('en-US'); };
+    var timer = null, seq = 0;
+    function render(q, mySeq) {
+        if (mySeq !== seq) return;
+        if (q.fee_rate === undefined) { out.hidden = true; msg.textContent = q.error || ''; return; }
+        out.hidden = false;
+        document.getElementById('loanCalcFee').textContent = fmt(q.fee) + ' (' + Math.round(q.fee_rate * 100) + '%)';
+        document.getElementById('loanCalcTotal').textContent = fmt(q.total_repay);
+        var over = document.getElementById('loanCalcOver');
+        over.textContent = q.over_threshold ? 'Yes (line is ' + fmt(q.threshold_value) + ')' : 'No (line is ' + fmt(q.threshold_value) + ')';
+        over.className = q.over_threshold ? 'loancalc-warn' : '';
+        msg.textContent = q.error || '';
+        msg.className = 'loancalc-rules' + (q.error ? ' loancalc-err' : '');
+    }
+    input.addEventListener('input', function () {
+        clearTimeout(timer);
+        var v = input.value.trim();
+        var mySeq = ++seq;
+        if (!v) { out.hidden = true; msg.textContent = ''; return; }
+        timer = setTimeout(function () {
+            fetch('/loans/quote?amount=' + encodeURIComponent(v), { credentials: 'same-origin' })
+                .then(function (r) { return r.json(); })
+                .then(function (q) { render(q, mySeq); })
+                .catch(function () { if (mySeq === seq) { msg.textContent = 'Could not calculate right now.'; } });
+        }, 250);
+    });
+})();
+</script>

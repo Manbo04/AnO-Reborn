@@ -26,7 +26,26 @@ def get_gold(db, user_id):
     return float(row[0]) if row and row[0] is not None else 0.0
 
 
-def insert_loan(db, user_id, principal, balance, interest_rate=0):
+def insert_loan(db, user_id, principal, balance, interest_rate=0, cap_at_take=None):
+    """cap_at_take (migration 0086) records the borrowing cap when the loan
+    was taken, so the credit score can tell a real loan from a token one.
+    Falls back to the pre-0086 insert if the column isn't there yet."""
+    if cap_at_take is not None:
+        try:
+            db.execute("SAVEPOINT loan_insert_cap")
+            db.execute(
+                """
+                INSERT INTO user_loans (user_id, principal, balance, interest_rate, cap_at_take)
+                VALUES (%s, %s, %s, %s, %s)
+                RETURNING id
+                """,
+                (user_id, principal, balance, interest_rate, cap_at_take),
+            )
+            row = db.fetchone()
+            db.execute("RELEASE SAVEPOINT loan_insert_cap")
+            return row[0] if row else None
+        except Exception:
+            db.execute("ROLLBACK TO SAVEPOINT loan_insert_cap")
     db.execute(
         """
         INSERT INTO user_loans (user_id, principal, balance, interest_rate)
@@ -37,6 +56,35 @@ def insert_loan(db, user_id, principal, balance, interest_rate=0):
     )
     row = db.fetchone()
     return row[0] if row else None
+
+
+def get_recent_loans_for_credit(db, user_id, limit):
+    """[(principal, status, taken_at, repaid_at, cap_at_take)], newest first."""
+    try:
+        db.execute("SAVEPOINT loan_credit_hist")
+        db.execute(
+            """
+            SELECT principal, status, taken_at, repaid_at, cap_at_take
+            FROM user_loans WHERE user_id = %s
+            ORDER BY taken_at DESC LIMIT %s
+            """,
+            (user_id, limit),
+        )
+        rows = db.fetchall()
+        db.execute("RELEASE SAVEPOINT loan_credit_hist")
+        return rows
+    except Exception:
+        # Pre-0086: no cap_at_take column yet.
+        db.execute("ROLLBACK TO SAVEPOINT loan_credit_hist")
+        db.execute(
+            """
+            SELECT principal, status, taken_at, repaid_at, NULL
+            FROM user_loans WHERE user_id = %s
+            ORDER BY taken_at DESC LIMIT %s
+            """,
+            (user_id, limit),
+        )
+        return db.fetchall()
 
 
 def get_last_repaid_at(db, user_id):
