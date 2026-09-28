@@ -2387,14 +2387,31 @@
                         <h2 class="templatecontentheaderleft">Other Raw Resources</h2>
                         <p class="templatecontentpleft">Not producible in this province's biome — shown for reference (e.g. checking what a trade partner's mines cost and produce).</p>
                         {% for m in other_mines %}
-                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row" style="opacity: 0.6;">
+                        {% set owned_qty = units.get(m.name, 0) | int %}
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row" style="opacity: {{ 1.0 if owned_qty > 0 else 0.6 }};">
                             <div class="templatedivflex2left">
-                                <h3 class="templatecontentheadercenter">{{ m.display_name }} <span style="font-weight: 400;">(not available in this biome)</span></h3>
+                                <h3 class="templatecontentheadercenter">{{ m.display_name }}
+                                    {% if owned_qty > 0 %}
+                                    <span style="font-weight: 400;">— you own {{ owned_qty }} (not buildable in this biome)</span>
+                                    {% else %}
+                                    <span style="font-weight: 400;">(not available in this biome)</span>
+                                    {% endif %}
+                                </h3>
                                 <p class="templatecontentpleft">{{ m.description }}</p>
                                 <ul>Costs {{ infra[m.name ~ "_money"] | fmt }} per hour and produces {{ infra[m.name ~ "_plus"][m.resource] | weight_fmt }} {{ m.resource }} per hour, as well as +{{ infra[m.name ~ "_effect"][0]["pollution"] }}% pollution</ul>
+                                {% if province['own'] and owned_qty > 0 %}
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="{{ m.name }}" type="number" placeholder="Amount to demolish" />
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+                                            {{ game_button('Sell / Demolish', icon='remove_circle_outline', formaction='/sell/' ~ m.name ~ '/' ~ province['id']) }}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
                             </div>
                             <div class="templatedivflex2right province-card-media">
-                                <img alt="Image" class="unitimage" loading="lazy" style="filter: grayscale(1);" src="{{ url_for('static', filename=game_asset_path('buildings', m.name)) }}?v=2" />
+                                <img alt="Image" class="unitimage" loading="lazy" style="filter: grayscale({{ 0 if owned_qty > 0 else 1 }});" src="{{ url_for('static', filename=game_asset_path('buildings', m.name)) }}?v=2" />
                             </div>
                         </div>
                         {% endfor %}

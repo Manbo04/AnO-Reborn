@@ -267,6 +267,11 @@
                     ? '<button type="button" class="province-base-build-btn" data-build-id="' +
                       b.building_id +
                       '" aria-label="Build one">+</button>'
+                    : '') +
+                (own && locked && b.quantity > 0
+                    ? '<button type="button" class="province-base-build-btn" data-demolish-id="' +
+                      b.building_id +
+                      '" aria-label="Demolish one" style="background:var(--danger,#d35649);">−</button>'
                     : '');
             list.appendChild(row);
         });
@@ -287,6 +292,7 @@
                 '<p class="province-base-sheet-sub">Empty district — build below.</p>';
         }
         items.slice(0, 8).forEach(function (b) {
+            var locked = b.can_build === false;
             var card = document.createElement('div');
             card.className = 'province-dock-card';
             card.innerHTML =
@@ -303,10 +309,15 @@
                 '<span class="province-base-building-meta">' +
                 formatCost(b) +
                 '</span>' +
-                (own
+                (own && !locked
                     ? '<button type="button" class="province-base-build-btn" data-build-id="' +
                       b.building_id +
                       '">+ Build</button>'
+                    : '') +
+                (own && locked && b.quantity > 0
+                    ? '<button type="button" class="province-base-build-btn" data-demolish-id="' +
+                      b.building_id +
+                      '" style="background:var(--danger,#d35649);">Demolish</button>'
                     : '');
             dockList.appendChild(card);
         });
@@ -319,6 +330,12 @@
             btn.addEventListener('click', function (e) {
                 e.stopPropagation();
                 quickBuild(parseInt(btn.getAttribute('data-build-id'), 10), btn);
+            });
+        });
+        (root || document).querySelectorAll('[data-demolish-id]').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                quickDemolish(parseInt(btn.getAttribute('data-demolish-id'), 10), btn);
             });
         });
     }
@@ -478,6 +495,65 @@
             .then(function (data) {
                 playSuccess();
                 showToast(data.message || 'Built!');
+                if (data.layout) {
+                    layoutData = data.layout;
+                    refreshSlotGrid();
+                    delete slotCache[activeSlotId];
+                    if (activeSlotId) {
+                        if (isMobileLayout()) openSheet(activeSlotId);
+                        else selectSlot(activeSlotId);
+                    }
+                }
+                if (row) {
+                    row.classList.remove('is-busy');
+                    row.classList.add('is-success');
+                    setTimeout(function () {
+                        row.classList.remove('is-success');
+                    }, 500);
+                }
+            })
+            .catch(function (err) {
+                showToast(err.message, true);
+                if (row) row.classList.remove('is-busy');
+            })
+            .finally(function () {
+                btn.disabled = false;
+            });
+    }
+
+    function quickDemolish(buildingId, btn) {
+        if (!meta || !meta.provinceId) return;
+        var row = btn.closest('.province-base-building-row, .province-dock-card');
+        if (row) row.classList.add('is-busy');
+        btn.disabled = true;
+
+        var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        var csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
+
+        fetch('/api/province/' + meta.provinceId + '/quick_build', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ building_id: buildingId, quantity: -1 }),
+        })
+            .then(function (r) {
+                var isJson = r.headers.get('content-type') && r.headers.get('content-type').indexOf('application/json') !== -1;
+                if (!isJson) {
+                    return r.text().then(function(text) {
+                        throw new Error('Server Error (' + r.status + '): ' + text.substring(0, 50));
+                    });
+                }
+                return r.json().then(function (data) {
+                    if (!r.ok || !data.ok) throw new Error(data.error || 'Demolish failed');
+                    return data;
+                });
+            })
+            .then(function (data) {
+                showToast(data.message || 'Demolished!');
                 if (data.layout) {
                     layoutData = data.layout;
                     refreshSlotGrid();
