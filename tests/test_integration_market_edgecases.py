@@ -63,10 +63,9 @@ class FakeCursor:
                 self._last = (True,)
                 return
             # SELECT resource, amount, price, user_id FROM offers WHERE offer_id=(%s)
-            offer_select = (
-                "select resource, amount, price, user_id " "from offers where offer_id"
-            )
-            if offer_select in sql_lower:
+            # (0091 added ", type, currency_id" before FROM)
+            offer_select = "select resource, amount, price, user_id"
+            if offer_select in sql_lower and "from offers where offer_id" in sql_lower:
                 # params may be strings; support string or int keys
                 offer_id = params[0]
                 offer = self.state["offers"].get(offer_id)
@@ -77,6 +76,8 @@ class FakeCursor:
                     offer["amount"],
                     offer["price"],
                     offer["user_id"],
+                    offer.get("type", "sell"),
+                    offer.get("currency_id"),
                 )
             # SELECT gold FROM stats WHERE id=(%s)
             elif "select gold from stats" in sql_lower:
@@ -101,6 +102,9 @@ class FakeCursor:
                 trade = self.state.get("trades", {}).get(tid) or self.state.get(
                     "trades", {}
                 ).get(int(tid))
+                # rows are stored without the 0091 currency_id column (gold)
+                if trade is not None and len(trade) == 6:
+                    trade = tuple(trade) + (None,)
                 self._last = trade
             # SELECT ... FROM trade_agreements WHERE id = %s AND status = 'active'
             elif "from trade_agreements" in sql_lower and sql_lower.strip().startswith(

@@ -29,7 +29,9 @@ def test_sell_trade_credits_exact_amount(monkeypatch):
     buyer = 6000
     state = {
         "stats": {seller: {"gold": 0}, buyer: {"gold": 100000}},
-        "resources": {seller: {"copper": 224}, buyer: {"copper": 24}},
+        # post_trade_offer already moved the 100 copper into bank escrow
+        # (seller had 224); accept delivers that escrow, not a second copy.
+        "resources": {seller: {"copper": 124}, buyer: {"copper": 24}},
         # trade tuple: (offeree, type, offerer, resource, amount, price)
         "trades": {123: (buyer, "sell", seller, "copper", 100, 100)},
     }
@@ -55,7 +57,7 @@ def test_sell_trade_credits_exact_amount(monkeypatch):
     # Trade should be removed
     assert 123 not in state["trades"]
 
-    # Resources transferred: seller copper decreased, buyer copper increased
+    # Buyer got the escrowed copper; seller isn't charged a second time
     assert state["resources"][seller]["copper"] == 124
     assert state["resources"][buyer]["copper"] == 124
 
