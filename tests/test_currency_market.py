@@ -469,3 +469,20 @@ def test_pages_render(nations, client, monkeypatch):
             assert r.status_code == 200, (page, v2)
             if page != "marketoffer":
                 assert b"in Amark" in r.data, (page, v2)
+
+
+def test_country_page_shows_holdings_and_trade_currency_picker(nations, client, monkeypatch):
+    a, b, _c = nations
+    _mint(a, 100)
+    _give_b_currency(a, b, "12")
+    for v2 in ("", "country"):
+        monkeypatch.setenv("THEME_V2_PAGES", v2)
+        _login(client, b)
+        r = client.get(f"/country/id={a}")
+        assert r.status_code == 200, v2
+        assert b"Paid in their currency" in r.data, v2
+        if v2:
+            r = client.get(f"/country/id={b}")
+            assert r.status_code == 200
+            assert b"Other nations&#39; currencies" in r.data or b"Other nations' currencies" in r.data
+            assert b"Amark" in r.data
