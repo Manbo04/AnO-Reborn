@@ -143,6 +143,12 @@ class CountryRepository:
             )
             deleted_counts["referred_by_user_id_cleared"] = db.rowcount
 
+            # Before the users row goes (trades cascade on it): give nations
+            # that offered this one a direct trade their escrow back.
+            from app_core.market.repositories import refund_trades_offered_to
+
+            refund_trades_offered_to(db, cId)
+
             db.execute("DELETE FROM users WHERE id=(%s)", (cId,))
             deleted_counts["users"] = db.rowcount
             db.execute("DELETE FROM stats WHERE id=(%s)", (cId,))

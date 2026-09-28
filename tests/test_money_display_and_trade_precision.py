@@ -55,8 +55,10 @@ def test_sell_trade_credits_exact_amount(monkeypatch):
     # Trade should be removed
     assert 123 not in state["trades"]
 
-    # Resources transferred: seller copper decreased, buyer copper increased
-    assert state["resources"][seller]["copper"] == 124
+    # Goods come out of escrow (taken from the seller when the offer was
+    # posted), so the seller's remaining stock is untouched -- accepting used
+    # to take the 100 copper from the seller a second time.
+    assert state["resources"][seller]["copper"] == 224
     assert state["resources"][buyer]["copper"] == 124
 
     # Money transferred: seller gets exactly 100*100; the accepting buyer also

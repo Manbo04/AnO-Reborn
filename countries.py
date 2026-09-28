@@ -1217,6 +1217,9 @@ def reset_account():
                 placeholders = ",".join(["%s"] * len(ids))
                 db.execute(f"DELETE FROM provinces WHERE id IN ({placeholders})", tuple(ids))
             db.execute("DELETE FROM user_buildings WHERE user_id=%s", (cId,))
+            from app_core.market.repositories import refund_trades_offered_to
+
+            refund_trades_offered_to(db, cId)
             db.execute("DELETE FROM trades WHERE offeree=%s OR offerer=%s", (cId, cId))
             db.execute("DELETE FROM spyinfo WHERE spyer=%s OR spyee=%s", (cId, cId))
             db.execute("DELETE FROM requests WHERE reqId=%s", (cId,))
