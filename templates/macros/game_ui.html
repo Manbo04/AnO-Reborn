@@ -26,7 +26,7 @@
     switched to the .game-glass frosted-panel treatment (game-glass.css) — only use this on
     pages carrying .game-page-bg behind them, not on pages still using the flat/opaque style. #}
 {% macro game_glass_panel(title, icon=None, extra_class=None, style=None, id=None) %}
-<div class="game-glass{{ ' ' ~ extra_class if extra_class else '' }}" style="padding: 22px 24px;{% if style %} {{ style }}{% endif %}"{% if id %} id="{{ id }}"{% endif %}>
+<div class="game-glass game-panel{{ ' ' ~ extra_class if extra_class else '' }}"{% if style %} style="{{ style }}"{% endif %}{% if id %} id="{{ id }}"{% endif %}>
     {% if title %}<h2 class="templatecontentheaderleft" style="margin-top: 0;">{% if icon %}<span class="material-icons-outlined">{{ icon }}</span>{% endif %}{{ title }}</h2>{% endif %}
     {{ caller() }}
 </div>

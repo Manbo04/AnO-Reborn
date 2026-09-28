@@ -620,3 +620,21 @@ DATABASE_PUBLIC_URL=... python3 scripts/apply_all_pending_migrations.py
 
 **Next steps**:
 - `templates/partials/quick_nav.html` (logged-in home grid) still lists pages individually. It could be regrouped by hub if players want that.
+
+### Session: 2026-09-28 — Rankings cleanup + one-frame-per-panel on v2 pages
+
+**Root cause**: v2 (glass) pages stacked up to four frames around one table. The page wrapper `.templatediv` kept its border and shadow after its fill was made transparent, which left a ghost outline around the page. Inside that sat the `.game-glass` panel. Its title was a full `.templatecontentheaderleft` bar, and below it came `.templateoutertablediv` (90% wide, inset) and then `.templatetable` (90% again, with its own glass fill, border and shadow). On a 390px phone that left ~250px for the table, so the value column was clipped. The generic ≤768px "scroll table + sticky first column" mode also painted an opaque block down the rank column.
+
+**What was done**:
+- `static/css/game-glass.css` (shared, v2 pages only): removed the ghost `.templatediv` frame. Inside a `.game-glass` panel, the table wrapper and table are now full-width and frameless. The panel's own title (first-child `h2.templatecontentheaderleft`) is now a compact left-aligned label with an accent icon. `.game-panel` padding shrinks on phones (≤620px).
+- `templates/macros/game_ui.html`: `game_glass_panel` uses the `.game-panel` class instead of inline padding, so the mobile padding rule can apply.
+- `templates/rankings_v2.html`: the four copy-pasted tables are now one local `leaderboard()` macro. It adds a real `<thead>` and puts the flag and name in one flex link, so long names and equipped titles wrap next to the flag instead of under it. The top 3 ranks are shown in `--gold`.
+- `static/css/game-experience.css`: rebuilt the rankings table rules. The page opts out of the generic mobile scroll-table mode and the 480px `img { height:auto !important }` hack. It uses a fixed layout (narrow rank, flexible name, right-aligned value). The two leaderboards stack below 1100px.
+- Verified by rendering the real `layout.html` + `rankings_v2.html` with mock data and screenshotting at 390px (dark and light) and 1280px.
+
+**What to watch**:
+- The panel-title and frameless-table changes also apply to the other `game_glass_panel` users (statistics_v2, market_v2, account_v2, intelligence_v2, store_v2). All of them compile, but none was screenshotted with real data.
+- Sticky first columns on other v2 pages' tables still use opaque `--tableOne`/`--tableTwo` backgrounds on mobile, which shows as a dark column over glass. Same symptom as rankings had, but it isn't fixed generically yet.
+
+**Next steps**:
+- Apply the same audit to the other v2 pages with dense tables (market, statistics, coalitions list).
