@@ -1,7 +1,7 @@
 from flask import render_template
 from helpers import login_required, is_theme_v2_enabled
 from database import get_request_cursor, cache_response, get_coalition_members_table
-from influence_formula import influence_sql_expr, STANDARD_INFLUENCE_ALIASES
+from influence_formula import influence_subquery_sql
 
 # NOTE: 'app' is NOT imported at module level to avoid circular imports
 
@@ -212,54 +212,15 @@ def rankings():
         # Top Alliances by Influence (sum of each member's real influence score)
         try:
             members_tbl = get_coalition_members_table() or "coalitions_legacy"
+            member_influence_sql = influence_subquery_sql(f"SELECT userid FROM {members_tbl}")
             db.execute(
                 f"""
                 SELECT c.id, c.name, COALESCE(SUM(prov.influence), 0) as total_influence
                 FROM colNames c
                 JOIN {members_tbl} cm ON c.id = cm.colid
                 LEFT JOIN (
-                    SELECT
-                        u.id AS userid,
-                        {influence_sql_expr(STANDARD_INFLUENCE_ALIASES)} AS influence
-                    FROM users u
-                    LEFT JOIN stats s ON s.id = u.id
-                    LEFT JOIN (
-                        SELECT
-                            userid AS user_id,
-                            COUNT(id) AS provinces_count,
-                            COALESCE(SUM(citycount), 0) AS city_count,
-                            COALESCE(SUM(land), 0) AS total_land
-                        FROM provinces
-                        WHERE userid IN (SELECT userid FROM {members_tbl})
-                        GROUP BY userid
-                    ) p ON p.user_id = u.id
-                    LEFT JOIN (
-                        SELECT
-                            um.user_id,
-                            SUM(CASE WHEN ud.name='soldiers' THEN um.quantity ELSE 0 END) AS soldiers,
-                            SUM(CASE WHEN ud.name='artillery' THEN um.quantity ELSE 0 END) AS artillery,
-                            SUM(CASE WHEN ud.name='tanks' THEN um.quantity ELSE 0 END) AS tanks,
-                            SUM(CASE WHEN ud.name='fighters' THEN um.quantity ELSE 0 END) AS fighters,
-                            SUM(CASE WHEN ud.name='bombers' THEN um.quantity ELSE 0 END) AS bombers,
-                            SUM(CASE WHEN ud.name='apaches' THEN um.quantity ELSE 0 END) AS apaches,
-                            SUM(CASE WHEN ud.name='submarines' THEN um.quantity ELSE 0 END) AS submarines,
-                            SUM(CASE WHEN ud.name='destroyers' THEN um.quantity ELSE 0 END) AS destroyers,
-                            SUM(CASE WHEN ud.name='cruisers' THEN um.quantity ELSE 0 END) AS cruisers,
-                            SUM(CASE WHEN ud.name='icbms' THEN um.quantity ELSE 0 END) AS icbms,
-                            SUM(CASE WHEN ud.name='nukes' THEN um.quantity ELSE 0 END) AS nukes,
-                            SUM(CASE WHEN ud.name='spies' THEN um.quantity ELSE 0 END) AS spies
-                        FROM user_military um
-                        JOIN unit_dictionary ud ON um.unit_id = ud.unit_id
-                        WHERE um.user_id IN (SELECT userid FROM {members_tbl})
-                        GROUP BY um.user_id
-                    ) m ON m.user_id = u.id
-                    LEFT JOIN (
-                        SELECT user_id, COALESCE(SUM(quantity), 0) AS total_resources
-                        FROM user_economy
-                        WHERE user_id IN (SELECT userid FROM {members_tbl})
-                        GROUP BY user_id
-                    ) r ON r.user_id = u.id
-                    WHERE u.id IN (SELECT userid FROM {members_tbl})
+                    SELECT inf.user_id AS userid, inf.influence
+                    FROM {member_influence_sql} inf
                 ) prov ON cm.userid = prov.userid
                 GROUP BY c.id, c.name
                 ORDER BY total_influence DESC

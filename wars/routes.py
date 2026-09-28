@@ -1,4 +1,5 @@
 from flask import Blueprint, session, request, redirect, render_template
+from influence_formula import influence_subquery_sql
 from helpers import (
     login_required,
     error,
@@ -478,6 +479,10 @@ def warChoose(war_id):
     elif request.method == "POST":
         selected_units = {}
         special_unit = request.form.get("special_unit")
+        if special_unit == "nukes":
+            # Nukes hit one chosen province via the nuclear strike planner
+            # (two-step confirm + influence cost), never the unit-fight path.
+            return redirect(f"/nuclear_strike/{war_id}")
         if special_unit:
             selected_units[special_unit] = 0
             unit_amount = 1
@@ -1524,35 +1529,24 @@ def find_targets():
             # filter out viable targets).
             min_influence = max(0.0, user_influence * 0.9)
             max_influence = max(user_influence * 2.0, 100.0)
+            # Influence comes from the shared formula (influence_formula);
+            # this used to be a separate military-only copy that drifted.
             query = (
                 "SELECT users.id, users.username, users.flag, "
-                "COUNT(DISTINCT provinces.id) as provinces_count, "
-                "COALESCE(SUM("
-                "CASE WHEN ud.name='soldiers' THEN um.quantity * 0.02 "
-                "WHEN ud.name='artillery' THEN um.quantity * 1.6 "
-                "WHEN ud.name='tanks' THEN um.quantity * 0.8 "
-                "WHEN ud.name='fighters' THEN um.quantity * 3.5 "
-                "WHEN ud.name='bombers' THEN um.quantity * 2.5 "
-                "WHEN ud.name='apaches' THEN um.quantity * 3.2 "
-                "WHEN ud.name='submarines' THEN um.quantity * 4.5 "
-                "WHEN ud.name='destroyers' THEN um.quantity * 3 "
-                "WHEN ud.name='cruisers' THEN um.quantity * 5.5 "
-                "WHEN ud.name='icbms' THEN um.quantity * 250 "
-                "WHEN ud.name='nukes' THEN um.quantity * 500 "
-                "WHEN ud.name='spies' THEN um.quantity * 25 "
-                "ELSE 0 END), 0) as influence "
+                "COUNT(provinces.id) AS provinces_count, "
+                "COALESCE(MAX(inf.influence), 0) AS influence "
                 "FROM users "
                 "LEFT JOIN provinces ON users.id = provinces.userId "
-                "LEFT JOIN user_military um ON users.id = um.user_id "
-                "LEFT JOIN unit_dictionary ud "
-                "ON um.unit_id = ud.unit_id AND ud.is_active = TRUE "
+                "LEFT JOIN "
+                + influence_subquery_sql("SELECT id FROM users WHERE id != %s")
+                + " inf ON inf.user_id = users.id "
                 "WHERE users.id != %s "
                 "GROUP BY users.id, users.username, users.flag "
-                "HAVING COUNT(DISTINCT provinces.id) BETWEEN %s AND %s "
+                "HAVING COUNT(provinces.id) BETWEEN %s AND %s "
                 "ORDER BY users.username "
                 "LIMIT 50"
             )
-            db.execute(query, (cId, min_provinces, max_provinces))
+            db.execute(query, (cId, cId, min_provinces, max_provinces))
             targets = db.fetchall()
         targets_list = []
         for target in targets:
@@ -1620,120 +1614,127 @@ def find_targets():
 @wars_bp.route("/nuclear_strike", methods=["POST"])
 @login_required
 def nuclear_strike():
+    """Entry point from a country page: find the active war with that nation
+    and open the nuclear strike planner (the strike itself is a two-step
+    confirm there; see wars/nuclear.py for the rules)."""
     attacker_id = session["user_id"]
     try:
         target_id = int(request.form.get("target_id"))
-        weapon_type = request.form.get("weapon_type")
     except (TypeError, ValueError):
         return error(400, "Invalid payload")
-
     if attacker_id == target_id:
         return error(400, "You cannot nuke yourself!")
-
-    if weapon_type not in ["nuke", "icbm"]:
-        return error(400, "Invalid weapon type")
-
-    weapon_name = "nukes" if weapon_type == "nuke" else "icbms"
-
+    if request.form.get("weapon_type", "nuke") != "nuke":
+        return error(
+            400,
+            "ICBMs are launched from a war's Attack page (Special Attack). "
+            "Only nukes use the nuclear strike planner.",
+        )
     with get_request_cursor() as db:
-        # FIXED 2026-09-23: same race class already fixed in drone_strike/
-        # cruise_missile_strike on 2026-09-13 (see drone_strike's
-        # docstring) -- the weapon-quantity read below and the UPDATE
-        # decrementing it have no lock between them. user_military.quantity
-        # has a real CHECK (quantity >= 0) constraint, so this did NOT let
-        # two concurrent strikes fire off a single nuke -- confirmed by
-        # test: the first concurrent UPDATE commits, the second blocks on
-        # Postgres's own row lock and, once unblocked, re-evaluates against
-        # the now-lower committed value, going negative and raising an
-        # unhandled psycopg2.errors.CheckViolation instead of this
-        # function's intended graceful "you don't have any nukes!" error.
-        # A double-click or two tabs firing the same strike got an ugly
-        # 500 crash. Locked per-attacker so the second racer's own read
-        # correctly sees the post-first-strike quantity and is rejected
-        # cleanly -- same pattern as every other strike route in this file.
-        db.execute("SELECT pg_advisory_xact_lock(%s)", (attacker_id,))
-
-        # Require an active war with the target before allowing a strike
         db.execute(
-            (
-                "SELECT id FROM wars "
-                "WHERE ((attacker=%s AND defender=%s) "
-                "OR (attacker=%s AND defender=%s)) "
-                "AND peace_date IS NULL"
-            ),
+            "SELECT id FROM wars WHERE peace_date IS NULL AND "
+            "((attacker=%s AND defender=%s) OR (attacker=%s AND defender=%s)) "
+            "ORDER BY id DESC LIMIT 1",
             (attacker_id, target_id, target_id, attacker_id),
         )
-        if not db.fetchone():
-            return error(403, "You are not at war with this nation.")
-
-        # Check weapon quantity
-        db.execute(
-            """
-            SELECT um.quantity, ud.unit_id
-            FROM user_military um
-            JOIN unit_dictionary ud ON um.unit_id = ud.unit_id
-            WHERE um.user_id = %s AND ud.name = %s
-            """,
-            (attacker_id, weapon_name)
-        )
         row = db.fetchone()
-        if not row or row[0] <= 0:
-            return error(400, f"You don't have any {weapon_name}!")
-        unit_id = row[1]
+    if not row:
+        return error(403, "You are not at war with this nation.")
+    return redirect(f"/nuclear_strike/{row[0]}")
 
-        # Use 1 weapon
-        db.execute(
-            "UPDATE user_military SET quantity = quantity - 1 WHERE user_id = %s AND unit_id = %s",
-            (attacker_id, unit_id)
+
+def _nuke_template():
+    return "nuclear_strike.html"
+
+
+@wars_bp.route("/nuclear_strike/<int:war_id>", methods=["GET"])
+@login_required
+def nuclear_strike_plan(war_id):
+    """Step 0: pick a province (shows the blast preview for each)."""
+    from wars.nuclear import plan_strike, StrikeError
+
+    attacker_id = session["user_id"]
+    with get_request_cursor() as db:
+        try:
+            plan = plan_strike(db, attacker_id, war_id)
+        except StrikeError as exc:
+            return error(exc.status, str(exc))
+    return render_template(_nuke_template(), step="plan", plan=plan)
+
+
+@wars_bp.route("/nuclear_strike/<int:war_id>/review", methods=["POST"])
+@login_required
+def nuclear_strike_review(war_id):
+    """Step 1: show exactly what this launch will do and what it costs."""
+    import secrets
+    from wars.nuclear import plan_strike, StrikeError
+
+    attacker_id = session["user_id"]
+    try:
+        province_id = int(request.form.get("province_id"))
+    except (TypeError, ValueError):
+        return error(400, "Pick a province to target.")
+    with get_request_cursor() as db:
+        try:
+            plan = plan_strike(db, attacker_id, war_id, province_id)
+        except StrikeError as exc:
+            return error(exc.status, str(exc))
+    if plan["blocked"]:
+        return error(400, plan["blocked"])
+    token = secrets.token_urlsafe(16)
+    session["nuke_confirm"] = {
+        "token": token,
+        "war_id": war_id,
+        "province_id": province_id,
+        "ts": time.time(),
+    }
+    return render_template(_nuke_template(), step="confirm", plan=plan, token=token)
+
+
+@wars_bp.route("/nuclear_strike/<int:war_id>/launch", methods=["POST"])
+@login_required
+def nuclear_strike_launch(war_id):
+    """Step 2: the actual launch. Needs the one-time token from the review
+    page (so a stray POST or a replayed form can't fire a nuke)."""
+    from wars.nuclear import execute_strike, StrikeError
+
+    attacker_id = session["user_id"]
+    pending = session.pop("nuke_confirm", None)
+    try:
+        province_id = int(request.form.get("province_id"))
+    except (TypeError, ValueError):
+        return error(400, "Invalid payload")
+    if (
+        not pending
+        or request.form.get("token") != pending.get("token")
+        or pending.get("war_id") != war_id
+        or pending.get("province_id") != province_id
+        or time.time() - float(pending.get("ts") or 0) > 600
+    ):
+        return error(
+            400,
+            "This launch confirmation expired or was already used. "
+            "Please review the strike again.",
         )
+    if request.form.get("confirm_launch") != "yes":
+        return error(400, "Tick the confirmation box to launch.")
+    with get_request_cursor() as db:
+        try:
+            result = execute_strike(db, attacker_id, war_id, province_id)
+        except StrikeError as exc:
+            rollback_db_cursor(db)
+            return error(exc.status, str(exc))
+        # Commit before dropping caches so no request re-caches the
+        # pre-strike influence in between.
+        db.connection.commit()
+    try:
+        from database import invalidate_user_cache
 
-        # Apply massive damage to target
-        db.execute(
-            """
-            UPDATE provinces
-            SET population = GREATEST(1000, population * 0.5),
-                happiness = 0,
-                consumer_spending = GREATEST(0, consumer_spending - 50)
-            WHERE userId = %s
-            """,
-            (target_id,)
-        )
-        
-        # Destroy target user_buildings
-        db.execute(
-            """
-            UPDATE user_buildings
-            SET quantity = GREATEST(0, quantity - CEIL(quantity * 0.4))
-            WHERE user_id = %s
-            """,
-            (target_id,)
-        )
-
-        # Attacker global diplomatic penalty
-        db.execute(
-            "UPDATE provinces SET happiness = 0 WHERE userId = %s",
-            (attacker_id,)
-        )
-
-        # Log to news
-        weapon_display = "Nuclear Weapon" if weapon_type == "nuke" else "ICBM"
-        db.execute("SELECT username FROM users WHERE id=%s", (attacker_id,))
-        attacker_row = db.fetchone()
-        attacker_name = attacker_row[0] if attacker_row else "Unknown"
-        
-        db.execute("SELECT username FROM users WHERE id=%s", (target_id,))
-        target_row = db.fetchone()
-        target_name = target_row[0] if target_row else "Unknown"
-
-        # Personal news to target ('news' has no global/broadcast row -- destination_id
-        # is FK'd to users.id, so there's no id-0 "everyone" recipient to insert for)
-        personal_news = f"🚨 NUCLEAR STRIKE: Your country was struck by a {weapon_display} launched by {attacker_name}! Your population has been decimated and happiness is 0."
-        db.execute(
-            "INSERT INTO news (destination_id, message) VALUES (%s, %s)",
-            (target_id, personal_news)
-        )
-
-    return redirect(f"/country/id={target_id}")
+        invalidate_user_cache(attacker_id)
+        invalidate_user_cache(result["enemy_id"])
+    except Exception:
+        pass
+    return render_template(_nuke_template(), step="result", result=result)
 
 @wars_bp.route("/strategic_airstrike", methods=["POST"])
 @login_required
