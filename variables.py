@@ -157,6 +157,11 @@ FEATURE_DEMOGRAPHIC_CONSUMPTION = True  # toggle the new mechanic on/off
 FEATURE_DEMOGRAPHIC_TAX = True  # toggle age-weighted tax rates on/off
 
 # PHASE 3: AGING, EDUCATION & WORKFORCE (Phase 3)
+# Grace period for education chain requirements: until this UTC date/time,
+# if a province lacks primary schools but has higher education, its primary
+# capacity is treated as max(primary, hs+uni) so players have time to build.
+EDUCATION_CHAIN_GRACE_UNTIL = "2026-10-05T00:00:00+00:00"
+
 # Daily population aging rates (per tick, as fraction)
 DEMO_AGING_RATES = {
     # Halved 2026-09-05 (was 0.002/0.001): near the population cap, growth

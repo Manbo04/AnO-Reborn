@@ -565,25 +565,15 @@ def generate_province_revenue():  # Runs each hour
                         pop_elderly += working_to_elderly
                         pop_working = max(0, pop_working - working_to_elderly)
 
-                        graduation_rate = variables.DEMO_AGING_RATES["children_to_working"]
-                        if variables.POLICY_MANDATORY_SCHOOLING in policies:
-                            graduation_rate *= (
-                                variables.POLICY_SCHOOLING_GRADUATION_MULTIPLIER
-                            )
-
-                        can_graduate = min(
-                            pop_children, int(round(pop_children * graduation_rate))
+                        from app_core.game_ticks.population import calc_education_graduation
+                        edu_stats = calc_education_graduation(
+                            pop_children,
+                            policies,
+                            int(province_buildings.get("primary_school", 0) or 0),
+                            int(province_buildings.get("high_school", 0) or 0),
+                            int(province_buildings.get("universities", 0) or 0)
                         )
-                        hs_buildings = int(province_buildings.get("high_school", 0) or 0)
-                        uni_buildings = int(province_buildings.get("universities", 0) or 0)
-                        # Each school building can graduate 500 students per tick
-                        hs_capacity = hs_buildings * 500
-                        uni_capacity = uni_buildings * 500
-                        school_capacity = hs_capacity + uni_capacity
-                        graduates = (
-                            min(can_graduate, school_capacity) if school_capacity > 0 else 0
-                        )
-                        non_graduates = can_graduate - graduates
+                        can_graduate = edu_stats["can_graduate"]
 
                         if province_id not in education_deltas:
                             education_deltas[province_id] = {
@@ -592,17 +582,16 @@ def generate_province_revenue():  # Runs each hour
                                 "edu_college": 0,
                             }
 
-                        # Distribute graduates: universities first, then high schools
-                        if graduates > 0:
-                            uni_grads = min(graduates, uni_capacity)
-                            hs_grads = min(graduates - uni_grads, hs_capacity)
-                            if uni_grads > 0:
-                                education_deltas[province_id]["edu_college"] += uni_grads
-                            if hs_grads > 0:
-                                education_deltas[province_id]["edu_highschool"] += hs_grads
+                        edu_college_new = edu_stats["edu_college_new"]
+                        edu_highschool_new = edu_stats["edu_highschool_new"]
+                        edu_none_new = edu_stats["edu_none_new"]
 
-                        if non_graduates > 0:
-                            education_deltas[province_id]["edu_none"] += non_graduates
+                        if edu_college_new > 0:
+                            education_deltas[province_id]["edu_college"] += edu_college_new
+                        if edu_highschool_new > 0:
+                            education_deltas[province_id]["edu_highschool"] += edu_highschool_new
+                        if edu_none_new > 0:
+                            education_deltas[province_id]["edu_none"] += edu_none_new
 
                         pop_working += can_graduate
                         pop_children = max(0, pop_children - can_graduate)
