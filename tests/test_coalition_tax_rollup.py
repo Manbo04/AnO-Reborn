@@ -54,7 +54,7 @@ def test_daily_rollup_is_default_and_hourly_keeps_raw_rows(client, coalition):
     csv_body = client.get(f"/coalition/{c['col_id']}/bank_log.csv?kind=tax").get_data(as_text=True)
     lines = csv_body.strip().splitlines()
     assert lines[0] == "date_utc,type,member,member_id,resource,amount,payments"
-    parsed = [l.split(",") for l in lines[1:]]
+    parsed = [line.split(",") for line in lines[1:]]
     got = {(p[0], int(p[3])): (int(p[5]), int(p[6])) for p in parsed}
     assert got == {
         ("2026-09-21", c["member"]): (5, 1),
