@@ -539,6 +539,18 @@
         <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lumber')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Lumber</strong>
         <span class="stat-value">{{ show_gross('lumber') }}</span>
     </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'silver')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Silver</strong>
+        <span class="stat-value">{{ show_gross('silver') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'diamonds')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Diamonds</strong>
+        <span class="stat-value">{{ show_gross('diamonds') }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'bullion')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Bullion</strong>
+        <span class="stat-value">{{ show_gross('bullion') }}</span>
+    </div>
 </div>
                     <br>
                     <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
@@ -625,6 +637,18 @@
     <div class="templatedivflex2left stat-card">
         <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lumber')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Lumber</strong>
         <span class="stat-value">{{ revenue["net"]["lumber"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'silver')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Silver</strong>
+        <span class="stat-value">{{ revenue["net"]["silver"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'diamonds')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Diamonds</strong>
+        <span class="stat-value">{{ revenue["net"]["diamonds"] | weight_fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card">
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'bullion')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Bullion</strong>
+        <span class="stat-value">{{ revenue["net"]["bullion"] | weight_fmt }}</span>
     </div>
 </div>
                     <br>
@@ -787,6 +811,18 @@
             </tr>
             <tr>
                 <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lumber')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Lumber:</td>
+                <td>{{ rationsGross }}%</td>
+            </tr>
+            <tr>
+                <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'silver')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Silver:</td>
+                <td>{{ rationsGross }}%</td>
+            </tr>
+            <tr>
+                <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'diamonds')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Diamonds:</td>
+                <td>{{ rationsGross }}%</td>
+            </tr>
+            <tr>
+                <td><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'bullion')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Bullion:</td>
                 <td>{{ rationsGross }}%</td>
             </tr>
             <tr>
@@ -2333,6 +2369,9 @@
                             <option value="lead" class="templateoption ">Lead</option>
                             <option value="copper"class="templateoption ">Copper</option>
                             <option value="lumber" class="templateoption ">Lumber</option>
+                            <option value="silver" class="templateoption ">Silver</option>
+                            <option value="diamonds" class="templateoption ">Diamonds</option>
+                            <option value="bullion" class="templateoption ">Bullion</option>
                             <option value="components" class="templateoption ">Components</option>
                             <option value="steel" class="templateoption ">Steel</option>
                             <option value="consumer_goods" class="templateoption ">Consumer Goods</option>
@@ -2410,6 +2449,9 @@
                             <option value="lead" class="templateoption ">Lead</option>
                             <option value="copper" class="templateoption ">Copper</option>
                             <option value="lumber" class="templateoption ">Lumber</option>
+                            <option value="silver" class="templateoption ">Silver</option>
+                            <option value="diamonds" class="templateoption ">Diamonds</option>
+                            <option value="bullion" class="templateoption ">Bullion</option>
                             <option value="components" class="templateoption ">Components</option>
                             <option value="steel" class="templateoption ">Steel</option>
                             <option value="consumer_goods" class="templateoption ">Consumer Goods</option>

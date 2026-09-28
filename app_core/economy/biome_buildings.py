@@ -18,6 +18,9 @@ ALL_MINE_BUILDINGS: tuple[str, ...] = (
     "uranium_mines",
     "pumpjacks",
     "lumber_mills",
+    "silver_mines",
+    "diamond_mines",
+    "bullion_mines",
 )
 
 CANONICAL_BIOMES: tuple[str, ...] = (
@@ -31,13 +34,13 @@ CANONICAL_BIOMES: tuple[str, ...] = (
 )
 
 BIOME_MINES: dict[str, tuple[str, ...]] = {
-    "tundra": ("iron_mines", "copper_mines", "lead_mines", "uranium_mines"),
-    "desert": ("iron_mines", "pumpjacks", "bauxite_mines", "uranium_mines"),
-    "boreal forest": ("iron_mines", "lumber_mills", "lead_mines", "coal_mines"),
+    "tundra": ("iron_mines", "copper_mines", "lead_mines", "uranium_mines", "silver_mines"),
+    "desert": ("iron_mines", "pumpjacks", "bauxite_mines", "uranium_mines", "diamond_mines"),
+    "boreal forest": ("iron_mines", "lumber_mills", "lead_mines", "coal_mines", "bullion_mines"),
     "grassland": ("iron_mines", "copper_mines", "bauxite_mines", "pumpjacks"),
-    "savanna": ("coal_mines", "copper_mines", "lead_mines", "bauxite_mines"),
-    "mountain range": ("coal_mines", "pumpjacks", "bauxite_mines", "lumber_mills"),
-    "jungle": ("coal_mines", "copper_mines", "lumber_mills", "pumpjacks"),
+    "savanna": ("coal_mines", "copper_mines", "lead_mines", "bauxite_mines", "diamond_mines"),
+    "mountain range": ("coal_mines", "pumpjacks", "bauxite_mines", "lumber_mills", "silver_mines"),
+    "jungle": ("coal_mines", "copper_mines", "lumber_mills", "pumpjacks", "bullion_mines"),
 }
 
 
@@ -86,6 +89,21 @@ MINE_INFO: dict[str, dict[str, str]] = {
         "display_name": "Lumber Mills",
         "resource": "lumber",
         "description": "Lumber mills produce lumber, a useful raw resource used to mines and farms.",
+    },
+    "silver_mines": {
+        "display_name": "Silver Mines",
+        "resource": "silver",
+        "description": "Silver mines extract silver ore, a precious metal valuable for trade and luxury consumer goods.",
+    },
+    "diamond_mines": {
+        "display_name": "Diamond Mines",
+        "resource": "diamonds",
+        "description": "Diamond mines extract rough diamonds from deep underground, used in jewelry and advanced production.",
+    },
+    "bullion_mines": {
+        "display_name": "Bullion Mines",
+        "resource": "bullion",
+        "description": "Bullion mines extract precious gold ore and cast bullion bars, highly prized for trade and jewelry production.",
     },
 }
 

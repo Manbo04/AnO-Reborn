@@ -22,8 +22,8 @@
                 <p class="templatecontentpleft">The most critical resource - without rations, your population cannot grow.</p>
                 <table class="templatetable">
                     <tr><td><strong>Consumption Rate</strong></td><td>~1 per 50,000 population/hour (children need 30% more, elderly 20% less)</td></tr>
-                    <tr><td><strong>Produced By</strong></td><td>Farms (100 rations/hour)</td></tr>
-                    <tr><td><strong>Farm Bonus</strong></td><td>+3 rations per land slot</td></tr>
+                    <tr><td><strong>Produced By</strong></td><td>Farms (100 rations/hour) or Fisheries (160 rations/hour)</td></tr>
+                    <tr><td><strong>Farm vs Fishery</strong></td><td>Farms gain +3 rations per land slot and benefit from Advanced Machinery; Fisheries have higher base output (160) and lower upfront cost ($800k), but do not scale with land or tech, making them ideal early on before farms outscale them.</td></tr>
                     <tr><td><strong>Distribution</strong></td><td>Distribution buildings must exist to move food; capacity is tiered by type, from 250k pop (Food Banks) up to 5M pop (Malls) — see table below.</td></tr>
                     <tr><td><strong>Without Rations</strong></td><td>No growth, -30% taxes</td></tr>
                 </table>
@@ -75,7 +75,7 @@
 
         <div class="mechanics-callout">
             <span class="material-icons-outlined">public</span>
-            <p>All 8 raw-material mines are biome-gated — your homeland biome unlocks 4 of the 8. See the <a href="/mechanics/biomes" style="color: var(--accent); font-weight: 600;">Biomes Guide</a> for the full breakdown.</p>
+            <p>All 11 raw-material mines are biome-gated — your homeland biome unlocks specific mines. See the <a href="/mechanics/biomes" style="color: var(--accent); font-weight: 600;">Biomes Guide</a> for the full breakdown.</p>
         </div>
 
         <h3 class="templatecontentheader"><span class="material-icons-outlined">layers</span> Mines &amp; Extractors — Cost to Build and Run</h3>
@@ -97,16 +97,23 @@
                 <tr><td>Copper</td><td>Copper Mines</td><td>$2.8M</td><td>$5,000</td><td>120 copper</td><td>Components, ammunition</td></tr>
                 <tr><td>Oil</td><td>Pumpjacks</td><td>$3.0M</td><td>$9,500</td><td>100 oil</td><td>Gasoline</td></tr>
                 <tr><td>Lumber</td><td>Lumber Mills</td><td>$2.2M</td><td>$7,500</td><td>150 lumber</td><td>Construction</td></tr>
+                <tr><td>Silver</td><td>Silver Mines</td><td>$4.0M</td><td>$12,000</td><td>60 silver</td><td>Jewelry Stores</td></tr>
+                <tr><td>Diamonds</td><td>Diamond Mines</td><td>$6.0M</td><td>$25,000</td><td>30 diamonds</td><td>Jewelry Stores</td></tr>
+                <tr><td>Bullion</td><td>Bullion Mines</td><td>$5.0M</td><td>$18,000</td><td>40 bullion</td><td>Jewelry Stores</td></tr>
             </table>
         </div>
         <p class="templatecontentpleft" style="margin-top: 8px; font-size: 0.9em; color: var(--text-secondary);">Upkeep is deducted from your treasury every hour whether or not you're online. The "Cheaper Materials" upgrade cuts upkeep on all of these by 20%. Build cost is one-time; some also require iron/lumber on hand to construct — check the building's own buy panel on your province page for the exact resource cost.</p>
 
-        <h3 class="templatecontentheader" style="margin-top: 20px;"><span class="material-icons-outlined">settings</span> Processed Materials (per hour, not biome-gated)</h3>
+        <h3 class="templatecontentheader" style="margin-top: 20px;"><span class="material-icons-outlined">settings</span> Processed Materials &amp; Consumer Goods (per hour, not biome-gated)</h3>
         <table class="templatetable">
             <tr><td><strong>Steel</strong></td><td>Steel Mills: 38 coal + 67 iron → 48 steel</td></tr>
             <tr><td><strong>Aluminium</strong></td><td>Refineries: 256 bauxite → 64 aluminium</td></tr>
             <tr><td><strong>Components</strong></td><td>Component Factories: 80 copper + 40 steel + 60 aluminium → 20 components</td></tr>
             <tr><td><strong>Ammunition</strong></td><td>Ammo Factories: 40 copper + 80 lead → 48 ammunition</td></tr>
+            <tr><td><strong>Consumer Goods (Workshops)</strong></td><td>Workshops (entry-level): 2 steel → 4 consumer goods</td></tr>
+            <tr><td><strong>Consumer Goods (Jewelry)</strong></td><td>Jewelry Stores (luxury): 12 silver + 6 diamonds + 8 bullion → 36 consumer goods</td></tr>
+            <tr><td><strong>Consumer Goods (Automotive)</strong></td><td>Automotive Plants (late-game): 40 steel + 30 aluminium + 15 components → 160 consumer goods</td></tr>
+            <tr><td><strong>Consumer Goods (Retail)</strong></td><td>General Stores: +6 CG | Malls: +30 CG</td></tr>
         </table>
 
         <!-- Resource Tips -->

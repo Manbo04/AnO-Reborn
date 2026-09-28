@@ -343,6 +343,13 @@ def province(pId):
             "industrial_district",
             "primary_school",
             "high_school",
+            "fisheries",
+            "silver_mines",
+            "diamond_mines",
+            "bullion_mines",
+            "workshops",
+            "jewelry_stores",
+            "automotive_plants",
         ]
         for bname in all_building_names:
             units.setdefault(bname, 0)
@@ -1830,6 +1837,13 @@ def province_sell_buy(way, units, province_id):
             "ammunition_factories",
             "aluminium_refineries",
             "oil_refineries",
+            "fisheries",
+            "silver_mines",
+            "diamond_mines",
+            "bullion_mines",
+            "workshops",
+            "jewelry_stores",
+            "automotive_plants",
         ]
 
         city_units = CITY_UNITS

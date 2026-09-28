@@ -36,6 +36,9 @@ CITY_UNITS = frozenset(
         "primary_school",
         "high_school",
         "industrial_district",
+        "workshops",
+        "jewelry_stores",
+        "automotive_plants",
     }
 )
 
@@ -49,6 +52,7 @@ LAND_UNITS = frozenset(
         "drone_sites",
         "missile_batteries",
         "farms",
+        "fisheries",
         "pumpjacks",
         "coal_mines",
         "bauxite_mines",
@@ -57,6 +61,9 @@ LAND_UNITS = frozenset(
         "lead_mines",
         "iron_mines",
         "lumber_mills",
+        "silver_mines",
+        "diamond_mines",
+        "bullion_mines",
         "component_factories",
         "steel_mills",
         "ammunition_factories",
