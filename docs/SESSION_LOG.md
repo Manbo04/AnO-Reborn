@@ -644,3 +644,25 @@ DATABASE_PUBLIC_URL=... python3 scripts/apply_all_pending_migrations.py
 
 **Next steps**:
 - Apply the same audit to the other v2 pages with dense tables (market, statistics, coalitions list).
+
+### Session: 2026-09-28 — Trade Agreements page rebuilt to match the v2 pages
+
+**Problem** (reported as "looks very outdated"):
+- The page used legacy chrome: `.infodiv` for the form, a `.templatecontentheaderleft` bar per section, and 5-7 column `.templatetable`s.
+- An inline `<style>` used tokens that don't exist (`--bg-color`, `--bg-color-alt`, `--font-header`, `--text-muted`) plus hardcoded `#e74c3c`/`#2ecc71`.
+- It rendered 413px wide on a 390px phone, so the whole page scrolled sideways.
+
+**What was done**:
+- `templates/trade_agreements_v2.html` was rewritten:
+  - Hero with subtitle and an "N active" badge.
+  - "Waiting for your answer" panel first when there are incoming proposals.
+  - "New proposal" form beside "How it works" (two columns from 1000px).
+  - One "Your agreements" panel grouped Active / Paused / Sent / Completed. Completed is collapsed in a `<details>`.
+  - Each agreement is a card, always from the viewer's side: You give / You get chips with resource icons, compact amounts (`fmt`, full value in `title`), interval, trade count and next run. Actions are `game-btn`s.
+  - Form field names, the partner-search JS and all POST routes are unchanged.
+- `static/css/game-trade.css` is new and added to `scripts/bundle_game_css.py` FILES. It is mobile-first and uses tokens only. Deal cards are stacked on phones and tablets and become one row from 900px. It overrides the global centred `label` rule for form labels.
+- Verified with rendered mock data (every status plus the empty state) at 390px dark/light, 820px and 1280px dark/light. There is no horizontal overflow at any width.
+
+**What to watch**:
+- `tests/test_trade_agreement_no_double_execution.py` needs a live DB. It fails the same way with and without this change.
+- The legacy `trade_agreements.html` (non-v2) was not touched.

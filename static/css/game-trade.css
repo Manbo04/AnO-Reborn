@@ -1,0 +1,524 @@
+/*
+ * Trade Agreements (templates/trade_agreements_v2.html). Bundled into
+ * static/style.css by scripts/bundle_game_css.py -- edit this file.
+ *
+ * Rebuilt 2026-09-28 ("looks very outdated, make it fit better with the
+ * rest"): the page used legacy .infodiv/.templatetable chrome, an inline
+ * <style> relying on tokens that don't exist (--bg-color, --font-header,
+ * --text-muted), hardcoded #e74c3c/#2ecc71 colours, and 5-7 column tables
+ * that forced sideways scrolling (the page rendered 413px wide on a 390px
+ * phone). Now: glass panels with the same compact titles as Loans/Bonds,
+ * game-btn buttons, and each agreement as a card row that fits a phone.
+ * Mobile first; desktop enhancements are in the min-width blocks.
+ */
+
+body.page-trade-agreements .ta-page {
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: var(--game-space-md);
+}
+
+/* Same compact label as game_glass_panel()'s title (game-glass.css). */
+.ta-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 14px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--colorOne);
+}
+
+.ta-panel-title .material-icons-outlined {
+    font-size: 20px;
+    color: var(--accent);
+}
+
+.ta-panel-title .game-badge {
+    margin-left: 2px;
+}
+
+.ta-top-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--game-space-md);
+}
+
+/* ---------- Form ---------- */
+.ta-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.ta-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+/* The global `label` rule (style.css) centres labels with width:fit-content
+   and margin:auto -- form labels here sit left, above their input. */
+.ta-field label {
+    width: auto;
+    margin: 0;
+    text-align: left;
+}
+
+.ta-field label,
+.ta-exchange-side legend {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--colorOne);
+}
+
+.ta-optional {
+    font-weight: 500;
+    color: var(--game-text-faint, var(--text-secondary));
+    margin-left: 4px;
+}
+
+.ta-hint {
+    font-size: 12px;
+    color: var(--game-text-faint, var(--text-secondary));
+}
+
+/* Inputs/selects: full-width, 44px touch height, override the legacy
+   .loginsignupinput/.templateselect widths and margins. */
+body.page-trade-agreements .ta-form .loginsignupinput,
+body.page-trade-agreements .ta-form .templateselect {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    margin: 0;
+    padding: 10px 12px;
+    box-sizing: border-box;
+    border-radius: var(--game-radius-sm);
+    font-size: 14px;
+}
+
+.ta-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+}
+
+.ta-exchange {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.ta-exchange-side {
+    margin: 0;
+    padding: 10px 12px 12px;
+    border: 1px solid var(--game-glass-border, var(--border));
+    border-radius: var(--game-radius-md);
+    background: var(--game-glass-bg, transparent);
+    min-width: 0;
+}
+
+.ta-exchange-side legend {
+    /* float + full width pulls the legend inside the box instead of
+       sitting on its top border. */
+    float: left;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    margin: 0 0 8px;
+}
+
+.ta-exchange-side .ta-pair {
+    clear: both;
+}
+
+.ta-exchange-side legend .material-icons-outlined {
+    font-size: 16px;
+}
+
+.ta-exchange-side--give legend .material-icons-outlined { color: var(--danger); }
+.ta-exchange-side--get legend .material-icons-outlined { color: var(--success); }
+
+/* Amount + resource on one line: the amount gets the room, the select
+   sizes to its longest label. */
+.ta-pair {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: 8px;
+}
+
+.ta-exchange-arrow {
+    align-self: center;
+    font-size: 20px;
+    color: var(--game-text-faint, var(--text-secondary));
+}
+
+.ta-submit {
+    width: 100%;
+    min-height: 44px;
+    font-size: 14px;
+}
+
+/* ---------- How it works ---------- */
+.ta-steps {
+    margin: 0;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--colorOne);
+}
+
+.ta-note {
+    display: flex;
+    gap: 8px;
+    margin: 14px 0 0;
+    padding: 10px 12px;
+    border-radius: var(--game-radius-sm);
+    background: var(--game-glass-bg-strong, var(--foregroundTwo));
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--colorOne);
+}
+
+.ta-note .material-icons-outlined {
+    font-size: 18px;
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+/* ---------- Agreement rows ---------- */
+.ta-group-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 18px 0 8px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--game-text-faint, var(--text-secondary));
+}
+
+.ta-panel-title + .ta-group-title {
+    margin-top: 0;
+}
+
+.ta-count {
+    min-width: 20px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--game-glass-bg-strong, var(--foregroundTwo));
+    color: var(--colorOne);
+    font-size: 11px;
+    text-align: center;
+}
+
+.ta-group-hint {
+    margin: -4px 0 8px;
+    line-height: 1.4;
+    font-size: 12.5px;
+    color: var(--game-text-faint, var(--text-secondary));
+}
+
+.ta-deal-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ta-deal {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid var(--game-glass-border, var(--border));
+    border-radius: var(--game-radius-md);
+    background: var(--game-glass-bg-strong, var(--foregroundTwo));
+}
+
+.ta-deal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+}
+
+.ta-partner {
+    font-weight: 700;
+    font-size: 14.5px;
+    color: var(--accent);
+    text-decoration: none;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ta-partner:hover {
+    text-decoration: underline;
+}
+
+/* Phones: give and get stacked, each a full-width line (label | chip), so
+   resource names like "Consumer Goods" fit instead of truncating. */
+.ta-deal-swap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ta-side {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.ta-deal-swap .ta-deal-arrow {
+    display: none;
+}
+
+.ta-side-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--game-text-faint, var(--text-secondary));
+}
+
+.ta-deal-arrow {
+    font-size: 18px;
+    color: var(--game-text-faint, var(--text-secondary));
+    padding-bottom: 8px;
+}
+
+.ta-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 6px 8px;
+    border-radius: var(--game-radius-sm);
+    font-size: 13px;
+    color: var(--colorOne);
+    border-left: 3px solid transparent;
+    background: var(--game-glass-bg, transparent);
+}
+
+.ta-chip--give { border-left-color: var(--danger); }
+.ta-chip--get { border-left-color: var(--success); }
+
+.ta-chip img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.ta-chip-amount {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.ta-chip-res {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ta-deal-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    font-size: 12px;
+    color: var(--game-text-faint, var(--text-secondary));
+}
+
+.ta-deal-meta > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ta-deal-meta .material-icons-outlined {
+    font-size: 14px;
+}
+
+.ta-deal-message {
+    margin: 0;
+    font-size: 12.5px;
+    font-style: italic;
+    color: var(--colorOne);
+    overflow-wrap: anywhere;
+}
+
+.ta-deal-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.ta-deal-actions form {
+    flex: 1;
+    margin: 0;
+}
+
+.ta-deal-actions .game-btn {
+    width: 100%;
+    min-height: 40px;
+}
+
+.ta-btn-danger {
+    color: var(--danger);
+    border-color: var(--game-glass-border, var(--border));
+}
+
+.ta-btn-danger:hover {
+    color: var(--danger);
+    background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+.ta-completed summary {
+    cursor: pointer;
+    list-style: none;
+}
+
+.ta-completed summary::-webkit-details-marker {
+    display: none;
+}
+
+.ta-chevron {
+    font-size: 18px;
+    margin-left: auto;
+    transition: transform 0.15s;
+}
+
+.ta-completed[open] .ta-chevron {
+    transform: rotate(180deg);
+}
+
+.ta-empty {
+    text-align: center;
+    padding: 18px 8px 8px;
+    color: var(--game-text-faint, var(--text-secondary));
+    font-size: 13.5px;
+}
+
+.ta-empty .material-icons-outlined {
+    font-size: 36px;
+    color: var(--accent);
+    opacity: 0.8;
+}
+
+.ta-empty p {
+    margin: 4px 0;
+    line-height: 1.4;
+}
+
+.ta-empty strong {
+    color: var(--colorOne);
+}
+
+/* ---------- Tablet / desktop ---------- */
+@media (min-width: 620px) {
+    .ta-exchange {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .ta-exchange-side {
+        flex: 1;
+    }
+
+    .ta-exchange-arrow {
+        transform: rotate(90deg);
+    }
+
+    .ta-submit {
+        width: auto;
+        align-self: flex-start;
+        padding-left: 22px;
+        padding-right: 22px;
+    }
+
+    .ta-deal-actions {
+        justify-content: flex-end;
+    }
+
+    .ta-deal-actions form {
+        flex: 0 0 auto;
+    }
+
+    .ta-deal-actions .game-btn {
+        width: auto;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+}
+
+/* One line per agreement from 900px; tablets keep the stacked card, which
+   has room for full resource names. */
+@media (min-width: 900px) {
+    .ta-deal {
+        display: grid;
+        grid-template-columns: minmax(120px, 0.8fr) minmax(0, 2fr) auto;
+        grid-template-areas:
+            "head swap actions"
+            "meta meta meta";
+        align-items: center;
+        column-gap: 16px;
+        row-gap: 6px;
+    }
+
+    .ta-deal-head {
+        grid-area: head;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        overflow: hidden;
+    }
+
+    .ta-partner {
+        max-width: 100%;
+    }
+
+    .ta-deal-swap {
+        grid-area: swap;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        align-items: end;
+        gap: 8px;
+    }
+
+    .ta-side {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+    }
+
+    .ta-deal-swap .ta-deal-arrow {
+        display: block;
+    }
+
+    .ta-deal-meta { grid-area: meta; }
+    .ta-deal-message { grid-column: 1 / -1; }
+    .ta-deal-actions { grid-area: actions; }
+
+    .ta-deal-actions .game-btn { min-height: 36px; }
+}
+
+@media (min-width: 1000px) {
+    .ta-top-grid {
+        grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+        align-items: start;
+    }
+}
