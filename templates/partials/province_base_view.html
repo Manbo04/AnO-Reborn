@@ -1,7 +1,7 @@
 {% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %}
 <section class="province-base-section" id="province-base-view" aria-label="Province command center"
     style="--province-biome-sky: {{ province_base_layout.biome.sky }}; --province-biome-ground: {{ province_base_layout.biome.ground }};">
-    <div class="province-base-header">
+    <div class="province-base-header{% if province.has_image %} province-base-header--photo{% endif %}"{% if province.has_image %} style="--province-photo: url('{{ province.image_url }}');"{% endif %}>
         <div class="province-base-title-block">
             <h2><span class="material-icons-outlined">castle</span> {{ province['name'] }}</h2>
         </div>

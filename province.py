@@ -73,6 +73,7 @@ def provinces():
         provinces=data["provinces"],
         provinces_with_images=data["provinces_with_images"],
         slots_used=data.get("slots_used", {}),
+        growth_rates=data.get("growth_rates", {}),
         current_page=data["current_page"],
         total_pages=data["total_pages"],
         total_count=data["total_count"],
@@ -227,6 +228,25 @@ def province(pId):
                     upgrades[legacy_key] = True
             query_cache.set(cache_key, upgrades)
 
+        # Projected population change next tick, owner only (same shared
+        # formula and nation-wide rations ratio as the real population tick;
+        # cached per nation, see get_population_growth).
+        growth_rate = None
+        if result["user"] == cId:
+            try:
+                from app_core.game_ticks.population import get_population_growth
+
+                # Plain tuple cursor on the same request connection: the
+                # projection indexes rows positionally (db is a dict cursor).
+                with db.connection.cursor() as tuple_db:
+                    growth_rate = (
+                        get_population_growth(cId, db=tuple_db).get("per_province")
+                        or {}
+                    ).get(str(result["id"]))
+            except Exception:
+                rollback_db_cursor(db)
+                growth_rate = None
+
         # Build province dict from result
         province = {
             "id": result["id"],
@@ -246,6 +266,10 @@ def province(pId):
             "location": (result["location"] or "Grassland").strip(),
             "is_capital": bool(result.get("is_capital")),
             "has_flag": bool(result.get("has_flag")),
+            # Was missing, so province["has_image"] below was always False and
+            # the uploaded province picture never showed on its own page.
+            "has_image": bool(result.get("has_image")),
+            "growth_rate": growth_rate,
             "flag_url": f"/flag/province/{result['id']}" if result.get("has_flag") else None,
         }
 
@@ -742,10 +766,45 @@ def province(pId):
                 distribution_status = dict(distribution_status)
                 distribution_status["show_alert"] = True
 
+        # "What makes up this number" for happiness / pollution /
+        # productivity (owner only), from the same per-building effect
+        # function the hourly tick uses (app_core.economy.province_effects),
+        # plus the city/land max-population diminishing-returns numbers.
+        stat_breakdown = None
+        pop_cap_info = None
+        if province.get("own"):
+            try:
+                from app_core.economy.building_purchase import _load_policies
+                from app_core.economy.province_effects import (
+                    pop_cap_marginals,
+                    province_stat_breakdown,
+                )
+
+                with db.connection.cursor() as tuple_db:
+                    own_policies = _load_policies(tuple_db, cId)
+                stat_breakdown = province_stat_breakdown(
+                    {
+                        k: province.get(k)
+                        for k in ("happiness", "pollution", "productivity")
+                    },
+                    units,
+                    upgrades,
+                    own_policies,
+                )
+                pop_cap_info = pop_cap_marginals(
+                    province.get("citycount"), province.get("land")
+                )
+            except Exception:
+                rollback_db_cursor(db)
+                stat_breakdown = None
+                pop_cap_info = None
+
         template = "province_v2.html" if is_theme_v2_enabled("province") else "province.html"
         return render_template(
             template,
             province=province,
+            stat_breakdown=stat_breakdown,
+            pop_cap_info=pop_cap_info,
             other_mines=other_biome_mines(province.get("location")),
             distribution_status=distribution_status,
             population=national_pop,
@@ -1728,29 +1787,10 @@ def province_sell_buy(way, units, province_id):
         if wantedUnits < 1:
             return error(400, "Units cannot be less than 1")
 
-        def sum_cost_capped_linear(
-            base_price, increment_per_item, current_owned, num_purchased, cap_threshold
-        ):
-            """Linear pricing with a hard cap: O(1) closed-form calculation.
-            Sum over i=0..n-1 of min(basePrice + (currentOwned + i) * increment, MaxPrice).
-            """
-            max_price = base_price + (cap_threshold * increment_per_item)
-            total_cost = 0
-
-            # Calculate how many units we are buying BEFORE hitting the cap
-            uncapped_purchases = 0
-            if current_owned < cap_threshold:
-                uncapped_purchases = min(num_purchased, cap_threshold - current_owned)
-                total_cost += uncapped_purchases * base_price + increment_per_item * (
-                    uncapped_purchases * current_owned + (uncapped_purchases * (uncapped_purchases - 1)) // 2
-                )
-            
-            # Calculate how many units we are buying AFTER hitting the cap
-            capped_purchases = num_purchased - uncapped_purchases
-            if capped_purchases > 0:
-                total_cost += capped_purchases * max_price
-
-            return int(total_cost)
+        from app_core.economy.building_costs import (
+            land_city_purchase_cost,
+            sum_cost_capped_linear,
+        )
 
         # Fetch cityCount and land in one query (reused later for currentUnits)
         db.execute(
@@ -1810,6 +1850,15 @@ def province_sell_buy(way, units, province_id):
 
         if units not in ["cityCount", "land"]:
             totalPrice = wantedUnits * price
+        elif way == "buy":
+            # Shared with Mass Purchase (land_city_purchase_cost) so a mass
+            # buy always costs exactly the same as these per-province buys.
+            totalPrice = land_city_purchase_cost(
+                units,
+                current_cityCount if units == "cityCount" else current_land,
+                wantedUnits,
+                policies,
+            )
         else:
             totalPrice = price
 
@@ -2121,75 +2170,290 @@ def province_sell_buy(way, units, province_id):
     return redirect(f"/province/{province_id}?_={int(_now())}")
 
 
+# ---------------------------------------------------------------------------
+# Mass Purchase (Discord #suggestions: mohammad20891 2026-09-08, and the
+# 2026-09-27 follow-up asking for cities/land plus "bring each up to X").
+# ---------------------------------------------------------------------------
+
+MASS_LAND_CITY_UNITS = ("cityCount", "land")
+# Sanity ceiling per province per submit, so a typo can't request billions.
+MASS_PURCHASE_MAX_PER_PROVINCE = 100_000
+
+
+def _normalize_mass_unit(raw):
+    """Map the submitted unit name to its canonical key. Buildings are
+    lowercase; cityCount keeps its camelCase column name."""
+    raw = (raw or "").strip()
+    if raw.lower() == "citycount":
+        return "cityCount"
+    return raw.lower()
+
+
+def _parse_mass_request(get):
+    """Validate the shared (unit, mode, quantity, province ids) inputs.
+    `get(name)` / `getlist` come from either the form or a JSON body.
+    Returns (params dict, error message or None)."""
+    unit = _normalize_mass_unit(get("building"))
+    mode = get("purchase_type") or "add"
+    if mode not in ("add", "target"):
+        mode = "add"
+    try:
+        quantity = int(get("quantity"))
+    except (TypeError, ValueError):
+        return None, "Enter a valid amount."
+    if quantity < 1:
+        return None, "Amount must be at least 1."
+    if quantity > MASS_PURCHASE_MAX_PER_PROVINCE:
+        return None, f"Amount can be at most {MASS_PURCHASE_MAX_PER_PROVINCE:,}."
+    if unit not in MASS_LAND_CITY_UNITS and (
+        f"{unit}_price" not in variables.PROVINCE_UNIT_PRICES
+    ):
+        return None, "Pick something to buy."
+    return {"unit": unit, "mode": mode, "quantity": quantity}, None
+
+
+def _plan_mass_purchase(db, user_id, unit, mode, quantity, province_ids, lock):
+    """Work out, per selected province the user owns, how many `unit` to buy
+    and what it costs. Pricing goes through the exact same functions the
+    single-province buy route uses (land_city_purchase_cost / get_build_cost),
+    so a mass buy never costs more or less than doing it one by one.
+
+    With lock=True the province rows are locked (FOR UPDATE, id order) so the
+    counts can't change between planning and buying. Must run inside the
+    request transaction (get_request_cursor is non-autocommit).
+    """
+    from app_core.economy.building_costs import land_city_purchase_cost
+    from app_core.economy.building_purchase import _load_policies
+
+    lock_sql = " FOR UPDATE" if lock else ""
+    db.execute(
+        "SELECT id, provinceName, CAST(cityCount AS INTEGER), land "
+        "FROM provinces WHERE userId = %s AND id = ANY(%s) ORDER BY id"
+        + lock_sql,
+        (user_id, province_ids),
+    )
+    rows = db.fetchall()
+    policies = _load_policies(db, user_id)
+
+    existing = {}
+    if unit not in MASS_LAND_CITY_UNITS and mode == "target" and rows:
+        db.execute(
+            """
+            SELECT ub.province_id, COALESCE(SUM(ub.quantity), 0)
+            FROM user_buildings ub
+            JOIN building_dictionary bd ON bd.building_id = ub.building_id
+            WHERE ub.user_id = %s AND bd.name = %s AND ub.province_id = ANY(%s)
+            GROUP BY ub.province_id
+            """,
+            (user_id, unit, [r[0] for r in rows]),
+        )
+        existing = {pid: int(q or 0) for pid, q in db.fetchall()}
+
+    unit_gold = 0
+    unit_resources = {}
+    if unit not in MASS_LAND_CITY_UNITS:
+        cost = get_build_cost(unit, policies)
+        unit_gold = int(cost["gold"])
+        unit_resources = dict(cost["resources"] or {})
+
+    plan = []
+    for pid, pname, cities, land in rows:
+        if unit == "cityCount":
+            current = int(cities or 0)
+        elif unit == "land":
+            current = int(land or 0)
+        else:
+            current = existing.get(pid, 0)
+        num = quantity if mode == "add" else quantity - current
+        if num <= 0:
+            continue
+        if unit in MASS_LAND_CITY_UNITS:
+            gold = land_city_purchase_cost(unit, current, num, policies)
+        else:
+            gold = unit_gold * num
+        plan.append(
+            {"id": pid, "name": pname, "current": current, "num": num, "gold": gold}
+        )
+
+    resources_total = {
+        res: int(per) * sum(p["num"] for p in plan)
+        for res, per in unit_resources.items()
+    }
+    return {
+        "owned": {r[0]: r[1] for r in rows},
+        "plan": plan,
+        "total_gold": sum(p["gold"] for p in plan),
+        "total_units": sum(p["num"] for p in plan),
+        "resources": resources_total,
+    }
+
+
+@bp.route("/mass_purchase/preview", methods=["POST"])
+@login_required
+def mass_purchase_preview():
+    """Read-only total for the Mass Purchase form (no locks, no writes)."""
+    cId = session["user_id"]
+    data = request.get_json(silent=True) or {}
+    params, err = _parse_mass_request(data.get)
+    if err:
+        return jsonify({"error": err}), 400
+    province_ids = [
+        int(p) for p in (data.get("province_ids") or []) if str(p).isdigit()
+    ]
+    if not province_ids:
+        return jsonify({"error": "Select at least one province."}), 400
+
+    with get_request_cursor() as db:
+        result = _plan_mass_purchase(
+            db, cId, params["unit"], params["mode"], params["quantity"],
+            province_ids, lock=False,
+        )
+        db.execute("SELECT gold FROM stats WHERE id = %s", (cId,))
+        gold_row = db.fetchone()
+    gold = int(gold_row[0] or 0) if gold_row else 0
+
+    return jsonify(
+        {
+            "total_cost": result["total_gold"],
+            "total_units": result["total_units"],
+            "provinces": len(result["plan"]),
+            "resources": result["resources"],
+            "gold": gold,
+            "affordable": result["total_gold"] <= gold,
+        }
+    )
+
+
+def _mass_buy_land_city(db, cId, unit, mode, quantity, province_ids):
+    """All-or-nothing land/city purchase across provinces. Returns
+    (bought_in, total_spent, owned, error message or None)."""
+    # Lock order: provinces (id order) then stats -- same order
+    # purchase_building uses, so concurrent buys can't deadlock each other.
+    result = _plan_mass_purchase(
+        db, cId, unit, mode, quantity, province_ids, lock=True
+    )
+    owned, plan, total = result["owned"], result["plan"], result["total_gold"]
+    if not owned:
+        return 0, 0, owned, "Select at least one province."
+    if not plan:
+        return 0, 0, owned, "Nothing to buy: every selected province is already at that amount."
+
+    db.execute("SELECT gold FROM stats WHERE id = %s FOR UPDATE", (cId,))
+    gold_row = db.fetchone()
+    if not gold_row:
+        return 0, 0, owned, "Nation data could not be found."
+    gold_before = int(gold_row[0] or 0)
+    if total > gold_before:
+        return 0, 0, owned, (
+            f"Not enough money: this costs {total:,} gold, you have "
+            f"{gold_before:,} (missing {total - gold_before:,}). Nothing was bought."
+        )
+
+    # One atomic, conditional deduction for the whole order.
+    db.execute(
+        "UPDATE stats SET gold = gold - %s WHERE id = %s AND gold >= %s RETURNING gold",
+        (total, cId, total),
+    )
+    row = db.fetchone()
+    if row is None:
+        raise BuildingPurchaseError("You don't have enough money.")
+
+    column = "cityCount" if unit == "cityCount" else "land"
+    running_before = gold_before
+    for p in plan:
+        db.execute(
+            f"UPDATE provinces SET {column} = {column} + %s WHERE id = %s AND userId = %s",
+            (p["num"], p["id"], cId),
+        )
+        db.execute(
+            "INSERT INTO purchase_audit (user_id, province_id, unit, units, "
+            "gold_before, gold_after, note) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+            (cId, p["id"], unit, p["num"], running_before,
+             running_before - p["gold"], f"mass_buy_{unit}"),
+        )
+        running_before -= p["gold"]
+        db.execute(
+            "INSERT INTO revenue (user_id, type, name, description, date, "
+            "resource, amount) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            (cId, "expense", f"Buying {p['num']} {unit} in a province.", "",
+             get_date(), unit, p["num"]),
+        )
+    return len(plan), total, owned, None
+
+
+def _mass_buy_buildings(db, cId, unit, mode, quantity, province_ids):
+    """Per-province building purchase (each province succeeds or fails on
+    its own, like before). Each province runs in its own SAVEPOINT so a
+    failure halfway through purchase_building (e.g. resources deducted,
+    then gold short) can't leave a partial deduction behind."""
+    result = _plan_mass_purchase(
+        db, cId, unit, mode, quantity, province_ids, lock=False
+    )
+    owned = result["owned"]
+    bought_in, total_spent, failures = 0, 0, []
+    for p in result["plan"]:
+        db.execute("SAVEPOINT mass_buy_building")
+        try:
+            res = purchase_building(db, cId, p["id"], unit, p["num"])
+            db.execute("RELEASE SAVEPOINT mass_buy_building")
+            bought_in += 1
+            total_spent += res["gold_spent"]
+        except BuildingPurchaseError as exc:
+            db.execute("ROLLBACK TO SAVEPOINT mass_buy_building")
+            failures.append(f"{p['name']}: {exc}")
+    if owned and not result["plan"]:
+        failures.append("every selected province is already at that amount")
+    return bought_in, total_spent, owned, failures
+
+
 @bp.route("/mass_purchase/buy", methods=["POST"])
 @login_required
 @require_post_origin
 def mass_purchase_buy():
-    """Buy the same building, in the same quantity, across several
-    provinces in one submit. Discord #suggestions "Mass purchase"
-    (mohammad20891, 2026-09-08): the old /mass_purchase page just linked
-    off to each province's own buy form one at a time despite the name.
+    """Buy the same thing across several provinces in one submit.
 
-    Scope for this first pass: buildings only (reuses purchase_building,
-    the same helper the single-province buy route delegates to for
-    buildings) -- land/cityCount purchases still go through the classic
-    per-province form. Each province is attempted independently so one
-    province running out of gold/resources/slots partway through the list
-    doesn't block or roll back the ones that already succeeded.
+    - Buildings: each province is attempted independently (one province out
+      of slots doesn't block the rest), same as the first version.
+    - Cities / land: one total, one atomic balance check + deduction, and
+      either every province gets its purchase or none do.
+    Both support "add N to each" and "bring each up to N".
     """
     cId = session["user_id"]
-
-    building = (request.form.get("building") or "").strip().lower()
-    province_ids = request.form.getlist("province_ids")
-
-    try:
-        quantity = int(request.form.get("quantity", ""))
-    except (TypeError, ValueError):
-        flash("Enter a valid amount.", "error")
+    params, err = _parse_mass_request(request.form.get)
+    if err:
+        flash(err, "error")
         return redirect("/mass_purchase")
+    unit, mode, quantity = params["unit"], params["mode"], params["quantity"]
 
-    if quantity < 1:
-        flash("Amount must be at least 1.", "error")
-        return redirect("/mass_purchase")
-
-    if f"{building}_price" not in variables.PROVINCE_UNIT_PRICES:
-        flash("Pick a building to buy.", "error")
-        return redirect("/mass_purchase")
-
+    province_ids = [
+        int(p) for p in request.form.getlist("province_ids") if p.isdigit()
+    ]
     if not province_ids:
         flash("Select at least one province.", "error")
         return redirect("/mass_purchase")
 
-    province_id_ints = [int(p) for p in province_ids if p.isdigit()]
-    if not province_id_ints:
-        flash("Select at least one province.", "error")
-        return redirect("/mass_purchase")
-
+    failures = []
     with get_request_cursor() as db:
-        # Only ever act on the requester's own provinces, regardless of what
-        # ids were submitted -- purchase_building also checks ownership per
-        # call, but filtering here keeps a tampered id list from even
-        # showing up as a per-province failure in the results flash.
-        db.execute(
-            "SELECT id, provinceName FROM provinces WHERE userId = %s AND id = ANY(%s) ORDER BY id",
-            (cId, province_id_ints),
-        )
-        owned = {row[0]: row[1] for row in db.fetchall()}
-
-        bought_in = 0
-        total_spent = 0
-        failures = []
-        for pid, pname in owned.items():
+        if unit in MASS_LAND_CITY_UNITS:
+            db.execute("SAVEPOINT mass_buy_land_city")
             try:
-                # No shared `policies=` here on purpose: purchase_building
-                # re-fetches them itself per call (one extra cheap SELECT
-                # per province) rather than this loop assuming they can't
-                # change mid-request.
-                result = purchase_building(db, cId, pid, building, quantity)
-                bought_in += 1
-                total_spent += result["gold_spent"]
+                bought_in, total_spent, owned, msg = _mass_buy_land_city(
+                    db, cId, unit, mode, quantity, province_ids
+                )
+                db.execute("RELEASE SAVEPOINT mass_buy_land_city")
             except BuildingPurchaseError as exc:
-                failures.append(f"{pname}: {exc}")
+                db.execute("ROLLBACK TO SAVEPOINT mass_buy_land_city")
+                bought_in, total_spent, owned = 0, 0, {}
+                failures.append(f"{exc} Nothing was bought.")
+            except Exception:
+                db.execute("ROLLBACK TO SAVEPOINT mass_buy_land_city")
+                raise
+            if msg:
+                failures.append(msg)
+        else:
+            bought_in, total_spent, owned, failures = _mass_buy_buildings(
+                db, cId, unit, mode, quantity, province_ids
+            )
 
     try:
         invalidate_user_cache(cId)
@@ -2202,19 +2466,20 @@ def mass_purchase_buy():
     except Exception:
         pass
 
-    building_display = building.replace("_", " ").title()
+    unit_display = {"cityCount": "Cities", "land": "Land"}.get(
+        unit, unit.replace("_", " ").title()
+    )
     if bought_in:
+        how = f"up to {quantity}" if mode == "target" else f"{quantity}"
         flash(
-            f"Bought {quantity} {building_display} in {bought_in} of "
+            f"Bought {unit_display} ({how} each) in {bought_in} of "
             f"{len(owned)} selected provinces (spent {total_spent:,} gold)."
         )
     if failures:
-        # Cap how many per-province errors get flashed -- selecting 20+
-        # provinces that all fail the same way (e.g. no free slots
-        # anywhere) shouldn't dump 20 near-identical lines on the page.
+        # Cap how many per-province errors get flashed.
         shown = failures[:8]
         more = len(failures) - len(shown)
-        msg = "Skipped -- " + "; ".join(shown)
+        msg = ("Skipped -- " if bought_in else "") + "; ".join(shown)
         if more > 0:
             msg += f"; and {more} more"
         # "error" makes the toast sticky (see layout.html) -- ieb read the

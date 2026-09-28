@@ -171,7 +171,8 @@ def get_population_growth(cId, db=None):
     provinces, using calc_province_population_delta() (the same function
     the real tick calls) so the two can never silently drift apart.
 
-    Returns {"delta": int, "percent": float, "current_population": int}.
+    Returns {"delta": int, "percent": float, "current_population": int,
+    "per_province": {str(province_id): int delta}}.
     Cached like get_revenue()/get_econ_statistics() since it does a
     handful of extra queries; invalidated by invalidate_user_cache()
     alongside those (see database.py) so a new distribution building
@@ -189,7 +190,8 @@ def get_population_growth(cId, db=None):
             """
             SELECT population, citycount, land, happiness, pollution,
                    COALESCE(pop_working, 0) AS pop_working,
-                   COALESCE(legacy_max_population, 0) AS legacy_max_population
+                   COALESCE(legacy_max_population, 0) AS legacy_max_population,
+                   id
             FROM provinces WHERE userId = %s
             """,
             (cId,),
@@ -197,7 +199,12 @@ def get_population_growth(cId, db=None):
         province_rows = active_db.fetchall()
 
         if not province_rows:
-            result = {"delta": 0, "percent": 0.0, "current_population": 0}
+            result = {
+                "delta": 0,
+                "percent": 0.0,
+                "current_population": 0,
+                "per_province": {},
+            }
             query_cache.set(cache_key, result)
             return result
 
@@ -257,10 +264,11 @@ def get_population_growth(cId, db=None):
 
         total_delta = 0
         current_population = 0
+        per_province = {}
         for row in province_rows:
             curPop = row[0] or 0
             current_population += curPop
-            total_delta += calc_province_population_delta(
+            province_delta = calc_province_population_delta(
                 curPop=curPop,
                 cities=row[1] or 0,
                 land=row[2] or 0,
@@ -271,6 +279,10 @@ def get_population_growth(cId, db=None):
                 rations_ratio=rations_ratio,
                 grace_period=grace_period,
             )
+            # Per-province breakdown for the province page / provinces list
+            # (same formula, same nation-wide rations ratio as the tick).
+            per_province[str(row[7])] = int(province_delta)
+            total_delta += province_delta
 
         percent = (
             (total_delta / current_population) * 100 if current_population > 0 else 0.0
@@ -280,6 +292,7 @@ def get_population_growth(cId, db=None):
             "delta": int(total_delta),
             "percent": percent,
             "current_population": int(current_population),
+            "per_province": per_province,
         }
         query_cache.set(cache_key, result)
         return result

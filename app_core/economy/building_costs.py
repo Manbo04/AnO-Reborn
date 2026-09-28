@@ -203,3 +203,54 @@ def enrich_building_row(row: dict, policies: list | None = None) -> dict:
     out["resource_cost"] = cost["resources"]
     out["cost_display"] = cost["cost_display"]
     return out
+
+
+# Land / city expansion pricing. Each extra city or land costs a bit more
+# than the last (linear), up to a price ceiling after CAP_THRESHOLD owned.
+LAND_CITY_PRICING = {
+    # unit: (base_price, increment_per_owned, cap_threshold)
+    "cityCount": (750000, 50000, 200),
+    "land": (520000, 25000, 100),
+}
+
+
+def sum_cost_capped_linear(
+    base_price, increment_per_item, current_owned, num_purchased, cap_threshold
+):
+    """Linear pricing with a hard cap: O(1) closed-form calculation.
+    Sum over i=0..n-1 of min(basePrice + (currentOwned + i) * increment, MaxPrice).
+    """
+    max_price = base_price + (cap_threshold * increment_per_item)
+    total_cost = 0
+
+    # Units bought BEFORE the price ceiling kicks in
+    uncapped_purchases = 0
+    if current_owned < cap_threshold:
+        uncapped_purchases = min(num_purchased, cap_threshold - current_owned)
+        total_cost += uncapped_purchases * base_price + increment_per_item * (
+            uncapped_purchases * current_owned
+            + (uncapped_purchases * (uncapped_purchases - 1)) // 2
+        )
+
+    # Units bought AFTER the ceiling (flat max price each)
+    capped_purchases = num_purchased - uncapped_purchases
+    if capped_purchases > 0:
+        total_cost += capped_purchases * max_price
+
+    return int(total_cost)
+
+
+def land_city_purchase_cost(
+    unit: str, current_owned: int, num_purchased: int, policies: list | None = None
+) -> int:
+    """Gold cost of buying `num_purchased` land/cities in ONE province that
+    already has `current_owned`. Single source of truth for both the
+    single-province buy route and Mass Purchase, so a mass buy costs exactly
+    what the same buys done province by province would."""
+    base_price, increment, cap_threshold = LAND_CITY_PRICING[unit]
+    if num_purchased <= 0:
+        return 0
+    raw = sum_cost_capped_linear(
+        base_price, increment, int(current_owned or 0), int(num_purchased), cap_threshold
+    )
+    return int(apply_policy_gold_discount(unit, raw, policies))

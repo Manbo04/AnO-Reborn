@@ -160,3 +160,38 @@ def province_stat_breakdown(
         entry["net"] = sum(s["total"] for s in entry["sources"])
         entry["projected"] = int(clamp_percentage(running[stat]))
     return result
+
+
+def pop_cap_marginals(cities, land):
+    """Max-population numbers behind the city/land tooltips.
+
+    Cities and land raise max population on a saturating curve (see
+    calc_province_population_delta): cap * (1 - exp(-n / softness)). Each
+    extra city/land adds less than the one before. Returns what the NEXT
+    one adds right now, the total from cities/land so far, the curve caps,
+    and the "diminishing returns" thresholds: at `softness` owned you have
+    ~63% of the cap, at 3x softness ~95% (after that more barely helps).
+    """
+    import math
+
+    def curve(cap, softness, n):
+        return cap * (1 - math.exp(-max(0, n) / softness))
+
+    cities = int(cities or 0)
+    land = int(land or 0)
+    c_cap, c_soft = variables.CITY_POP_CAP, variables.CITY_POP_SOFTNESS
+    l_cap, l_soft = variables.LAND_POP_CAP, variables.LAND_POP_SOFTNESS
+    return {
+        "city_next": int(curve(c_cap, c_soft, cities + 1) - curve(c_cap, c_soft, cities)),
+        "city_total": int(curve(c_cap, c_soft, cities)),
+        "city_cap": int(c_cap),
+        "city_soft": int(c_soft),
+        "city_95": int(round(3 * c_soft)),
+        "land_next": int(curve(l_cap, l_soft, land + 1) - curve(l_cap, l_soft, land)),
+        "land_total": int(curve(l_cap, l_soft, land)),
+        "land_cap": int(l_cap),
+        "land_soft": int(l_soft),
+        "land_95": int(round(3 * l_soft)),
+        # Land's tax bonus is linear and stops growing at this many land.
+        "land_tax_max": int(1 + round(1 / variables.DEFAULT_LAND_TAX_MULTIPLIER)),
+    }

@@ -44,6 +44,10 @@
             </div>
             <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12.5px;">
                 <div class="game-spread"><span class="game-faint">Population</span><span class="game-mono">{{ population | fmt }}</span></div>
+                {% set growth = growth_rates.get(pId) if growth_rates is defined else none %}
+                {% if growth is not none %}
+                <div class="game-spread" title="Projected population change at the next hourly tick"><span class="game-faint">Growth</span><span class="game-mono" style="color: {% if growth > 0 %}var(--success){% elif growth < 0 %}var(--danger){% else %}inherit{% endif %};">{% if growth > 0 %}+{% endif %}{{ growth | fmt }}/h</span></div>
+                {% endif %}
                 <div class="game-spread"><span class="game-faint">Happiness</span><span class="game-mono">{{ happiness | round }}%</span></div>
                 <div class="game-spread"><span class="game-faint">Productivity</span><span class="game-mono">{{ (productivity if productivity is not none else 50) | round }}%</span></div>
                 {% set used = slots_used.get(pId, {}) if slots_used is defined else {} %}

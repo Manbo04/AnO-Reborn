@@ -593,3 +593,72 @@ body.page-province .templatedivflex2.divflex2center .templatedivflex2right butto
         min-width: 380px;
     }
 }
+
+/* Province picture header (every layout). The custom picture is layered
+   under a dark gradient so the name/buttons stay readable on any photo.
+   Hidden while the district-map base view is active (it has its own
+   header, which gets the same photo treatment below). */
+body.province-base-view-active .province-photo-header {
+    display: none;
+}
+
+.province-photo-header--custom .game-hero {
+    background-image:
+        linear-gradient(180deg, rgba(8, 10, 16, 0.45) 0%, rgba(8, 10, 16, 0.82) 100%),
+        var(--province-photo);
+    background-size: cover;
+    background-position: center;
+    min-height: 160px;
+}
+
+.province-photo-header--custom .game-hero h1,
+.province-photo-header--custom .game-hero-badge {
+    color: #fff;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}
+
+.province-base-header--photo {
+    background-image:
+        linear-gradient(180deg, rgba(20, 24, 32, 0.7) 0%, rgba(20, 24, 32, 0.92) 100%),
+        var(--province-photo);
+    background-size: cover;
+    background-position: center;
+}
+
+.province-base-header--photo h2,
+.province-base-header--photo .province-vital-label {
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+}
+
+@media (min-width: 768px) {
+    .province-photo-header--custom .game-hero {
+        min-height: 220px;
+    }
+}
+
+/* Happiness / pollution / productivity "what changes this" breakdown */
+.province-stat-breakdown {
+    margin-top: 8px;
+}
+
+.province-stat-breakdown-item {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 6px 0;
+}
+
+.province-stat-breakdown-item summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.province-stat-breakdown-item summary::-webkit-details-marker {
+    display: none;
+}
+
+.province-stat-breakdown-net {
+    margin-left: auto;
+}

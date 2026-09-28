@@ -31,7 +31,8 @@
         <a href="/province/{{ pId }}" class="game-province-card">
             <div class="game-province-card-stats">
                 <h2 class="game-province-card-title"><span class="material-icons-outlined">account_balance</span>{{ name }}</h2>
-                <span><span class="material-icons-outlined">people_alt</span> {{ population | fmt }}</span>
+                <span><span class="material-icons-outlined">people_alt</span> {{ population | fmt }}</span>{% set growth = growth_rates.get(pId) if growth_rates is defined else none %}{% if growth is not none %}
+                <span title="Projected population change at the next hourly tick"><span class="material-icons-outlined">trending_{% if growth < 0 %}down{% else %}up{% endif %}</span> {% if growth > 0 %}+{% endif %}{{ growth | fmt }}/h</span>{% endif %}
                 <span><span class="material-icons-outlined">sentiment_satisfied</span> {{ happiness }}% happy</span>
                 <span><span class="material-icons-outlined">arrow_circle_up</span> {{ productivity }}% prod</span>
                 <span><span class="material-icons-outlined">power</span> {% if energy >= 0 %}Powered{% else %}No power{% endif %}</span>
@@ -49,7 +50,8 @@
             <div class="province-banner__body">
                 <h2 class="province-banner__name"><span class="material-icons-outlined">account_balance</span>{{ name }}</h2>
                 <div class="province-stat-row">
-                    <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">people_alt</span> {{ population | fmt }}</span>
+                    <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">people_alt</span> {{ population | fmt }}</span>{% set growth = growth_rates.get(pId) if growth_rates is defined else none %}{% if growth is not none %}
+                    <span class="province-stat-pill province-stat-pill--onphoto" title="Projected population change at the next hourly tick"><span class="material-icons-outlined">trending_{% if growth < 0 %}down{% else %}up{% endif %}</span> {% if growth > 0 %}+{% endif %}{{ growth | fmt }}/h</span>{% endif %}
                     <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">sentiment_satisfied</span> {{ happiness }}%</span>
                     <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">arrow_circle_up</span> {{ productivity }}%</span>
                     <span class="province-stat-pill province-stat-pill--onphoto"><span class="material-icons-outlined">business</span> {{ cityCount }} cities</span>

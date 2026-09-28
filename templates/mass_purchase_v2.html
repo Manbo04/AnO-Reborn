@@ -25,6 +25,22 @@
     font-size: 0.9rem;
     color: var(--text-secondary);
 }
+.page-mass-purchase .mass-purchase-amount-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.page-mass-purchase .mass-purchase-amount-row > * {
+    flex: 1 1 160px;
+    min-width: 0;
+}
+.page-mass-purchase .mass-purchase-preview {
+    margin-bottom: 16px;
+}
+.page-mass-purchase .mass-purchase-preview-cost {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
 .page-mass-purchase .templatetable input[type="checkbox"] {
     width: 20px;
     height: 20px;
@@ -33,7 +49,7 @@
 
 <div class="templatediv">
 
-    {{ game_hero('Mass Purchase', badge_icon='payments', subtitle='Buy the same building across several provinces at once.') }}
+    {{ game_hero('Mass Purchase', badge_icon='payments', subtitle='Buy cities, land or a building across several provinces at once.') }}
 
     <div class="templatedivcontent">
 
@@ -46,8 +62,12 @@
         {% endif %}
         <form action="/mass_purchase/buy" method="POST" id="massPurchaseForm">
             <div class="mass-purchase-controls">
-                <select name="building" class="templateselect" required>
-                    <option value="" disabled selected>Choose a building...</option>
+                <select name="building" id="massPurchaseBuilding" class="templateselect" required>
+                    <option value="" disabled selected>Choose what to buy...</option>
+                    <optgroup label="Core expansions">
+                        <option value="cityCount">Cities</option>
+                        <option value="land">Land</option>
+                    </optgroup>
                     <optgroup label="City buildings">
                         {% for b in city_buildings %}
                         <option value="{{ b.name }}">{{ b.label }}</option>
@@ -60,7 +80,20 @@
                     </optgroup>
                 </select>
 
-                <input class="loginsignupinput" autocomplete="off" name="quantity" type="number" min="1" placeholder="Amount per province" required />
+                <div class="mass-purchase-amount-row">
+                    <select name="purchase_type" id="massPurchaseType" class="templateselect" aria-label="How to buy">
+                        <option value="add">Add this many to each province</option>
+                        <option value="target">Bring each province up to</option>
+                    </select>
+                    <input class="loginsignupinput" id="massPurchaseQuantity" autocomplete="off" name="quantity" type="number" min="1" max="100000" inputmode="numeric" placeholder="Amount" required />
+                </div>
+            </div>
+
+            <div id="massPurchasePreview" class="game-glass game-panel mass-purchase-preview" hidden aria-live="polite">
+                <div class="game-faint" style="font-size: 12px;">Total cost</div>
+                <div id="massPurchasePreviewCost" class="game-mono mass-purchase-preview-cost"></div>
+                <div id="massPurchasePreviewUnits" class="game-faint" style="font-size: 12.5px; margin-top: 4px;"></div>
+                <p class="game-faint" style="font-size: 11.5px; margin: 6px 0 0;">Same price as buying them one province at a time. Cities and land are all-or-nothing: if you can't afford the whole order, nothing is bought.</p>
             </div>
 
             <label class="mass-purchase-select-all">
@@ -101,18 +134,71 @@
         </form>
 
         <p class="templatecontentpleft landingpagecontent">
-            Need land, cities, or a building this list doesn't cover yet? Visit the <a href="/provinces">Provinces</a> page to manage a single province in full.
+            Need something this list doesn't cover? Visit the <a href="/provinces">Provinces</a> page to manage a single province in full.
         </p>
 
         <script>
         (function () {
             var selectAll = document.getElementById('massPurchaseSelectAll');
-            if (!selectAll) return;
-            selectAll.addEventListener('change', function () {
-                document.querySelectorAll('.mass-purchase-province-checkbox').forEach(function (cb) {
-                    cb.checked = selectAll.checked;
+            var checkboxes = document.querySelectorAll('.mass-purchase-province-checkbox');
+            var unitSelect = document.getElementById('massPurchaseBuilding');
+            var typeSelect = document.getElementById('massPurchaseType');
+            var qtyInput = document.getElementById('massPurchaseQuantity');
+            var preview = document.getElementById('massPurchasePreview');
+            var costEl = document.getElementById('massPurchasePreviewCost');
+            var unitsEl = document.getElementById('massPurchasePreviewUnits');
+            var timer = null;
+            var seq = 0;
+
+            function fmt(n) { return Number(n || 0).toLocaleString(); }
+
+            function refresh() {
+                var unit = unitSelect.value;
+                var qty = parseInt(qtyInput.value, 10);
+                var ids = [];
+                checkboxes.forEach(function (cb) { if (cb.checked) ids.push(cb.value); });
+                if (!unit || isNaN(qty) || qty < 1 || !ids.length) { preview.hidden = true; return; }
+                var mySeq = ++seq;
+                fetch('/mass_purchase/preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ building: unit, purchase_type: typeSelect.value, quantity: qty, province_ids: ids })
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (mySeq !== seq) return;  // a newer request superseded this one
+                    preview.hidden = false;
+                    if (data.error) {
+                        costEl.textContent = data.error;
+                        costEl.style.color = 'var(--danger)';
+                        unitsEl.textContent = '';
+                        return;
+                    }
+                    var label = unitSelect.options[unitSelect.selectedIndex].text;
+                    costEl.textContent = fmt(data.total_cost) + ' gold';
+                    costEl.style.color = data.affordable ? 'var(--success)' : 'var(--danger)';
+                    var parts = [fmt(data.total_units) + ' ' + label + ' across ' + data.provinces + ' province' + (data.provinces === 1 ? '' : 's')];
+                    Object.keys(data.resources || {}).forEach(function (r) {
+                        parts.push(fmt(data.resources[r]) + ' ' + r.replace(/_/g, ' '));
+                    });
+                    if (!data.affordable) parts.push('you have ' + fmt(data.gold) + ' gold');
+                    unitsEl.textContent = parts.join(' · ');
+                })
+                .catch(function () { preview.hidden = true; });
+            }
+
+            function schedule() { clearTimeout(timer); timer = setTimeout(refresh, 250); }
+
+            if (selectAll) {
+                selectAll.addEventListener('change', function () {
+                    checkboxes.forEach(function (cb) { cb.checked = selectAll.checked; });
+                    schedule();
                 });
-            });
+            }
+            checkboxes.forEach(function (cb) { cb.addEventListener('change', schedule); });
+            unitSelect.addEventListener('change', schedule);
+            typeSelect.addEventListener('change', schedule);
+            qtyInput.addEventListener('input', schedule);
         })();
         </script>
         {% else %}

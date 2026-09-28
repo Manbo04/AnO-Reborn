@@ -883,9 +883,26 @@ def country(cId):
     except Exception:
         currency_union = None
 
+    # Revenue history (gold actually gained/spent per tick, 24h/7d/30d),
+    # owner only. Missing table / any failure just hides the block.
+    revenue_history_totals = None
+    if viewer_id and str(viewer_id) == str(cId):
+        try:
+            from app_core.game_ticks.revenue_history import get_ledger_totals
+
+            with get_request_cursor() as db:
+                try:
+                    revenue_history_totals = get_ledger_totals(db, int(cId))
+                except Exception:
+                    rollback_db_cursor(db)
+                    revenue_history_totals = None
+        except Exception:
+            revenue_history_totals = None
+
     template = "country_v2.html" if is_theme_v2_enabled("country") else "country.html"
     return render_template(
         template,
+        revenue_history_totals=revenue_history_totals,
         currency_union=currency_union,
         can_invite_to_coalition=can_invite_to_coalition,
         bounty_total=bounty_total,
@@ -983,6 +1000,24 @@ def update_info():
                 db.execute(
                     f"UPDATE users SET {field}=%s WHERE id=%s", (value, cId)
                 )
+
+        # "Show my province info to other players" (users.public_province_info,
+        # read by the public Provinces panel on the nation page). Only applied
+        # when the customization form itself was submitted (it carries the
+        # marker field), since an unchecked checkbox sends nothing at all.
+        # Own row only: cId always comes from the session.
+        if request.form.get("public_province_info_present") == "1":
+            public_province_info = request.form.get("public_province_info") == "1"
+            db.execute(
+                "UPDATE users SET public_province_info=%s WHERE id=%s",
+                (public_province_info, cId),
+            )
+            try:
+                from database import invalidate_user_cache
+
+                invalidate_user_cache(cId)
+            except Exception:
+                pass
 
         # Name changing
         new_name = request.form.get("countryName", "").strip()
