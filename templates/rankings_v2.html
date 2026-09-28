@@ -3,6 +3,44 @@
 {% block body %}
 {% from 'macros/game_ui.html' import game_glass_panel, game_hero, render_nation_name %}
 
+{#- One leaderboard table. `rows` are (id, name, value, name_color, badge_icon,
+    badge_name, title) for nations, (id, name, value) for coalitions.
+    Flag + name live in one flex link so a long name or an equipped title
+    wraps beside the flag instead of dropping underneath it. #}
+{% macro leaderboard(rows, name_label, value_label, value_prefix='', coalition=False) %}
+<div class="templateoutertablediv">
+<table class="templatetable rankings-table">
+    <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">{{ name_label }}</th>
+            <th scope="col">{{ value_label }}</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for row in rows %}
+    <tr>
+        <td class="rank-pos{% if loop.index <= 3 %} rank-pos--top{% endif %}">{{ loop.index }}</td>
+        <td class="rank-name">
+            {% if coalition %}
+            <a class="rank-nation" href="/coalition/{{ row[0] }}" title="{{ row[1] }}"><span class="rank-nation-text">{{ row[1] }}</span></a>
+            {% else %}
+            <a class="rank-nation" href="/country/id={{ row[0] }}" title="{{ row[1] }}">
+                <img class="rank-flag" src="/flag/country/{{ row[0] }}" onerror="this.onerror=null;this.src='{{ url_for('static', filename='flags/default_flag.jpg') }}'" alt="" loading="lazy" width="24" height="16">
+                <span class="rank-nation-text">{{ render_nation_name(row[0], row[1], {'name_color': row[3], 'badge_icon': row[4], 'badge_name': row[5], 'title': row[6]}) }}</span>
+            </a>
+            {% endif %}
+        </td>
+        <td class="rank-value" title="{{ value_prefix }}{{ row[2] | fmt }}">{{ value_prefix }}{{ row[2] | fmt }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="3" class="rank-empty">No data available</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endmacro %}
+
 <div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/statistics.jpg') }}');"></div>
 <div class="game-page-overlay"></div>
 
@@ -10,112 +48,23 @@
     {{ game_hero('Global Rankings', badge_icon='leaderboard', badge_text='Top 10 Leaderboards', subtitle='Only verified nations are eligible for rankings.') }}
 
     <div class="templatedivcontent">
-
-        <div class="game-panel-grid game-panel-grid--2" style="margin-bottom: var(--game-space-lg, 24px);">
+        <div class="game-panel-grid game-panel-grid--2 rankings-grid">
             {% call game_glass_panel('Largest Populations', icon='people_alt') %}
-                <div class="templateoutertablediv">
-                <table class="templatetable rankings-table">
-                    <tr>
-                        <th>Rank</th>
-                        <th>Nation</th>
-                        <th>Population</th>
-                    </tr>
-                    {% for idx in range(top_population|length) %}
-                    {% set nation = top_population[idx] %}
-                    <tr>
-                        <td style="text-align: center;">#{{ idx + 1 }}</td>
-                        <td>
-                            <img src="/flag/country/{{ nation[0] }}" onerror="this.src='{{ url_for('static', filename='flags/default_flag.jpg') }}'" alt="" style="width: 25px; height: 15px; vertical-align: middle; margin-right: 5px; border: 1px solid var(--border-color, #333); border-radius: 2px;">
-                            <a href="/country/id={{ nation[0] }}" title="{{ nation[1] }}">{{ render_nation_name(nation[0], nation[1], {'name_color': nation[3], 'badge_icon': nation[4], 'badge_name': nation[5], 'title': nation[6]}) }}</a>
-                        </td>
-                        <td title="{{ nation[2] | fmt }}">{{ nation[2] | fmt }}</td>
-                    </tr>
-                    {% endfor %}
-                    {% if not top_population %}
-                    <tr><td colspan="3" style="text-align: center;">No data available</td></tr>
-                    {% endif %}
-                </table>
-                </div>
+                {{ leaderboard(top_population, 'Nation', 'Population') }}
             {% endcall %}
 
             {% call game_glass_panel('Largest Militaries', icon='military_tech') %}
-                <div class="templateoutertablediv">
-                <table class="templatetable rankings-table">
-                    <tr>
-                        <th>Rank</th>
-                        <th>Nation</th>
-                        <th>Army Size</th>
-                    </tr>
-                    {% for idx in range(top_military|length) %}
-                    {% set nation = top_military[idx] %}
-                    <tr>
-                        <td style="text-align: center;">#{{ idx + 1 }}</td>
-                        <td>
-                            <img src="/flag/country/{{ nation[0] }}" onerror="this.src='{{ url_for('static', filename='flags/default_flag.jpg') }}'" alt="" style="width: 25px; height: 15px; vertical-align: middle; margin-right: 5px; border: 1px solid var(--border-color, #333); border-radius: 2px;">
-                            <a href="/country/id={{ nation[0] }}" title="{{ nation[1] }}">{{ render_nation_name(nation[0], nation[1], {'name_color': nation[3], 'badge_icon': nation[4], 'badge_name': nation[5], 'title': nation[6]}) }}</a>
-                        </td>
-                        <td title="{{ nation[2] | fmt }}">{{ nation[2] | fmt }}</td>
-                    </tr>
-                    {% endfor %}
-                    {% if not top_military %}
-                    <tr><td colspan="3" style="text-align: center;">No data available</td></tr>
-                    {% endif %}
-                </table>
-                </div>
+                {{ leaderboard(top_military, 'Nation', 'Army Size') }}
             {% endcall %}
-        </div>
 
-        <div class="game-panel-grid game-panel-grid--2">
             {% call game_glass_panel('Wealthiest Nations', icon='account_balance') %}
-                <div class="templateoutertablediv">
-                <table class="templatetable rankings-table">
-                    <tr>
-                        <th>Rank</th>
-                        <th>Nation</th>
-                        <th>Treasury</th>
-                    </tr>
-                    {% for idx in range(top_wealth|length) %}
-                    {% set nation = top_wealth[idx] %}
-                    <tr>
-                        <td style="text-align: center;">#{{ idx + 1 }}</td>
-                        <td>
-                            <img src="/flag/country/{{ nation[0] }}" onerror="this.src='{{ url_for('static', filename='flags/default_flag.jpg') }}'" alt="" style="width: 25px; height: 15px; vertical-align: middle; margin-right: 5px; border: 1px solid var(--border-color, #333); border-radius: 2px;">
-                            <a href="/country/id={{ nation[0] }}" title="{{ nation[1] }}">{{ render_nation_name(nation[0], nation[1], {'name_color': nation[3], 'badge_icon': nation[4], 'badge_name': nation[5], 'title': nation[6]}) }}</a>
-                        </td>
-                        <td title="${{ nation[2] | fmt }}">${{ nation[2] | fmt }}</td>
-                    </tr>
-                    {% endfor %}
-                    {% if not top_wealth %}
-                    <tr><td colspan="3" style="text-align: center;">No data available</td></tr>
-                    {% endif %}
-                </table>
-                </div>
+                {{ leaderboard(top_wealth, 'Nation', 'Treasury', value_prefix='$') }}
             {% endcall %}
 
             {% call game_glass_panel('Most Influential Coalitions', icon='public') %}
-                <div class="templateoutertablediv">
-                <table class="templatetable rankings-table">
-                    <tr>
-                        <th>Rank</th>
-                        <th>Coalition</th>
-                        <th>Influence</th>
-                    </tr>
-                    {% for idx in range(top_alliances|length) %}
-                    {% set col = top_alliances[idx] %}
-                    <tr>
-                        <td style="text-align: center;">#{{ idx + 1 }}</td>
-                        <td><a href="/coalition/{{ col[0] }}" title="{{ col[1] }}">{{ col[1] }}</a></td>
-                        <td title="{{ col[2] | fmt }}">{{ col[2] | fmt }}</td>
-                    </tr>
-                    {% endfor %}
-                    {% if not top_alliances %}
-                    <tr><td colspan="3" style="text-align: center;">No data available</td></tr>
-                    {% endif %}
-                </table>
-                </div>
+                {{ leaderboard(top_alliances, 'Coalition', 'Influence', coalition=True) }}
             {% endcall %}
         </div>
-
     </div>
 </div>
 {% endblock %}
