@@ -2,102 +2,79 @@
 {% block body_class %} page-assembly game-page-v2{% endblock %}
 
 {% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
 <style>
-    .assembly-container {
-        padding: 20px;
-        max-width: 800px;
-        margin: 0 auto;
-        color: #e2e8f0;
-    }
-    .poll-section {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 16px;
-        padding: 30px;
-        backdrop-filter: blur(10px);
-    }
-    .poll-section-title {
-        font-size: 1.5rem;
-        color: #e2e8f0;
-        margin-bottom: 25px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        padding-bottom: 15px;
-    }
-    .form-group {
-        margin-bottom: 20px;
-    }
+    .assembly-form-wrap { max-width: 720px; margin: 0 auto; }
+    .form-group { margin-bottom: 16px; }
     .form-group label {
         display: block;
-        margin-bottom: 8px;
-        font-weight: bold;
+        margin-bottom: 6px;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--colorOne);
     }
     .form-control {
         width: 100%;
-        padding: 12px;
-        background: rgba(0,0,0,0.2);
-        border: 1px solid rgba(255,255,255,0.1);
-        color: #fff;
-        border-radius: 8px;
+        box-sizing: border-box;
+        min-height: 44px;
+        padding: 10px 12px;
+        font-size: 16px; /* 16px stops iOS zooming into the field */
+        font-family: inherit;
+        background: var(--foreground);
+        border: 1.5px solid var(--border);
+        border-radius: var(--game-radius-sm);
+        color: var(--colorOne);
     }
-    .submit-btn {
-        margin-top: 25px;
-        width: 100%;
-        padding: 15px;
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-        color: white;
-        border: none;
-        border-radius: 12px;
-        font-size: 1.2rem;
-        font-weight: bold;
-        cursor: pointer;
-    }
+    .form-control:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-subtle); }
+    textarea.form-control { resize: vertical; min-height: 120px; line-height: 1.5; }
+    .assembly-submit { width: 100%; min-height: 46px; font-size: 15px; margin-top: 4px; }
 </style>
 
-<div class="assembly-container">
-    <div class="poll-section">
-        <h2 class="poll-section-title">
-            <span class="material-icons-outlined">gavel</span> Submit Global Proposal
-        </h2>
-        <form action="/assembly/propose" method="post">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <div class="form-group">
-                <label>Proposal Type</label>
-                <select name="type" class="form-control" id="proposal-type" required onchange="toggleFields()">
-                    <option value="sanction">Sanction Nation</option>
-                    <option value="condemn">Condemn Nation</option>
-                    <option value="lift_sanction">Lift Sanction</option>
-                    <option value="currency_cap">Cap Currency</option>
-                    <option value="free_text">Free Text Resolution</option>
-                </select>
-            </div>
-            
-            <div class="form-group" id="target-nation-group">
-                <label>Target Nation ID</label>
-                <input type="number" name="target_nation_id" class="form-control" placeholder="e.g. 16">
-            </div>
-            
-            <div class="form-group" id="target-currency-group" style="display:none;">
-                <label>Target Currency ID</label>
-                <input type="number" name="target_currency_id" class="form-control" placeholder="Currency ID">
-            </div>
-            
-            <div class="form-group" id="currency-cap-group" style="display:none;">
-                <label>Currency Cap Amount</label>
-                <input type="number" name="currency_cap_amount" class="form-control" placeholder="Max circulation">
-            </div>
-            
-            <div class="form-group">
-                <label>Resolution Text (Description)</label>
-                <textarea name="text" class="form-control" rows="4" required placeholder="Explain why this should pass..."></textarea>
-            </div>
-            
-            <button type="submit" class="submit-btn">Submit Proposal</button>
-        </form>
-        <div style="margin-top: 20px; text-align: center;">
-            <a href="/assembly" style="color: #94a3b8; text-decoration: none;">&larr; Back to Assembly</a>
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/assembly.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+    {% call game_hero('Submit a proposal', badge_text='World Assembly', badge_icon='gavel', subtitle='Put a resolution before every nation. It passes or fails on the weighted vote when it closes.') %}
+        <a href="/assembly" class="game-btn game-btn-secondary"><span class="material-icons-outlined">arrow_back</span>Back to Assembly</a>
+    {% endcall %}
+
+    <div class="templatedivcontent">
+        <div class="game-glass game-panel assembly-form-wrap">
+            <form action="/assembly/propose" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label for="proposal-type">Proposal type</label>
+                    <select name="type" class="form-control" id="proposal-type" required onchange="toggleFields()">
+                        <option value="sanction">Sanction nation</option>
+                        <option value="condemn">Condemn nation</option>
+                        <option value="lift_sanction">Lift sanction</option>
+                        <option value="currency_cap">Cap currency</option>
+                        <option value="free_text">Free text resolution</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="target-nation-group">
+                    <label for="target-nation-id">Target nation ID</label>
+                    <input type="number" id="target-nation-id" name="target_nation_id" class="form-control" placeholder="e.g. 16" inputmode="numeric">
+                </div>
+
+                <div class="form-group" id="target-currency-group" style="display:none;">
+                    <label for="target-currency-id">Target currency ID</label>
+                    <input type="number" id="target-currency-id" name="target_currency_id" class="form-control" placeholder="Currency ID" inputmode="numeric">
+                </div>
+
+                <div class="form-group" id="currency-cap-group" style="display:none;">
+                    <label for="currency-cap-amount">Currency cap amount</label>
+                    <input type="number" id="currency-cap-amount" name="currency_cap_amount" class="form-control" placeholder="Max circulation" inputmode="numeric">
+                </div>
+
+                <div class="form-group">
+                    <label for="proposal-text">Resolution text</label>
+                    <textarea id="proposal-text" name="text" class="form-control" rows="4" required placeholder="Explain why this should pass..."></textarea>
+                </div>
+
+                <button type="submit" class="game-btn game-btn-primary assembly-submit">Submit proposal</button>
+            </form>
         </div>
     </div>
 </div>

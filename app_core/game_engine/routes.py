@@ -76,11 +76,14 @@ def assembly():
                    COALESCE(SUM(CASE WHEN av.vote = 'for' THEN av.weight ELSE 0 END), 0) as votes_for,
                    COALESCE(SUM(CASE WHEN av.vote = 'against' THEN av.weight ELSE 0 END), 0) as votes_against,
                    COALESCE(SUM(CASE WHEN av.vote = 'abstain' THEN av.weight ELSE 0 END), 0) as votes_abstain,
-                   (SELECT vote FROM assembly_votes WHERE proposal_id = ap.id AND voter_id = %s LIMIT 1) as my_vote
+                   (SELECT vote FROM assembly_votes WHERE proposal_id = ap.id AND voter_id = %s LIMIT 1) as my_vote,
+                   pu.username as proposer_name, tu.username as target_name
             FROM assembly_proposals ap
             LEFT JOIN assembly_votes av ON ap.id = av.proposal_id
+            LEFT JOIN users pu ON pu.id = ap.proposer_id
+            LEFT JOIN users tu ON tu.id = ap.target_nation_id
             WHERE ap.status = 'open'
-            GROUP BY ap.id
+            GROUP BY ap.id, pu.username, tu.username
             ORDER BY ap.created_at DESC
         ''', (user_id,))
         open_proposals = db.fetchall()
@@ -89,11 +92,13 @@ def assembly():
         db.execute('''
             SELECT ap.*,
                    COALESCE(SUM(CASE WHEN av.vote = 'for' THEN av.weight ELSE 0 END), 0) as votes_for,
-                   COALESCE(SUM(CASE WHEN av.vote = 'against' THEN av.weight ELSE 0 END), 0) as votes_against
+                   COALESCE(SUM(CASE WHEN av.vote = 'against' THEN av.weight ELSE 0 END), 0) as votes_against,
+                   tu.username as target_name
             FROM assembly_proposals ap
             LEFT JOIN assembly_votes av ON ap.id = av.proposal_id
+            LEFT JOIN users tu ON tu.id = ap.target_nation_id
             WHERE ap.status != 'open'
-            GROUP BY ap.id
+            GROUP BY ap.id, tu.username
             ORDER BY ap.closes_at DESC LIMIT 20
         ''')
         closed_proposals = db.fetchall()

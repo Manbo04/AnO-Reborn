@@ -2,350 +2,270 @@
 {% block body_class %} page-assembly game-page-v2{% endblock %}
 
 {% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+{% macro proposal_title(prop) -%}
+    {%- set target = prop.target_name or ('Nation #' ~ prop.target_nation_id) -%}
+    {%- if prop.type == 'sanction' %}Sanction {{ target }}
+    {%- elif prop.type == 'condemn' %}Condemn {{ target }}
+    {%- elif prop.type == 'lift_sanction' %}Lift sanctions on {{ target }}
+    {%- elif prop.type == 'currency_cap' %}Cap currency #{{ prop.target_currency_id }}
+    {%- else %}Resolution{% endif -%}
+{%- endmacro %}
 <style>
-    .assembly-container {
-        padding: 20px;
-        max-width: 1200px;
-        margin: 0 auto;
-        color: #e2e8f0;
-    }
-
-    .assembly-header {
-        text-align: center;
-        margin-bottom: 40px;
-    }
-
-    .assembly-header h1 {
-        font-size: 2.5rem;
-        background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 15px;
-        margin-bottom: 15px;
-    }
-
-    .assembly-header p {
-        color: #94a3b8;
-        font-size: 1.1rem;
-        max-width: 600px;
-        margin: 0 auto;
-        line-height: 1.6;
-    }
-
-    .poll-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 40px;
-    }
-
-    @media (max-width: 768px) {
-        .poll-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    .poll-section {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 16px;
-        padding: 30px;
-        backdrop-filter: blur(10px);
-    }
-
-    .poll-section-title {
-        font-size: 1.5rem;
-        color: #e2e8f0;
-        margin-bottom: 25px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        padding-bottom: 15px;
-    }
-
-    /* Tabs Styling */
+    /* Built on the shared game-glass components + theme tokens so it reads
+       correctly in both light and dark themes (the first version hardcoded
+       dark-only colors and washed out on the light theme). */
     .assembly-tabs {
         display: flex;
-        gap: 10px;
-        margin-bottom: 25px;
-        border-bottom: 1px solid rgba(255,255,255,0.1);
-        padding-bottom: 10px;
+        gap: 6px;
+        padding: 5px;
+        margin-bottom: 18px;
+        width: fit-content;
+        max-width: 100%;
         overflow-x: auto;
     }
-    .assembly-tab-btn {
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(255,255,255,0.1);
-        color: #cbd5e1;
-        padding: 10px 20px;
-        border-radius: 8px;
-        cursor: pointer;
-        font-weight: 600;
+    .assembly-tabs .game-btn {
+        min-height: 40px;
         white-space: nowrap;
-        transition: all 0.2s;
     }
-    .assembly-tab-btn:hover {
-        background: rgba(255,255,255,0.1);
-    }
-    .assembly-tab-btn.active {
-        background: rgba(0, 242, 254, 0.1);
-        border-color: #00f2fe;
-        color: #fff;
-    }
-    .assembly-tab-content {
-        display: none;
-    }
-    .assembly-tab-content.active {
-        display: block;
-    }
+    .assembly-tab-content { display: none; }
+    .assembly-tab-content.active { display: block; }
 
-    /* Voting Options */
-    .vote-options {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-    }
-    .vote-option-label {
-        position: relative;
+    .assembly-panel-title {
         display: flex;
         align-items: center;
-        padding: 15px 20px;
-        background: rgba(255, 255, 255, 0.05);
-        border: 2px solid rgba(255, 255, 255, 0.05);
-        border-radius: 12px;
-        cursor: pointer;
-        transition: all 0.3s;
-        overflow: hidden;
-    }
-    .vote-option-label:hover {
-        background: rgba(255, 255, 255, 0.1);
-    }
-    .vote-option-input {
-        display: none;
-    }
-    .vote-option-label:has(.vote-option-input:checked) {
-        border-color: #00f2fe;
-        background: rgba(0, 242, 254, 0.1);
-    }
-    .vote-option-content {
-        display: flex;
-        justify-content: space-between;
-        width: 100%;
-        align-items: center;
-        font-weight: 600;
-        color: #cbd5e1;
-    }
-    .submit-vote-btn {
-        margin-top: 25px;
-        width: 100%;
-        padding: 15px;
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-        color: white;
-        border: none;
-        border-radius: 12px;
-        font-size: 1.2rem;
-        font-weight: bold;
-        cursor: pointer;
-    }
-
-    /* Results */
-    .results-list {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
-    .result-item {
-        display: flex;
-        flex-direction: column;
         gap: 8px;
+        margin: 0 0 14px;
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--colorOne);
     }
+    .assembly-panel-title .material-icons-outlined { font-size: 20px; color: var(--accent); }
+
+    .assembly-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        padding: 26px 12px;
+        text-align: center;
+        color: var(--text-secondary);
+        font-size: 14px;
+    }
+    .assembly-empty .material-icons-outlined { font-size: 32px; opacity: 0.6; }
+
+    .assembly-list { display: flex; flex-direction: column; gap: 12px; }
+    .assembly-item {
+        background: var(--game-glass-bg-strong);
+        border: 1px solid var(--game-glass-border);
+        border-radius: var(--game-radius-md);
+        padding: 14px 16px;
+    }
+    .assembly-item.passed { border-left: 4px solid var(--success); }
+    .assembly-item.failed { border-left: 4px solid var(--danger); }
+    .assembly-item h3 {
+        margin: 0 0 4px;
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--colorOne);
+    }
+    .assembly-item h3 a { color: inherit; }
+    .assembly-item-text {
+        margin: 8px 0 12px;
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--colorOne);
+        overflow-wrap: anywhere;
+    }
+    .assembly-vote-row { display: flex; gap: 8px; }
+    .assembly-vote-row .game-btn { flex: 1; min-height: 44px; }
+    .assembly-vote-for { background: var(--success); color: #fff; }
+    .assembly-vote-against { background: var(--danger); color: #fff; }
+    .assembly-vote-for:hover, .assembly-vote-against:hover { filter: brightness(0.93); }
+    .assembly-vote-row .is-mine { box-shadow: 0 0 0 2px var(--colorOne); }
+    .assembly-tally { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .assembly-sanctions { border-color: color-mix(in srgb, var(--danger) 55%, transparent); margin-bottom: 18px; }
+    .assembly-sanctions li { margin-bottom: 6px; color: var(--colorOne); }
+
+    /* World-name poll */
+    .vote-options { display: flex; flex-direction: column; gap: 10px; }
+    .vote-option-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        min-height: 48px;
+        padding: 12px 16px;
+        background: var(--game-glass-bg-strong);
+        border: 2px solid var(--game-glass-border);
+        border-radius: var(--game-radius-md);
+        color: var(--colorOne);
+        font-weight: 600;
+        cursor: pointer;
+        transition: border-color 0.15s, background 0.15s;
+    }
+    .vote-option-label:hover { border-color: var(--accent); }
+    .vote-option-input { position: absolute; opacity: 0; pointer-events: none; }
+    .vote-option-label:has(.vote-option-input:checked) {
+        border-color: var(--accent);
+        background: var(--accent-subtle);
+    }
+    .vote-option-label:has(.vote-option-input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .assembly-submit { width: 100%; margin-top: 16px; min-height: 46px; font-size: 15px; }
+    .results-list { display: flex; flex-direction: column; gap: 16px; }
     .result-header {
         display: flex;
         justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 6px;
         font-weight: 600;
+        color: var(--colorOne);
     }
-    .progress-track {
-        width: 100%;
-        height: 12px;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 6px;
-    }
-    .progress-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #00f2fe 0%, #4facfe 100%);
-        border-radius: 6px;
+    .result-header .game-faint { font-weight: 500; }
+    .results-list .game-meter { height: 10px; }
+    .assembly-total { margin-top: 20px; text-align: center; }
+
+    @media (max-width: 620px) {
+        .assembly-tabs { width: 100%; }
+        .assembly-tabs .game-btn { flex: 1; }
     }
 </style>
 
-<div class="assembly-container">
-    <div class="assembly-header">
-        <h1>
-            <span class="material-icons-outlined" style="font-size: 3rem;">how_to_vote</span>
-            World Assembly
-        </h1>
-        <p>The global forum for shaping the future of our civilization. Discuss, propose, and enforce global laws.</p>
-    </div>
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/assembly.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
 
-    <div class="assembly-tabs">
-        <button class="assembly-tab-btn active" onclick="switchTab('tab-proposals', this)">Global Proposals</button>
-        <button class="assembly-tab-btn" onclick="switchTab('tab-polls', this)">World Name Poll</button>
-    </div>
+<div class="templatediv">
+    {% call game_hero('World Assembly', badge_text='Diplomacy', badge_icon='how_to_vote', subtitle='The global forum for shaping the future of our civilization. Discuss, propose, and enforce global laws.') %}
+        <a href="/assembly/propose" class="game-btn game-btn-primary"><span class="material-icons-outlined">add</span>Create proposal</a>
+    {% endcall %}
 
-    <div id="tab-proposals" class="assembly-tab-content active">
-        <div style="margin-bottom: 20px;">
-            <a href="/assembly/propose" class="submit-vote-btn" style="display:inline-block; width:auto; text-decoration:none;">Create New Proposal</a>
+    <div class="templatedivcontent">
+        <div class="assembly-tabs game-glass" role="tablist">
+            <button type="button" role="tab" class="game-btn game-btn-ghost is-current" onclick="switchTab('tab-proposals', this)"><span class="material-icons-outlined">gavel</span>Global proposals</button>
+            <button type="button" role="tab" class="game-btn game-btn-ghost" onclick="switchTab('tab-polls', this)"><span class="material-icons-outlined">ballot</span>World name poll</button>
         </div>
-        
-        {% if active_sanctions %}
-        <div class="poll-section" style="margin-bottom: 20px; border-color: #ef4444;">
-            <h2 class="poll-section-title" style="color: #fca5a5;">
-                <span class="material-icons-outlined">warning</span> Active Assembly Sanctions
-            </h2>
-            <ul style="padding-left: 20px; color: #f87171;">
-                {% for sanction in active_sanctions %}
-                <li>
-                    <strong>{{ sanction.target_name }}</strong> (Nation #{{ sanction.target_nation_id }})
-                    - Ends: {{ sanction.expires_at.strftime('%Y-%m-%d %H:%M') }}
-                    {% if sanction.effect_type == 'currency_cap' %}
-                        - Currency Cap: {{ sanction.target_currency_id }} limited to {{ sanction.currency_cap_amount }}
-                    {% else %}
-                        - Trade Sanctions Active
-                    {% endif %}
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-        {% endif %}
 
-        <div class="poll-grid">
-            <div class="poll-section">
-                <h2 class="poll-section-title">
-                    <span class="material-icons-outlined">gavel</span> Open Proposals
-                </h2>
-                {% if open_proposals %}
-                    <div style="display: flex; flex-direction: column; gap: 15px;">
-                    {% for prop in open_proposals %}
-                        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
-                            <h3 style="margin-top:0; margin-bottom:5px;">
-                                {% if prop.type == 'sanction' %} Sanction Nation #{{ prop.target_nation_id }}
-                                {% elif prop.type == 'condemn' %} Condemn Nation #{{ prop.target_nation_id }}
-                                {% elif prop.type == 'lift_sanction' %} Lift Sanction on Nation #{{ prop.target_nation_id }}
-                                {% elif prop.type == 'currency_cap' %} Cap Currency #{{ prop.target_currency_id }}
-                                {% else %} Resolution {% endif %}
-                            </h3>
-                            <p style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 10px;">Proposed by Nation #{{ prop.proposer_id }} - Closes: {{ prop.closes_at.strftime('%Y-%m-%d %H:%M') }}</p>
-                            <p style="margin-bottom: 15px;">{{ prop.text }}</p>
-                            
-                            <form action="/assembly/vote/{{ prop.id }}" method="post" style="display: flex; gap: 10px;">
+        <div id="tab-proposals" class="assembly-tab-content active">
+            {% if active_sanctions %}
+            <div class="game-glass game-panel assembly-sanctions">
+                <h2 class="assembly-panel-title"><span class="material-icons-outlined" style="color: var(--danger);">warning</span>Active Assembly sanctions</h2>
+                <ul style="margin: 0; padding-left: 20px;">
+                    {% for sanction in active_sanctions %}
+                    <li>
+                        <strong><a href="/country/id={{ sanction.target_nation_id }}">{{ sanction.target_name or ('Nation #' ~ sanction.target_nation_id) }}</a></strong>
+                        {% if sanction.effect_type == 'currency_cap' %}
+                            &mdash; currency #{{ sanction.target_currency_id }} capped at {{ sanction.currency_cap_amount }}
+                        {% else %}
+                            &mdash; trade sanctions
+                        {% endif %}
+                        {% if sanction.expires_at %}<span class="game-faint">(ends {{ sanction.expires_at.strftime('%Y-%m-%d %H:%M') }})</span>{% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <div class="game-grid-2">
+                <div class="game-glass game-panel">
+                    <h2 class="assembly-panel-title"><span class="material-icons-outlined">gavel</span>Open proposals</h2>
+                    {% if open_proposals %}
+                    <div class="assembly-list">
+                        {% for prop in open_proposals %}
+                        <div class="assembly-item">
+                            <h3>{% if prop.target_nation_id %}<a href="/country/id={{ prop.target_nation_id }}">{{ proposal_title(prop) }}</a>{% else %}{{ proposal_title(prop) }}{% endif %}</h3>
+                            <div class="game-faint">Proposed by <a href="/country/id={{ prop.proposer_id }}">{{ prop.proposer_name or ('Nation #' ~ prop.proposer_id) }}</a> &middot; closes {{ prop.closes_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                            {% if prop.text %}<p class="assembly-item-text">{{ prop.text }}</p>{% endif %}
+
+                            <form action="/assembly/vote/{{ prop.id }}" method="post" class="assembly-vote-row">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button name="vote" value="for" type="submit" class="submit-vote-btn" style="margin-top:0; padding:8px; font-size:1rem; background: #10b981;">For</button>
-                                <button name="vote" value="against" type="submit" class="submit-vote-btn" style="margin-top:0; padding:8px; font-size:1rem; background: #ef4444;">Against</button>
-                                <button name="vote" value="abstain" type="submit" class="submit-vote-btn" style="margin-top:0; padding:8px; font-size:1rem; background: #64748b;">Abstain</button>
+                                <button name="vote" value="for" type="submit" class="game-btn assembly-vote-for{% if prop.my_vote == 'for' %} is-mine{% endif %}">For</button>
+                                <button name="vote" value="against" type="submit" class="game-btn assembly-vote-against{% if prop.my_vote == 'against' %} is-mine{% endif %}">Against</button>
+                                <button name="vote" value="abstain" type="submit" class="game-btn game-btn-secondary{% if prop.my_vote == 'abstain' %} is-mine{% endif %}">Abstain</button>
                             </form>
-                            {% if prop.my_vote %}
-                                <div style="margin-top: 10px; font-size: 0.85rem; color: #38bdf8;">You voted: {{ prop.my_vote|upper }}</div>
-                            {% endif %}
-                            
-                            <div style="margin-top: 10px; font-size: 0.85rem;">
-                                Current Tally (weighted): For: {{ prop.votes_for|round(1) }} | Against: {{ prop.votes_against|round(1) }} | Abstain: {{ prop.votes_abstain|round(1) }}
+
+                            <div class="assembly-tally">
+                                <span class="game-badge game-badge-good">For {{ prop.votes_for|round(1) }}</span>
+                                <span class="game-badge game-badge-bad">Against {{ prop.votes_against|round(1) }}</span>
+                                <span class="game-badge game-badge-warn">Abstain {{ prop.votes_abstain|round(1) }}</span>
+                                {% if prop.my_vote %}<span class="game-faint" style="align-self: center;">You voted {{ prop.my_vote }}</span>{% endif %}
                             </div>
                         </div>
-                    {% endfor %}
-                    </div>
-                {% else %}
-                    <p style="color: #94a3b8;">No proposals are currently open for voting.</p>
-                {% endif %}
-            </div>
-
-            <div class="poll-section">
-                <h2 class="poll-section-title">
-                    <span class="material-icons-outlined">history</span> Recent Resolutions
-                </h2>
-                {% if closed_proposals %}
-                    <div style="display: flex; flex-direction: column; gap: 15px;">
-                    {% for prop in closed_proposals %}
-                        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid {% if prop.status == 'passed' %}#10b981{% else %}#ef4444{% endif %};">
-                            <h3 style="margin-top:0; margin-bottom:5px;">
-                                {% if prop.type == 'sanction' %} Sanction Nation #{{ prop.target_nation_id }}
-                                {% elif prop.type == 'condemn' %} Condemn Nation #{{ prop.target_nation_id }}
-                                {% elif prop.type == 'lift_sanction' %} Lift Sanction on Nation #{{ prop.target_nation_id }}
-                                {% elif prop.type == 'currency_cap' %} Cap Currency #{{ prop.target_currency_id }}
-                                {% else %} Resolution {% endif %}
-                            </h3>
-                            <p style="margin-bottom: 5px;">{{ prop.text }}</p>
-                            <span style="font-weight: bold; color: {% if prop.status == 'passed' %}#10b981{% else %}#ef4444{% endif %};">{{ prop.status|upper }}</span>
-                            <span style="font-size: 0.85rem; color: #94a3b8; margin-left: 10px;">For: {{ prop.votes_for|round(1) }} | Against: {{ prop.votes_against|round(1) }}</span>
-                        </div>
-                    {% endfor %}
-                    </div>
-                {% else %}
-                    <p style="color: #94a3b8;">No resolutions have been concluded yet.</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <div id="tab-polls" class="assembly-tab-content">
-        <div class="poll-grid">
-            <div class="poll-section">
-                <h2 class="poll-section-title">
-                    <span class="material-icons-outlined">ballot</span>
-                    Cast Your Vote
-                </h2>
-                
-                <form action="/assembly" method="post">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <div class="vote-options">
-                        {% set options = ["Terra", "Aethelgard", "Nova Pangaea", "Gaia", "Eos"] %}
-                        {% for opt in options %}
-                        <label class="vote-option-label">
-                            <input type="radio" class="vote-option-input" name="vote_option" value="{{ opt }}" {% if user_vote == opt %}checked{% endif %} required>
-                            <div class="vote-option-content">
-                                <span>{{ opt }}</span>
-                                {% if user_vote == opt %}
-                                    <span class="current-vote-badge">YOUR VOTE</span>
-                                {% endif %}
-                            </div>
-                        </label>
                         {% endfor %}
                     </div>
-                    <button type="submit" class="submit-vote-btn">Confirm Vote</button>
-                </form>
+                    {% else %}
+                    <div class="assembly-empty">
+                        <span class="material-icons-outlined">inbox</span>
+                        No proposals are open for voting right now.
+                        <a href="/assembly/propose" class="game-btn game-btn-secondary game-btn-sm" style="margin-top: 6px;">Propose one</a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="game-glass game-panel">
+                    <h2 class="assembly-panel-title"><span class="material-icons-outlined">history</span>Recent resolutions</h2>
+                    {% if closed_proposals %}
+                    <div class="assembly-list">
+                        {% for prop in closed_proposals %}
+                        <div class="assembly-item {{ 'passed' if prop.status == 'passed' else 'failed' }}">
+                            <div class="game-spread">
+                                <h3>{{ proposal_title(prop) }}</h3>
+                                <span class="game-badge {{ 'game-badge-good' if prop.status == 'passed' else 'game-badge-bad' }}">{{ prop.status|capitalize }}</span>
+                            </div>
+                            {% if prop.text %}<p class="assembly-item-text" style="margin-bottom: 6px;">{{ prop.text }}</p>{% endif %}
+                            <div class="game-faint">For {{ prop.votes_for|round(1) }} &middot; Against {{ prop.votes_against|round(1) }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="assembly-empty">
+                        <span class="material-icons-outlined">history</span>
+                        No resolutions have been concluded yet.
+                    </div>
+                    {% endif %}
+                </div>
             </div>
+        </div>
 
-            <div class="poll-section">
-                <h2 class="poll-section-title">
-                    <span class="material-icons-outlined">poll</span>
-                    Live Results
-                </h2>
-                
-                {% set ns = namespace(total=0) %}
-                {% set options = ["Terra", "Aethelgard", "Nova Pangaea", "Gaia", "Eos"] %}
-                {% for opt in options %}
-                    {% set ns.total = ns.total + results.get(opt, 0) %}
-                {% endfor %}
+        <div id="tab-polls" class="assembly-tab-content">
+            {% set options = ["Terra", "Aethelgard", "Nova Pangaea", "Gaia", "Eos"] %}
+            <div class="game-grid-2">
+                <div class="game-glass game-panel">
+                    <h2 class="assembly-panel-title"><span class="material-icons-outlined">ballot</span>Cast your vote</h2>
+                    <form action="/assembly" method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="vote-options">
+                            {% for opt in options %}
+                            <label class="vote-option-label">
+                                <input type="radio" class="vote-option-input" name="vote_option" value="{{ opt }}" {% if user_vote == opt %}checked{% endif %} required>
+                                <span>{{ opt }}</span>
+                                {% if user_vote == opt %}<span class="game-badge game-badge-good">Your vote</span>{% endif %}
+                            </label>
+                            {% endfor %}
+                        </div>
+                        <button type="submit" class="game-btn game-btn-primary assembly-submit">Confirm vote</button>
+                    </form>
+                </div>
 
-                <div class="results-list">
+                <div class="game-glass game-panel">
+                    <h2 class="assembly-panel-title"><span class="material-icons-outlined">poll</span>Live results</h2>
+                    {% set ns = namespace(total=0) %}
                     {% for opt in options %}
+                        {% set ns.total = ns.total + results.get(opt, 0) %}
+                    {% endfor %}
+                    <div class="results-list">
+                        {% for opt in options %}
                         {% set votes = results.get(opt, 0) %}
                         {% set percentage = (votes / ns.total * 100) if ns.total > 0 else 0 %}
-                        
-                        <div class="result-item">
+                        <div>
                             <div class="result-header">
                                 <span>{{ opt }}</span>
-                                <span class="result-votes">{{ votes }} vote{% if votes != 1 %}s{% endif %} ({{ "%.1f"|format(percentage) }}%)</span>
+                                <span class="game-faint">{{ votes }} vote{% if votes != 1 %}s{% endif %} ({{ "%.1f"|format(percentage) }}%)</span>
                             </div>
-                            <div class="progress-track">
-                                <div class="progress-fill" style="width: {{ percentage }}%;"></div>
-                            </div>
+                            <div class="game-meter"><div class="game-meter-fill" style="width: {{ percentage }}%;"></div></div>
                         </div>
-                    {% endfor %}
-                </div>
-                
-                <div style="margin-top: 30px; text-align: center; color: #94a3b8; font-size: 0.9rem;">
-                    Total Votes Cast: <strong>{{ ns.total }}</strong>
+                        {% endfor %}
+                    </div>
+                    <div class="assembly-total game-faint">Total votes cast: <strong>{{ ns.total }}</strong></div>
                 </div>
             </div>
         </div>
@@ -355,9 +275,9 @@
 <script>
 function switchTab(tabId, btnEl) {
     document.querySelectorAll('.assembly-tab-content').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.assembly-tab-btn').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.assembly-tabs .game-btn').forEach(el => el.classList.remove('is-current'));
     document.getElementById(tabId).classList.add('active');
-    btnEl.classList.add('active');
+    btnEl.classList.add('is-current');
 }
 </script>
 {% endblock %}
