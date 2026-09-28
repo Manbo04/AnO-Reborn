@@ -850,10 +850,14 @@ def province(pId):
                 pop_cap_info = None
         education_stats = None
         if variables.FEATURE_PHASE3_WORKFORCE:
+            from app_core.economy.building_purchase import _load_policies
             from app_core.game_ticks.population import calc_education_graduation
+
+            with db.connection.cursor() as tuple_db:
+                edu_policies = _load_policies(tuple_db, province.get("owner_id") or cId)
             education_stats = calc_education_graduation(
                 province.get("pop_children", 0) or 0,
-                policies,
+                edu_policies,
                 units.get("primary_school", 0) or 0,
                 units.get("high_school", 0) or 0,
                 units.get("universities", 0) or 0,

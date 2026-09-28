@@ -141,21 +141,21 @@
             <tr>
                 <th colspan="2"><span class="material-icons-outlined">school</span>Education Breakdown (Workforce)</th>
             </tr>
-            {% set total_edu = province['edu_none'] + province['edu_highschool'] + province['edu_college'] %}
-            {% set pct_none = ((province['edu_none'] / total_edu) * 100) | round(1) if total_edu > 0 else 0 %}
-            {% set pct_hs = ((province['edu_highschool'] / total_edu) * 100) | round(1) if total_edu > 0 else 0 %}
-            {% set pct_col = ((province['edu_college'] / total_edu) * 100) | round(1) if total_edu > 0 else 0 %}
+            {% set total_edu = (province.get('edu_none') or 0) + (province.get('edu_highschool') or 0) + (province.get('edu_college') or 0) %}
+            {% set pct_none = (((province.get('edu_none') or 0) / total_edu) * 100) | round(1) if total_edu > 0 else 0 %}
+            {% set pct_hs = (((province.get('edu_highschool') or 0) / total_edu) * 100) | round(1) if total_edu > 0 else 0 %}
+            {% set pct_col = (((province.get('edu_college') or 0) / total_edu) * 100) | round(1) if total_edu > 0 else 0 %}
             <tr>
                 <td>Basic (None):</td>
-                <td>{{ province['edu_none'] | commas }} ({{ pct_none }}%)</td>
+                <td>{{ (province.get('edu_none') or 0) | commas }} ({{ pct_none }}%)</td>
             </tr>
             <tr>
                 <td>High School:</td>
-                <td>{{ province['edu_highschool'] | commas }} ({{ pct_hs }}%)</td>
+                <td>{{ (province.get('edu_highschool') or 0) | commas }} ({{ pct_hs }}%)</td>
             </tr>
             <tr>
                 <td>College:</td>
-                <td>{{ province['edu_college'] | commas }} ({{ pct_col }}%)</td>
+                <td>{{ (province.get('edu_college') or 0) | commas }} ({{ pct_col }}%)</td>
             </tr>
             <tr>
                 <th colspan="2"><span class="material-icons-outlined">account_balance</span>Education Capacity (This Tick)</th>
