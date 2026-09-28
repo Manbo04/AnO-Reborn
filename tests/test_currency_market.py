@@ -436,7 +436,11 @@ def test_currency_priced_direct_trade(nations, client):
     assert _own_currency(a) == a_cur + 60
 
 
-def test_direct_sell_trade_delivers_escrow_not_a_second_copy(nations, client):
+def test_direct_sell_trade_delivers_escrow_not_a_second_copy(nations, client, monkeypatch):
+    # A fresh DB hands out low trade ids; don't let them hit the prod-only
+    # legacy pre-escrow ids (4, 5).
+    from app_core.market import routes as market_routes
+    monkeypatch.setattr(market_routes, "LEGACY_UNESCROWED_SELL_TRADE_IDS", frozenset())
     a, b, _c = nations
     _set_resource(a, "copper", 100)
     _login(client, a)
@@ -486,3 +490,10 @@ def test_country_page_shows_holdings_and_trade_currency_picker(nations, client, 
             assert r.status_code == 200
             assert b"Other nations&#39; currencies" in r.data or b"Other nations' currencies" in r.data
             assert b"Amark" in r.data
+
+
+def test_legacy_pre_escrow_sell_trade_ids_take_from_seller():
+    from app_core.market import routes as market_routes
+    assert not market_routes._sell_trade_escrowed("4")
+    assert not market_routes._sell_trade_escrowed(5)
+    assert market_routes._sell_trade_escrowed("6")

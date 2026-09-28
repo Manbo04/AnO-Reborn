@@ -510,6 +510,17 @@ def post_trade_offer(offer_type, offeree_id):
 
     return redirect(f"/country/id={offeree_id}")
 
+# Direct sell trades posted before the bank-escrow change (e59c853c, Feb 2026)
+# never had their resource set aside. Two were still pending on 2026-09-28
+# (ids 4 and 5): accepting takes the resource from the seller as it did back
+# then, and declining has nothing to refund.
+LEGACY_UNESCROWED_SELL_TRADE_IDS = frozenset({4, 5})
+
+
+def _sell_trade_escrowed(trade_id):
+    return int(trade_id) not in LEGACY_UNESCROWED_SELL_TRADE_IDS
+
+
 @market_bp.route("/decline_trade/<trade_id>", methods=["POST"])
 @login_required
 def decline_trade_endpoint(trade_id):
@@ -524,7 +535,9 @@ def decline_trade_endpoint(trade_id):
             
         trade_type, resource, amount, price, offerer, currency_id = deleted_row
 
-        if trade_type == "sell":
+        if trade_type == "sell" and not _sell_trade_escrowed(trade_id):
+            pass  # legacy pre-escrow trade: nothing was set aside
+        elif trade_type == "sell":
             try:
                 give_resource("bank", offerer, resource, amount, cursor=db)
             except Exception:
@@ -611,8 +624,9 @@ def accept_trade(trade_id):
                 # This used to try offerer -> offeree first, which took the
                 # resource from the seller a second time whenever they still
                 # had that much left, leaving the escrow stranded.
+                source = "bank" if _sell_trade_escrowed(trade_id) else offerer
                 try:
-                    gr_ret = give_resource("bank", offeree, resource, amount, cursor=db)
+                    gr_ret = give_resource(source, offeree, resource, amount, cursor=db)
                 except Exception as exc:
                     report_trade_error("accept_trade: give_resource raised exception during sell", exc=exc)
                     return error(400, "Trade acceptance failed")
