@@ -126,6 +126,9 @@ def province(pId):
                    COALESCE(p.pop_children, 0) AS pop_children,
                    COALESCE(p.pop_working, 0) AS pop_working,
                    COALESCE(p.pop_elderly, 0) AS pop_elderly,
+                   COALESCE(p.edu_none, 0) AS edu_none,
+                   COALESCE(p.edu_highschool, 0) AS edu_highschool,
+                   COALESCE(p.edu_college, 0) AS edu_college,
                    p.is_capital, (p.flag_data IS NOT NULL) AS has_flag,
                    {image_select}
             FROM provinces p
@@ -140,6 +143,7 @@ def province(pId):
                    p.land, p.energy AS electricity,
                    s.location,
                    0 AS pop_children, 0 AS pop_working, 0 AS pop_elderly,
+                   0 AS edu_none, 0 AS edu_highschool, 0 AS edu_college,
                    p.is_capital, (p.flag_data IS NOT NULL) AS has_flag,
                    {image_select}
             FROM provinces p
@@ -159,6 +163,7 @@ def province(pId):
                        p.land, p.energy AS electricity,
                        s.location,
                        0 AS pop_children, 0 AS pop_working, 0 AS pop_elderly,
+                       0 AS edu_none, 0 AS edu_highschool, 0 AS edu_college,
                        FALSE AS is_capital, FALSE AS has_flag,
                        FALSE AS has_image
                 FROM provinces p
@@ -742,6 +747,17 @@ def province(pId):
                 distribution_status = dict(distribution_status)
                 distribution_status["show_alert"] = True
 
+        education_stats = None
+        if variables.FEATURE_PHASE3_WORKFORCE:
+            from app_core.game_ticks.population import calc_education_graduation
+            education_stats = calc_education_graduation(
+                province.get("pop_children", 0) or 0,
+                policies,
+                units.get("primary_school", 0) or 0,
+                units.get("high_school", 0) or 0,
+                units.get("universities", 0) or 0,
+            )
+
         template = "province_v2.html" if is_theme_v2_enabled("province") else "province.html"
         return render_template(
             template,
@@ -772,6 +788,7 @@ def province(pId):
             province_base_layout=province_base_layout,
             province_count=province_count,
             province_rename_cost=PROVINCE_RENAME_COST,
+            education_stats=education_stats,
         )
 
 

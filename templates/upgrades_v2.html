@@ -643,6 +643,7 @@
                             <p class="templatecontentpleft">Ironworks that boosts Steel Mills' production by 36% nationwide. Iron and Coal usages are proportionally increased to create more Steel.
                             </p>
 
+                            <p class="templatecontentpleft text-info" style="margin-bottom: 4px;"><strong>Requires:</strong> 2 Universities nationwide</p>
                             <ul>Costs {{ tech_costs.get("integratedsteelmaking", 0) | weight_fmt }} components</ul>
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["integratedsteelmaking"] %}
@@ -671,6 +672,7 @@
                             <p class="templatecontentpleft">A modern steelmaking method that consumes less raw iron and coal, but uses immense amounts of electricity.
                             </p>
 
+                            <p class="templatecontentpleft text-info" style="margin-bottom: 4px;"><strong>Requires:</strong> 2 Universities nationwide</p>
                             <ul>Costs {{ tech_costs.get("electricarcfurnace", 0) | weight_fmt }} components</ul>
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["electricarcfurnace"] %}
@@ -828,8 +830,9 @@
                         <p class="templatecontentpleft">Inter-continental ballistic missile silos allows countries to develop and deploy inter-continental ballistic missiles
                         </p>
 
+                        {% if tech_prereq_names.get("icbmsilo") %}<p class="templatecontentpleft" style="margin-bottom: 4px;"><strong>Requires:</strong> {{ tech_prereq_names.get("icbmsilo") }}</p>{% endif %}
+                        <p class="templatecontentpleft text-info" style="margin-bottom: 4px;"><strong>Requires:</strong> 2 Universities nationwide</p>
                         <ul>Costs {{ tech_costs.get("icbmsilo", 0) | weight_fmt }} components</ul>
-                        {% if tech_prereq_names.get("icbmsilo") %}<p class="templatecontentpleft"><strong>Requires:</strong> {{ tech_prereq_names.get("icbmsilo") }}</p>{% endif %}
                         <div class="purchasemilitarydiv">
                             {% if not upgrades["icbmsilo"] %}
                             <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/ICBMsilo">
@@ -861,8 +864,9 @@
                         <p class="templatecontentpleft">Nuclear testing facilities gives countries the ability to create nuclear warheads and establish nuclear reactors
                         </p>
 
+                        {% if tech_prereq_names.get("nucleartestingfacility") %}<p class="templatecontentpleft" style="margin-bottom: 4px;"><strong>Requires:</strong> {{ tech_prereq_names.get("nucleartestingfacility") }}</p>{% endif %}
+                        <p class="templatecontentpleft text-info" style="margin-bottom: 4px;"><strong>Requires:</strong> 2 Universities nationwide</p>
                         <ul>Costs {{ tech_costs.get("nucleartestingfacility", 0) | weight_fmt }} components</ul>
-                        {% if tech_prereq_names.get("nucleartestingfacility") %}<p class="templatecontentpleft"><strong>Requires:</strong> {{ tech_prereq_names.get("nucleartestingfacility") }}</p>{% endif %}
                         <div class="purchasemilitarydiv">
                             {% if not upgrades["nucleartestingfacility"] %}
                             <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/nuclearTestingFacility">

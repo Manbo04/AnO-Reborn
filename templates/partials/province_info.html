@@ -98,6 +98,49 @@
                 <td>{{ province['pop_elderly'] | commas }}</td>
             </tr>
         </table>
+        
+        {% if education_stats %}
+        <table class="templatetable table-mt">
+            <tr>
+                <th colspan="2"><span class="material-icons-outlined">school</span>Education Breakdown (Workforce)</th>
+            </tr>
+            {% set total_edu = province['edu_none'] + province['edu_highschool'] + province['edu_college'] %}
+            {% set pct_none = ((province['edu_none'] / total_edu) * 100) | round(1) if total_edu > 0 else 0 %}
+            {% set pct_hs = ((province['edu_highschool'] / total_edu) * 100) | round(1) if total_edu > 0 else 0 %}
+            {% set pct_col = ((province['edu_college'] / total_edu) * 100) | round(1) if total_edu > 0 else 0 %}
+            <tr>
+                <td>Basic (None):</td>
+                <td>{{ province['edu_none'] | commas }} ({{ pct_none }}%)</td>
+            </tr>
+            <tr>
+                <td>High School:</td>
+                <td>{{ province['edu_highschool'] | commas }} ({{ pct_hs }}%)</td>
+            </tr>
+            <tr>
+                <td>College:</td>
+                <td>{{ province['edu_college'] | commas }} ({{ pct_col }}%)</td>
+            </tr>
+            <tr>
+                <th colspan="2"><span class="material-icons-outlined">account_balance</span>Education Capacity (This Tick)</th>
+            </tr>
+            <tr>
+                <td>Graduating:</td>
+                <td>{{ education_stats['can_graduate'] | commas }} children</td>
+            </tr>
+            <tr>
+                <td>Primary School:</td>
+                <td>{{ education_stats['passed_primary'] | commas }} used / {{ education_stats['primary_capacity'] | commas }} avail</td>
+            </tr>
+            <tr>
+                <td>High School:</td>
+                <td>{{ education_stats['passed_hs'] | commas }} used / {{ education_stats['hs_capacity'] | commas }} avail</td>
+            </tr>
+            <tr>
+                <td>University:</td>
+                <td>{{ education_stats['passed_uni'] | commas }} used / {{ education_stats['uni_capacity'] | commas }} avail</td>
+            </tr>
+        </table>
+        {% endif %}
     </div>
 </div>
 <script type="application/json" id="province-demographics-data">{{ {
