@@ -61,6 +61,7 @@
             <span class="material-icons-outlined">gavel</span> Submit Global Proposal
         </h2>
         <form action="/assembly/propose" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label>Proposal Type</label>
                 <select name="type" class="form-control" id="proposal-type" required onchange="toggleFields()">

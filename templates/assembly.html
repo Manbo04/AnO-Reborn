@@ -238,6 +238,7 @@
                             <p style="margin-bottom: 15px;">{{ prop.text }}</p>
                             
                             <form action="/assembly/vote/{{ prop.id }}" method="post" style="display: flex; gap: 10px;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button name="vote" value="for" type="submit" class="submit-vote-btn" style="margin-top:0; padding:8px; font-size:1rem; background: #10b981;">For</button>
                                 <button name="vote" value="against" type="submit" class="submit-vote-btn" style="margin-top:0; padding:8px; font-size:1rem; background: #ef4444;">Against</button>
                                 <button name="vote" value="abstain" type="submit" class="submit-vote-btn" style="margin-top:0; padding:8px; font-size:1rem; background: #64748b;">Abstain</button>
@@ -294,6 +295,7 @@
                 </h2>
                 
                 <form action="/assembly" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="vote-options">
                         {% set options = ["Terra", "Aethelgard", "Nova Pangaea", "Gaia", "Eos"] %}
                         {% for opt in options %}

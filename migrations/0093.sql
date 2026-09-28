@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS assembly_effects (
     target_nation_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     target_currency_id INTEGER,
     effect_type VARCHAR(32) NOT NULL, -- 'sanction', 'currency_cap'
+    currency_cap_amount BIGINT,
     active BOOLEAN NOT NULL DEFAULT TRUE,
     expires_at TIMESTAMP WITHOUT TIME ZONE
 );

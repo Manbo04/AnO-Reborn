@@ -114,7 +114,12 @@ def buy_market_offer(offer_id):
         if is_embargoed(db, seller_id, cId):
             return error(403, "This nation has embargoed you and will not sell to you.")
 
-        db.execute("SELECT 1 FROM assembly_effects WHERE target_nation_id IN (%s, %s) AND effect_type = 'sanction' AND active = TRUE", (seller_id, cId))
+        db.execute(
+            "SELECT 1 FROM assembly_effects WHERE target_nation_id IN (%s, %s)"
+            " AND effect_type = 'sanction' AND active = TRUE"
+            " AND (expires_at IS NULL OR expires_at > NOW())",
+            (seller_id, cId),
+        )
         if db.fetchone():
             return error(403, "Trade blocked by active World Assembly sanctions on one of the nations.")
 
@@ -212,7 +217,12 @@ def sell_market_offer(offer_id):
         if is_embargoed(db, buyer_id, seller_id):
             return error(403, "This nation has embargoed you and will not buy from you.")
 
-        db.execute("SELECT 1 FROM assembly_effects WHERE target_nation_id IN (%s, %s) AND effect_type = 'sanction' AND active = TRUE", (buyer_id, seller_id))
+        db.execute(
+            "SELECT 1 FROM assembly_effects WHERE target_nation_id IN (%s, %s)"
+            " AND effect_type = 'sanction' AND active = TRUE"
+            " AND (expires_at IS NULL OR expires_at > NOW())",
+            (buyer_id, seller_id),
+        )
         if db.fetchone():
             return error(403, "Trade blocked by active World Assembly sanctions on one of the nations.")
 
@@ -309,7 +319,12 @@ def post_offer(offer_type):
         if price < 1:
             return error(400, "Price must be greater than 0")
 
-        db.execute("SELECT 1 FROM assembly_effects WHERE target_nation_id = %s AND effect_type = 'sanction' AND active = TRUE", (cId,))
+        db.execute(
+            "SELECT 1 FROM assembly_effects WHERE target_nation_id = %s"
+            " AND effect_type = 'sanction' AND active = TRUE"
+            " AND (expires_at IS NULL OR expires_at > NOW())",
+            (cId,),
+        )
         if db.fetchone():
             return error(403, "You cannot post market offers while under World Assembly sanctions.")
 

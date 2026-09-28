@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, session, flash
-from helpers import login_required, empty_state, is_theme_v2_enabled
+from helpers import login_required, empty_state, is_theme_v2_enabled, get_influence
 from database import get_request_cursor
+from psycopg2.extras import RealDictCursor
 from app_core.coalitions.repositories import _coalition_id_for_user
 
 bp = Blueprint('game_engine_bp', __name__)
@@ -34,45 +35,35 @@ def country_redirect():
 def assembly():
     user_id = session.get("user_id")
     poll_name = "world_name"
-    
-    with get_request_cursor() as db:
-        # Legacy poll fallback just in case
-        db.execute('''CREATE TABLE IF NOT EXISTS poll_votes (
-            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-            poll_name TEXT NOT NULL,
-            vote_option TEXT NOT NULL,
-            PRIMARY KEY (user_id, poll_name)
-        )''')
-        
+
+    with get_request_cursor(cursor_factory=RealDictCursor) as db:
         if request.method == "POST":
             vote_option = request.form.get("vote_option")
             if vote_option in ["Terra", "Aethelgard", "Nova Pangaea", "Gaia", "Eos"]:
                 try:
                     db.execute('''INSERT INTO poll_votes (user_id, poll_name, vote_option) VALUES (%s, %s, %s)
-                                  ON CONFLICT (user_id, poll_name) DO UPDATE SET vote_option = EXCLUDED.vote_option''', 
+                                  ON CONFLICT (user_id, poll_name) DO UPDATE SET vote_option = EXCLUDED.vote_option''',
                                (user_id, poll_name, vote_option))
                     flash("Your vote has been cast!", "success")
                 except Exception:
                     db.execute("ROLLBACK")
                     flash("Failed to cast vote.", "danger")
-            else: flash("Invalid option.", "danger")
+            else:
+                flash("Invalid option.", "danger")
             return redirect("/assembly")
 
         db.execute("SELECT vote_option, COUNT(*) as vote_count FROM poll_votes WHERE poll_name = %s GROUP BY vote_option", (poll_name,))
         rows = db.fetchall()
-        results = {}
-        for r in rows:
-            if isinstance(r, dict) or hasattr(r, 'keys'): results[r['vote_option']] = r['vote_count']
-            else: results[r[0]] = r[1]
+        results = {r['vote_option']: r['vote_count'] for r in rows}
 
         db.execute("SELECT vote_option FROM poll_votes WHERE user_id = %s AND poll_name = %s", (user_id, poll_name))
         row = db.fetchone()
-        user_vote = (row['vote_option'] if (isinstance(row, dict) or hasattr(row, 'keys')) else row[0]) if row else None
+        user_vote = row['vote_option'] if row else None
 
         # --- Assembly Data ---
         # Fetch active sanctions/effects
         db.execute('''
-            SELECT ae.*, u.name as target_name 
+            SELECT ae.*, u.name as target_name
             FROM assembly_effects ae
             LEFT JOIN users u ON ae.target_nation_id = u.id
             WHERE ae.active = TRUE AND (ae.expires_at IS NULL OR ae.expires_at > NOW())
@@ -81,7 +72,7 @@ def assembly():
 
         # Fetch open proposals
         db.execute('''
-            SELECT ap.*, 
+            SELECT ap.*,
                    COALESCE(SUM(CASE WHEN av.vote = 'for' THEN av.weight ELSE 0 END), 0) as votes_for,
                    COALESCE(SUM(CASE WHEN av.vote = 'against' THEN av.weight ELSE 0 END), 0) as votes_against,
                    COALESCE(SUM(CASE WHEN av.vote = 'abstain' THEN av.weight ELSE 0 END), 0) as votes_abstain,
@@ -96,7 +87,7 @@ def assembly():
 
         # Fetch closed proposals
         db.execute('''
-            SELECT ap.*, 
+            SELECT ap.*,
                    COALESCE(SUM(CASE WHEN av.vote = 'for' THEN av.weight ELSE 0 END), 0) as votes_for,
                    COALESCE(SUM(CASE WHEN av.vote = 'against' THEN av.weight ELSE 0 END), 0) as votes_against
             FROM assembly_proposals ap
@@ -117,12 +108,18 @@ def assembly_propose():
     if request.method == "GET":
         return render_template("assembly_propose.html")
 
-    p_type = request.form.get("type")
+    _VALID_TYPES = {'sanction', 'condemn', 'lift_sanction', 'currency_cap', 'free_text'}
+
+    p_type = request.form.get("type", "")
+    if p_type not in _VALID_TYPES:
+        flash("Invalid proposal type.", "danger")
+        return redirect("/assembly/propose")
+
     target_nation_id = request.form.get("target_nation_id")
     target_currency_id = request.form.get("target_currency_id")
     currency_cap_amount = request.form.get("currency_cap_amount")
-    text = request.form.get("text", "").strip()
-    
+    text = request.form.get("text", "").strip()[:2000]
+
     if not text:
         flash("Proposal text is required.", "danger")
         return redirect("/assembly/propose")
@@ -131,67 +128,79 @@ def assembly_propose():
     target_currency_id = int(target_currency_id) if target_currency_id and target_currency_id.isdigit() else None
     currency_cap_amount = int(currency_cap_amount) if currency_cap_amount and currency_cap_amount.isdigit() else None
 
-    if p_type in ['sanction', 'condemn', 'lift_sanction'] and not target_nation_id:
+    if p_type in ('sanction', 'condemn', 'lift_sanction') and not target_nation_id:
         flash("Target nation ID is required for this proposal type.", "danger")
         return redirect("/assembly/propose")
-        
-    if p_type == 'currency_cap' and (not target_currency_id or not currency_cap_amount):
-        flash("Target currency ID and cap amount are required.", "danger")
+
+    if p_type == 'currency_cap':
+        if not target_currency_id or not currency_cap_amount or currency_cap_amount <= 0:
+            flash("Target currency ID and a positive cap amount are required.", "danger")
+            return redirect("/assembly/propose")
+        target_nation_id = target_currency_id
+
+    # Proposer cannot target themselves
+    if target_nation_id and target_nation_id == user_id:
+        flash("You cannot target your own nation.", "danger")
         return redirect("/assembly/propose")
 
     with get_request_cursor() as db:
+        # Verify target nation exists
+        if target_nation_id:
+            db.execute("SELECT 1 FROM users WHERE id = %s", (target_nation_id,))
+            if not db.fetchone():
+                flash("Target nation does not exist.", "danger")
+                return redirect("/assembly/propose")
+
         # Check eligibility: 5 provinces minimum
         db.execute("SELECT COUNT(*) FROM provinces WHERE userId = %s", (user_id,))
         prov_count = db.fetchone()[0]
         if prov_count < 5:
             flash("Your nation must have at least 5 provinces to submit a proposal.", "danger")
             return redirect("/assembly")
-            
+
         # Check max 1 open proposal per nation
         db.execute("SELECT COUNT(*) FROM assembly_proposals WHERE proposer_id = %s AND status = 'open'", (user_id,))
         if db.fetchone()[0] > 0:
             flash("You already have an active proposal. Wait for it to conclude.", "danger")
             return redirect("/assembly")
-            
+
         # Insert proposal
         db.execute('''
             INSERT INTO assembly_proposals (proposer_id, type, target_nation_id, target_currency_id, currency_cap_amount, text, closes_at)
             VALUES (%s, %s, %s, %s, %s, %s, NOW() + INTERVAL '48 hours')
         ''', (user_id, p_type, target_nation_id, target_currency_id, currency_cap_amount, text))
-        
+
         flash("Proposal submitted successfully.", "success")
         return redirect("/assembly")
 
 @bp.route("/assembly/vote/<int:proposal_id>", methods=["POST"])
 @login_required
 def assembly_vote(proposal_id):
+    import math
     user_id = session.get("user_id")
     vote = request.form.get("vote")
-    
-    if vote not in ['for', 'against', 'abstain']:
+
+    if vote not in ('for', 'against', 'abstain'):
         flash("Invalid vote option.", "danger")
         return redirect("/assembly")
-        
-    with get_request_cursor() as db:
-        # Get proposal
+
+    with get_request_cursor(cursor_factory=RealDictCursor) as db:
+        # Get proposal — use RealDictCursor so prop['status'] and prop['target_nation_id'] work
         db.execute("SELECT proposer_id, target_nation_id, status FROM assembly_proposals WHERE id = %s", (proposal_id,))
         prop = db.fetchone()
-        
+
         if not prop or prop['status'] != 'open':
             flash("Proposal not found or closed.", "danger")
             return redirect("/assembly")
-            
+
         if prop['target_nation_id'] == user_id:
             flash("You cannot vote on proposals directly targeting your nation.", "danger")
             return redirect("/assembly")
-            
-        # Calculate vote weight based on influence
-        db.execute("SELECT influence FROM users WHERE id = %s", (user_id,))
-        user_row = db.fetchone()
-        influence = user_row['influence'] if user_row and user_row['influence'] else 0
-        import math
+
+        # Calculate vote weight using computed influence (users.influence does not exist)
+        influence = get_influence(user_id, db=db) or 0
         weight = max(1.0, math.sqrt(influence))
-        
+
         try:
             db.execute('''
                 INSERT INTO assembly_votes (proposal_id, voter_id, vote, weight)
@@ -202,7 +211,7 @@ def assembly_vote(proposal_id):
         except Exception:
             db.execute("ROLLBACK")
             flash("Failed to record vote.", "danger")
-            
+
     return redirect("/assembly")
 
 
