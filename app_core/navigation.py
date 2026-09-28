@@ -52,6 +52,12 @@ NAV_SECTIONS: list[dict[str, Any]] = [
                     ("Loans", "account_balance_wallet", "/loans", ("/loans",)),
                     ("Bonds", "request_quote", "/bonds", ("/bonds",)),
                     (
+                        "Currency Market",
+                        "swap_horiz",
+                        "/currency_market",
+                        ("/currency_market",),
+                    ),
+                    (
                         "Currency Unions",
                         "currency_exchange",
                         "/currency_unions",

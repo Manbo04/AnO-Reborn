@@ -8,17 +8,21 @@ from .repositories import (
     credit_currency,
     log_conversion,
     get_conversion_history,
+    get_user_currency_holdings,
 )
 
 
 def get_currency_status(db, user_id):
     """Returns a template-friendly dict describing the nation's central bank
-    state: current balances and the fixed rate everyone converts at."""
+    state: current balances, the fixed rate the issuer converts at, and any
+    other nations' currencies it holds (those can't be redeemed here -- only
+    their issuer can -- they're traded on /currency_market or spent)."""
     gold, currency = get_gold_and_currency(db, user_id)
     return {
         "gold": gold,
         "currency_balance": currency,
         "rate": variables.CURRENCY_GOLD_PER_UNIT,
+        "foreign_holdings": get_user_currency_holdings(db, user_id),
     }
 
 

@@ -24,6 +24,7 @@ from app_core.bonds import bp as bonds_bp
 from app_core.coalition_bank import bp as coalition_bank_bp
 from app_core.currency_unions import bp as currency_unions_bp
 from app_core.currency import bp as currency_bp
+from app_core.currency_market import bp as currency_market_bp
 from app_core.world_affairs import bp as world_affairs_bp
 from app_core.bounties import bp as bounties_bp
 from app_core.social_cards import bp as social_cards_bp
@@ -685,6 +686,7 @@ def create_app():
     app.register_blueprint(coalition_bank_bp)
     app.register_blueprint(currency_unions_bp)
     app.register_blueprint(currency_bp)
+    app.register_blueprint(currency_market_bp)
     app.register_blueprint(world_affairs_bp)
     app.register_blueprint(bounties_bp)
     app.register_blueprint(social_cards_bp)

@@ -107,7 +107,7 @@
                 <div class="game-market-card-body">
                     <span class="game-market-resource">{{ resource | replace('_', ' ') | title }}</span>
                     <span class="game-market-amount">{{ amount }}</span>
-                    <span class="game-market-price">${{ price }} / ${{ total_price }} total</span>
+                    <span class="game-market-price">{{ '' if offer_currency.get(offer_id) else '$' }}{{ price }} / {{ '' if offer_currency.get(offer_id) else '$' }}{{ total_price }} total{% if offer_currency.get(offer_id) %} <span class="game-badge">in {{ offer_currency[offer_id] }}</span>{% endif %}</span>
                 </div>
                 <form method="POST" class="game-market-card-form market-purchase-form">
                     <span class="market-input-wrap">
@@ -173,14 +173,14 @@
                         <div class="center fit">
                             <div class="left middle fit">
 
-                                <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource resourcesmall" />${{ price | commas }} Each
+                                <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource resourcesmall" />{{ '' if offer_currency.get(offer_id) else '$' }}{{ price | commas }} Each{% if offer_currency.get(offer_id) %} <span class="game-badge">in {{ offer_currency[offer_id] }}</span>{% endif %}
 
                             </div>
                         </div>
                         <div class="center fit">
                             <div class="left middle fit">
 
-                                <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource resourcesmall" /> ${{ total_price | commas }} Total
+                                <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource resourcesmall" /> {{ '' if offer_currency.get(offer_id) else '$' }}{{ total_price | commas }} Total
 
                             </div>
                         </div>

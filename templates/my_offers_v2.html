@@ -69,7 +69,7 @@
                         <div class="center fit">
                             <div class="left middle fit">
 
-                                <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource resourcesmall" />${{ price | commas }} Each
+                                <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource resourcesmall" />{{ '' if offer_currency.get(offer_id) else '$' }}{{ price | commas }} Each{% if offer_currency.get(offer_id) %} <span class="game-badge">in {{ offer_currency[offer_id] }}</span>{% endif %}
 
                             </div>
                         </div>
@@ -156,7 +156,7 @@
                         <div class="center fit">
                             <div class="left middle fit">
 
-                                <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource resourcesmall" />${{ price | commas }} Each
+                                <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource resourcesmall" />{{ '' if trade_currency.get(offer_id) else '$' }}{{ price | commas }} Each{% if trade_currency.get(offer_id) %} <span class="game-badge">in {{ trade_currency[offer_id] }}</span>{% endif %}
 
                             </div>
                         </div>
@@ -246,7 +246,7 @@
                         <div class="center fit">
                             <div class="left middle fit">
 
-                                <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource resourcesmall" />${{ price | commas }} Each
+                                <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource resourcesmall" />{{ '' if trade_currency.get(offer_id) else '$' }}{{ price | commas }} Each{% if trade_currency.get(offer_id) %} <span class="game-badge">in {{ trade_currency[offer_id] }}</span>{% endif %}
 
                             </div>
                         </div>

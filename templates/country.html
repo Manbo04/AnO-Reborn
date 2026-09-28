@@ -2367,6 +2367,13 @@
                         <input class="loginsignupinput" autocomplete="off" name="price" placeholder="Price for one" required/>
 
                     </div>
+                    <div class="templatedivflex2left flexchildvanilla ">
+                        <select name="currency_id" class="templateselect" aria-label="Paid in">
+                            <option value="" selected>Paid in gold</option>
+                            {% if session.get('user_id') %}<option value="{{ session.get('user_id') }}">Paid in your currency</option>{% endif %}
+                            <option value="{{ cId }}">Paid in their currency</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="templatedivflex2 divflex2center ">

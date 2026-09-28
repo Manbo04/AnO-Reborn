@@ -10,10 +10,14 @@ from .repositories import (
     insert_offer, insert_trade, get_my_trades, get_my_offers, delete_trade, try_lock_trade,
     unlock_trade, get_trade_by_id, get_username, insert_news, delete_trade_by_id, user_exists,
     decrement_gold, increment_gold, is_embargoed, add_embargo, remove_embargo, list_embargoes,
-    get_user_gold, get_user_resource_quantities
+    get_user_gold, get_user_resource_quantities, get_my_currency_ids
 )
 from .fees import trade_fee, trade_fee_percent, union_partner_ids, max_affordable_amount
 from .services import give_resource, report_trade_error
+from .currency_pricing import (
+    parse_currency_choice, currency_balances, get_currency_labels, get_currency_balance,
+)
+from app_core.currency.repositories import take_currency, give_currency
 from app_core.world_affairs.services import log_event
 
 market_bp = Blueprint("market_bp", __name__)
@@ -57,12 +61,16 @@ def market():
         my_gold = get_user_gold(db, cId) or 0
         my_resources = get_user_resource_quantities(db, cId)
         union_partners = union_partner_ids(db, cId)
+        # Offers priced in a nation currency (migration 0091) instead of gold.
+        offer_currency = {row[5]: row[7] for row in offers_data if row[7]}
+        currency_labels = get_currency_labels(db, offer_currency.values())
+        my_currency = currency_balances(db, cId) if offer_currency else {}
 
         offers = []
         max_take = {}
         fee_percent = {}
         for row in offers_data:
-            user_id, offer_type_val, resource, amount, price, offer_id, username = row
+            user_id, offer_type_val, resource, amount, price, offer_id, username, currency_id = row
             offers.append((user_id, offer_type_val, username, resource, amount, price, offer_id, price * amount))
             pct = (
                 variables.UNION_TRADE_FEE_PERCENT
@@ -71,7 +79,8 @@ def market():
             )
             fee_percent[offer_id] = pct
             if offer_type_val == "sell":
-                max_take[offer_id] = min(amount, max_affordable_amount(my_gold, price, pct))
+                funds = my_currency.get(currency_id, 0) if currency_id else my_gold
+                max_take[offer_id] = min(amount, max_affordable_amount(funds, price, pct))
             else:
                 max_take[offer_id] = min(amount, my_resources.get(resource, 0))
 
@@ -81,6 +90,7 @@ def market():
             offers=offers,
             max_take=max_take,
             fee_percent=fee_percent,
+            offer_currency={oid: currency_labels.get(iid, "currency") for oid, iid in offer_currency.items()},
             price_type=price_type,
             cId=cId,
             current_page=page,
@@ -109,7 +119,11 @@ def buy_market_offer(offer_id):
         row = get_offer_by_id(db, offer_id)
         if not row:
             return error(400, "Offer not found")
-        resource, total_amount, price_for_one, seller_id = row
+        resource, total_amount, price_for_one, seller_id, offer_type, currency_id = row
+        # Only a sell offer's resource is escrowed at the bank. Buying
+        # "from" a buy offer used to hand out bank resources nobody had put up.
+        if offer_type != "sell":
+            return error(400, "That is a buy offer; use Sell to fill it.")
 
         if is_embargoed(db, seller_id, cId):
             return error(403, "This nation has embargoed you and will not sell to you.")
@@ -134,7 +148,12 @@ def buy_market_offer(offer_id):
         market_fee = trade_fee(total_price, trade_fee_percent(db, cId, seller_id))
         total_cost_to_buyer = total_price + market_fee
 
-        if total_cost_to_buyer > buyers_gold:
+        if currency_id:
+            # Priced in a nation currency: price + fee come out of the
+            # buyer's holding of it; the fee is burned in that currency.
+            if total_cost_to_buyer > get_currency_balance(db, cId, currency_id):
+                return error(400, "You don't have enough of the currency this offer is priced in.")
+        elif total_cost_to_buyer > buyers_gold:
             return error(400, "You don't have enough money.")
 
         res = give_resource("bank", cId, resource, amount_wanted, cursor=db)
@@ -143,13 +162,20 @@ def buy_market_offer(offer_id):
             report_trade_error(f"buy_market_offer: give_resource(bank -> buyer) failed: {res}")
             return error(400, str(res))
 
-        res = give_resource(cId, seller_id, "money", total_price, cursor=db)
+        if currency_id:
+            if not take_currency(db, cId, currency_id, total_cost_to_buyer):
+                rollback_db_cursor(db)
+                return error(400, "You don't have enough of the currency this offer is priced in.")
+            give_currency(db, seller_id, currency_id, total_price)
+            res = True
+        else:
+            res = give_resource(cId, seller_id, "money", total_price, cursor=db)
         if res is not True:
             rollback_db_cursor(db)
             report_trade_error(f"buy_market_offer: give_resource(buyer -> seller money) failed: {res}")
             return error(400, str(res))
 
-        if market_fee > 0:
+        if market_fee > 0 and not currency_id:
             res = give_resource(cId, "bank", "money", market_fee, cursor=db)
             if res is not True:
                 rollback_db_cursor(db)
@@ -203,7 +229,11 @@ def sell_market_offer(offer_id):
         row = get_offer_by_id(db, offer_id)
         if not row:
             return error(400, "Offer not found")
-        resource, total_amount, price_for_one, buyer_id = row
+        resource, total_amount, price_for_one, buyer_id, offer_type, currency_id = row
+        # Only a buy offer's payment is escrowed at the bank. Selling "into"
+        # a sell offer used to pay the seller bank gold nobody had put up.
+        if offer_type != "buy":
+            return error(400, "That is a sell offer; use Buy to fill it.")
 
         if is_embargoed(db, buyer_id, seller_id):
             return error(403, "This nation has embargoed you and will not buy from you.")
@@ -239,7 +269,13 @@ def sell_market_offer(offer_id):
             report_trade_error(f"sell_market_offer: give_resource(seller -> buyer) failed: {res}")
             return error(400, str(res))
 
-        res = give_resource("bank", seller_id, "money", seller_proceeds, cursor=db)
+        if currency_id:
+            # The buy offer escrowed amount*price of this currency; the
+            # seller gets it minus the fee, the fee stays burned.
+            give_currency(db, seller_id, currency_id, seller_proceeds)
+            res = True
+        else:
+            res = give_resource("bank", seller_id, "money", seller_proceeds, cursor=db)
         if res is not True:
             rollback_db_cursor(db)
             report_trade_error(f"sell_market_offer: give_resource(bank -> seller money) failed: {res}")
@@ -274,8 +310,16 @@ def sell_market_offer(offer_id):
 @market_bp.route("/marketoffer/", methods=["GET", "POST"])
 @login_required
 def marketoffer():
+    from app_core.currency_market.repositories import list_known_currencies
+    from app_core.currency.repositories import currency_label
+
+    with get_request_cursor(read_only=True) as db:
+        currencies = [
+            (issuer_id, currency_label(cname, uname), uname)
+            for issuer_id, uname, cname in list_known_currencies(db, session["user_id"])
+        ]
     template = "marketoffer_v2.html" if is_theme_v2_enabled("marketoffer") else "marketoffer.html"
-    return render_template(template)
+    return render_template(template, currencies=currencies)
 
 @market_bp.route("/post_offer/<offer_type>", methods=["POST"])
 @login_required
@@ -301,6 +345,10 @@ def post_offer(offer_type):
         if price < 1:
             return error(400, "Price must be greater than 0")
 
+        currency_id, cur_err = parse_currency_choice(db, request.form.get("currency_id"))
+        if cur_err:
+            return error(400, cur_err)
+
         if offer_type == "sell":
             realAmount = get_user_resource_quantity(db, cId, resource)
             if realAmount is None:
@@ -314,7 +362,14 @@ def post_offer(offer_type):
                 rollback_db_cursor(db)
                 return error(400, str(res))
 
-            insert_offer(db, cId, offer_type, resource, amount, price)
+            insert_offer(db, cId, offer_type, resource, amount, price, currency_id)
+
+        elif offer_type == "buy" and currency_id:
+            # Escrow the offer's value in the chosen currency.
+            lock_users(db, [cId])
+            if not take_currency(db, cId, currency_id, int(amount) * int(price)):
+                return error(400, "You don't hold enough of that currency to back this offer.")
+            insert_offer(db, cId, offer_type, resource, amount, price, currency_id)
 
         elif offer_type == "buy":
             money_to_take_away = int(amount) * int(price)
@@ -347,9 +402,15 @@ def my_offers():
         offers["incoming"] = incoming
         offers["market"] = get_my_offers(db, cId)
         embargoes = list_embargoes(db, cId)
+        offer_cur, trade_cur = get_my_currency_ids(db, cId)
+        labels = get_currency_labels(db, list(offer_cur.values()) + list(trade_cur.values()))
 
     template = "my_offers_v2.html" if is_theme_v2_enabled("my_offers") else "my_offers.html"
-    return render_template(template, cId=cId, offers=offers, embargoes=embargoes)
+    return render_template(
+        template, cId=cId, offers=offers, embargoes=embargoes,
+        offer_currency={k: labels.get(v, "currency") for k, v in offer_cur.items()},
+        trade_currency={k: labels.get(v, "currency") for k, v in trade_cur.items()},
+    )
 
 @market_bp.route("/delete_offer/<offer_id>", methods=["POST"])
 @login_required
@@ -360,9 +421,11 @@ def delete_offer_endpoint(offer_id):
         if not deleted_row:
             return error(400, "Offer not found or already processed")
 
-        offer_type, amount, price, resource = deleted_row
+        offer_type, amount, price, resource, currency_id = deleted_row
 
-        if offer_type == "buy":
+        if offer_type == "buy" and currency_id:
+            give_currency(db, cId, currency_id, price * amount)
+        elif offer_type == "buy":
             give_resource("bank", cId, "money", price * amount, cursor=db)
         elif offer_type == "sell":
             give_resource("bank", cId, resource, amount, cursor=db)
@@ -398,6 +461,10 @@ def post_trade_offer(offer_type, offeree_id):
         if offeree_id == str(cId):
             return error(400, "You cannot send a direct trade to yourself!")
 
+        currency_id, cur_err = parse_currency_choice(db, request.form.get("currency_id"))
+        if cur_err:
+            return error(400, cur_err)
+
         if offer_type == "sell":
             realAmount = get_user_resource_quantity(db, cId, resource)
             if realAmount is None:
@@ -411,7 +478,13 @@ def post_trade_offer(offer_type, offeree_id):
                 report_trade_error(f"trade_offer: escrow reserve failed: {res}")
                 return error(400, str(res))
 
-            insert_trade(db, cId, offer_type, resource, amount, price, offeree_id)
+            insert_trade(db, cId, offer_type, resource, amount, price, offeree_id, currency_id)
+
+        elif offer_type == "buy" and currency_id:
+            lock_users(db, [cId])
+            if not take_currency(db, cId, currency_id, amount * price):
+                return error(400, "You don't hold enough of that currency to back this offer.")
+            insert_trade(db, cId, offer_type, resource, amount, price, offeree_id, currency_id)
 
         elif offer_type == "buy":
             # Escrow first, insert last: every error() below still ends in a
@@ -449,13 +522,15 @@ def decline_trade_endpoint(trade_id):
         if not deleted_row:
             return error(400, "Trade not found or already processed")
             
-        trade_type, resource, amount, price, offerer = deleted_row
+        trade_type, resource, amount, price, offerer, currency_id = deleted_row
 
         if trade_type == "sell":
             try:
                 give_resource("bank", offerer, resource, amount, cursor=db)
             except Exception:
                 rollback_db_cursor(db)
+        elif trade_type == "buy" and currency_id:
+            give_currency(db, offerer, currency_id, amount * price)
         elif trade_type == "buy":
             try:
                 give_resource("bank", offerer, "money", amount * price, cursor=db)
@@ -488,7 +563,7 @@ def accept_trade(trade_id):
             row = get_trade_by_id(db, trade_id)
             if not row:
                 return error(400, "Trade not found")
-            offeree, trade_type, offerer, resource, amount, price = row
+            offeree, trade_type, offerer, resource, amount, price, currency_id = row
 
             if offeree != cId:
                 return error(400, "You can't accept that offer")
@@ -504,25 +579,45 @@ def accept_trade(trade_id):
             trade_total = amount * price
             accept_fee = trade_fee(trade_total, trade_fee_percent(db, offeree, offerer))
 
-            if trade_type == "sell":
+            if trade_type == "sell" and currency_id:
+                # Priced in a nation currency: the accepting buyer pays price
+                # + fee in it; the fee is burned. Checked before anything moves.
+                if get_currency_balance(db, offeree, currency_id) < trade_total + accept_fee:
+                    return error(400, "You don't have enough of the currency this trade is priced in")
+                gr_ret = give_resource("bank", offeree, resource, amount, cursor=db)
+                if gr_ret is not True:
+                    rollback_db_cursor(db)
+                    return error(400, gr_ret or "Trade acceptance failed")
+                if not take_currency(db, offeree, currency_id, trade_total + accept_fee):
+                    rollback_db_cursor(db)
+                    return error(400, "You don't have enough of the currency this trade is priced in")
+                give_currency(db, offerer, currency_id, trade_total)
+
+            elif trade_type == "buy" and currency_id:
+                # The offerer escrowed trade_total of the currency; the
+                # accepting seller gets it minus the fee.
+                gr_ret = give_resource(offeree, offerer, resource, amount, cursor=db)
+                if gr_ret is not True:
+                    return error(400, gr_ret or "Trade acceptance failed")
+                give_currency(db, offeree, currency_id, trade_total - accept_fee)
+
+            elif trade_type == "sell":
                 buyer_gold = get_user_gold_for_update(db, offeree)
                 if buyer_gold is None or buyer_gold < (trade_total + accept_fee):
                     return error(400, "Buyer doesn't have enough money")
 
+                # post_trade_offer escrows a sell trade's resource at the bank
+                # (since e59c853c, Feb 2026), so it's delivered from there.
+                # This used to try offerer -> offeree first, which took the
+                # resource from the seller a second time whenever they still
+                # had that much left, leaving the escrow stranded.
                 try:
-                    gr_ret = give_resource(offerer, offeree, resource, amount, cursor=db)
+                    gr_ret = give_resource("bank", offeree, resource, amount, cursor=db)
                 except Exception as exc:
                     report_trade_error("accept_trade: give_resource raised exception during sell", exc=exc)
                     return error(400, "Trade acceptance failed")
-
                 if gr_ret is not True:
-                    try:
-                        gr_ret2 = give_resource("bank", offeree, resource, amount, cursor=db)
-                    except Exception as exc:
-                        report_trade_error("accept_trade: fallback give_resource raised exception", exc=exc)
-                        return error(400, "Trade acceptance failed")
-                    if gr_ret2 is not True:
-                        return error(400, gr_ret or (gr_ret2 or "Trade acceptance failed"))
+                    return error(400, gr_ret or "Trade acceptance failed")
 
                 try:
                     if not decrement_gold(db, offeree, trade_total + accept_fee):

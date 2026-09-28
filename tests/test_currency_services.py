@@ -80,11 +80,14 @@ def test_log_conversion_records_direction_and_rate():
 
 def test_get_currency_status_reports_fixed_rate(monkeypatch):
     monkeypatch.setattr(services, "get_gold_and_currency", lambda db, uid: (1000.0, 20.0))
+    holdings = [{"issuer_id": 7, "amount": 3.5, "issuer_name": "X", "currency_name": "Xmark"}]
+    monkeypatch.setattr(services, "get_user_currency_holdings", lambda db, uid: holdings)
     status = services.get_currency_status(None, 1)
     assert status == {
         "gold": 1000.0,
         "currency_balance": 20.0,
         "rate": variables.CURRENCY_GOLD_PER_UNIT,
+        "foreign_holdings": holdings,
     }
 
 

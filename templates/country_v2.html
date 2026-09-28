@@ -740,6 +740,21 @@
                         <button type="submit" class="game-btn game-btn-secondary">Redeem to Gold</button>
                     </form>
                 </div>
+                {% if currency_status.foreign_holdings %}
+                <h3 class="templatecontentheaderleft" style="margin: 18px 0 8px; font-size: 1.05em;"><span class="material-icons-outlined">language</span>Other nations' currencies</h3>
+                <div class="stat-grid">
+                    {% for holding in currency_status.foreign_holdings %}
+                    <div class="templatedivflex2left stat-card">
+                        <strong class="stat-label">{{ holding.currency_name }} <small class="font-normal-sub">({{ holding.issuer_name }})</small></strong>
+                        <span class="stat-value">{{ holding.amount | fmt }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                <p class="templatecontentpleft" style="margin-top: 8px; font-size: 13px;">Only the issuing nation can redeem its currency for gold. Trade these on the currency market or spend them on resource offers priced in them.</p>
+                {% endif %}
+                <div class="game-row" style="margin-top: 14px;">
+                    <a href="/currency_market" class="game-btn game-btn-secondary"><span class="material-icons-outlined">currency_exchange</span>Currency Market</a>
+                </div>
             </div>
             {% endif %}
 
@@ -2875,6 +2890,13 @@
 
                         <input class="loginsignupinput" autocomplete="off" name="price" placeholder="Price for one" required/>
 
+                    </div>
+                    <div class="templatedivflex2left flexchildvanilla ">
+                        <select name="currency_id" class="templateselect" aria-label="Paid in">
+                            <option value="" selected>Paid in gold</option>
+                            {% if session.get('user_id') %}<option value="{{ session.get('user_id') }}">Paid in your currency</option>{% endif %}
+                            <option value="{{ cId }}">Paid in their currency</option>
+                        </select>
                     </div>
                 </div>
 

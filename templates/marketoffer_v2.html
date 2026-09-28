@@ -54,6 +54,16 @@
             </div>
             <div class="templatedivflex2 divflex2center">
                 <div class="templatedivflex2left">
+                    <select name="currency_id" class="templateselect" aria-label="Paid in">
+                        <option value="" selected>Paid in gold</option>
+                        {% for issuer_id, label, owner in currencies %}
+                        <option value="{{ issuer_id }}">Paid in {{ label }} ({{ owner }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="templatedivflex2 divflex2center">
+                <div class="templatedivflex2left">
 
                     <button type="submit" formaction="/post_offer/buy" class="game-btn game-btn-primary templatecenteredbutton"><span class="material-icons-outlined">
                     payments

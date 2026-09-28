@@ -137,7 +137,7 @@ def get_offers(db, filter_resource, offer_type, price_type, limit, offset):
 
     query = f"""
         SELECT o.user_id, o.type, o.resource, o.amount, o.price,
-               o.offer_id, u.username
+               o.offer_id, u.username, o.currency_id
         FROM offers o
         INNER JOIN users u ON o.user_id = u.id
         {where_clause}
@@ -149,7 +149,7 @@ def get_offers(db, filter_resource, offer_type, price_type, limit, offset):
 
 def get_offer_by_id(db, offer_id):
     db.execute(
-        "SELECT resource, amount, price, user_id FROM offers WHERE offer_id=%s FOR UPDATE",
+        "SELECT resource, amount, price, user_id, type, currency_id FROM offers WHERE offer_id=%s FOR UPDATE",
         (offer_id,),
     )
     return db.fetchone()
@@ -157,7 +157,7 @@ def get_offer_by_id(db, offer_id):
 def delete_offer(db, offer_id, user_id=None):
     if user_id:
         db.execute(
-            "DELETE FROM offers WHERE offer_id=%s AND user_id=%s RETURNING type, amount, price, resource",
+            "DELETE FROM offers WHERE offer_id=%s AND user_id=%s RETURNING type, amount, price, resource, currency_id",
             (offer_id, user_id)
         )
         return db.fetchone()
@@ -199,23 +199,23 @@ def get_user_gold(db, user_id):
     row = db.fetchone()
     return int(row[0] or 0) if row else None
 
-def insert_offer(db, user_id, type_, resource, amount, price):
+def insert_offer(db, user_id, type_, resource, amount, price, currency_id=None):
     db.execute(
         (
-            "INSERT INTO offers (user_id, type, resource, amount, price) "
-            "VALUES (%s, %s, %s, %s, %s)"
+            "INSERT INTO offers (user_id, type, resource, amount, price, currency_id) "
+            "VALUES (%s, %s, %s, %s, %s, %s)"
         ),
-        (user_id, type_, resource, int(amount), int(price)),
+        (user_id, type_, resource, int(amount), int(price), currency_id),
     )
 
-def insert_trade(db, offerer, type_, resource, amount, price, offeree):
+def insert_trade(db, offerer, type_, resource, amount, price, offeree, currency_id=None):
     db.execute(
         (
             "INSERT INTO trades (offerer, type, resource, amount, price, "
-            "offeree) "
-            "VALUES (%s, %s, %s, %s, %s, %s)"
+            "offeree, currency_id) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s)"
         ),
-        (offerer, type_, resource, amount, price, offeree),
+        (offerer, type_, resource, amount, price, offeree, currency_id),
     )
 
 def get_my_trades(db, user_id):
@@ -252,9 +252,27 @@ def get_my_offers(db, user_id):
     )
     return db.fetchall()
 
+def get_my_currency_ids(db, user_id):
+    """Which of the user's market offers / direct trades are priced in a
+    nation currency: ({offer_id: issuer_id}, {trade_id: issuer_id}).
+    Kept separate from get_my_offers/get_my_trades so the my_offers
+    templates' fixed-width tuple unpacking stays unchanged."""
+    db.execute(
+        "SELECT offer_id, currency_id FROM offers WHERE user_id=%s AND currency_id IS NOT NULL",
+        (user_id,),
+    )
+    offers = {r[0]: r[1] for r in db.fetchall()}
+    db.execute(
+        "SELECT offer_id, currency_id FROM trades "
+        "WHERE (offerer=%s OR offeree=%s) AND currency_id IS NOT NULL",
+        (user_id, user_id),
+    )
+    trades = {r[0]: r[1] for r in db.fetchall()}
+    return offers, trades
+
 def delete_trade(db, trade_id, user_id):
     db.execute(
-        "DELETE FROM trades WHERE offer_id=%s AND (offeree=%s OR offerer=%s) RETURNING type, resource, amount, price, offerer",
+        "DELETE FROM trades WHERE offer_id=%s AND (offeree=%s OR offerer=%s) RETURNING type, resource, amount, price, offerer, currency_id",
         (trade_id, user_id, user_id)
     )
     return db.fetchone()
@@ -291,7 +309,7 @@ def get_trade_by_id(db, trade_id):
     """
     db.execute(
         (
-            "SELECT offeree, type, offerer, resource, amount, price "
+            "SELECT offeree, type, offerer, resource, amount, price, currency_id "
             "FROM trades WHERE offer_id=%s FOR UPDATE"
         ),
         (trade_id,),

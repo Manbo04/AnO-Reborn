@@ -76,8 +76,8 @@
                 </div>
                 <div class="game-row" style="margin-top: 4px;">
                     <img alt="" class="game-icon-sm" src="{{ url_for('static', filename=game_asset_path('resources', 'gold')) }}?v=2" />
-                    <span>${{ price | commas }} Each</span>
-                    <span class="game-faint">${{ total_price | commas }} Total</span>
+                    <span>{{ '' if offer_currency.get(offer_id) else '$' }}{{ price | commas }} Each{% if offer_currency.get(offer_id) %} <span class="game-badge">in {{ offer_currency[offer_id] }}</span>{% endif %}</span>
+                    <span class="game-faint">{{ '' if offer_currency.get(offer_id) else '$' }}{{ total_price | commas }} Total</span>
                 </div>
                 <form method="POST" class="game-row market-purchase-form" style="margin-top: 10px;">
                     <span class="market-input-wrap game-row" style="gap: 6px;">
@@ -122,9 +122,9 @@
                         </td>
                         <td>
                             <div class="game-row" style="gap: 4px;">
-                                <img alt="" class="game-icon-sm" src="{{ url_for('static', filename=game_asset_path('resources', 'gold')) }}?v=2" />${{ price | commas }} Each
+                                <img alt="" class="game-icon-sm" src="{{ url_for('static', filename=game_asset_path('resources', 'gold')) }}?v=2" />{{ '' if offer_currency.get(offer_id) else '$' }}{{ price | commas }} Each{% if offer_currency.get(offer_id) %} <span class="game-badge">in {{ offer_currency[offer_id] }}</span>{% endif %}
                             </div>
-                            <div class="game-faint">${{ total_price | commas }} Total</div>
+                            <div class="game-faint">{{ '' if offer_currency.get(offer_id) else '$' }}{{ total_price | commas }} Total</div>
                         </td>
                         <td>
                             <form method="POST" class="game-row market-purchase-form">

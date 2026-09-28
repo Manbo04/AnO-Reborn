@@ -1,0 +1,157 @@
+{% extends "layout.html" %} {% block title %} Currency Market {% endblock %}{% block body_class %} page-currency-market game-page-v2{% endblock %} {% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+
+<style>
+    .page-currency-market .cm-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    @media (min-width: 700px) { .page-currency-market .cm-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); } }
+    .page-currency-market .cm-card { padding: 14px; }
+    .page-currency-market .cm-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .page-currency-market .cm-row input, .page-currency-market .cm-row select { flex: 1 1 120px; min-width: 0; min-height: 44px; }
+    .page-currency-market .cm-row .game-btn { min-height: 44px; }
+    .page-currency-market .cm-hist { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; font-size: 13px; }
+    .page-currency-market .cm-hist span { padding: 2px 8px; border-radius: var(--game-radius-sm, 8px); background: var(--foregroundTwo); border: 1px solid var(--border); }
+    .page-currency-market .cm-muted { color: var(--text-secondary); font-size: 13px; }
+</style>
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/market.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {% call game_hero('Currency Market', badge_icon='currency_exchange', subtitle='Buy and sell other nations\' currencies for gold.') %}
+        <a class="game-btn game-btn-secondary" href="/country/id={{ cId }}"><span class="material-icons-outlined">account_balance</span> Central Bank</a>
+    {% endcall %}
+
+    <div class="templatedivcontent">
+
+        <div class="game-glass game-panel" style="margin-bottom: 18px;">
+            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">help_outline</span> How it works</h2>
+            <ul class="templatecontentpleft" style="margin: 6px 0 0 18px; line-height: 1.6; text-align: left;">
+                <li>Every nation can mint its own currency at the Central Bank ({{ currency_status.rate }} gold = 1). <strong>Only the nation that issued a currency can turn it back into gold</strong> at that rate. Everyone else can trade it here or spend it on resource offers priced in it.</li>
+                <li>Posting an offer locks what you're offering right away: gold for a buy offer, the currency for a sell offer. Cancelling gives back whatever is left.</li>
+                <li>If a nation is behind on a defaulted bond, its currency can't trade above a price cap (4 gold per unit or lower, depending on how much it owes) until that debt is paid off.</li>
+            </ul>
+        </div>
+
+        <div class="game-glass game-panel" style="margin-bottom: 18px;">
+            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">account_balance_wallet</span> Your wallet</h2>
+            <div class="stat-grid">
+                <div class="templatedivflex2left stat-card">
+                    <strong class="stat-label"><span class="material-icons-outlined">payments</span>Gold</strong>
+                    <span class="stat-value">${{ currency_status.gold | fmt }}</span>
+                </div>
+                <div class="templatedivflex2left stat-card">
+                    <strong class="stat-label"><span class="material-icons-outlined">savings</span>Your own currency</strong>
+                    <span class="stat-value">{{ currency_status.currency_balance | fmt }}</span>
+                </div>
+                {% for h in currency_status.foreign_holdings %}
+                <div class="templatedivflex2left stat-card">
+                    <strong class="stat-label"><span class="material-icons-outlined">language</span>{{ h.currency_name }}</strong>
+                    <span class="stat-value">{{ h.amount | fmt }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="game-glass game-panel" style="margin-bottom: 18px;">
+            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">add</span> Post an offer</h2>
+            {% if currencies %}
+            <form action="/currency_market/offer" method="POST">
+                <input type="hidden" name="back_issuer" value="{{ issuer_filter or '' }}">
+                <div class="cm-row">
+                    <select name="issuer_id" class="game-select" required aria-label="Currency">
+                        {% for c in currencies %}
+                        <option value="{{ c.issuer_id }}" {% if issuer_filter == c.issuer_id %}selected{% endif %}>{{ c.label }} ({{ c.issuer_name }}){% if c.held %} · you hold {{ c.held | fmt }}{% endif %}{% if c.cap is not none %} · cap {{ c.cap }}{% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="cm-row" style="margin-top: 8px;">
+                    <input class="loginsignupinput" name="amount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Units" required>
+                    <input class="loginsignupinput" name="price" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Gold per unit" required>
+                </div>
+                <div class="cm-row" style="margin-top: 8px;">
+                    <button type="submit" name="type" value="buy" class="game-btn game-btn-primary"><span class="material-icons-outlined">shopping_cart</span>Buy offer</button>
+                    <button type="submit" name="type" value="sell" class="game-btn game-btn-secondary"><span class="material-icons-outlined">sell</span>Sell offer</button>
+                </div>
+            </form>
+            {% else %}
+            <p class="cm-muted">No currencies exist yet. Mint some of your own at the Central Bank to get started.</p>
+            {% endif %}
+        </div>
+
+        {% set traded = currencies | selectattr('last_price') | list %}
+        {% if traded %}
+        <div class="game-glass game-panel" style="margin-bottom: 18px;">
+            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">show_chart</span> Recent prices</h2>
+            <div class="cm-grid">
+                {% for c in traded %}
+                <div class="cm-card" style="border: 1px solid var(--border); border-radius: var(--game-radius-md, 12px);">
+                    <div class="game-spread">
+                        <a href="/currency_market?currency={{ c.issuer_id }}" style="color: var(--accent); font-weight: 700; text-decoration: none;">{{ c.label }}</a>
+                        {% if c.cap is not none %}<span class="game-badge game-badge-warn">Capped at {{ c.cap }}</span>{% endif %}
+                    </div>
+                    <div style="margin-top: 4px;">Last: <strong>{{ c.last_price }} gold</strong></div>
+                    <div class="cm-hist" aria-label="Recent trade prices, newest first">
+                        {% for price, amount, at in c.history %}<span title="{{ amount | fmt }} units, {{ at.strftime('%b %d %H:%M') }}">{{ price }}</span>{% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="game-glass game-panel" style="margin-bottom: 18px;">
+            <div class="game-spread">
+                <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">storefront</span> Open offers</h2>
+                {% if issuer_filter %}<a class="game-btn game-btn-ghost game-btn-sm" href="/currency_market">Show all</a>{% endif %}
+            </div>
+            {% if offers %}
+            <div class="cm-grid">
+                {% for o in offers %}
+                <div class="cm-card" style="border: 1px solid var(--border); border-radius: var(--game-radius-md, 12px);">
+                    <div class="game-spread">
+                        <a href="/country/id={{ o.user_id }}" style="color: var(--accent); font-weight: 700; text-decoration: none;">{{ o.username }}</a>
+                        <span class="game-badge {{ 'game-badge-good' if o.type == 'sell' else 'game-badge-warn' }}">{{ 'Selling' if o.type == 'sell' else 'Buying' }}</span>
+                    </div>
+                    <div style="margin-top: 6px;"><strong>{{ o.amount | fmt }}</strong> {{ o.label }}</div>
+                    <div class="cm-muted">{{ o.price_gold }} gold each</div>
+                    {% if o.cap_blocked %}
+                    <p class="cm-muted" style="margin: 8px 0 0;">Priced above this currency's default cap, so it can't be filled until it's repriced.</p>
+                    {% else %}
+                    <form action="/currency_market/accept/{{ o.offer_id }}" method="POST" class="cm-row" style="margin-top: 10px;">
+                        <input type="hidden" name="back_issuer" value="{{ issuer_filter or '' }}">
+                        <input class="loginsignupinput" name="amount" type="number" min="0.01" step="0.01" max="{{ o.amount }}" inputmode="decimal" placeholder="Units (max {{ o.amount }})" required>
+                        <button type="submit" class="game-btn game-btn-secondary">{{ 'Buy' if o.type == 'sell' else 'Sell' }}</button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="cm-muted">No open offers{% if issuer_filter %} for this currency{% endif %} right now.</p>
+            {% endif %}
+        </div>
+
+        {% if my_offers %}
+        <div class="game-glass game-panel" style="margin-bottom: 18px;">
+            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">list</span> Your offers</h2>
+            <div class="cm-grid">
+                {% for o in my_offers %}
+                <div class="cm-card" style="border: 1px solid var(--border); border-radius: var(--game-radius-md, 12px);">
+                    <div class="game-spread">
+                        <strong>{{ 'Buying' if o.type == 'buy' else 'Selling' }} {{ o.amount | fmt }} {{ o.label }}</strong>
+                    </div>
+                    <div class="cm-muted">{{ o.price_gold }} gold each{% if o.type == 'buy' %} · {{ o.gold_escrow | fmt }} gold locked{% endif %}</div>
+                    <form action="/currency_market/cancel/{{ o.offer_id }}" method="POST" style="margin-top: 8px;" onsubmit="return confirm('Cancel this offer? What is left will be refunded.')">
+                        <input type="hidden" name="back_issuer" value="{{ issuer_filter or '' }}">
+                        <button type="submit" class="game-btn game-btn-ghost game-btn-sm"><span class="material-icons-outlined">close</span>Cancel</button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
