@@ -1,1170 +1,149 @@
-{% extends "layout.html"%} {% block title %} Military {% endblock %}{% block body_class %} page-military game-page-v2{% endblock %} {% block body %}
-{% from 'macros/game_ui.html' import game_button, game_hero %}
+{% extends "layout.html" %} {% block title %} Military {% endblock %}{% block body_class %} page-military game-page-v2{% endblock %}
+{% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+
+{#- Every unit on the page, grouped by branch. `key` is the unit's real name
+    everywhere else (units/limits/mildict dicts, the POST field name and the
+    /military/<way>/<key> route), `img` its game_asset_path('units', ...) key.
+    Rebuilt 2026-09-28 from 16 hand-copied ~50-line blocks (with <form> tags
+    closing outside the divs they opened in) -- change a unit here, once. -#}
+{% set branches = [
+    {'id': 'land', 'tab': 'militaryland', 'label': 'Army', 'icon': 'shield', 'units': [
+        {'key': 'soldiers', 'name': 'Soldiers', 'img': 'soldiers',
+         'desc': 'Cheap and expendable. They need 1 munitions per 5,000 soldiers to fight at full strength, but still fight without it at 10% effectiveness. Counter artillery and attack helicopters, and can take resource control.'},
+        {'key': 'artillery', 'name': 'Artillery', 'img': 'artillery',
+         'desc': 'Expensive, but devastating against tanks. Use 5 munitions and 1 gasoline per 100 artillery in battle, and can take field control.'},
+        {'key': 'tanks', 'name': 'Tanks', 'img': 'tanks',
+         'desc': 'Middle of the road in cost and power. Use 1 munitions and 2 gasoline per 100 tanks in battle. Great against soldiers, and can take field and city control.'},
+    ]},
+    {'id': 'air', 'tab': 'militaryair', 'label': 'Air Force', 'icon': 'flight', 'units': [
+        {'key': 'fighters', 'name': 'Fighter Jets', 'img': 'fighter_jets',
+         'desc': 'Dominant in the air. Strong against bombers, and can take air superiority.'},
+        {'key': 'bombers', 'name': 'Bombers', 'img': 'bombers',
+         'desc': 'Deal massive damage to units below. Use 4 munitions and 10 gasoline per 100 bombers per attack. Annihilate soldiers, destroyers and submarines, and can take field control.'},
+        {'key': 'apaches', 'name': 'Attack Helicopters', 'img': 'attack_helicopters',
+         'desc': 'Take on both land and air. Counter tanks and soldiers, and can take city control.'},
+    ]},
+    {'id': 'water', 'tab': 'militarywater', 'label': 'Navy', 'icon': 'directions_boat', 'units': [
+        {'key': 'submarines', 'name': 'Submarines', 'img': 'submarines',
+         'desc': 'Hide beneath the surface to counter cruisers. Can take depth control.'},
+        {'key': 'cruisers', 'name': 'Cruisers', 'img': 'cruisers',
+         'desc': 'The powerhouse of the ocean, and very expensive. Counter destroyers, fighter jets and attack helicopters, and can blockade the enemy.'},
+        {'key': 'destroyers', 'name': 'Destroyers', 'img': 'destroyers',
+         'desc': 'Advanced radar lets them find and counter submarines. Can blockade the enemy.'},
+        {'key': 'aircraft_carriers', 'name': 'Aircraft Carriers', 'img': 'aircraft_carriers',
+         'desc': 'The capital ship of your fleet. Each one raises how many fighter jets, bombers and attack helicopters you can field.'},
+    ]},
+    {'id': 'special', 'tab': 'militaryspecial', 'label': 'Special', 'icon': 'bolt', 'units': [
+        {'key': 'spies', 'name': 'Spies', 'img': 'spies',
+         'desc': 'Agents who gather information on your adversaries. Each admin building supports 10 spies.'},
+        {'key': 'counter_intel_agents', 'name': 'Counter-Intelligence Agents', 'img': 'counter_intel_agents',
+         'desc': 'Your internal security force. Each enemy spy operation has a chance to be caught before it happens: it fails, some of their spies are captured and the rest flee. More agents means a higher chance, with diminishing returns (never above 60%); big operations are harder to stop. Each admin building supports 10 agents. They don\'t fight in wars.'},
+        {'key': 'sam_batteries', 'name': 'SAM Batteries', 'img': 'sam_batteries',
+         'desc': 'Surface-to-air missiles. They don\'t fight in normal battles, but shoot down part of every incoming kamikaze drone and cruise missile strike. More batteries means more interceptions, with diminishing returns (never 100%). Each army base supports 20.'},
+        {'key': 'icbms', 'name': 'Ballistic Missiles', 'img': 'icbms',
+         'desc': 'Obliterate an enemy\'s infrastructure, collapsing their economy.'},
+        {'key': 'nukes', 'name': 'Nukes', 'img': 'nukes',
+         'desc': 'Annihilate everything your enemies love. Save them for your most hated adversary.'},
+        {'key': 'kamikaze_drones', 'name': 'Kamikaze Drones', 'img': 'kamikaze_drones', 'stockpile': True,
+         'desc': 'Cheap loitering munitions your Drone Sites build into a stockpile over time. Weak alone, they\'re launched in swarms at an enemy\'s buildings during a war.'},
+        {'key': 'cruise_missiles', 'name': 'Cruise Missiles', 'img': 'cruise_missiles', 'stockpile': True,
+         'desc': 'Precision strikes your Missile Batteries build into a stockpile over time. Pricier and slower than drones, but a guaranteed hit.'},
+    ]},
+] %}
+
+{% macro unit_card(u) %}
+{% set k = u.key %}
+{% set info = units[k] %}
+{% set cost = mildict[k] %}
+{#- Widespread Propaganda discounts soldiers' gold price (was the
+    "soldiers, 0.65" milres special case). -#}
+{% set price = cost.price * 0.65 if (k == 'soldiers' and upgrades["widespreadpropaganda"]) else cost.price %}
+<article class="mil-unit game-glass" id="unit-{{ k }}">
+    <div class="mil-unit-media">
+        <img src="{{ url_for('static', filename=game_asset_path('units', u.img)) }}?v=2" alt="" loading="lazy">
+    </div>
+    <div class="mil-unit-body">
+        <header class="mil-unit-head">
+            <h3>{{ u.name }}</h3>
+            <div class="mil-owned">
+                <span class="mil-owned-value">{{ info.quantity | commas }}</span>
+                <span class="mil-owned-label">owned</span>
+            </div>
+        </header>
+
+        {% if info.attack or info.defense %}
+        <div class="mil-stats">
+            <span class="mil-stat"><span class="material-icons-outlined">gps_fixed</span>{{ info.attack | fmt }} ATK</span>
+            <span class="mil-stat"><span class="material-icons-outlined">shield</span>{{ info.defense | fmt }} DEF</span>
+        </div>
+        {% endif %}
+
+        <p class="mil-desc">{{ u.desc }}</p>
+
+        <div class="mil-costs" aria-label="Cost per unit">
+            <span class="mil-costs-label">{% if u.stockpile %}To activate{% else %}Cost each{% endif %}</span>
+            <span class="mil-cost"><img src="{{ url_for('static', filename='images/resmoney.png') }}?v=2" alt="">{{ price | fmt }}</span>
+            {% if cost.manpower %}<span class="mil-cost"><span class="material-icons-outlined">person</span>{{ cost.manpower }}</span>{% endif %}
+            {% for res, amt in (cost.resources or {}).items() %}
+            <span class="mil-cost" title="{{ res | replace('_', ' ') | title }}"><img src="{{ url_for('static', filename=game_asset_path('resources', res)) }}" alt="{{ res }}" onerror="this.style.display='none'">{{ amt | weight_fmt }}</span>
+            {% endfor %}
+        </div>
+
+        {% if info.maintenance_per_tick > 0 %}
+        <p class="mil-upkeep"><span class="material-icons-outlined">autorenew</span>Upkeep {{ info.maintenance_per_tick | commas }} {{ (info.maintenance_resource or '') | replace('_', ' ') }} per tick</p>
+        {% endif %}
+
+        {% if u.stockpile %}
+        <form class="mil-order" action="/military/activate/{{ k }}" method="POST">
+            <input class="mil-amount" name="{{ k }}" type="number" min="1" inputmode="numeric" autocomplete="off" placeholder="Amount" aria-label="{{ u.name }} to activate" required>
+            <button type="submit" class="game-btn game-btn-primary"><span class="material-icons-outlined">bolt</span> Activate</button>
+        </form>
+        <p class="mil-limit"><strong>{{ stockpile[k] | commas }}</strong> in stockpile, ready to activate</p>
+        {% else %}
+        <form class="mil-order" method="POST">
+            <input class="mil-amount" name="{{ k }}" type="number" min="1" inputmode="numeric" autocomplete="off" placeholder="Amount" aria-label="{{ u.name }} amount" required>
+            <button type="submit" class="game-btn game-btn-primary" formaction="/military/buy/{{ k }}"><span class="material-icons-outlined">add</span> Buy</button>
+            <button type="submit" class="game-btn game-btn-secondary" formaction="/military/sell/{{ k }}"><span class="material-icons-outlined">remove</span> Sell</button>
+        </form>
+        <p class="mil-limit">{% if limits[k] > 0 %}Room for <strong>{{ limits[k] | commas }}</strong> more{% else %}At capacity &mdash; build more to raise the limit{% endif %}</p>
+        {% endif %}
+    </div>
+</article>
+{% endmacro %}
 
 <div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/military.jpg') }}');"></div>
 <div class="game-page-overlay"></div>
 
-{% macro combat_stats_line(unit_key) %}
-<div class="combat-stats-inline">
-    <strong>Combat Stats:</strong>
-    <span class="stat-badge">
-        {{ units[unit_key]["attack"] }} ATK
-    </span>
-    <span>/</span>
-    <span class="stat-badge">
-        {{ units[unit_key]["defense"] }} DEF
-    </span>
-</div>
-{% endmacro %}
-
-<style>
-/* MOBILE-FIRST DESIGN (Rule 7) */
-.page-military .menuflex2 {
-    display: flex;
-    flex-wrap: wrap !important;
-    gap: 8px;
-    margin-bottom: 16px;
-    padding: 0 8px !important;
-    mask-image: none !important;
-    -webkit-mask-image: none !important;
-}
-.page-military .menuflex2 .templatedivflex2left {
-    flex: 1 1 45% !important;
-    min-height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--foreground);
-    color: var(--colorOne);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    cursor: pointer;
-    touch-action: manipulation;
-}
-body.game-page-v2 .page-military .menuflex2 .templatedivflex2left {
-    background: var(--game-glass-bg);
-    backdrop-filter: var(--game-glass-blur);
-    -webkit-backdrop-filter: var(--game-glass-blur);
-    border-color: var(--game-glass-border);
-}
-.page-military .menuflex2 .templatedivflex2left .smallheader {
-    color: inherit;
-}
-.page-military .menuflex2 .templatedivflex2left:hover,
-.page-military .menuflex2 .templatedivflex2left:active {
-    background: var(--accent);
-    color: white;
-}
-body.game-page-v2 .page-military .menuflex2 .templatedivflex2left:hover,
-body.game-page-v2 .page-military .menuflex2 .templatedivflex2left:active {
-    background: var(--game-glass-bg);
-    color: var(--colorOne);
-}
-.page-military .menuflex2 .smallheader {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 600;
-}
-.page-military .warflexparentcolors {
-    display: flex;
-    flex-direction: column-reverse; /* photo (2nd in DOM) pinned to the top */
-    gap: 12px;
-    padding: 12px;
-    width: 100%;
-    margin: 0;
-    border-radius: var(--game-radius-lg, 16px);
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-/* Card density pass (2026-09-07): each unit card ran ~990px tall on an
-   844px mobile viewport -- more than a full screen for one of 16 units
-   across the 4 branches -- almost entirely from generous default
-   margins/padding stacking up (photo + heading + stats + description +
-   cost line + form), not any single oversized element. Tightened here
-   rather than restructuring the card, per the mobile-first "keep faith
-   with the current look" mandate. */
-.page-military .menudiv .templatecontentheaderleft {
-    margin: 12px 0;
-}
-.page-military .templatecontentheadercenter {
-    margin-top: 8px;
-}
-/* The "milres" Jinja filter's output is plain text dropped straight into
-   a bare <ul> with no <li> -- not an actual list, just a cost line -- so
-   it was silently inheriting the browser's default UA list margin
-   (~17px top/bottom) for no visual reason. */
-.page-military .menudiv ul {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 10px;
-}
-body.game-page-v2 .page-military .warflexparentcolors:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.35);
-}
-.page-military .templatecontentpleft {
-    width: 100%;
-    margin: 0 0 8px;
-    text-align: left;
-    font-size: 0.92rem;
-}
-/* !important on the size properties: static/style.css's unrelated
-   ".templatedivcontent .warflexparentcolors .unitimage" rule (see the
-   desktop override further down for the full story) also has no media
-   query gating it, and outranks this rule on plain specificity (3 classes
-   vs. 2) at every width, not just desktop -- so mobile needs the same
-   defensive pinning or it's exposed to the same stretch-to-fill collision
-   the moment its percentage heights have a definite parent height to
-   resolve against. */
-.page-military .unitimage {
-    width: 100%;
-    max-width: 260px;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    flex: none !important;
-    align-self: auto !important;
-    border-radius: 8px;
-    margin: 0 auto;
-    display: block;
-}
-.page-military .purchasemilitarydiv {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 8px;
-    background: var(--foregroundTwo);
-    padding: 12px;
-    border-radius: 8px;
-}
-body.game-page-v2 .page-military .purchasemilitarydiv {
-    background: var(--game-glass-bg-strong);
-    backdrop-filter: var(--game-glass-blur);
-    -webkit-backdrop-filter: var(--game-glass-blur);
-    border: 1px solid var(--game-glass-border);
-}
-.page-military .loginsignupinput {
-    width: 100%;
-    min-height: 48px; /* Touch target */
-    font-size: 1.1rem;
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: 1.5px solid var(--border);
-    background: var(--foreground);
-    color: var(--colorOne);
-}
-.page-military .loginsignupinput::placeholder {
-    color: var(--text-secondary);
-}
-.page-military .divflex2center {
-    display: flex;
-    flex-direction: row;
-    gap: 12px;
-    width: 100%;
-}
-.page-military .flexchildvanilla {
-    flex: 1;
-}
-.page-military .templatecenteredbutton {
-    width: 100%;
-    min-height: 48px; /* Touch target */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    font-size: 1rem;
-    font-weight: bold;
-    border-radius: 6px;
-    padding: 0 16px;
-}
-/* Plain inline stat row, no box/border -- matches the reference mockup's
-   .unit-stats (flex row, mono numbers, no chrome) instead of the previous
-   bordered/boxed treatment, which read as heavier than the rest of the card. */
-.page-military .combat-stats-box {
-    margin: 6px 0;
-    padding: 0;
-    background: transparent;
-    border-radius: 0;
-    display: block;
-    text-align: left;
-}
-.page-military .combat-stats-inline {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 14px;
-    margin-bottom: 8px;
-}
-.page-military .stat-badge {
-    color: var(--colorOne);
-    font-family: monospace;
-    font-size: 0.95rem;
-    font-weight: 700;
-}
-.page-military .limit-text {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    text-align: center;
-    margin-top: 8px;
-    display: block;
-}
-
-@media (min-width: 768px) {
-    .page-military .warflexparentcolors {
-        flex-direction: row;
-        align-items: flex-start;
-    }
-    .page-military .menuflex2 {
-        flex-wrap: nowrap;
-    }
-}
-
-/* Compact card grid matching the reference mockup's unit-card layout
-   (/Users/dede/ano-redesign/military.html) -- CSS layout only, every real
-   buy/sell form/formaction/input stays exactly where it was in the DOM, so
-   no purchasing behavior changes. Mockup uses a 3-up grid with the photo
-   pinned to the top of each card and the branch tabs in a single row;
-   `minmax(240px, 1fr)` lets it fall back to 2 or 1 columns on medium
-   widths instead of forcing 3 columns too early. */
-@media (min-width: 1000px) {
-    .page-military .menuflex2 .templatedivflex2left {
-        flex: 1 1 0 !important;
-    }
-    .page-military .landclick,
-    .page-military .airclick,
-    .page-military .waterclick,
-    .page-military .specialclick {
-        display: grid;
-        /* Capping the TRACK max (e.g. minmax(240px, 340px)) instead of
-           the container was tried and reverted: with auto-fit, Chrome
-           computes how many columns fit using the track's max bound, not
-           its min, once that max is a definite length -- so capping the
-           max at 340px made a 3-card row fit only 2 (3*340+2*16=1052 >
-           the ~1048px container), orphaning the 3rd card onto its own
-           half-empty row instead of shrinking all 3 to fit. Capping the
-           CONTAINER's max-width instead leaves auto-fit's min-based
-           column count untouched (still 3-up on this page) while still
-           bounding how wide each card can stretch on an ultrawide
-           monitor -- the actual "too big" complaint. */
-        max-width: 1100px;
-        margin: 0 auto;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 16px;
-        align-items: start;
-    }
-    .page-military .landclick .menudiv,
-    .page-military .airclick .menudiv,
-    .page-military .waterclick .menudiv,
-    .page-military .specialclick .menudiv {
-        margin: 0;
-    }
-    .page-military .landclick .warflexparentcolors,
-    .page-military .airclick .warflexparentcolors,
-    .page-military .waterclick .warflexparentcolors,
-    .page-military .specialclick .warflexparentcolors {
-        /* Same as the mobile column-reverse below -- photo stays pinned to
-           the top of the card at every width, matching the mockup, instead
-           of flipping to text-first once the grid kicks in. */
-        flex-direction: column-reverse;
-        gap: 12px;
-    }
-    /* static/style.css has a completely unrelated ".templatedivcontent
-       .warflexparentcolors .unitimage" rule (written for a different,
-       full-bleed card component) that sets height/min-height/max-height/
-       flex/align-self ALL to 100%/stretch on ANY .unitimage sitting inside
-       ANY .warflexparentcolors in .templatedivcontent -- which this page's
-       cards also are. Same specificity as the rule below, and min-height
-       always wins as a floor over height regardless of which "height"
-       declaration wins, so every one of these had to be pinned explicitly
-       (not just height) or the photo silently re-stretched to fill its
-       card instead of staying a fixed 120px strip. Found live 2026-09-07
-       after a previous pass only overrode height and the photos still
-       rendered oversized/distorted. */
-    .page-military .landclick .unitimage,
-    .page-military .airclick .unitimage,
-    .page-military .waterclick .unitimage,
-    .page-military .specialclick .unitimage {
-        display: block;
-        width: 100%;
-        max-width: none;
-        /* !important: the mobile-first .unitimage rule above also has to
-           carry !important against the same legacy collision, so this
-           desktop override needs it too or the mobile rule's
-           height:auto!important would win here despite lower specificity. */
-        height: 120px !important;
-        min-height: 120px !important;
-        max-height: 120px !important;
-        flex: none !important;
-        align-self: auto !important;
-        margin: 0;
-        object-fit: cover;
-        border-radius: var(--game-radius-sm, 8px);
-    }
-}
-</style>
-
-
 <div class="templatediv">
 
-    {{ game_hero('Military', badge_icon='military_tech', badge_text='Current Manpower: ' ~ (manpower | fmt), subtitle='Manpower is used to maintain your military units. Each unit requires manpower to function. Manpower regenerates over time.') }}
+    {{ game_hero('Military', badge_icon='groups', badge_text='Manpower ' ~ (manpower | fmt), subtitle='Recruit and maintain your forces. Every unit needs manpower, which regenerates over time; how many you can field depends on your buildings.') }}
 
     <div class="templatedivcontent">
 
-        <div class="templatedivflex2 menuflex2">
-            <div class="templatedivflex2left" id="militaryland" onclick="militaryland()">
-
-                <h3 class="smallheader">Army</h3>
-
-            </div>
-            <div class="templatedivflex2left" id="militaryair" onclick="militaryair()">
-
-                <h3 class="smallheader">Air Force</h3>
-
-            </div>
-            <div class="templatedivflex2left" id="militarywater" onclick="militarywater()">
-
-                <h3 class="smallheader">Navy</h3>
-
-            </div>
-            <div class="templatedivflex2left" id="militaryspecial" onclick="militaryspecial()">
-
-                <h3 class="smallheader">Special</h3>
-
-            </div>
-        </div>
-        <!--LAND-->
-        <div class="land" id="land">
-
-            <div class="menudiv">
-
-                <h2 class="templatecontentheaderleft">Soldiers</h2>
-
-                <div class="templatedivflex2 menuflex warflexparentcolors">
-                    <div class="templatedivflex2left">
-
-                        <h3 class="templatecontentheadercenter">You have {{ units["soldiers"]["quantity"] }} Soldiers</h3>
-
-                        <div class="combat-stats-box">
-                            {{ combat_stats_line("soldiers") }}
-                            {% if units["soldiers"]["maintenance_per_tick"] > 0 %}
-                            <p><strong>Maintenance:</strong> {{ units["soldiers"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["soldiers"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["soldiers"]["maintenance_resource"] }} per tick</p>
-                            {% endif %}
-                        </div>
-
-                        <p class="templatecontentpleft">Soldiers are cheap and expendable. They require 1 munitions per 5000 soldiers to fight at 100% effectiveness, but will go into battle without, at 10% effectiveness. They counter artillery, apaches, and can obtain resource control.</p>
-
-                        {% if upgrades["widespreadpropaganda"] %}
-                        <ul>{{ "soldiers, 0.65" | milres }}</ul>
-                        {% else %}
-                        <ul>{{ "soldiers" | milres }}</ul>
-                        {% endif %}
-
-                        <form action="/soldiers" method="POST">
-                            <div class="purchasemilitarydiv">
-
-                                <input class="loginsignupinput" autocomplete="off" name="soldiers" type="number" placeholder="Amount" required />
-
-
-                                <div class="templatedivflex2 divflex2center">
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/soldiers') }}
-                                    </div>
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/soldiers') }}
-
-                                    </div>
-                                </div>
-                                <span class="limit-text">You can purchase {{ limits["soldiers"] }} more Soldiers today</span>
-                            </div>
-                    </div>
-                    </form>
-                    <div class="templatedivflex2left">
-
-
-
-                        <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'soldiers')) }}?v=2" loading="lazy" />
-                    </div>
-                </div>
-            </div>
-            <div class="menudiv">
-
-                <h2 class="templatecontentheaderleft">Artillery</h2>
-
-                <div class="templatedivflex2 menuflex warflexparentcolors">
-                    <div class="templatedivflex2left">
-
-                        <h3 class="templatecontentheadercenter">You have {{ units["artillery"]["quantity"] }} Artillery</h3>
-
-                        <div class="combat-stats-box">
-                            {{ combat_stats_line("artillery") }}
-                            {% if units["artillery"]["maintenance_per_tick"] > 0 %}
-                            <p><strong>Maintenance:</strong> {{ units["artillery"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["artillery"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["artillery"]["maintenance_resource"] }} per tick</p>
-                            {% endif %}
-                        </div>
-
-                        <p class="templatecontentpleft">Artillery are expensive, but make it up with their incredible effectiveness against tanks. They require 5 munitions and 1 gasoline per 100 artillery to fight, and can also obtain field control.</p>
-                        <p class="templatecontentpleft"><strong>Note:</strong> Enforces a cap of 150 troops per Army Base.</p>
-
-                        <ul>{{ "artillery" | milres }}
-                        </ul>
-                        <form action="/artillery" method="POST">
-                            <div class="purchasemilitarydiv">
-                                <input class="loginsignupinput" autocomplete="off" name="artillery" type="number" placeholder="Amount" required />
-
-                                <div class="templatedivflex2 divflex2center">
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/artillery') }}
-
-                                    </div>
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/artillery') }}
-
-                                    </div>
-                                </div>
-                                <span class="limit-text">You can purchase {{ limits["artillery"] }} more Artillery today</span>
-                            </div>
-                    </div>
-                    </form>
-                    <div class="templatedivflex2left">
-
-                        <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'artillery')) }}?v=2" loading="lazy" />
-
-                    </div>
-                </div>
-            </div>
-            <div class="menudiv">
-                <h2 class="templatecontentheaderleft">Tanks</h2>
-
-                <div class="templatedivflex2 menuflex warflexparentcolors">
-                    <div class="templatedivflex2left">
-
-                        <h3 class="templatecontentheadercenter">You have {{ units["tanks"]["quantity"] }} Tanks</h3>
-
-                        <div class="combat-stats-box">
-                            {{ combat_stats_line("tanks") }}
-                            {% if units["tanks"]["maintenance_per_tick"] > 0 %}
-                            <p><strong>Maintenance:</strong> {{ units["tanks"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["tanks"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["tanks"]["maintenance_resource"] }} per tick</p>
-                            {% endif %}
-                        </div>
-
-                        <p class="templatecontentpleft">Tanks are mediocre in both cost and power, and cost 1 munitions and 2 gasoline per 100 tanks in battle. This makes them perfect for taking on soldiers, and for obtaining field and city control.</p>
-                        <p class="templatecontentpleft"><strong>Note:</strong> Enforces a cap of 150 troops per Army Base.</p>
-
-                        <ul>{{ "tanks" | milres }}
-                        </ul>
-                        <form action="/tanks" method="POST">
-                            <div class="purchasemilitarydiv">
-                                <input class="loginsignupinput" autocomplete="off" name="tanks" type="number" placeholder="Amount" required />
-
-                                <div class="templatedivflex2 divflex2center">
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/tanks') }}
-
-                                    </div>
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/tanks') }}
-
-                                    </div>
-                                </div>
-                                <span class="limit-text">You can purchase {{ limits["tanks"] }} more Tanks today</span>
-                            </div>
-                    </div>
-                    </form>
-                    <div class="templatedivflex2left">
-
-
-
-                        <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'tanks')) }}?v=2" loading="lazy" />
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!--AIR-->
-        <div class="air" id="air">
-
-            <div class="menudiv">
-
-                <h2 class="templatecontentheaderleft">Fighter Jets</h2>
-
-                <div class="templatedivflex2 menuflex warflexparentcolors">
-                    <div class="templatedivflex2left">
-
-                        <h3 class="templatecontentheadercenter">You have {{ units["fighters"]["quantity"] }} Fighter Jets</h3>
-
-                        <div class="combat-stats-box">
-                            {{ combat_stats_line("fighters") }}
-                            {% if units["fighters"]["maintenance_per_tick"] > 0 %}
-                            <p><strong>Maintenance:</strong> {{ units["fighters"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["fighters"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["fighters"]["maintenance_resource"] }} per tick</p>
-                            {% endif %}
-                        </div>
-
-                        <p class="templatecontentpleft">Fighter jets are incredibly powerful in the air. They are strong against bombers, and can obtain air superiority.</p>
-
-                        <ul>{{ "fighters" | milres }}
-                        </ul>
-                        <form method="POST">
-                            <div class="purchasemilitarydiv">
-                                <input class="loginsignupinput" autocomplete="off" name="fighters" type="number" placeholder="Amount" required />
-
-                                <div class="templatedivflex2 divflex2center">
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/fighters') }}
-
-                                    </div>
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/fighters') }}
-
-                                    </div>
-                                </div>
-                                <span class="limit-text">You can purchase {{ limits["fighters"] }} more Fighter Jets today</span>
-                            </div>
-
-                    </div>
-                    </form>
-                    <div class="templatedivflex2left">
-
-
-
-                        <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'fighter_jets')) }}?v=2" loading="lazy" />
-                    </div>
-                </div>
-
-            </div>
-            <div class="menudiv">
-
-                <h2 class="templatecontentheaderleft">Bombers</h2>
-
-                <div class="templatedivflex2 menuflex warflexparentcolors">
-                    <div class="templatedivflex2left">
-
-                        <h3 class="templatecontentheadercenter">You have {{ units["bombers"]["quantity"] }} Bombers</h3>
-
-                        <div class="combat-stats-box">
-                            {{ combat_stats_line("bombers") }}
-                            {% if units["bombers"]["maintenance_per_tick"] > 0 %}
-                            <p><strong>Maintenance:</strong> {{ units["bombers"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["bombers"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["bombers"]["maintenance_resource"] }} per tick</p>
-                            {% endif %}
-                        </div>
-
-                        <p class="templatecontentpleft">Bombers are air units that can deal massive damage to units below, and cost 4 munitions and 10 gasoline per 100 bombers for each attack. They annihilate soldiers, destroyers, and submarines. They may also obtain field control.</p>
-
-                        <ul>{{ "bombers" | milres }}
-                        </ul>
-                        <form action="/bombers" method="POST">
-                            <div class="purchasemilitarydiv">
-                                <input class="loginsignupinput" autocomplete="off" name="bombers" type="number" placeholder="Amount" required />
-
-                                <div class="templatedivflex2 divflex2center">
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/bombers') }}
-
-                                    </div>
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/bombers') }}
-
-                                    </div>
-                                </div>
-                                <span class="limit-text">You can purchase {{ limits["bombers"] }} more Bombers today</span>
-                            </div>
-
-                    </div>
-                    </form>
-                    <div class="templatedivflex2left">
-
-
-
-                        <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'bombers')) }}?v=2" loading="lazy" />
-                    </div>
-                </div>
-
-            </div>
-            <div class="menudiv">
-
-                <h2 class="templatecontentheaderleft">Attack Helicopters</h2>
-
-                <div class="templatedivflex2 menuflex warflexparentcolors">
-                    <div class="templatedivflex2left">
-
-                        <h3 class="templatecontentheadercenter">You have {{ units["apaches"]["quantity"] }} Attack Helicopters</h3>
-
-                        <div class="combat-stats-box">
-                            {{ combat_stats_line("apaches") }}
-                            {% if units["apaches"]["maintenance_per_tick"] > 0 %}
-                            <p><strong>Maintenance:</strong> {{ units["apaches"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["apaches"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["apaches"]["maintenance_resource"] }} per tick</p>
-                            {% endif %}
-                        </div>
-
-                        <p class="templatecontentpleft">Attack Helicopters are devastating helicopters that can take on both land and air. They counter tanks and soldiers. Furthermore, they are capable of obtaining city control.</p>
-
-                        <ul>{{ "apaches" | milres }}
-                        </ul>
-                        <form action="/apaches" method="POST">
-                            <div class="purchasemilitarydiv">
-                                <input class="loginsignupinput" autocomplete="off" name="apaches" type="number" placeholder="Amount" required />
-
-                                <div class="templatedivflex2 divflex2center">
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/apaches') }}
-
-                                    </div>
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/apaches') }}
-
-                                    </div>
-                                </div>
-                                <span class="limit-text">You can purchase {{ limits["apaches"] }} more Attack Helicopters today</span>
-                            </div>
-
-                    </div>
-                    </form>
-                    <div class="templatedivflex2left">
-
-
-
-                        <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'attack_helicopters')) }}?v=2" loading="lazy" />
-                    </div>
-                </div>
-
-            </div>
+        {# Branch tabs: ids and onclick names are what static/script.js's
+           TAB_GROUPS.military toggles (#militaryland -> .militarylandclick,
+           #land -> .landclick) -- keep them in sync. #}
+        <div class="mil-tabs" role="tablist">
+            {% for b in branches %}
+            {% set ns = namespace(total=0) %}
+            {% for u in b.units %}{% set ns.total = ns.total + units[u.key].quantity %}{% endfor %}
+            <button type="button" class="mil-tab" id="{{ b.tab }}" onclick="{{ b.tab }}()" role="tab">
+                <span class="material-icons-outlined">{{ b.icon }}</span>
+                <span class="mil-tab-label">{{ b.label }}</span>
+                <span class="mil-tab-count">{{ ns.total | fmt }}</span>
+            </button>
+            {% endfor %}
         </div>
 
-        <!--WATER-->
-        <div class="water" id="water">
-            <div class="menudiv">
-
-                <h2 class="templatecontentheaderleft">Submarines</h2>
-
-                <div class="templatedivflex2 menuflex warflexparentcolors">
-                    <div class="templatedivflex2left">
-
-                        <h3 class="templatecontentheadercenter">You have {{ units["submarines"]["quantity"] }} Submarines</h3>
-
-                        <div class="combat-stats-box">
-                            {{ combat_stats_line("submarines") }}
-                            {% if units["submarines"]["maintenance_per_tick"] > 0 %}
-                            <p><strong>Maintenance:</strong> {{ units["submarines"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["submarines"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["submarines"]["maintenance_resource"] }} per tick</p>
-                            {% endif %}
-                        </div>
-
-                        <p class="templatecontentpleft">Submarines are very useful for ocean combat, and use their ability to hide to counter cruisers. They are able to obtain depth control.</p>
-
-                        <ul>{{ "submarines" | milres }}
-                        </ul>
-                        <form action="/destroyers" method="POST">
-                            <div class="purchasemilitarydiv">
-                                <input class="loginsignupinput" autocomplete="off" name="submarines" type="number" placeholder="Amount" required />
-
-                                <div class="templatedivflex2 divflex2center">
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/submarines') }}
-
-                                    </div>
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/submarines') }}
-
-                                    </div>
-                                </div>
-                            </div>
-
-                            <span class="limit-text">You can purchase {{ limits["submarines"] }} more Submarines today</span>
-                    </div>
-                    </form>
-                    <div class="templatedivflex2left">
-
-                        <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'submarines')) }}?v=2" loading="lazy" />
-                    </div>
-                </div>
+        {% for b in branches %}
+        <section class="{{ b.id }} mil-branch" id="{{ b.id }}" role="tabpanel" aria-labelledby="{{ b.tab }}">
+            <div class="mil-grid">
+                {% for u in b.units %}{{ unit_card(u) }}{% endfor %}
             </div>
-            <div class="menudiv">
+        </section>
+        {% endfor %}
 
-                <h2 class="templatecontentheaderleft">Cruisers</h2>
-
-                <div class="templatedivflex2 menuflex warflexparentcolors">
-                    <div class="templatedivflex2left">
-
-                        <h3 class="templatecontentheadercenter">You have {{ units["cruisers"]["quantity"] }} Cruisers</h3>
-
-                        <div class="combat-stats-box">
-                            {{ combat_stats_line("cruisers") }}
-                            {% if units["cruisers"]["maintenance_per_tick"] > 0 %}
-                            <p><strong>Maintenance:</strong> {{ units["cruisers"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["cruisers"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["cruisers"]["maintenance_resource"] }} per tick</p>
-                            {% endif %}
-                        </div>
-                        <p class="templatecontentpleft">Cruisers are the powerhouse of the ocean, and are very expensive. Cruisers counter destroyers, figher jets, apaches, and can obtain a naval blockade on the enemy.</p>
-
-                        <ul>{{ "cruisers" | milres }}
-                        </ul>
-                        <form action="/destroyers" method="POST">
-                            <div class="purchasemilitarydiv">
-                                <input class="loginsignupinput" autocomplete="off" name="cruisers" type="number" placeholder="Amount" required />
-
-                                <div class="templatedivflex2 divflex2center">
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/cruisers') }}
-
-                                    </div>
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/cruisers') }}
-
-                                    </div>
-                                </div>
-                            </div>
-
-                            <span class="limit-text">You can purchase {{ limits["cruisers"] }} more Cruisers today</span>
-                    </div>
-                    </form>
-                    <div class="templatedivflex2left">
-
-
-
-                        <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'cruisers')) }}?v=2" loading="lazy" />
-                    </div>
-                </div>
-            </div>
-            <div class="menudiv">
-
-                <h2 class="templatecontentheaderleft">Destroyers</h2>
-
-                <div class="templatedivflex2 menuflex warflexparentcolors">
-                    <div class="templatedivflex2left">
-
-                        <h3 class="templatecontentheadercenter">You have {{ units["destroyers"]["quantity"] }} Destroyers</h3>
-
-                        <div class="combat-stats-box">
-                            {{ combat_stats_line("destroyers") }}
-                            {% if units["destroyers"]["maintenance_per_tick"] > 0 %}
-                            <p><strong>Maintenance:</strong> {{ units["destroyers"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["destroyers"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["destroyers"]["maintenance_resource"] }} per tick</p>
-                            {% endif %}
-                        </div>
-
-                        <p class="templatecontentpleft">Destroyers are equipped with advanced radars, allowing them to detect and successfully counter submarines. They are also able to obtain a naval blockade on the enemy.</p>
-
-                        <ul>{{ "destroyers" | milres }}
-                        </ul>
-                        <form action="/destroyers" method="POST">
-                            <div class="purchasemilitarydiv">
-                                <input class="loginsignupinput" autocomplete="off" name="destroyers" type="number" placeholder="Amount" required />
-
-                                <div class="templatedivflex2 divflex2center">
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/destroyers') }}
-
-                                    </div>
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/destroyers') }}
-
-                                    </div>
-                                </div>
-                            </div>
-
-                            <span class="limit-text">You can purchase {{ limits["destroyers"] }} more Destroyers today</span>
-                    </div>
-                    </form>
-                    <div class="templatedivflex2left">
-
-
-
-                        <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'destroyers')) }}?v=2" loading="lazy" />
-                    </div>
-                </div>
-            </div>
-            <div class="menudiv">
-
-                <h2 class="templatecontentheaderleft">Aircraft Carriers</h2>
-
-                <div class="templatedivflex2 menuflex warflexparentcolors">
-                    <div class="templatedivflex2left">
-
-                        <h3 class="templatecontentheadercenter">You have {{ units["aircraft_carriers"]["quantity"] }} Aircraft Carriers</h3>
-
-                        <div class="combat-stats-box">
-                            {{ combat_stats_line("aircraft_carriers") }}
-                            {% if units["aircraft_carriers"]["maintenance_per_tick"] > 0 %}
-                            <p><strong>Maintenance:</strong> {{ units["aircraft_carriers"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["aircraft_carriers"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["aircraft_carriers"]["maintenance_resource"] }} per tick</p>
-                            {% endif %}
-                        </div>
-
-                        <p class="templatecontentpleft">Aircraft carriers are the naval capital ship of your fleet. Each one you own extends the reach of your air wing, raising your Fighter Jets and Bombers capacity.</p>
-
-                        <ul>{{ "aircraft_carriers" | milres }}
-                        </ul>
-                        <form action="/aircraft_carriers" method="POST">
-                            <div class="purchasemilitarydiv">
-                                <input class="loginsignupinput" autocomplete="off" name="aircraft_carriers" type="number" placeholder="Amount" required />
-
-                                <div class="templatedivflex2 divflex2center">
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/aircraft_carriers') }}
-
-                                    </div>
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/aircraft_carriers') }}
-
-                                    </div>
-                                </div>
-                            </div>
-
-                            <span class="limit-text">You can purchase {{ limits["aircraft_carriers"] }} more Aircraft Carriers today</span>
-                    </div>
-                    </form>
-                    <div class="templatedivflex2left">
-
-
-
-                        <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'aircraft_carriers')) }}?v=2" loading="lazy" />
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!--SPECIAL-->
-        <div class="special" id="special">
-
-            <div class="menudiv">
-
-                <h2 class="templatecontentheaderleft">Spies</h2>
-
-                <div class="templatedivflex2 menuflex warflexparentcolors">
-                    <div class="templatedivflex2left">
-
-                        <h3 class="templatecontentheadercenter">You have {{ units["spies"]["quantity"] }} Spies</h3>
-
-                        <div class="combat-stats-box">
-                            {{ combat_stats_line("spies") }}
-                            {% if units["spies"]["maintenance_per_tick"] > 0 %}
-                            <p><strong>Maintenance:</strong> {{ units["spies"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["spies"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["spies"]["maintenance_resource"] }} per tick</p>
-                            {% endif %}
-                        </div>
-
-                        <p class="templatecontentpleft">Spies are agents for your country that allow you to acquire information on your adversaries. Each admin building supports 10 spies.</p>
-
-                        <ul>{{ "spies" | milres }}
-                        </ul>
-                        <form action="/icbm" method="POST">
-                            <div class="purchasemilitarydiv">
-                                <input class="loginsignupinput" autocomplete="off" name="spies" type="number" placeholder="Amount" required />
-
-                                <div class="templatedivflex2 divflex2center">
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/spies') }}
-
-                                    </div>
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/spies') }}
-
-                                    </div>
-                                </div>
-                                <span class="limit-text">You can purchase {{ limits["spies"] }} more Spies today</span>
-                            </div>
-
-                    </div>
-                    </form>
-                    <div class="templatedivflex2left">
-
-
-
-                        <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'spies')) }}?v=2" loading="lazy" />
-                    </div>
-                </div>
-            </div>
-            <div class="menudiv">
-
-                <h2 class="templatecontentheaderleft">Counter-Intelligence Agents</h2>
-
-                <div class="templatedivflex2 menuflex warflexparentcolors">
-                    <div class="templatedivflex2left">
-
-                        <h3 class="templatecontentheadercenter">You have {{ units["counter_intel_agents"]["quantity"] }} Counter-Intelligence Agents</h3>
-
-                        <div class="combat-stats-box">
-                            {% if units["counter_intel_agents"]["maintenance_per_tick"] > 0 %}
-                            <p><strong>Maintenance:</strong> {{ units["counter_intel_agents"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["counter_intel_agents"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["counter_intel_agents"]["maintenance_resource"] }} per tick</p>
-                            {% endif %}
-                        </div>
-
-                        <p class="templatecontentpleft">Your internal security force. Every enemy spy operation against you has a chance to be intercepted before it happens: the operation fails, some of their spies are captured and the rest are driven off. More agents means a higher chance, with diminishing returns (never above 60%), and big operations with many spies are harder to stop. Each admin building supports 10 agents. They don't fight in wars.</p>
-
-                        <ul>{{ "counter_intel_agents" | milres }}
-                        </ul>
-                        <form action="/military" method="POST">
-                            <div class="purchasemilitarydiv">
-                                <input class="loginsignupinput" autocomplete="off" name="counter_intel_agents" type="number" placeholder="Amount" required />
-
-                                <div class="templatedivflex2 divflex2center">
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/counter_intel_agents') }}
-
-                                    </div>
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/counter_intel_agents') }}
-
-                                    </div>
-                                </div>
-                                <span class="limit-text">You can purchase {{ limits["counter_intel_agents"] }} more Counter-Intelligence Agents</span>
-                            </div>
-                        </form>
-
-                    </div>
-                    <div class="templatedivflex2left">
-                        <img alt="Counter-intelligence operations center" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'counter_intel_agents')) }}?v=2" loading="lazy" />
-                    </div>
-                </div>
-            </div>
-            <div class="menudiv">
-
-                <h2 class="templatecontentheaderleft">SAM Batteries</h2>
-
-                <div class="templatedivflex2 menuflex warflexparentcolors">
-                    <div class="templatedivflex2left">
-
-                        <h3 class="templatecontentheadercenter">You have {{ units["sam_batteries"]["quantity"] }} SAM Batteries</h3>
-
-                        <div class="combat-stats-box">
-                            {% if units["sam_batteries"]["maintenance_per_tick"] > 0 %}
-                            <p><strong>Maintenance:</strong> {{ units["sam_batteries"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["sam_batteries"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["sam_batteries"]["maintenance_resource"] }} per tick</p>
-                            {% endif %}
-                        </div>
-
-                        <p class="templatecontentpleft">Surface-to-air missile batteries. They don't fight in normal battles, but they shoot down part of every incoming kamikaze drone and cruise missile strike before it hits. More batteries means more interceptions, with diminishing returns (never 100%). Each army base supports 20 batteries.</p>
-
-                        <ul>{{ "sam_batteries" | milres }}
-                        </ul>
-                        <form action="/military" method="POST">
-                            <div class="purchasemilitarydiv">
-                                <input class="loginsignupinput" autocomplete="off" name="sam_batteries" type="number" placeholder="Amount" required />
-
-                                <div class="templatedivflex2 divflex2center">
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/sam_batteries') }}
-
-                                    </div>
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/sam_batteries') }}
-
-                                    </div>
-                                </div>
-                                <span class="limit-text">You can purchase {{ limits["sam_batteries"] }} more SAM Batteries</span>
-                            </div>
-                        </form>
-
-                    </div>
-                    <div class="templatedivflex2left">
-                        <img alt="Surface-to-air missile battery" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'sam_batteries')) }}?v=2" loading="lazy" />
-                    </div>
-                </div>
-            </div>
-            <div class="menudiv">
-
-                <h2 class="templatecontentheaderleft">Ballistic Missiles</h2>
-
-                <div class="templatedivflex2 menuflex warflexparentcolors">
-                    <div class="templatedivflex2left">
-
-                        <h3 class="templatecontentheadercenter">You have {{ units["icbms"]["quantity"] }} Ballistic Missiles</h3>
-
-                        <div class="combat-stats-box">
-                            {{ combat_stats_line("icbms") }}
-                            {% if units["icbms"]["maintenance_per_tick"] > 0 %}
-                            <p><strong>Maintenance:</strong> {{ units["icbms"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["icbms"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["icbms"]["maintenance_resource"] }} per tick</p>
-                            {% endif %}
-                        </div>
-
-                        <p class="templatecontentpleft">Ballistic Missiles are devastating missiles. They can obliterate an enemy's infrastructure effectively collapsing their economy.</p>
-
-                        <ul>{{ "icbms" | milres }}
-                        </ul>
-                        <form action="/icbm" method="POST">
-                            <div class="purchasemilitarydiv">
-                                <input class="loginsignupinput" autocomplete="off" name="icbms" type="number" placeholder="Amount" required />
-
-                                <div class="templatedivflex2 divflex2center">
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/icbms') }}
-
-                                    </div>
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/icbms') }}
-
-                                    </div>
-                                </div>
-                                <span class="limit-text">You can purchase {{ limits["icbms"] }} more Ballistic Missiles today</span>
-                            </div>
-
-                    </div>
-                    </form>
-                    <div class="templatedivflex2left">
-
-
-
-                        <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'icbms')) }}?v=2" loading="lazy" />
-                    </div>
-                </div>
-            </div>
-            <div class="menudiv">
-
-                <h2 class="templatecontentheaderleft">Nukes</h2>
-
-                <div class="templatedivflex2 menuflex warflexparentcolors">
-                    <div class="templatedivflex2left">
-
-                        <h3 class="templatecontentheadercenter">You have {{ units["nukes"]["quantity"] }} Nukes</h3>
-
-                        <div class="combat-stats-box">
-                            {{ combat_stats_line("nukes") }}
-                            {% if units["nukes"]["maintenance_per_tick"] > 0 %}
-                            <p><strong>Maintenance:</strong> {{ units["nukes"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["nukes"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["nukes"]["maintenance_resource"] }} per tick</p>
-                            {% endif %}
-                        </div>
-
-                        <p class="templatecontentpleft">Nukes are tools to annihilate everything your enemies love. These bombs should be saved for your most hated adversary.</p>
-
-                        <ul>{{ "nukes" | milres }}
-                        </ul>
-                        <form action="/icbm" method="POST">
-                            <div class="purchasemilitarydiv">
-                                <input class="loginsignupinput" autocomplete="off" name="nukes" type="number" placeholder="Amount" required />
-
-                                <div class="templatedivflex2 divflex2center">
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Buy', icon='add_circle_outline', formaction='/military/buy/nukes') }}
-
-                                    </div>
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Sell', icon='remove_circle_outline', formaction='/military/sell/nukes') }}
-
-                                    </div>
-                                </div>
-                                <span class="limit-text">You can purchase {{ limits["nukes"] }} more Nukes today</span>
-                            </div>
-
-                    </div>
-                    </form>
-                    <div class="templatedivflex2left">
-
-
-
-                        <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'nukes')) }}?v=2" loading="lazy" />
-                    </div>
-                </div>
-            </div>
-            <div class="menudiv">
-
-                <h2 class="templatecontentheaderleft">Kamikaze Drones</h2>
-
-                <div class="templatedivflex2 menuflex warflexparentcolors">
-                    <div class="templatedivflex2left">
-
-                        <h3 class="templatecontentheadercenter">You have {{ units["kamikaze_drones"]["quantity"] }} Kamikaze Drones</h3>
-
-                        <div class="combat-stats-box">
-                            {{ combat_stats_line("kamikaze_drones") }}
-                            {% if units["kamikaze_drones"]["maintenance_per_tick"] > 0 %}
-                            <p><strong>Maintenance:</strong> {{ units["kamikaze_drones"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["kamikaze_drones"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["kamikaze_drones"]["maintenance_resource"] }} per tick</p>
-                            {% endif %}
-                        </div>
-
-                        <p class="templatecontentpleft">Kamikaze drones are cheap, expendable loitering munitions. Your Drone Sites manufacture them automatically into a stockpile over time -- weak alone, they're meant to be activated and launched in swarms at an enemy's buildings during a war to damage their economy.</p>
-
-                        <p class="templatecontentpleft"><strong>{{ stockpile["kamikaze_drones"] }}</strong> drones are manufactured and sitting in your stockpile. Activating moves them into your usable military -- {{ "kamikaze_drones" | milres }}</p>
-
-                        <form action="/military/activate/kamikaze_drones" method="POST">
-                            <div class="purchasemilitarydiv">
-                                <input class="loginsignupinput" autocomplete="off" name="kamikaze_drones" type="number" placeholder="Amount" required />
-
-                                <div class="templatedivflex2 divflex2center">
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Activate', icon='bolt', formaction='/military/activate/kamikaze_drones') }}
-
-                                    </div>
-                                </div>
-                            </div>
-
-                            <span class="limit-text">{{ stockpile["kamikaze_drones"] }} drones in your stockpile ready to activate</span>
-                    </div>
-                    </form>
-                    <div class="templatedivflex2left">
-
-
-
-                        <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'kamikaze_drones')) }}?v=2" loading="lazy" />
-                    </div>
-                </div>
-            </div>
-            <div class="menudiv">
-
-                <h2 class="templatecontentheaderleft">Cruise Missiles</h2>
-
-                <div class="templatedivflex2 menuflex warflexparentcolors">
-                    <div class="templatedivflex2left">
-
-                        <h3 class="templatecontentheadercenter">You have {{ units["cruise_missiles"]["quantity"] }} Cruise Missiles</h3>
-
-                        <div class="combat-stats-box">
-                            {{ combat_stats_line("cruise_missiles") }}
-                            {% if units["cruise_missiles"]["maintenance_per_tick"] > 0 %}
-                            <p><strong>Maintenance:</strong> {{ units["cruise_missiles"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["cruise_missiles"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["cruise_missiles"]["maintenance_resource"] }} per tick</p>
-                            {% endif %}
-                        </div>
-
-                        <p class="templatecontentpleft">Cruise missiles are a precision strike weapon, manufactured over time by your Missile Batteries into a stockpile. Pricier and slower to produce than drones, but a guaranteed hit -- no need for a swarm.</p>
-
-                        <p class="templatecontentpleft"><strong>{{ stockpile["cruise_missiles"] }}</strong> missiles are manufactured and sitting in your stockpile. Activating moves them into your usable military -- {{ "cruise_missiles" | milres }}</p>
-
-                        <form action="/military/activate/cruise_missiles" method="POST">
-                            <div class="purchasemilitarydiv">
-                                <input class="loginsignupinput" autocomplete="off" name="cruise_missiles" type="number" placeholder="Amount" required />
-
-                                <div class="templatedivflex2 divflex2center">
-                                    <div class="templatedivflex2left flexchildvanilla">
-
-                                        {{ game_button('Activate', icon='bolt', formaction='/military/activate/cruise_missiles') }}
-
-                                    </div>
-                                </div>
-                            </div>
-
-                            <span class="limit-text">{{ stockpile["cruise_missiles"] }} missiles in your stockpile ready to activate</span>
-                    </div>
-                    </form>
-                    <div class="templatedivflex2left">
-
-
-
-                        <img alt="Image" tabindex="0" class="unitimage" src="{{ url_for('static', filename=game_asset_path('units', 'cruise_missiles')) }}?v=2" loading="lazy" />
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!--end-->
     </div>
 </div>
 {% endblock %}

@@ -13639,6 +13639,364 @@ body.page-trade-agreements .ta-form .templateselect {
 }
 
 
+/* --- static/css/game-military.css --- */
+/*
+ * Military page (templates/military_v2.html). Bundled into static/style.css
+ * by scripts/bundle_game_css.py -- edit this file.
+ *
+ * Rebuilt 2026-09-28 ("in the worst shape of the whole game"). The old page
+ * was 16 hand-copied unit blocks plus a ~280-line inline <style> that fought
+ * legacy .warflexparentcolors/.unitimage rules with !important; each unit
+ * card ran ~1.5 phone screens tall (photo below the buy form, Buy/Sell
+ * stacked full-width, costs as a prose sentence). Now: branch tabs with
+ * unit totals, and compact unit cards -- photo strip, name + owned count,
+ * ATK/DEF, description, cost chips, one Amount | Buy | Sell row.
+ * Mobile first; tablet/desktop go to a 2/3-column grid.
+ */
+
+/* ---------- Branch tabs ---------- */
+body.page-military .mil-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    margin: 0 0 var(--game-space-md);
+}
+
+body.page-military .mil-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 64px;
+    padding: 8px 4px;
+    border: 1px solid var(--game-glass-border);
+    border-radius: var(--game-radius-md);
+    background: var(--game-glass-bg);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+    color: var(--colorOne);
+    font: inherit;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: background 0.12s, border-color 0.12s;
+}
+
+body.page-military .mil-tab:hover {
+    background: var(--game-glass-bg-strong);
+}
+
+body.page-military .mil-tab .material-icons-outlined {
+    font-size: 20px;
+    color: var(--game-text-faint);
+}
+
+.mil-tab-label {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.mil-tab-count {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--game-text-faint);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Active tab. static/script.js adds .militarylandclick etc.; style.css and
+   game-glass.css already paint those ids (solid blue / underline) for the
+   old .menuflex2 markup, hence the !important to win back a consistent
+   look for this page's own tab component. */
+body.page-military .mil-tab.militarylandclick,
+body.page-military .mil-tab.militaryairclick,
+body.page-military .mil-tab.militarywaterclick,
+body.page-military .mil-tab.militaryspecialclick {
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+    color: #fff !important;
+}
+
+body.page-military .mil-tab.militarylandclick .material-icons-outlined,
+body.page-military .mil-tab.militaryairclick .material-icons-outlined,
+body.page-military .mil-tab.militarywaterclick .material-icons-outlined,
+body.page-military .mil-tab.militaryspecialclick .material-icons-outlined,
+body.page-military .mil-tab.militarylandclick .mil-tab-count,
+body.page-military .mil-tab.militaryairclick .mil-tab-count,
+body.page-military .mil-tab.militarywaterclick .mil-tab-count,
+body.page-military .mil-tab.militaryspecialclick .mil-tab-count {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* style.css shows the active panel with `display: initial` (inline). */
+body.page-military .mil-branch.landclick,
+body.page-military .mil-branch.airclick,
+body.page-military .mil-branch.waterclick,
+body.page-military .mil-branch.specialclick {
+    display: block;
+}
+
+/* ---------- Unit cards ---------- */
+.mil-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--game-space-md);
+}
+
+.mil-unit {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    text-align: left;
+}
+
+.mil-unit-media {
+    position: relative;
+    height: 120px;
+    background: var(--game-glass-bg-strong);
+}
+
+.mil-unit-media img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Soft fade from photo into the card so the strip doesn't read as a
+   separate box glued on top. */
+.mil-unit-media::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 40%;
+    background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.35));
+    pointer-events: none;
+}
+
+.mil-unit-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px 16px;
+    flex: 1;
+}
+
+.mil-unit-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.mil-unit-head h3 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--colorOne);
+    text-align: left;
+}
+
+.mil-owned {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+    line-height: 1.1;
+}
+
+.mil-owned-value {
+    font-size: 20px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--colorOne);
+}
+
+.mil-owned-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--game-text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.mil-stats {
+    display: flex;
+    gap: 8px;
+    margin-top: -4px;
+}
+
+.mil-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--game-glass-bg-strong);
+    border: 1px solid var(--game-glass-border);
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--colorOne);
+}
+
+.mil-stat .material-icons-outlined {
+    font-size: 14px;
+    color: var(--accent);
+}
+
+.mil-desc {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--colorOne);
+    opacity: 0.85;
+}
+
+.mil-costs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.mil-costs-label {
+    width: 100%;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--game-text-faint);
+}
+
+.mil-cost {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px 4px 6px;
+    border-radius: var(--game-radius-sm);
+    background: var(--game-glass-bg-strong);
+    border: 1px solid var(--game-glass-border);
+    font-size: 12.5px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--colorOne);
+    white-space: nowrap;
+}
+
+.mil-cost img {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+}
+
+.mil-cost .material-icons-outlined {
+    font-size: 16px;
+    color: var(--game-text-faint);
+}
+
+.mil-upkeep {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--game-text-faint);
+}
+
+.mil-upkeep .material-icons-outlined {
+    font-size: 15px;
+}
+
+/* One row: Amount | Buy | Sell -- actions low in the card (thumb zone). */
+.mil-order {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 8px;
+    margin: auto 0 0;
+    padding-top: 4px;
+}
+
+.mil-order:has(> button:only-of-type) {
+    grid-template-columns: minmax(0, 1fr) auto;
+}
+
+body.page-military .mil-amount {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    margin: 0;
+    padding: 10px 12px;
+    box-sizing: border-box;
+    border-radius: var(--game-radius-sm);
+    border: 1px solid var(--game-glass-border);
+    background: var(--game-glass-bg-strong);
+    color: var(--colorOne);
+    font-size: 15px;
+}
+
+body.page-military .mil-amount::placeholder {
+    color: var(--game-text-faint);
+}
+
+body.page-military .mil-order .game-btn {
+    min-height: 44px;
+    padding: 0 14px;
+    font-size: 14px;
+}
+
+.mil-limit {
+    margin: -2px 0 0;
+    font-size: 12px;
+    color: var(--game-text-faint);
+}
+
+.mil-limit strong {
+    color: var(--colorOne);
+}
+
+/* ---------- Tablet / desktop ---------- */
+@media (min-width: 700px) {
+    .mil-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    body.page-military .mil-tab {
+        flex-direction: row;
+        gap: 8px;
+        min-height: 52px;
+    }
+
+    .mil-tab-label {
+        font-size: 14px;
+    }
+
+    .mil-tab-count {
+        padding: 1px 7px;
+        border-radius: 999px;
+        background: var(--game-glass-bg-strong);
+    }
+
+    body.page-military .mil-tab.militarylandclick .mil-tab-count,
+    body.page-military .mil-tab.militaryairclick .mil-tab-count,
+    body.page-military .mil-tab.militarywaterclick .mil-tab-count,
+    body.page-military .mil-tab.militaryspecialclick .mil-tab-count {
+        background: rgba(255, 255, 255, 0.2);
+    }
+}
+
+@media (min-width: 1100px) {
+    .mil-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+
 /* --- static/css/game-touch.css --- */
 /* =====================================================================
  * game-touch.css — touch / gesture polish for Affairs and Order

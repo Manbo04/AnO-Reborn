@@ -666,3 +666,26 @@ DATABASE_PUBLIC_URL=... python3 scripts/apply_all_pending_migrations.py
 **What to watch**:
 - `tests/test_trade_agreement_no_double_execution.py` needs a live DB. It fails the same way with and without this change.
 - The legacy `trade_agreements.html` (non-v2) was not touched.
+
+### Session: 2026-09-28 — Military page rebuilt
+
+**Problem** (reported as "in the worst shape of the whole game"):
+- `military_v2.html` was 1,170 lines: 16 hand-copied ~50-line unit blocks, several with `<form>` closing outside the div it opened in.
+- A ~280-line inline `<style>` fought legacy `.warflexparentcolors`/`.unitimage` rules with `!important`.
+- Each unit card was ~1.5 phone screens tall. The photo sat below the buy form, Buy/Sell were stacked full-width, costs were a prose sentence, and there were four levels of heading per unit.
+- "You can purchase N more today" was wrong: `compute_display_limits` returns building capacity, not a daily limit.
+- The Artillery/Tanks note "cap of 150 troops per Army Base" contradicted the code (200 per base).
+
+**What was done**:
+- `templates/military_v2.html` is now data-driven: one `branches` list (key, name, image, description) plus one `unit_card` macro.
+  - Tabs keep the ids/onclick names `static/script.js` TAB_GROUPS.military toggles (`#militaryland` / `#land`, …) and now show branch unit totals.
+  - Cards: photo strip, name + owned count, ATK/DEF pills, description, cost chips built from `mildict` (the same source the old `milres` filter used, including the Widespread Propaganda 0.65 soldier price), upkeep, and one `Amount | Buy | Sell` row with "Room for N more".
+  - Drones/missiles keep their activate form and stockpile count.
+- Verified all 17 units render a form with the correct input name and `/military/buy|sell/<unit>` or `/military/activate/<unit>` targets. CSRF comes from `layout.html`'s auto-injection, as before.
+- `static/css/game-military.css` is new and added to the bundle. It is mobile-first: 4-up icon tabs and 1 column on phones, 2 columns from 700px, 3 from 1100px.
+- Screenshotted at 390px dark/light, 820px and 1280px dark/light with mock data, including switching to the Special tab. Mobile page height went from 3,567px to 2,215px on the Army tab.
+
+**What to watch**:
+- `tests/test_military_rebalance.py` / `test_normalized_military.py` need a live DB and fail identically before and after.
+- Unit descriptions were tightened (facts unchanged, "figher" typo fixed). The stale 150-per-base note was dropped.
+- The legacy `military.html` (non-v2) was not touched.
