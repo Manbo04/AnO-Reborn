@@ -32,6 +32,7 @@ import os
 import math
 from action_loop import build_structure, ActionLoopError
 from app_core.coalitions.repositories import can_manage_province_builds
+from app_core.economy.project_bonuses import project_output_bonus
 from app_core.economy.biome_buildings import mines_for_biome, other_biome_mines
 from app_core.economy.building_costs import (
     CITY_UNITS,
@@ -455,7 +456,11 @@ def province(pId):
                     province.get("citycount") or 0,
                     nation_counts,
                 )
-                entry = {"scale": round(b["scale"] * 100, 1), "integration": None}
+                entry = {
+                    "scale": round(b["scale"] * 100, 1),
+                    "integration": None,
+                    "multiplier": b["multiplier"],
+                }
                 if bname in PROCESSING_BUILDINGS:
                     entry["integration"] = round(b["integration"] * 100, 1)
                     entry["self_sufficiency"] = int(
@@ -566,6 +571,28 @@ def province(pId):
                     1.0, max(variables.PRODUCTION_EFFICIENCY_MIN, employment_ratio)
                 )
         production_multiplier = productivity_multiplier * efficiency_multiplier
+
+        # Real per-building hourly output in this province, built exactly like
+        # generate_province_revenue(): (productivity + national-project bonus)
+        # x specialisation x integration x workforce. The static card text
+        # only shows base x project, which read far below what the tick pays
+        # (Kurai: 65 steel/mill shown vs ~104 actually produced).
+        for bname, entry in industry_bonus.items():
+            qty = units.get(bname, 0) or 0
+            if qty <= 0:
+                continue
+            mult = (
+                productivity_multiplier + project_output_bonus(bname, upgrades)
+            ) * entry.get("multiplier", 1.0) * efficiency_multiplier
+            flat = (
+                int((province.get("land") or 0) * variables.LAND_FARM_PRODUCTION_ADDITION)
+                if bname == "farms"
+                else 0
+            )
+            entry["unit_outputs"] = [
+                (res, round((amt * qty + flat) * mult / qty, 1))
+                for res, amt in (new_infra.get(bname, {}).get("plus") or {}).items()
+            ]
 
         # Per-building consumption breakdown (each consumer building uses 1
         # energy/hour, except Electric Arc Furnace steel mills which use 2 —

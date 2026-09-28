@@ -9,6 +9,7 @@ import logging
 from collections import defaultdict
 from app_core.policies.services import get_user_policies
 from app_core.economy.industry_bonuses import production_bonuses
+from app_core.economy.project_bonuses import project_output_bonus
 from app_core.economy.consumer_goods import (
     allocate_consumer_goods,
     cg_tax_multiplier,
@@ -415,12 +416,7 @@ def get_revenue(cId, db=None):
 
                     # Production project multipliers (mirror app_core/game_ticks/
                     # revenue.py so the projection matches actual generation).
-                    if building == "bauxite_mines" and upgrades.get("strongerexplosives"):
-                        multiplier += 0.45
-                    if building == "farms" and upgrades.get("advancedmachinery"):
-                        multiplier += 0.5
-                    if building == "steel_mills" and upgrades.get("integratedsteelmaking"):
-                        multiplier += 0.36
+                    multiplier += project_output_bonus(building, upgrades)
 
                     # Economies of scale + vertical integration, same helper
                     # as the real tick.
