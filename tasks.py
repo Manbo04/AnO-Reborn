@@ -407,3 +407,9 @@ from app_core.game_ticks.assembly_tick import run_assembly_tick
 def task_assembly_tick():
     run_assembly_tick()
 
+
+@celery.task()
+@leader_only(ttl_seconds=300)
+def task_check_achievements():
+    from app_core.game_ticks.achievements import check_achievements
+    _run_with_deadlock_retries(check_achievements, "check_achievements")

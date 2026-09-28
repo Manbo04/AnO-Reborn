@@ -42,6 +42,11 @@ TASK_RUN_THRESHOLDS = {
 }
 
 CELERY_BEAT_SCHEDULE = {
+    "check_achievements": {
+        "task": "tasks.task_check_achievements",
+        "schedule": get_crontab_env("ACHIEVEMENTS_CRON", crontab(minute="*/30")),
+    },
+
     "tax_income": {
         "task": "tasks.task_tax_income",
         "schedule": get_crontab_env("TAX_INCOME_CRON", crontab(minute="0")),

@@ -99,6 +99,7 @@ MIGRATION_FILES = [
     "0091_currency_market.sql",
     "0093.sql",
     "0094.sql",
+    "0095_achievements.sql",
 ]
 
 

@@ -915,6 +915,19 @@ def country(cId):
         except Exception:
             revenue_history_totals = None
 
+    # Fetch achievements
+    all_achievements = []
+    with get_request_cursor(read_only=True) as db:
+        db.execute("SELECT key, unlocked_at FROM user_achievements WHERE user_id = %s", (cId,))
+        unlocked_keys = set(row[0] for row in db.fetchall())
+        db.execute("SELECT key, name, description, category, tier, icon FROM achievements ORDER BY category, tier")
+        from psycopg2.extras import RealDictCursor
+        with get_request_cursor(read_only=True, cursor_factory=RealDictCursor) as dict_db:
+            dict_db.execute("SELECT key, name, description, category, tier, icon FROM achievements ORDER BY category, tier")
+            for row in dict_db.fetchall():
+                row['unlocked'] = row['key'] in unlocked_keys
+                all_achievements.append(row)
+
     template = "country_v2.html" if is_theme_v2_enabled("country") else "country.html"
     return render_template(
         template,
@@ -926,6 +939,7 @@ def country(cId):
         treaty_types=treaty_types,
         treaty_type_labels=treaty_type_labels,
         is_embargoed_by_viewer=is_embargoed_by_viewer,
+        achievements=all_achievements,
         currency_status=currency_status,
         **data
     )
