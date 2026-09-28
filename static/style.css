@@ -13894,24 +13894,23 @@ body.nation-forge-theme .forge-embers-canvas {
     height: 100%;
     pointer-events: none;
     opacity: 0.55;
-    mix-blend-mode: screen;
+    /* No mix-blend-mode: with "screen" the canvas's dark fading trail
+       vanished on desktop, the drips went faint and the overlay stripes
+       showed through as static bars, while touch devices (game-touch.css
+       forces blend "normal" for scroll performance) saw proper molten
+       drips. Normal blending everywhere makes desktop match mobile and is
+       cheaper to composite. */
 }
 
-/* Slow-scrolling molten streaks + warm ember glow painted onto the
-   page's existing darkening overlay (game-glass.css .game-page-overlay),
-   which already sits fixed between the background photo and all
-   content. */
+/* Warm ember glow painted onto the page's existing darkening overlay
+   (game-glass.css .game-page-overlay), fixed between the background
+   photo and all content. Static: the drips come from the canvas above.
+   The old 36px repeating stripe + background-position scroll read as
+   static bars on desktop and repainted the whole viewport every frame. */
 body.nation-forge-theme .game-page-overlay {
     background:
-        repeating-linear-gradient(180deg, rgba(255, 140, 43, 0.07) 0px, rgba(255, 140, 43, 0.07) 2px, transparent 2px, transparent 36px),
         radial-gradient(circle at 20% 10%, rgba(255, 140, 43, 0.18) 0%, transparent 45%),
         linear-gradient(180deg, rgba(13, 4, 2, 0.55) 0%, rgba(13, 4, 2, 0.9) 65%, #0d0402 100%);
-    animation: forge-drip-scroll 3.2s linear infinite;
-}
-
-@keyframes forge-drip-scroll {
-    0% { background-position: 0 0, 0 0, 0 0; }
-    100% { background-position: 0 36px, 0 0, 0 0; }
 }
 
 /* Roaming downward ember flare, purely decorative, never blocks clicks --
