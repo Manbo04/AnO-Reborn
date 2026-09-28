@@ -17,7 +17,8 @@ The blend (rebalanced 2026-09-27, players' request):
   kamikaze drones > cruise missiles): a stockpile of WMDs makes the rest of
   the world trust you less.
 * **Resources are a minor share**, valued per kg (RESOURCE_VALUE_PER_KG) as
-  60% hourly production + 40% stockpile. Hourly production is the nominal
+  60% hourly production + 40% stockpile. The treasury is part of the
+  stockpile: gold counts at GOLD_STOCKPILE_VALUE per $1 inside that 40%. Hourly production is the nominal
   per-building output from variables.NEW_INFRA -- the same table the hourly
   revenue tick produces from -- so there is no second copy of it here.
 * **Territory and buildings** (production capacity) count some.
@@ -26,8 +27,10 @@ The blend (rebalanced 2026-09-27, players' request):
   NUCLEAR_PENALTY_DECAY_DAYS (the struck province's recovery timer). The live
   remainder is subtracted here.
 
-Gold no longer counts: it used to be 1 point per $100k and swamped every
-other term (it was >90% of most nations' score).
+Gold used to be its own term (1 point per $100k) and was >90% of most
+nations' score; it now sits inside the stockpile share, calibrated on the
+2026-09-27 prod snapshot so treasury-heavy nations get roughly 20-35% of
+their score from gold (1 influence per ~$833k).
 """
 
 from __future__ import annotations
@@ -81,6 +84,8 @@ RESOURCE_VALUE_PER_KG = {
     "gasoline": 5639,
     "components": 155298,
 }
+# Gold in the treasury, valued per $1 like a resource kg (stockpile only).
+GOLD_STOCKPILE_VALUE = 2
 PRODUCTION_SHARE = 0.6  # of the resource value: hourly production
 STOCKPILE_SHARE = 0.4  # of the resource value: stockpile
 # Scales the raw value down so resources stay a minor share (~4% of all
@@ -131,7 +136,7 @@ def compute_influence(metrics: dict) -> int:
     metrics keys (all optional, missing = 0):
       population, provinces, cities, land, buildings (total count),
       units: {unit_name: qty}, stockpile: {resource: kg},
-      building_counts: {building_name: qty}, nuclear_penalty.
+      building_counts: {building_name: qty}, gold, nuclear_penalty.
     """
     units = metrics.get("units") or {}
     score = POPULATION_WEIGHT * float(metrics.get("population") or 0)
@@ -139,7 +144,10 @@ def compute_influence(metrics: dict) -> int:
         score += UNIT_WEIGHTS.get(name, 0) * float(qty or 0)
         score -= MISSILE_PENALTIES.get(name, 0) * float(qty or 0)
     score += RESOURCE_SCALE * (
-        STOCKPILE_SHARE * stockpile_value(metrics.get("stockpile") or {})
+        STOCKPILE_SHARE * (
+            stockpile_value(metrics.get("stockpile") or {})
+            + GOLD_STOCKPILE_VALUE * float(metrics.get("gold") or 0)
+        )
         + PRODUCTION_SHARE * production_value(metrics.get("building_counts") or {})
     )
     score += PROVINCE_WEIGHT * float(metrics.get("provinces") or 0)
@@ -205,7 +213,8 @@ def influence_subquery_sql(user_ids_sql: str) -> str:
                 COALESCE(p.population, 0) * {_num(POPULATION_WEIGHT)}
                 + COALESCE(m.points, 0)
                 + {_num(RESOURCE_SCALE)} * (
-                    {_num(STOCKPILE_SHARE)} * COALESCE(r.stock_value, 0)
+                    {_num(STOCKPILE_SHARE)} * (COALESCE(r.stock_value, 0)
+                        + COALESCE(s.gold, 0)::numeric * {_num(GOLD_STOCKPILE_VALUE)})
                     + {_num(PRODUCTION_SHARE)} * COALESCE(b.production_value, 0))
                 + COALESCE(p.provinces, 0) * {PROVINCE_WEIGHT}
                 + COALESCE(p.cities, 0) * {CITY_WEIGHT}
@@ -214,6 +223,7 @@ def influence_subquery_sql(user_ids_sql: str) -> str:
                 - COALESCE(n.penalty, 0)
             ))::bigint AS influence
         FROM (SELECT DISTINCT id FROM inf_ids AS x(id)) ids
+        LEFT JOIN stats s ON s.id = ids.id
         LEFT JOIN (
             SELECT userid AS user_id, COUNT(*) AS provinces,
                    SUM(citycount) AS cities, SUM(land) AS land,

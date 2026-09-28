@@ -43,8 +43,12 @@ def test_resource_values_and_60_40_split():
     assert prod_only == round(inf.RESOURCE_SCALE * 0.6 * 24400 * 1000)
 
 
-def test_gold_no_longer_counts_and_floor_zero():
-    assert inf.compute_influence({"gold": 10**15}) == 0
+def test_gold_counts_inside_stockpile_share_and_floor_zero():
+    gold = 1_000_000_000
+    expected = round(inf.RESOURCE_SCALE * inf.STOCKPILE_SHARE * inf.GOLD_STOCKPILE_VALUE * gold)
+    assert inf.compute_influence({"gold": gold}) == expected
+    # far below the old 1 point per $100k
+    assert expected < gold / 100_000
     assert inf.compute_influence({"units": {"nukes": 5}}) == 0
 
 
@@ -134,6 +138,7 @@ def test_sql_matches_python_and_callers():
                 "units": units,
                 "stockpile": stock,
                 "building_counts": blds,
+                "gold": 999999999,
                 "nuclear_penalty": inf.nuclear_penalty_remaining(70000, 86400),
             }
         )
@@ -146,7 +151,8 @@ def test_sql_matches_python_and_callers():
         with app.test_request_context():
             bulk = get_bulk_influence(uids)
         assert abs(bulk[a] - expected) <= 1
-        assert bulk[uids[1]] == 0  # gold alone no longer counts
+        # second user owns only gold: it counts inside the stockpile share
+        assert abs(bulk[uids[1]] - inf.compute_influence({"gold": 999999999})) <= 1
     finally:
         query_cache.invalidate(pattern="influence_")
         with get_db_connection() as conn:
