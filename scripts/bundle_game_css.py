@@ -15,6 +15,7 @@ FILES = [
     "static/css/game-mechanics.css",
     "static/css/game-province.css",
     "static/css/game-war.css",
+    "static/css/game-trade.css",
     "static/css/game-touch.css",
     "static/css/chat.css",
     "static/css/store.css",

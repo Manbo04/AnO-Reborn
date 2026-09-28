@@ -1,583 +1,321 @@
 {% extends "layout.html" %}
 {% block title %}Trade Agreements{% endblock %}
 {% block body_class %} page-trade-agreements game-page-v2{% endblock %}
-{% from 'macros/game_ui.html' import game_hero %}
-<style>
 {% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+
+{#- agreements rows (app_core/trade_agreements/repositories.get_agreements_for_user):
+    0 id, 1 proposer_id, 2 proposer_resource, 3 proposer_amount, 4 receiver_id,
+    5 receiver_resource, 6 receiver_amount, 7 interval_hours, 8 next_execution,
+    9 last_execution, 10 max_executions, 11 execution_count, 12 status,
+    13 created_at, 14 message, 15 proposer_name, 16 receiver_name -#}
+{% set pending_incoming = agreements | selectattr('12', 'equalto', 'pending') | selectattr('4', 'equalto', user_id) | list %}
+{% set pending_outgoing = agreements | selectattr('12', 'equalto', 'pending') | selectattr('1', 'equalto', user_id) | list %}
+{% set active = agreements | selectattr('12', 'equalto', 'active') | list %}
+{% set paused = agreements | selectattr('12', 'equalto', 'paused') | list %}
+{% set completed = agreements | selectattr('12', 'equalto', 'completed') | list %}
+
+{% macro res_label(res) -%}
+{{ resource_labels.get(res, res | replace('_', ' ') | title) }}
+{%- endmacro %}
+
+{% macro res_chip(res, amount, side) -%}
+<span class="ta-chip ta-chip--{{ side }}" title="{{ amount | commas }} {{ res_label(res) }}">
+    <img src="{{ url_for('static', filename='images/res' ~ res ~ '.png') }}?v=2" alt="" loading="lazy" onerror="this.style.display='none'">
+    <span class="ta-chip-amount">{{ amount | fmt }}</span>
+    <span class="ta-chip-res">{{ res_label(res) }}</span>
+</span>
+{%- endmacro %}
+
+{% macro interval_label(hours) -%}
+{% if hours == 1 %}Hourly{% elif hours == 24 %}Daily{% elif hours == 168 %}Weekly{% else %}Every {{ hours }}h{% endif %}
+{%- endmacro %}
+
+{#- One agreement, always from the viewer's side: what YOU give / what YOU get. -#}
+{% macro deal(a, badge_class, badge_text) %}
+{% set mine = a[1] == user_id %}
+<div class="ta-deal">
+    <div class="ta-deal-head">
+        {% if mine %}
+        <a class="ta-partner" href="/country/id={{ a[4] }}" title="{{ a[16] }}">{{ a[16] }}</a>
+        {% else %}
+        <a class="ta-partner" href="/country/id={{ a[1] }}" title="{{ a[15] }}">{{ a[15] }}</a>
+        {% endif %}
+        <span class="game-badge {{ badge_class }}">{{ badge_text }}</span>
+    </div>
+    <div class="ta-deal-swap">
+        <div class="ta-side">
+            <span class="ta-side-label">You give</span>
+            {% if mine %}{{ res_chip(a[2], a[3], 'give') }}{% else %}{{ res_chip(a[5], a[6], 'give') }}{% endif %}
+        </div>
+        <span class="material-icons-outlined ta-deal-arrow" aria-hidden="true">sync_alt</span>
+        <div class="ta-side">
+            <span class="ta-side-label">You get</span>
+            {% if mine %}{{ res_chip(a[5], a[6], 'get') }}{% else %}{{ res_chip(a[2], a[3], 'get') }}{% endif %}
+        </div>
+    </div>
+    <div class="ta-deal-meta">
+        <span><span class="material-icons-outlined">schedule</span>{{ interval_label(a[7]) }}</span>
+        {% if a[12] != 'pending' %}
+        <span><span class="material-icons-outlined">repeat</span>{{ a[11] }}{% if a[10] %} / {{ a[10] }}{% endif %} trades</span>
+        {% elif a[10] %}
+        <span><span class="material-icons-outlined">repeat</span>max {{ a[10] }} trades</span>
+        {% endif %}
+        {% if a[12] == 'active' and a[8] %}
+        <span><span class="material-icons-outlined">event</span>Next {{ a[8].strftime('%b %d, %H:%M') }}</span>
+        {% endif %}
+    </div>
+    {% if a[14] %}<p class="ta-deal-message">&ldquo;{{ a[14] }}&rdquo;</p>{% endif %}
+    {% if caller is defined %}<div class="ta-deal-actions">{{ caller() }}</div>{% endif %}
+</div>
+{% endmacro %}
 
 <div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/market.jpg') }}');"></div>
 <div class="game-page-overlay"></div>
 
 <div class="templatediv">
 
-    {{ game_hero('Trade Agreements', badge_icon='handshake') }}
+    {{ game_hero('Trade Agreements', badge_icon='handshake',
+                 badge_text=(active | length ~ ' active') if active else 'Recurring trades',
+                 subtitle='Set up automatic recurring swaps with another nation. Once they accept, the trade repeats on its own at the interval you pick.') }}
 
-    <div class="templatedivcontent">
-        <p class="templatecontentpleft landingpagecontent">
-            Create automatic recurring trades with other players. Once accepted, trades execute automatically at the interval you set.
-        </p>
+    <div class="templatedivcontent ta-page">
 
-        {# Plain-language walkthrough (ieb, 2026-09-27: "I don't fully know how they
-           work"). Mirrors app_core/trade_agreements/services.py and the 15-minute
-           execute_trade_agreements tick -- keep in sync if those rules change. #}
-        <div class="game-glass game-panel" style="margin-bottom: 18px;">
-            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">help_outline</span> How Trade Agreements work</h2>
-            <ol class="templatecontentpleft" style="margin: 6px 0 0 18px; line-height: 1.6;">
-                <li><strong>You propose a swap</strong> to another nation: what you give, what you get back (any resource or gold), how often, and optionally how many times.</li>
-                <li><strong>They accept or reject it.</strong> Nothing moves until they accept &mdash; when they do, the first swap happens straight away.</li>
-                <li><strong>After that it repeats automatically</strong> at the interval you picked (every 1 hour up to once a week). Swaps are checked every 15 minutes, so one can land a few minutes late.</li>
-                <li><strong>It ends</strong> once it hits the max number of trades, or as soon as either side cancels &mdash; either nation can cancel at any time.</li>
-            </ol>
-            <p class="templatecontentpleft" style="margin-top: 10px; opacity: .8; font-size: .9em;"><strong>Not enough resources?</strong> If either side can't cover their half when a swap is due, nothing moves and the agreement is paused. Either nation can resume it once both sides have enough again. There's no fee &mdash; both sides get the full amounts.</p>
-        </div>
+        {# Needs an answer first: incoming proposals are the only thing on this page
+           another player is waiting on. #}
+        {% if pending_incoming %}
+        <section class="game-glass game-panel ta-incoming">
+            <h2 class="ta-panel-title"><span class="material-icons-outlined">notifications_active</span> Waiting for your answer <span class="game-badge game-badge-warn">{{ pending_incoming | length }}</span></h2>
+            <div class="ta-deal-list">
+                {% for a in pending_incoming %}
+                {% call deal(a, 'game-badge-warn', 'Proposal') %}
+                    <form action="{{ url_for('accept_trade_agreement', agreement_id=a[0]) }}" method="POST">
+                        <button type="submit" class="game-btn game-btn-primary game-btn-sm"><span class="material-icons-outlined">check</span> Accept</button>
+                    </form>
+                    <form action="{{ url_for('reject_trade_agreement', agreement_id=a[0]) }}" method="POST">
+                        <button type="submit" class="game-btn game-btn-secondary game-btn-sm"><span class="material-icons-outlined">close</span> Decline</button>
+                    </form>
+                {% endcall %}
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
 
-        <style>
-            .trade-exchange-zone {
-                display: flex;
-                flex-direction: column;
-                gap: var(--game-space-md);
-                margin: var(--game-space-lg) 0;
-                align-items: stretch;
-            }
-            @media (min-width: 768px) {
-                .trade-exchange-zone {
-                    flex-direction: row;
-                    align-items: center;
-                }
-            }
-            .trade-side-panel {
-                flex: 1;
-                background-color: var(--bg-color);
-                border: 1px solid var(--border);
-                border-radius: var(--game-radius-md);
-                padding: var(--game-space-lg);
-                display: flex;
-                flex-direction: column;
-                gap: var(--game-space-md);
-            }
-            .trade-panel-title {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                font-family: var(--font-header);
-                font-size: 1.1rem;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                margin-bottom: 8px;
-            }
-            .trade-side-give {
-                border-top: 3px solid #e74c3c;
-            }
-            .trade-side-give .trade-panel-title { color: #e74c3c; }
-            
-            .trade-side-receive {
-                border-top: 3px solid #2ecc71;
-            }
-            .trade-side-receive .trade-panel-title { color: #2ecc71; }
+        <div class="ta-top-grid">
+            <section class="game-glass game-panel">
+                <h2 class="ta-panel-title"><span class="material-icons-outlined">add_circle</span> New proposal</h2>
+                <form action="{{ url_for('create_trade_agreement') }}" method="POST" class="ta-form">
 
-            .trade-swap-icon {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 48px;
-                height: 48px;
-                background-color: var(--bg-color-alt);
-                border-radius: 50%;
-                border: 2px solid var(--border);
-                color: var(--text-muted);
-                margin: 0 auto;
-                z-index: 2;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            }
-            
-            .trade-form-row {
-                display: grid;
-                grid-template-columns: 1fr;
-                gap: var(--game-space-md);
-                margin-bottom: var(--game-space-md);
-            }
-            @media (min-width: 768px) {
-                .trade-form-row {
-                    grid-template-columns: 1fr 1fr;
-                }
-            }
-            
-            .trade-input-group label {
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                color: var(--text-muted);
-                font-size: 0.9rem;
-                margin-bottom: 8px;
-            }
-            .trade-input-group label .material-icons-outlined {
-                font-size: 1.1rem;
-            }
-        </style>
-
-        <div class="infodiv" style="padding: var(--game-space-xl); margin-top: var(--game-space-md);">
-            <form action="{{ url_for('create_trade_agreement') }}" method="POST">
-                
-                <div class="trade-form-row">
-                    <div class="trade-input-group">
-                        <label for="trade-partner-search"><span class="material-icons-outlined">person</span> Trade Partner</label>
+                    <div class="ta-field">
+                        <label for="trade-partner-search">Trade partner</label>
                         <input
                             type="text"
                             id="trade-partner-search"
                             name="receiver"
-                            class="loginsignupinput w-full"
-                            placeholder="Type country name or nation ID…"
+                            class="loginsignupinput"
+                            placeholder="Nation name or ID"
                             autocomplete="off"
                             required
                             list="trade-partner-suggestions"
                         />
                         <datalist id="trade-partner-suggestions"></datalist>
                         <input type="hidden" name="receiver_id" id="trade-receiver-id" value="" />
-                        <p class="templatecontentpleft" style="margin: 6px 0 0; font-size: 0.85rem; opacity: 0.85;">
-                            Start typing to search; pick a match or enter the exact nation ID.
-                        </p>
+                        <span class="ta-hint">Start typing to search, or enter the exact nation ID.</span>
                     </div>
-                    <div class="trade-input-group">
-                        <label><span class="material-icons-outlined">schedule</span> Interval</label>
-                        <select name="interval_hours" required class="templateselect w-full">
-                            <option value="1" class="templateoption">Every 1 hour</option>
-                            <option value="6" class="templateoption">Every 6 hours</option>
-                            <option value="12" class="templateoption">Every 12 hours</option>
-                            <option value="24" selected class="templateoption">Every 24 hours</option>
-                            <option value="48" class="templateoption">Every 48 hours</option>
-                            <option value="72" class="templateoption">Every 3 days</option>
-                            <option value="168" class="templateoption">Every week</option>
-                        </select>
-                    </div>
-                </div>
 
-                <div class="trade-exchange-zone">
-                    <div class="trade-side-panel trade-side-give">
-                        <div class="trade-panel-title">
-                            <span class="material-icons-outlined">upload</span> You Give
-                        </div>
-                        <div class="trade-input-group">
-                            <label>Amount</label>
-                            <input class="loginsignupinput w-full" name="proposer_amount" type="number" min="1" placeholder="e.g. 50000" required/>
-                        </div>
-                        <div class="trade-input-group">
-                            <label>Resource</label>
-                            <select name="proposer_resource" required class="templateselect w-full">
-                                {% for res in resources %}
-                                <option value="{{ res }}" class="templateoption">{{ resource_labels.get(res, res | replace('_', ' ') | title) }}</option>
-                                {% endfor %}
+                    <div class="ta-exchange">
+                        <fieldset class="ta-exchange-side ta-exchange-side--give">
+                            <legend><span class="material-icons-outlined">north_east</span> You give</legend>
+                            <div class="ta-pair">
+                                <input class="loginsignupinput" name="proposer_amount" type="number" min="1" inputmode="numeric" placeholder="Amount" aria-label="Amount you give" required/>
+                                <select name="proposer_resource" required class="templateselect" aria-label="Resource you give">
+                                    {% for res in resources %}
+                                    <option value="{{ res }}">{{ res_label(res) }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </fieldset>
+
+                        <span class="ta-exchange-arrow material-icons-outlined" aria-hidden="true">swap_vert</span>
+
+                        <fieldset class="ta-exchange-side ta-exchange-side--get">
+                            <legend><span class="material-icons-outlined">south_west</span> You get</legend>
+                            <div class="ta-pair">
+                                <input class="loginsignupinput" name="receiver_amount" type="number" min="1" inputmode="numeric" placeholder="Amount" aria-label="Amount you get" required/>
+                                <select name="receiver_resource" required class="templateselect" aria-label="Resource you get">
+                                    {% for res in resources %}
+                                    <option value="{{ res }}">{{ res_label(res) }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </fieldset>
+                    </div>
+
+                    <div class="ta-row">
+                        <div class="ta-field">
+                            <label for="ta-interval">Repeat</label>
+                            <select id="ta-interval" name="interval_hours" required class="templateselect">
+                                <option value="1">Every hour</option>
+                                <option value="6">Every 6 hours</option>
+                                <option value="12">Every 12 hours</option>
+                                <option value="24" selected>Every day</option>
+                                <option value="48">Every 2 days</option>
+                                <option value="72">Every 3 days</option>
+                                <option value="168">Every week</option>
                             </select>
                         </div>
-                    </div>
-
-                    <div class="trade-swap-icon">
-                        <span class="material-icons-outlined">sync_alt</span>
-                    </div>
-
-                    <div class="trade-side-panel trade-side-receive">
-                        <div class="trade-panel-title">
-                            <span class="material-icons-outlined">download</span> You Receive
-                        </div>
-                        <div class="trade-input-group">
-                            <label>Amount</label>
-                            <input class="loginsignupinput w-full" name="receiver_amount" type="number" min="1" placeholder="e.g. 100000" required/>
-                        </div>
-                        <div class="trade-input-group">
-                            <label>Resource</label>
-                            <select name="receiver_resource" required class="templateselect w-full">
-                                {% for res in resources %}
-                                <option value="{{ res }}" class="templateoption">{{ resource_labels.get(res, res | replace('_', ' ') | title) }}</option>
-                                {% endfor %}
-                            </select>
+                        <div class="ta-field">
+                            <label for="ta-max">Max trades <span class="ta-optional">optional</span></label>
+                            <input id="ta-max" class="loginsignupinput" name="max_executions" type="number" min="1" inputmode="numeric" placeholder="Unlimited"/>
                         </div>
                     </div>
-                </div>
 
-                <div class="trade-form-row">
-                    <div class="trade-input-group">
-                        <label><span class="material-icons-outlined">repeat</span> Max Trades (Optional)</label>
-                        <input class="loginsignupinput w-full" name="max_executions" type="number" min="1" placeholder="Unlimited if empty"/>
+                    <div class="ta-field">
+                        <label for="ta-message">Message <span class="ta-optional">optional</span></label>
+                        <input id="ta-message" class="loginsignupinput" name="message" type="text" maxlength="200" placeholder="Add a note for them"/>
                     </div>
-                    <div class="trade-input-group">
-                        <label><span class="material-icons-outlined">chat</span> Message (Optional)</label>
-                        <input class="loginsignupinput w-full" name="message" type="text" maxlength="200" placeholder="Attach a note..."/>
-                    </div>
-                </div>
 
-                <div style="margin-top: var(--game-space-xl); display: flex; justify-content: center;">
-                    <button type="submit" class="templatedivbutton" style="padding: 12px 32px; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
-                        <span class="material-icons-outlined">send</span>
-                        Send Proposal
+                    <button type="submit" class="game-btn game-btn-primary ta-submit">
+                        <span class="material-icons-outlined">send</span> Send proposal
                     </button>
-                </div>
-            </form>
+                </form>
+            </section>
+
+            {# Plain-language walkthrough (ieb, 2026-09-27: "I don't fully know how they
+               work"). Mirrors app_core/trade_agreements/services.py and the 15-minute
+               execute_trade_agreements tick -- keep in sync if those rules change. #}
+            <section class="game-glass game-panel ta-howto">
+                <h2 class="ta-panel-title"><span class="material-icons-outlined">help_outline</span> How it works</h2>
+                <ol class="ta-steps">
+                    <li><strong>You propose a swap</strong> to another nation: what you give, what you get back (any resource or gold), how often, and optionally how many times.</li>
+                    <li><strong>They accept or decline.</strong> Nothing moves until they accept &mdash; then the first swap happens straight away.</li>
+                    <li><strong>It repeats automatically</strong> at the interval you picked (hourly up to weekly). Swaps are checked every 15 minutes, so one can land a few minutes late.</li>
+                    <li><strong>It ends</strong> when it hits the max number of trades, or as soon as either side cancels.</li>
+                </ol>
+                <p class="ta-note"><span class="material-icons-outlined">info</span><span><strong>Not enough resources?</strong> If either side can't cover their half when a swap is due, nothing moves and the agreement pauses. Either nation can resume it once both have enough. No fees &mdash; both sides get the full amounts.</span></p>
+            </section>
         </div>
 
-        <script>
-        (function () {
-            var input = document.getElementById('trade-partner-search');
-            var hidden = document.getElementById('trade-receiver-id');
-            var list = document.getElementById('trade-partner-suggestions');
-            if (!input || !hidden || !list) return;
+        <section class="game-glass game-panel">
+            <h2 class="ta-panel-title"><span class="material-icons-outlined">handshake</span> Your agreements</h2>
 
-            var debounce = null;
-            var partnerIds = {};
-
-            function clearSuggestions() {
-                list.innerHTML = '';
-                partnerIds = {};
-            }
-
-            input.addEventListener('input', function () {
-                hidden.value = '';
-                var q = input.value.trim();
-                if (q.length < 2) {
-                    clearSuggestions();
-                    return;
-                }
-                clearTimeout(debounce);
-                debounce = setTimeout(function () {
-                    fetch('/trade-agreements/partners?q=' + encodeURIComponent(q), {
-                        credentials: 'same-origin'
-                    })
-                        .then(function (r) { return r.json(); })
-                        .then(function (rows) {
-                            clearSuggestions();
-                            rows.forEach(function (p) {
-                                partnerIds[p.username.toLowerCase()] = String(p.id);
-                                var opt = document.createElement('option');
-                                opt.value = p.username;
-                                list.appendChild(opt);
-                            });
-                        })
-                        .catch(function () { clearSuggestions(); });
-                }, 200);
-            });
-
-            input.addEventListener('change', function () {
-                var q = input.value.trim();
-                if (/^\d+$/.test(q)) {
-                    hidden.value = q;
-                    return;
-                }
-                var id = partnerIds[q.toLowerCase()];
-                if (id) {
-                    hidden.value = id;
-                } else {
-                    hidden.value = '';
-                }
-            });
-        })();
-        </script>
-
-        <!-- Pending Agreements (Incoming) -->
-        {% set pending_incoming = agreements | selectattr('12', 'equalto', 'pending') | selectattr('4', 'equalto', user_id) | list %}
-        {% if pending_incoming | length > 0 %}
-        <h3 class="templatecontentheaderleft warningtext">
-            <span class="material-icons-outlined">notifications</span>
-            Incoming Proposals ({{ pending_incoming | length }})
-        </h3>
-        <div class="templateoutertablediv">
-            <table class="templatetable templatetable2">
-                <tr>
-                    <th>From</th>
-                    <th>They Give</th>
-                    <th>You Give</th>
-                    <th>Interval</th>
-                    <th>Message</th>
-                    <th>Actions</th>
-                </tr>
-                {% for agreement in pending_incoming %}
-                <tr>
-                    <td><a href="/country/id={{ agreement[1] }}">{{ agreement[15] }}</a></td>
-                    <td>
-                        <div class="middle">
-                            <img src="{{ url_for('static', filename='images/res' ~ agreement[2] ~ '.png') }}?v=2"
-                                 class="resource resourcesmall" alt="{{ agreement[2] }}" onerror="this.style.display='none'"/>
-                            {{ agreement[3] }} {{ agreement[2] | replace('_', ' ') | title }}
-                        </div>
-                    </td>
-                    <td>
-                        <div class="middle">
-                            <img src="{{ url_for('static', filename='images/res' ~ agreement[5] ~ '.png') }}?v=2"
-                                 class="resource resourcesmall" alt="{{ agreement[5] }}" onerror="this.style.display='none'"/>
-                            {{ agreement[6] }} {{ agreement[5] | replace('_', ' ') | title }}
-                        </div>
-                    </td>
-                    <td>
-                        {% if agreement[7] == 1 %}Hourly
-                        {% elif agreement[7] == 24 %}Daily
-                        {% elif agreement[7] == 168 %}Weekly
-                        {% else %}Every {{ agreement[7] }}h{% endif %}
-                        {% if agreement[10] %}<br><small>(max {{ agreement[10] }})</small>{% endif %}
-                    </td>
-                    <td>{{ agreement[14] or '-' }}</td>
-                    <td>
-                        <div class="templatedivflex2 divflex2center">
-                            <form action="{{ url_for('accept_trade_agreement', agreement_id=agreement[0]) }}" method="POST">
-                                <button type="submit" class="templatedivbutton smallactionbutton successbutton">
-                                    <span class="material-icons-outlined">check</span>
-                                </button>
-                            </form>
-                            <form action="{{ url_for('reject_trade_agreement', agreement_id=agreement[0]) }}" method="POST">
-                                <button type="submit" class="templatedivbutton smallactionbutton dangerbutton">
-                                    <span class="material-icons-outlined">close</span>
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
+            {% if active %}
+            <h3 class="ta-group-title">Active <span class="ta-count">{{ active | length }}</span></h3>
+            <div class="ta-deal-list">
+                {% for a in active %}
+                {% call deal(a, 'game-badge-good', 'Active') %}
+                    <form action="{{ url_for('cancel_trade_agreement', agreement_id=a[0]) }}" method="POST">
+                        <button type="submit" class="game-btn game-btn-ghost game-btn-sm ta-btn-danger"><span class="material-icons-outlined">close</span> End</button>
+                    </form>
+                {% endcall %}
                 {% endfor %}
-            </table>
-        </div>
-        {% endif %}
-
-        <!-- Pending Agreements (Outgoing) -->
-        {% set pending_outgoing = agreements | selectattr('12', 'equalto', 'pending') | selectattr('1', 'equalto', user_id) | list %}
-        {% if pending_outgoing | length > 0 %}
-        <h3 class="templatecontentheaderleft">
-            <span class="material-icons-outlined">hourglass_empty</span>
-            Pending Proposals ({{ pending_outgoing | length }})
-        </h3>
-        <div class="templateoutertablediv">
-            <table class="templatetable templatetable2">
-                <tr>
-                    <th>To</th>
-                    <th>You Give</th>
-                    <th>You Receive</th>
-                    <th>Interval</th>
-                    <th>Actions</th>
-                </tr>
-                {% for agreement in pending_outgoing %}
-                <tr>
-                    <td><a href="/country/id={{ agreement[4] }}">{{ agreement[16] }}</a></td>
-                    <td>
-                        <div class="middle">
-                            <img src="{{ url_for('static', filename='images/res' ~ agreement[2] ~ '.png') }}?v=2"
-                                 class="resource resourcesmall" alt="{{ agreement[2] }}" onerror="this.style.display='none'"/>
-                            {{ agreement[3] }} {{ agreement[2] | replace('_', ' ') | title }}
-                        </div>
-                    </td>
-                    <td>
-                        <div class="middle">
-                            <img src="{{ url_for('static', filename='images/res' ~ agreement[5] ~ '.png') }}?v=2"
-                                 class="resource resourcesmall" alt="{{ agreement[5] }}" onerror="this.style.display='none'"/>
-                            {{ agreement[6] }} {{ agreement[5] | replace('_', ' ') | title }}
-                        </div>
-                    </td>
-                    <td>
-                        {% if agreement[7] == 1 %}Hourly
-                        {% elif agreement[7] == 24 %}Daily
-                        {% elif agreement[7] == 168 %}Weekly
-                        {% else %}Every {{ agreement[7] }}h{% endif %}
-                    </td>
-                    <td>
-                        <form action="{{ url_for('cancel_trade_agreement', agreement_id=agreement[0]) }}" method="POST">
-                            <button type="submit" class="templatedivbutton smallactionbutton dangerbutton">
-                                <span class="material-icons-outlined">close</span> Cancel
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </table>
-        </div>
-        {% endif %}
-
-        <!-- Active Agreements -->
-        {% set active = agreements | selectattr('12', 'equalto', 'active') | list %}
-        {% if active | length > 0 %}
-        <h3 class="templatecontentheaderleft successtext">
-            <span class="material-icons-outlined">autorenew</span>
-            Active Agreements ({{ active | length }})
-        </h3>
-        <div class="templateoutertablediv">
-            <table class="templatetable templatetable2">
-                <tr>
-                    <th>Partner</th>
-                    <th>You Give</th>
-                    <th>You Receive</th>
-                    <th>Interval</th>
-                    <th>Trades</th>
-                    <th>Next</th>
-                    <th>Actions</th>
-                </tr>
-                {% for agreement in active %}
-                <tr>
-                    <td>
-                        {% if agreement[1] == user_id %}
-                        <a href="/country/id={{ agreement[4] }}">{{ agreement[16] }}</a>
-                        {% else %}
-                        <a href="/country/id={{ agreement[1] }}">{{ agreement[15] }}</a>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <div class="middle">
-                            {% if agreement[1] == user_id %}
-                            <img src="{{ url_for('static', filename='images/res' ~ agreement[2] ~ '.png') }}?v=2"
-                                 class="resource resourcesmall" alt="{{ agreement[2] }}" onerror="this.style.display='none'"/>
-                            {{ agreement[3] }} {{ agreement[2] | replace('_', ' ') | title }}
-                            {% else %}
-                            <img src="{{ url_for('static', filename='images/res' ~ agreement[5] ~ '.png') }}?v=2"
-                                 class="resource resourcesmall" alt="{{ agreement[5] }}" onerror="this.style.display='none'"/>
-                            {{ agreement[6] }} {{ agreement[5] | replace('_', ' ') | title }}
-                            {% endif %}
-                        </div>
-                    </td>
-                    <td>
-                        <div class="middle">
-                            {% if agreement[1] == user_id %}
-                            <img src="{{ url_for('static', filename='images/res' ~ agreement[5] ~ '.png') }}?v=2"
-                                 class="resource resourcesmall" alt="{{ agreement[5] }}" onerror="this.style.display='none'"/>
-                            {{ agreement[6] }} {{ agreement[5] | replace('_', ' ') | title }}
-                            {% else %}
-                            <img src="{{ url_for('static', filename='images/res' ~ agreement[2] ~ '.png') }}?v=2"
-                                 class="resource resourcesmall" alt="{{ agreement[2] }}" onerror="this.style.display='none'"/>
-                            {{ agreement[3] }} {{ agreement[2] | replace('_', ' ') | title }}
-                            {% endif %}
-                        </div>
-                    </td>
-                    <td>
-                        {% if agreement[7] == 1 %}Hourly
-                        {% elif agreement[7] == 24 %}Daily
-                        {% elif agreement[7] == 168 %}Weekly
-                        {% else %}Every {{ agreement[7] }}h{% endif %}
-                    </td>
-                    <td>{{ agreement[11] }}{% if agreement[10] %}/{{ agreement[10] }}{% endif %}</td>
-                    <td>
-                        {% if agreement[8] %}
-                        {{ agreement[8].strftime('%m/%d %H:%M') }}
-                        {% else %}-{% endif %}
-                    </td>
-                    <td>
-                        <form action="{{ url_for('cancel_trade_agreement', agreement_id=agreement[0]) }}" method="POST">
-                            <button type="submit" class="templatedivbutton smallactionbutton dangerbutton">
-                                <span class="material-icons-outlined">close</span> End
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </table>
-        </div>
-        {% endif %}
-
-        <!-- Paused Agreements -->
-        {% set paused = agreements | selectattr('12', 'equalto', 'paused') | list %}
-        {% if paused | length > 0 %}
-        <h3 class="templatecontentheaderleft warningtext">
-            <span class="material-icons-outlined">pause_circle</span>
-            Paused Agreements ({{ paused | length }})
-        </h3>
-        <p class="templatecontentpleft">Paused due to insufficient resources. Resume when both parties have enough.</p>
-        <div class="templateoutertablediv">
-            <table class="templatetable templatetable2">
-                <tr>
-                    <th>Partner</th>
-                    <th>You Give</th>
-                    <th>You Receive</th>
-                    <th>Trades</th>
-                    <th>Actions</th>
-                </tr>
-                {% for agreement in paused %}
-                <tr>
-                    <td>
-                        {% if agreement[1] == user_id %}
-                        <a href="/country/id={{ agreement[4] }}">{{ agreement[16] }}</a>
-                        {% else %}
-                        <a href="/country/id={{ agreement[1] }}">{{ agreement[15] }}</a>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <div class="middle">
-                            {% if agreement[1] == user_id %}
-                            {{ agreement[3] }} {{ agreement[2] | replace('_', ' ') | title }}
-                            {% else %}
-                            {{ agreement[6] }} {{ agreement[5] | replace('_', ' ') | title }}
-                            {% endif %}
-                        </div>
-                    </td>
-                    <td>
-                        <div class="middle">
-                            {% if agreement[1] == user_id %}
-                            {{ agreement[6] }} {{ agreement[5] | replace('_', ' ') | title }}
-                            {% else %}
-                            {{ agreement[3] }} {{ agreement[2] | replace('_', ' ') | title }}
-                            {% endif %}
-                        </div>
-                    </td>
-                    <td>{{ agreement[11] }}{% if agreement[10] %}/{{ agreement[10] }}{% endif %}</td>
-                    <td>
-                        <div class="templatedivflex2 divflex2center">
-                            <form action="{{ url_for('resume_trade_agreement', agreement_id=agreement[0]) }}" method="POST">
-                                <button type="submit" class="templatedivbutton smallactionbutton successbutton">
-                                    <span class="material-icons-outlined">play_arrow</span>
-                                </button>
-                            </form>
-                            <form action="{{ url_for('cancel_trade_agreement', agreement_id=agreement[0]) }}" method="POST">
-                                <button type="submit" class="templatedivbutton smallactionbutton dangerbutton">
-                                    <span class="material-icons-outlined">close</span>
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </table>
-        </div>
-        {% endif %}
-
-        <!-- Completed Agreements -->
-        {% set completed = agreements | selectattr('12', 'equalto', 'completed') | list %}
-        {% if completed | length > 0 %}
-        <h3 class="templatecontentheaderleft">
-            <span class="material-icons-outlined">check_circle</span>
-            Completed Agreements ({{ completed | length }})
-        </h3>
-        <div class="templateoutertablediv">
-            <table class="templatetable templatetable2">
-                <tr>
-                    <th>Partner</th>
-                    <th>Terms</th>
-                    <th>Total Trades</th>
-                </tr>
-                {% for agreement in completed %}
-                <tr>
-                    <td>
-                        {% if agreement[1] == user_id %}
-                        <a href="/country/id={{ agreement[4] }}">{{ agreement[16] }}</a>
-                        {% else %}
-                        <a href="/country/id={{ agreement[1] }}">{{ agreement[15] }}</a>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {{ agreement[3] }} {{ agreement[2] | replace('_', ' ') | title }}
-                        ⇄
-                        {{ agreement[6] }} {{ agreement[5] | replace('_', ' ') | title }}
-                    </td>
-                    <td>{{ agreement[11] }}</td>
-                </tr>
-                {% endfor %}
-            </table>
-        </div>
-        {% endif %}
-
-        <!-- No agreements message -->
-        {% if agreements | length == 0 %}
-        <div class="templatedivflex2 divflex2center">
-            <div class="templatedivflex2left templatecenteredcontent">
-                <span class="material-icons-outlined iconlarge">handshake</span>
-                <p>You don't have any trade agreements yet.</p>
-                <p>Create one above to start automatic recurring trades!</p>
             </div>
-        </div>
-        {% endif %}
+            {% endif %}
+
+            {% if paused %}
+            <h3 class="ta-group-title">Paused <span class="ta-count">{{ paused | length }}</span></h3>
+            <p class="ta-group-hint">Paused because one side didn't have enough. Resume once both do.</p>
+            <div class="ta-deal-list">
+                {% for a in paused %}
+                {% call deal(a, 'game-badge-warn', 'Paused') %}
+                    <form action="{{ url_for('resume_trade_agreement', agreement_id=a[0]) }}" method="POST">
+                        <button type="submit" class="game-btn game-btn-primary game-btn-sm"><span class="material-icons-outlined">play_arrow</span> Resume</button>
+                    </form>
+                    <form action="{{ url_for('cancel_trade_agreement', agreement_id=a[0]) }}" method="POST">
+                        <button type="submit" class="game-btn game-btn-ghost game-btn-sm ta-btn-danger"><span class="material-icons-outlined">close</span> End</button>
+                    </form>
+                {% endcall %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if pending_outgoing %}
+            <h3 class="ta-group-title">Sent, awaiting reply <span class="ta-count">{{ pending_outgoing | length }}</span></h3>
+            <div class="ta-deal-list">
+                {% for a in pending_outgoing %}
+                {% call deal(a, 'game-badge-accent', 'Sent') %}
+                    <form action="{{ url_for('cancel_trade_agreement', agreement_id=a[0]) }}" method="POST">
+                        <button type="submit" class="game-btn game-btn-ghost game-btn-sm ta-btn-danger"><span class="material-icons-outlined">undo</span> Withdraw</button>
+                    </form>
+                {% endcall %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if completed %}
+            <details class="ta-completed">
+                <summary class="ta-group-title">Completed <span class="ta-count">{{ completed | length }}</span><span class="material-icons-outlined ta-chevron">expand_more</span></summary>
+                <div class="ta-deal-list">
+                    {% for a in completed %}
+                    {{ deal(a, 'game-badge-accent', 'Done') }}
+                    {% endfor %}
+                </div>
+            </details>
+            {% endif %}
+
+            {% if not (active or paused or pending_outgoing or completed) %}
+            <div class="ta-empty">
+                <span class="material-icons-outlined">handshake</span>
+                <p><strong>No agreements yet.</strong></p>
+                <p>Send a proposal above to set up your first recurring trade.</p>
+            </div>
+            {% endif %}
+        </section>
 
     </div>
 </div>
 
+<script>
+(function () {
+    var input = document.getElementById('trade-partner-search');
+    var hidden = document.getElementById('trade-receiver-id');
+    var list = document.getElementById('trade-partner-suggestions');
+    if (!input || !hidden || !list) return;
 
+    var debounce = null;
+    var partnerIds = {};
 
+    function clearSuggestions() {
+        list.innerHTML = '';
+        partnerIds = {};
+    }
+
+    input.addEventListener('input', function () {
+        hidden.value = '';
+        var q = input.value.trim();
+        if (q.length < 2) {
+            clearSuggestions();
+            return;
+        }
+        clearTimeout(debounce);
+        debounce = setTimeout(function () {
+            fetch('/trade-agreements/partners?q=' + encodeURIComponent(q), {
+                credentials: 'same-origin'
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (rows) {
+                    clearSuggestions();
+                    rows.forEach(function (p) {
+                        partnerIds[p.username.toLowerCase()] = String(p.id);
+                        var opt = document.createElement('option');
+                        opt.value = p.username;
+                        list.appendChild(opt);
+                    });
+                })
+                .catch(function () { clearSuggestions(); });
+        }, 200);
+    });
+
+    input.addEventListener('change', function () {
+        var q = input.value.trim();
+        if (/^\d+$/.test(q)) {
+            hidden.value = q;
+            return;
+        }
+        var id = partnerIds[q.toLowerCase()];
+        hidden.value = id ? id : '';
+    });
+})();
+</script>
 
 {% endblock %}
