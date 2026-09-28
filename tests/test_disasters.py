@@ -62,3 +62,61 @@ def test_compute_disaster_loss_is_fraction_of_stockpile():
 def test_compute_disaster_loss_capped_for_large_stockpiles():
     huge = 100_000_000
     assert disasters.compute_disaster_loss(huge) == disasters.DAMAGE_CAP_KG
+
+
+# ---------------------------------------------------------------------------
+# Mitigation tests (new buildings: firewatch_towers, levees, seismic_reinforcements)
+# ---------------------------------------------------------------------------
+
+def test_mitigation_multiplier_no_buildings_is_one():
+    """With 0 buildings mitigation_multiplier should return 1.0."""
+    assert disasters.mitigation_multiplier(0) == pytest.approx(1.0)
+
+
+def test_mitigation_multiplier_reduces_with_buildings():
+    """More buildings → smaller multiplier (more protection)."""
+    m100 = disasters.mitigation_multiplier(100)
+    m10 = disasters.mitigation_multiplier(10)
+    assert m100 < m10 < 1.0
+
+
+def test_mitigation_multiplier_floor_at_0_1():
+    """Very large building counts should bottom-out at 0.1, not reach 0."""
+    assert disasters.mitigation_multiplier(1_000_000) == pytest.approx(0.1)
+
+
+def test_roll_struck_nations_mitigation_reduces_chance():
+    """A nation with many mitigation buildings should almost never be struck
+    even when the raw RNG value would normally cause a hit."""
+    # DISASTER_CHANCE_PER_NATION is 0.001; with 900 buildings the multiplier
+    # is 100/1000 = 0.1 → effective chance = 0.0001.  A FixedRng returning
+    # 0.0005 is above that threshold, so the nation must NOT be struck.
+    nations = [(1, "boreal forest")]
+    mitigations = {1: {"firewatch_towers": 900}}
+    result = disasters.roll_struck_nations(nations, mitigations=mitigations, rng=FixedRng(0.0005))
+    assert result == [], "Nation with heavy mitigation should not be struck at mid-range RNG"
+
+
+def test_roll_struck_nations_no_mitigation_still_struck():
+    """Without mitigation buildings the chance is the baseline value, so a
+    FixedRng(0.0) always triggers a strike."""
+    nations = [(1, "boreal forest")]
+    result = disasters.roll_struck_nations(nations, mitigations={}, rng=FixedRng(0.0))
+    assert result == [(1, "boreal forest")]
+
+
+def test_compute_disaster_loss_mitigation_reduces_loss():
+    """Mitigation buildings must reduce the loss fraction."""
+    base_loss = disasters.compute_disaster_loss(1_000_000, mitigation_qty=0)
+    mitigated_loss = disasters.compute_disaster_loss(1_000_000, mitigation_qty=100)
+    assert mitigated_loss < base_loss
+
+
+def test_compute_disaster_loss_mitigation_floor():
+    """Even enormous mitigation qty cannot reduce loss below 10% of base (floor=0.1)."""
+    # With mitigation_qty → ∞ fraction → DAMAGE_FRACTION * 0.1
+    floor_fraction = disasters.DAMAGE_FRACTION * 0.1
+    stockpile = 1_000_000
+    expected_floor = int(stockpile * floor_fraction)
+    actual = disasters.compute_disaster_loss(stockpile, mitigation_qty=10_000_000)
+    assert actual == expected_floor

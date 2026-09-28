@@ -70,7 +70,14 @@ BIOME_DISASTERS = {
 
 
 def mitigation_multiplier(qty):
+    """Return a damage/chance multiplier in [0.1, 1.0] given building count.
+
+    Uses a simple hyperbolic decay: 100 / (100 + qty).  At qty=0 → 1.0
+    (no mitigation); at qty=100 → ~0.5; floor at 0.1 so no building count
+    completely nullifies a disaster.
+    """
     return max(0.1, 100.0 / (100.0 + qty))
+
 
 BIOME_MITIGATION_BUILDING = {
     "boreal forest": "firewatch_towers",
@@ -79,7 +86,23 @@ BIOME_MITIGATION_BUILDING = {
     "mountain range": "seismic_reinforcements",
 }
 
+
 def roll_struck_nations(nations, mitigations=None, rng=rand):
+    """Pure helper (no DB) — which (user_id, biome) pairs get struck this run.
+
+    Args:
+        nations:     iterable of (user_id, biome_lowercase) pairs, as returned
+                     by ``SELECT id, LOWER(location) FROM stats``.
+        mitigations: nested dict ``{user_id: {building_name: qty}}`` containing
+                     mitigation building counts per user.  Absent keys are
+                     treated as 0.  Pass ``None`` (or omit) to skip mitigation.
+        rng:         random-number source; must expose ``.random()`` returning
+                     a float in [0, 1).  Defaults to the stdlib ``random``
+                     module.  Override in tests for determinism.
+
+    Returns:
+        List of (user_id, biome) tuples that are struck this tick.
+    """
     mitigations = mitigations or {}
     struck = []
     for user_id, biome in nations:
@@ -95,7 +118,19 @@ def roll_struck_nations(nations, mitigations=None, rng=rand):
             struck.append((user_id, biome))
     return struck
 
+
 def compute_disaster_loss(current_quantity, mitigation_qty=0):
+    """Pure helper — kg lost given a current stockpile.  Returns 0 if nothing to lose.
+
+    Args:
+        current_quantity: Current resource stockpile in kg (int or float).
+        mitigation_qty:   Number of the relevant mitigation building owned by
+                          this nation.  A non-zero value reduces the damage
+                          fraction using :func:`mitigation_multiplier`.
+
+    Returns:
+        Integer kg lost, capped at ``DAMAGE_CAP_KG``.
+    """
     if current_quantity <= 0:
         return 0
     fraction = DAMAGE_FRACTION
