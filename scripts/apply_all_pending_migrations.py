@@ -100,6 +100,7 @@ MIGRATION_FILES = [
     "0093.sql",
     "0094.sql",
     "0095_achievements.sql",
+    "0096_cg_chains.sql",
 ]
 
 

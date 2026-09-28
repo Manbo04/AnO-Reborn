@@ -72,7 +72,7 @@
 
             {% call game_glass_panel(data["username"] ~ "'s Resources", icon='article') %}
             <div class="stat-grid">
-                {% for label, key in [('Rations','rations'), ('Oil','oil'), ('Coal','coal'), ('Uranium','uranium'), ('Iron','iron'), ('Lead','lead'), ('Bauxite','bauxite'), ('Copper','copper'), ('Lumber','lumber'), ('Components','components'), ('Steel','steel'), ('Consumer goods','consumer_goods'), ('Aluminium','aluminium'), ('Gasoline','gasoline'), ('Ammunition','ammunition')] %}
+                {% for label, key in [('Rations','rations'), ('Oil','oil'), ('Coal','coal'), ('Uranium','uranium'), ('Iron','iron'), ('Lead','lead'), ('Bauxite','bauxite'), ('Copper','copper'), ('Lumber','lumber'), ('Silver','silver'), ('Diamonds','diamonds'), ('Bullion','bullion'), ('Components','components'), ('Steel','steel'), ('Consumer goods','consumer_goods'), ('Aluminium','aluminium'), ('Gasoline','gasoline'), ('Ammunition','ammunition')] %}
                 {{ stat_card(label, data[key]) }}
                 {% endfor %}
             </div>
