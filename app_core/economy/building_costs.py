@@ -31,6 +31,8 @@ CITY_UNITS = frozenset(
         "libraries",
         "universities",
         "monorails",
+        "railways",
+        "metros",
         "primary_school",
         "high_school",
         "industrial_district",
@@ -60,6 +62,9 @@ LAND_UNITS = frozenset(
         "ammunition_factories",
         "aluminium_refineries",
         "oil_refineries",
+        "firewatch_towers",
+        "levees",
+        "seismic_reinforcements",
     }
 )
 

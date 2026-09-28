@@ -339,7 +339,12 @@
                         <tr>
                             <td></td>
                             <td>{{ units["industrial_district"] }} Industrial Districts</td>
+                            <td>{{ units["railways"] }} Railways</td>
+                        </tr>
+                        <tr>
                             <td></td>
+                            <td></td>
+                            <td>{{ units["metros"] }} Metros</td>
                         </tr>
                     </table>
                 </div>
@@ -1364,6 +1369,61 @@
                                 <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename=game_asset_path('buildings', 'monorails')) }}?v=2" /> {% endif %}
                             </div>
                         </div>
+
+                    <div class="menudiv">
+                        <h2 class="templatecontentheaderleft">Railways</h2>
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+                                <h3 class="templatecontentheadercenter">You have {{ units["railways"] }} Railways</h3>
+                                <p class="templatecontentpleft">Railways increase the productivity of your citizens by deceasing the time it takes for them to get to work.</p>
+                                <ul>Railways cost {{ infra["railways_money"] | fmt }} per hour and contribute
+                                    {% if upgrades["highspeedrail"] %} +{{ infra["railways_effect"][0]["productivity"] * 1.2 }}% {% else %} +{{ infra["railways_effect"][0]["productivity"] }}% {% endif %} productivity and +{{ infra["railways_effect"][0]["pollution"] }}% pollution</ul>
+                                <ul>Uses -1 electricity per hour</ul>
+                                <ul>{{ "Railways" | prores }}</ul>
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="railways" type="number" placeholder="Amount" />
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/railways/' ~ province['id']) }}
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/railways/' ~ province['id']) }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="templatedivflex2left">
+                                <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename=game_asset_path('buildings', 'railways')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="menudiv">
+                        <h2 class="templatecontentheaderleft">Metros</h2>
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+                                <h3 class="templatecontentheadercenter">You have {{ units["metros"] }} Metros</h3>
+                                <p class="templatecontentpleft">Metros increase the productivity of your citizens by deceasing the time it takes for them to get to work. They also reduce pollution by cutting down on the use of cars.</p>
+                                <ul>Metros cost {{ infra["metros_money"] | fmt }} per hour and contribute
+                                    {% if upgrades["highspeedrail"] %} +{{ infra["metros_effect"][0]["productivity"] * 1.2 }}% {% else %} +{{ infra["metros_effect"][0]["productivity"] }}% {% endif %} productivity and -{{ infra["metros_effect_minus"]["pollution"] }}% pollution</ul>
+                                <ul>Uses -1 electricity per hour</ul>
+                                <ul>{{ "Metros" | prores }}</ul>
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="metros" type="number" placeholder="Amount" />
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/metros/' ~ province['id']) }}
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/metros/' ~ province['id']) }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="templatedivflex2left">
+                                <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename=game_asset_path('buildings', 'metros')) }}?v=2" />
+                            </div>
+                        </div>
+                    </div>
                     </div>
                 </div>
             </div>
