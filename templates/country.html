@@ -1116,7 +1116,14 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            window.location.reload();
+                            // Show what the decision cost/earned before refreshing.
+                            const box = document.getElementById('modalEventLoading');
+                            if (box && data.summary && data.summary.length) {
+                                box.textContent = data.summary.join('  ·  ');
+                                setTimeout(() => window.location.reload(), 2500);
+                            } else {
+                                window.location.reload();
+                            }
                         } else {
                             alert(data.message || 'An error occurred.');
                             closeEventModal();

@@ -757,12 +757,22 @@ def global_tick():
                 import random
                 import json
                 import os
-                events_path = os.path.join(os.path.dirname(__file__), 'app_core', 'events', 'events.json')
+                # Repo root is two levels up from app_core/game_ticks/ (the old path pointed at
+                # app_core/game_ticks/app_core/events/, so no event spawned from July to Sep 2026).
+                events_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'app_core', 'events', 'events.json')
                 if os.path.exists(events_path):
                     with open(events_path, 'r') as f:
                         events_data = json.load(f)
+                    if isinstance(events_data, list):
+                        events_data = {e.get('id'): e for e in events_data if e.get('id')}
                     if events_data:
                         event_ids = list(events_data.keys())
+                        # Unanswered events expire after 48h so a player who ignores one
+                        # still gets new decisions later.
+                        db.execute(
+                            "UPDATE interactive_events SET resolved_at = now() "
+                            "WHERE resolved_at IS NULL AND created_at < now() - interval '48 hours'"
+                        )
                         db.execute("""
                             SELECT u.id, COUNT(p.id) 
                             FROM users u 
@@ -772,26 +782,24 @@ def global_tick():
                         """)
                         rows = db.fetchall()
                         inserts = []
-                        base_chance = 0.30  # 30% chance per province per tick
+                        # global_tick runs every ~10 min: 3% per run = a new decision roughly every
+                        # 5-6 hours per active player (was 30% per province, which with the
+                        # broken path never mattered); one open event at a time.
+                        base_chance = 0.03
                         for row in rows:
                             user_id = row[0]
-                            province_count = row[1]
-                            
-                            # Check if they already have an unresolved event
                             db.execute("SELECT 1 FROM interactive_events WHERE user_id = %s AND resolved_at IS NULL", (user_id,))
                             if db.fetchone():
                                 continue
-                                
-                            spawned = False
-                            for _ in range(province_count):
-                                if random.random() < base_chance:
-                                    spawned = True
-                                    break
-                                    
-                            if spawned:
-                                event_id = random.choice(event_ids)
-                                inserts.append((user_id, event_id))
-                                
+                            if random.random() >= base_chance:
+                                continue
+                            db.execute(
+                                "SELECT event_def_id FROM interactive_events WHERE user_id = %s "
+                                "ORDER BY created_at DESC LIMIT 20", (user_id,))
+                            recent = {r[0] for r in db.fetchall()}
+                            fresh = [e for e in event_ids if e not in recent] or event_ids
+                            inserts.append((user_id, random.choice(fresh)))
+
                         if inserts:
                             from psycopg2.extras import execute_batch
                             execute_batch(db, "INSERT INTO interactive_events (user_id, event_def_id) VALUES (%s, %s)", inserts)

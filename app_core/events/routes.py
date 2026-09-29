@@ -80,38 +80,74 @@ def respond_event(event_id):
         # Load resource dictionary to map names to ids
         db.execute("SELECT name, resource_id FROM resource_dictionary")
         resource_map = {row[0]: row[1] for row in db.fetchall()}
-        
-        # Check if user has enough resources for costs
-        for cost_resource_name, cost_amount in costs.items():
-            res_id = resource_map.get(cost_resource_name)
-            if not res_id:
-                return jsonify({"success": False, "message": f"Unknown resource {cost_resource_name}"}), 500
-                
-            db.execute("SELECT quantity FROM user_economy WHERE user_id = %s AND resource_id = %s", (cId, res_id))
-            row = db.fetchone()
-            current_qty = row[0] if row else 0
-            
-            if current_qty < cost_amount:
-                return jsonify({"success": False, "message": f"Not enough {cost_resource_name}"}), 400
-                
-        # Deduct costs
-        for cost_resource_name, cost_amount in costs.items():
-            res_id = resource_map.get(cost_resource_name)
-            db.execute("UPDATE user_economy SET quantity = quantity - %s WHERE user_id = %s AND resource_id = %s", (cost_amount, cId, res_id))
-            
-        # Apply rewards
-        for reward_resource_name, reward_amount in rewards.items():
-            res_id = resource_map.get(reward_resource_name)
-            db.execute("""
-                INSERT INTO user_economy (user_id, resource_id, quantity) 
-                VALUES (%s, %s, %s)
-                ON CONFLICT (user_id, resource_id) 
-                DO UPDATE SET quantity = user_economy.quantity + %s
-            """, (cId, res_id, reward_amount, reward_amount))
-            
-        # Mark as resolved
+        db.execute("SELECT gold FROM stats WHERE id = %s", (cId,))
+        gold_row = db.fetchone()
+        gold_now = int(gold_row[0] or 0) if gold_row else 0
+
+        def _held(name):
+            db.execute("SELECT quantity FROM user_economy WHERE user_id = %s AND resource_id = %s",
+                       (cId, resource_map[name]))
+            r = db.fetchone()
+            return int(r[0] or 0) if r else 0
+
+        def _resolve(spec, is_cost):
+            """Turn {"gold_pct": 3, "rations": 800} into [(name, amount, label)] with
+            absolute amounts. *_pct keys are a percentage of what the player holds now,
+            so events matter for both 80M newcomers and billion-gold veterans."""
+            out = []
+            for key, val in (spec or {}).items():
+                pct = key.endswith("_pct")
+                name = key[:-4] if pct else key
+                if name != "gold" and name not in resource_map:
+                    raise ValueError(f"Unknown resource {name}")
+                held = gold_now if name == "gold" else _held(name)
+                if pct:
+                    amount = held * int(val) // 100
+                    if amount <= 0:
+                        amount = 0 if is_cost else (1 if name == "gold" else 50)
+                else:
+                    amount = int(val)
+                if amount <= 0:
+                    continue
+                sign = "-" if is_cost else "+"
+                label = name.replace("_", " ")
+                text = f"{sign}{val}% {label} ({sign}{amount:,})" if pct else f"{sign}{amount:,} {label}"
+                out.append((name, amount, text, held))
+            return out
+
+        try:
+            cost_list = _resolve(costs, True)
+            reward_list = _resolve(rewards, False)
+        except ValueError as exc:
+            return jsonify({"success": False, "message": str(exc)}), 500
+        for name, amount, _, held in cost_list:
+            if held < amount:
+                return jsonify({"success": False, "message": f"Not enough {name.replace('_', ' ')}"}), 400
+        for name, amount, _, _ in cost_list:
+            if name == "gold":
+                db.execute("UPDATE stats SET gold = gold - %s WHERE id = %s AND gold >= %s RETURNING gold",
+                           (amount, cId, amount))
+            else:
+                db.execute("UPDATE user_economy SET quantity = quantity - %s WHERE user_id = %s "
+                           "AND resource_id = %s AND quantity >= %s RETURNING quantity",
+                           (amount, cId, resource_map[name], amount))
+            if db.fetchone() is None:
+                conn.rollback()
+                return jsonify({"success": False, "message": f"Not enough {name.replace('_', ' ')}"}), 400
+        for name, amount, _, _ in reward_list:
+            if name == "gold":
+                db.execute("UPDATE stats SET gold = gold + %s WHERE id = %s", (amount, cId))
+            else:
+                db.execute("""
+                    INSERT INTO user_economy (user_id, resource_id, quantity)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (user_id, resource_id)
+                    DO UPDATE SET quantity = user_economy.quantity + %s
+                """, (cId, resource_map[name], amount, amount))
+        summary = [t for _, _, t, _ in cost_list + reward_list]
+
         db.execute("UPDATE interactive_events SET resolved_at = now(), chosen_option_index = %s WHERE id = %s", (option_index, event_id))
         
         conn.commit()
         
-    return jsonify({"success": True, "message": "Event resolved successfully"})
+    return jsonify({"success": True, "message": "Event resolved successfully", "summary": summary})
