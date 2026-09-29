@@ -242,7 +242,7 @@ def resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=False):
         return False, 400, "Must send at least 1 spy.", None
 
     if spies > actual_spies:
-        missing = actual_spies - spies
+        missing = spies - actual_spies
         return False, 400, (
             f"You don't have enough spies ({spies}/{actual_spies}). "
             f"Missing {missing} spies"
