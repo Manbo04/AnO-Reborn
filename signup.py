@@ -43,6 +43,8 @@ def _complete_referral_signup(db, user_id: int) -> None:
         "resolved_code=%r",
         user_id, form_code, session_code, code,
     )
+    from app_core.analytics.service import attach_signup_attribution
+    attach_signup_attribution(db, user_id)
     db.execute("SAVEPOINT referral_signup")
     try:
         referrer_id = link_referrer_on_signup(db, user_id, code)

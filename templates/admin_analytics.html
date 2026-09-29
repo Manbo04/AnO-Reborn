@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+
+{% block title %}Player Analytics{% endblock %}
+
+{% block body %}
+<div class="templatediv">
+    <div class="templatedivtopper">
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">insights</span>Player Analytics</h1>
+    </div>
+    <div class="templatedivcontent">
+        <div class="infodiv" style="text-align:center;">
+            <a href="/admin/command-center" class="admin-nav-link">Command Center</a>
+            {% for d in (7, 30, 90, 365) %}
+            <a href="?days={{ d }}" class="admin-nav-link{% if d == days %} active{% endif %}">{{ d }} days</a>
+            {% endfor %}
+        </div>
+        {% for s in sections %}
+        <h2 class="templatecontentheaderleft">{{ s.title }}</h2>
+        <div style="overflow-x:auto;">
+            <table class="templatetable templatetable2">
+                <tr>{% for h in s.headers %}<th>{{ h }}</th>{% endfor %}</tr>
+                {% for row in s.rows %}
+                <tr>{% for c in row %}<td>{{ c }}</td>{% endfor %}</tr>
+                {% else %}
+                <tr><td colspan="{{ s.headers|length }}">No data yet</td></tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% endfor %}
+        <p class="infodiv">Visits are counted on our own servers (anonymous daily code, no IPs stored). Retention before 2026-09-29 is rebuilt from game activity records.</p>
+    </div>
+</div>
+{% endblock %}

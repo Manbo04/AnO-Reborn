@@ -173,6 +173,9 @@ def create_app():
     def before_request():
         from time import time
         request.start_time = time()
+        from app_core.analytics.service import capture_first_touch, record_visit
+        capture_first_touch()
+        record_visit()
         try:
             import sentry_sdk
             user_id = session.get("user_id") if hasattr(session, "get") else None
@@ -379,6 +382,8 @@ def create_app():
                 try:
                     with get_request_cursor() as _db:
                         _db.execute("UPDATE users SET last_active = CURRENT_TIMESTAMP WHERE id = %s", (user_id,))
+                        from app_core.analytics.service import record_active_day
+                        record_active_day(_db, user_id)
                         from app_core.referrals.service import process_referral_activity
                         process_referral_activity(_db, user_id)
                     session["_last_active_ping"] = now
@@ -724,6 +729,8 @@ def create_app():
     app.register_blueprint(game_engine_bp)
     app.register_blueprint(system_bp)
     app.register_blueprint(admin_bp)
+    from app_core.analytics.routes import analytics_bp
+    app.register_blueprint(analytics_bp)
     app.register_blueprint(ads_bp)
     app.register_blueprint(world_map_bp)
     app.register_blueprint(game_map_bp)
