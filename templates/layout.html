@@ -208,8 +208,8 @@
          the visitor accepts the cookie banner (see partials/cookie_consent.html). -->
     <script>
         window.anoCookieConsentConfig = {
-            gaId: 'G-RZVBFFEGHM',
-            adsenseClient: 'ca-pub-2399873064840158',
+            gaId: {{ config.get('GA_MEASUREMENT_ID', '')|tojson }},
+            adsenseClient: {{ config.get('ADSENSE_CLIENT', '')|tojson }},
             showAds: {{ 'true' if session.get('user_id') is none else 'false' }}
         };
     </script>

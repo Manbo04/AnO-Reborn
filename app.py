@@ -158,6 +158,9 @@ def create_app():
         return render_template("error.html", code=500, message="An unexpected error occurred. Please try again."), 500
 
     app.config["PREFERRED_URL_SCHEME"] = "https"
+    # Google Analytics / AdSense IDs must belong to the current owner; empty = not loaded.
+    app.config["GA_MEASUREMENT_ID"] = os.getenv("GA_MEASUREMENT_ID", "")
+    app.config["ADSENSE_CLIENT"] = os.getenv("ADSENSE_CLIENT", "")
     app.config["SERVER_NAME"] = None
     app.config["ALLOWED_HOSTS"] = ["affairsandorder.com", "www.affairsandorder.com", "web-production-55d7b.up.railway.app"]
     app.config["SESSION_COOKIE_DOMAIN"] = None
