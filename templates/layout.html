@@ -570,6 +570,16 @@
         {% if session.get('user_id') %}{% include 'partials/section_tabs.html' %}{% endif %}
         {% block body %} {% endblock %}
 
+        {% if email_verify_nudge %}
+        <div class="toast-container" role="status" aria-live="polite">
+            <div class="toast-item toast-item--warning" data-sticky="1">
+                <span class="toast-message">Please verify your email to secure your account. <a href="/verification_pending">Resend the email</a></span>
+                <button type="button" class="toast-dismiss" onclick="dismissToast(this.parentElement)" aria-label="Dismiss notification">
+                    <span class="material-icons-outlined">close</span>
+                </button>
+            </div>
+        </div>
+        {% endif %}
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
         <div class="toast-container" id="toast-container" role="status" aria-live="polite">

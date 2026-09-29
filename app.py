@@ -805,6 +805,38 @@ def create_app():
             return {"rotating_ads": {}}
 
     @app.context_processor
+    def inject_email_verify_nudge():
+        """Once per session, remind unverified email-signup players to verify.
+
+        Verification no longer blocks play, so this is the only prompt. The DB
+        check is cached in the session (10 min) to keep page renders query-free.
+        """
+        from time import time as _now
+        uid = session.get("user_id")
+        if not uid or session.get("_ev_nudged"):
+            return {}
+        cached = session.get("_ev_chk")
+        if cached and _now() - cached[0] < 600:
+            unverified = cached[1]
+        else:
+            unverified = False
+            try:
+                from database import get_db_cursor
+                with get_db_cursor() as db:
+                    db.execute("SELECT is_verified, auth_type FROM users WHERE id = %s", (uid,))
+                    row = db.fetchone()
+                if row:
+                    vals = list(row.values()) if isinstance(row, dict) else list(row)
+                    unverified = vals[0] is False and vals[1] not in ("discord", "google")
+            except Exception:
+                return {}
+            session["_ev_chk"] = [_now(), unverified]
+        if not unverified:
+            return {}
+        session["_ev_nudged"] = True
+        return {"email_verify_nudge": True}
+
+    @app.context_processor
     def inject_trade_fees():
         """Trade fee percents for market/trade forms (app_core/market/fees.py)."""
         return {

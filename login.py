@@ -198,7 +198,7 @@ def login():
                         if email_enforced:
                             # is_verified is selected as the last column when present
                             is_verified = user[-1] if len(user) >= 6 else True
-                            if is_verified is False:
+                            if is_verified is False and os.getenv("REQUIRE_EMAIL_VERIFICATION") == "1":
                                 user_email = user[2] if user[2] else ""
                                 return redirect(
                                     f"/verification_pending?email={user_email}"

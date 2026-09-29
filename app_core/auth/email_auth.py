@@ -1,3 +1,4 @@
+import os
 from flask import Blueprint, request, render_template, session, redirect, flash
 from app_core.auth.passwords import hash_password, password_matches
 from database import get_request_cursor, client_ip_from_headers, coarse_fingerprint_from_headers
@@ -36,7 +37,7 @@ def _complete_email_login(user_id, is_verified, has_verification, email):
     except Exception:
         email_enforced = False
 
-    if email_enforced and has_verification and is_verified is False:
+    if email_enforced and has_verification and is_verified is False and os.getenv("REQUIRE_EMAIL_VERIFICATION") == "1":
         import urllib.parse
         safe_email = urllib.parse.quote(email)
         return redirect(f"/verification_pending?email={safe_email}")
@@ -123,9 +124,10 @@ def register_email():
 
     if verification_token and is_email_configured():
         send_verification_email(email, username, verification_token)
-        import urllib.parse
-        safe_email = urllib.parse.quote(email)
-        return redirect(f"/verification_pending?email={safe_email}")
+        if os.getenv("REQUIRE_EMAIL_VERIFICATION") == "1":
+            import urllib.parse
+            safe_email = urllib.parse.quote(email)
+            return redirect(f"/verification_pending?email={safe_email}")
 
     from login_verification import establish_authenticated_session
 

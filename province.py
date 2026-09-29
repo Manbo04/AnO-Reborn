@@ -1606,6 +1606,95 @@ def upload_province_flag(pId):
 
 
 
+def create_province_record(db, user_id: int, name: str) -> int:
+    """Place a new province on a free hex next to the owner (or anywhere for a first
+    province), insert it and invalidate the owner's caches. Caller handles payment
+    and locking. Returns the new province id."""
+    # Find an available adjacent hex coordinate for the new province
+    db.execute("SELECT coordinate_x, coordinate_y FROM provinces WHERE coordinate_x IS NOT NULL AND coordinate_y IS NOT NULL")
+    occupied_coords = set(db.fetchall())
+
+    db.execute("SELECT coordinate_x, coordinate_y FROM provinces WHERE userId = %s AND coordinate_x IS NOT NULL AND coordinate_y IS NOT NULL", (user_id,))
+    user_coords = set(db.fetchall())
+
+    hex_directions = [(1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1)]
+    new_x, new_y = None, None
+
+    if not user_coords:
+        import random
+        if occupied_coords:
+            found = False
+            occupied_list = list(occupied_coords)
+            random.shuffle(occupied_list)
+            for ox, oy in occupied_list:
+                for dx, dy in hex_directions:
+                    nx, ny = ox + dx, oy + dy
+                    if (nx, ny) not in occupied_coords:
+                        new_x, new_y = nx, ny
+                        found = True
+                        break
+                if found:
+                    break
+            if not found:
+                new_x, new_y = 0, 0
+        else:
+            new_x, new_y = 0, 0
+    else:
+        # Find an adjacent free hex tile
+        found = False
+        for ux, uy in user_coords:
+            for dx, dy in hex_directions:
+                nx, ny = ux + dx, uy + dy
+                if (nx, ny) not in occupied_coords:
+                    new_x, new_y = nx, ny
+                    found = True
+                    break
+            if found:
+                break
+        if not found:
+            new_x, new_y = 0, 0 # Fallback
+
+    # Split the starting 1,000,000 population across age brackets
+    # (60% working / 30% children / 10% elderly) instead of
+    # dumping it all into pop_children -- a new nation used to
+    # start 100% "children," which zeroed its tax income under
+    # the age-weighted tax system and skewed consumer-goods need.
+    db.execute(
+        (
+            "INSERT INTO provinces "
+            "(userId, provinceName, pop_children, pop_working, pop_elderly, "
+            "coordinate_x, coordinate_y) "
+            "VALUES (%s, %s, 300000, 600000, 100000, %s, %s) RETURNING id"
+        ),
+        (user_id, name, new_x, new_y),
+    )
+    row = db.fetchone()
+    province_id = row["id"] if isinstance(row, dict) else row[0]
+
+    # No need to INSERT INTO proInfra - user_buildings is populated
+    # dynamically when buildings are purchased
+
+    # Commit handled by teardown_request_connection
+
+    # Invalidate cached provinces page for this user
+    # so the new province appears immediately
+    try:
+        from database import query_cache, invalidate_user_cache, invalidate_view_cache
+
+        pattern = f"provinces_{user_id}_"
+        query_cache.invalidate(pattern=pattern)
+        # Invalidate the response cache for the provinces list page
+        # so the new province appears immediately on redirect
+        invalidate_view_cache("provinces", user_id=user_id)
+        # Also invalidate influence/resources cache so the
+        # new province is reflected in influence score
+        invalidate_user_cache(user_id)
+    except Exception:
+        # Best-effort: cache invalidation should not raise on failure
+        pass
+    return province_id
+
+
 @bp.route("/createprovince", methods=["GET", "POST"])
 @login_required
 def createprovince():
@@ -1639,87 +1728,7 @@ def createprovince():
                 if not result:
                     return error(400, "You don't have enough money.")
 
-                # Find an available adjacent hex coordinate for the new province
-                db.execute("SELECT coordinate_x, coordinate_y FROM provinces WHERE coordinate_x IS NOT NULL AND coordinate_y IS NOT NULL")
-                occupied_coords = set(db.fetchall())
-
-                db.execute("SELECT coordinate_x, coordinate_y FROM provinces WHERE userId = %s AND coordinate_x IS NOT NULL AND coordinate_y IS NOT NULL", (cId,))
-                user_coords = set(db.fetchall())
-
-                hex_directions = [(1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1)]
-                new_x, new_y = None, None
-
-                if not user_coords:
-                    import random
-                    if occupied_coords:
-                        found = False
-                        occupied_list = list(occupied_coords)
-                        random.shuffle(occupied_list)
-                        for ox, oy in occupied_list:
-                            for dx, dy in hex_directions:
-                                nx, ny = ox + dx, oy + dy
-                                if (nx, ny) not in occupied_coords:
-                                    new_x, new_y = nx, ny
-                                    found = True
-                                    break
-                            if found:
-                                break
-                        if not found:
-                            new_x, new_y = 0, 0
-                    else:
-                        new_x, new_y = 0, 0
-                else:
-                    # Find an adjacent free hex tile
-                    found = False
-                    for ux, uy in user_coords:
-                        for dx, dy in hex_directions:
-                            nx, ny = ux + dx, uy + dy
-                            if (nx, ny) not in occupied_coords:
-                                new_x, new_y = nx, ny
-                                found = True
-                                break
-                        if found:
-                            break
-                    if not found:
-                        new_x, new_y = 0, 0 # Fallback
-
-                # Split the starting 1,000,000 population across age brackets
-                # (60% working / 30% children / 10% elderly) instead of
-                # dumping it all into pop_children -- a new nation used to
-                # start 100% "children," which zeroed its tax income under
-                # the age-weighted tax system and skewed consumer-goods need.
-                db.execute(
-                    (
-                        "INSERT INTO provinces "
-                        "(userId, provinceName, pop_children, pop_working, pop_elderly, "
-                        "coordinate_x, coordinate_y) "
-                        "VALUES (%s, %s, 300000, 600000, 100000, %s, %s) RETURNING id"
-                    ),
-                    (cId, pName, new_x, new_y),
-                )
-                db.fetchone()  # Consume result
-
-                # No need to INSERT INTO proInfra - user_buildings is populated
-                # dynamically when buildings are purchased
-
-                # Commit handled by teardown_request_connection
-
-                # Invalidate cached provinces page for this user
-                # so the new province appears immediately
-                try:
-                    from database import query_cache, invalidate_user_cache, invalidate_view_cache
-
-                    pattern = f"provinces_{cId}_"
-                    query_cache.invalidate(pattern=pattern)
-                    # Invalidate the response cache for the provinces list page
-                    # so the new province appears immediately on redirect
-                    invalidate_view_cache("provinces", user_id=cId)
-                    # Also invalidate influence/resources cache so the
-                    # new province is reflected in influence score
-                    invalidate_user_cache(cId)
-                except Exception:
-                    # Best-effort: cache invalidation should not raise on failure
-                    pass
+                create_province_record(db, cId, pName)
             finally:
                 # Always release the advisory lock
                 try:

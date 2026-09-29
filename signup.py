@@ -161,6 +161,10 @@ def init_user_game_data(db, user_id, continent):
     _init_economy_tables(db, user_id)
     
     logger.info(f"Initialized game data for user_id={user_id} on continent={continent}")
+    # Every signup path (form, Discord, Google, email) runs this, so the free
+    # starter province is created here rather than only in post_signup_redirect.
+    from app_core.onboarding.service import ensure_starter_province
+    ensure_starter_province(db, user_id)
 
 
 
@@ -1042,7 +1046,9 @@ def signup():
 
             # If verification is enabled, redirect to pending page.
             # Otherwise, log them in and issue a one-time recovery key.
-            if verification_token:
+            # Play first, verify later (REQUIRE_EMAIL_VERIFICATION=1 restores the old wall):
+            # 15 of 53 recent signups who never came back were stuck unverified.
+            if verification_token and os.getenv("REQUIRE_EMAIL_VERIFICATION") == "1":
                 import urllib.parse
                 safe_email = urllib.parse.quote(email)
                 return redirect(f"/verification_pending?email={safe_email}")
@@ -1080,6 +1086,17 @@ def signup():
 def verification_pending():
     """Show the verification pending page after signup."""
     email = request.args.get("email", "")
+    if not email and session.get("user_id"):
+        # Reached from the in-game "please verify" toast: use the account's email.
+        try:
+            from database import get_db_cursor
+            with get_db_cursor() as db:
+                db.execute("SELECT email FROM users WHERE id = %s", (session["user_id"],))
+                row = db.fetchone()
+            if row:
+                email = (row["email"] if isinstance(row, dict) else row[0]) or ""
+        except Exception:
+            email = ""
     return render_template("verification_pending.html", email=email)
 
 

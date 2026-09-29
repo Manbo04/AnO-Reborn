@@ -133,12 +133,41 @@ def get_onboarding_status(db, user_id: int) -> dict:
     return result
 
 
+def ensure_starter_province(db, user_id: int) -> None:
+    """Give a brand-new nation its first province for free, so signup lands the
+    player in the game instead of on the /createprovince form (where most new
+    players used to quit). Best-effort: on any failure the old form still works."""
+    import logging
+    try:
+        db.execute("SAVEPOINT starter_province")
+        db.execute("SELECT pg_try_advisory_xact_lock(%s)", (100000 + user_id,))
+        got = db.fetchone()
+        locked = (list(got.values())[0] if isinstance(got, dict) else got[0]) if got else False
+        if locked and _province_count(db, user_id) == 0:
+            db.execute("SELECT username FROM users WHERE id = %s", (user_id,))
+            row = db.fetchone()
+            nation = (row["username"] if isinstance(row, dict) else row[0]) if row else ""
+            name = f"{nation} Capital".strip()[:40] if nation else "Capital"
+            from province import create_province_record
+            create_province_record(db, user_id, name)
+        db.execute("RELEASE SAVEPOINT starter_province")
+    except Exception as exc:
+        try:
+            db.execute("ROLLBACK TO SAVEPOINT starter_province")
+        except Exception:
+            pass
+        logging.getLogger(__name__).warning("ensure_starter_province failed for %s: %s", user_id, exc)
+
+
 def post_signup_redirect(user_id: int, *, has_recovery_key: bool = False) -> str:
     """Where to send a brand-new account after signup."""
     if has_recovery_key:
         return "/save_recovery_key"
     with get_request_cursor() as db:
         provinces = _province_count(db, user_id)
+        if provinces == 0:
+            ensure_starter_province(db, user_id)
+            provinces = _province_count(db, user_id)
         if provinces == 0:
             return "/createprovince"
         status = get_onboarding_status(db, user_id)
