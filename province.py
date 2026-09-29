@@ -880,9 +880,20 @@ def province(pId):
                 units.get("universities", 0) or 0,
             )
 
+        # Policy 2 ("Free Trade") discounts land/city gold cost 4%; the page estimate
+        # must apply it too or it disagrees with what the buy actually charges.
+        gold_policy_mult = 1.0
+        try:
+            from app_core.economy.building_purchase import _load_policies
+            with db.connection.cursor() as _pol_db:
+                if 2 in (_load_policies(_pol_db, cId) or []):
+                    gold_policy_mult = 0.96
+        except Exception:
+            pass
         template = "province_v2.html" if is_theme_v2_enabled("province") else "province.html"
         return render_template(
             template,
+            gold_policy_mult=gold_policy_mult,
             province=province,
             stat_breakdown=stat_breakdown,
             pop_cap_info=pop_cap_info,

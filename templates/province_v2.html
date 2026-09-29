@@ -142,19 +142,24 @@
                                 citiesamount = parseInt(citiesamount);
                                 cityCount = parseInt(cityCount) || 0;
 
-                                function sum_cost_linear(basePrice, incrementPerItem, currentOwned, numPurchased) {
-                                    // O(1) formula instead of O(n) loop for performance
-                                    // Sum of: basePrice + (currentOwned + i) * increment for i in 0..numPurchased-1
-                                    let totalCost = numPurchased * basePrice +
-                                                    incrementPerItem * (numPurchased * currentOwned + numPurchased * (numPurchased - 1) / 2);
-                                    return Math.round(totalCost);
+                                function sum_cost_linear(basePrice, incrementPerItem, currentOwned, numPurchased, capThreshold) {
+                                    // Mirrors land_city_purchase_cost() on the server: each unit costs
+                                    // basePrice + owned*increment, capped at basePrice + capThreshold*increment,
+                                    // then the "Free Trade" policy discount. Without the cap this estimate
+                                    // showed ~10x the real price for provinces with lots of land/cities.
+                                    let maxPrice = basePrice + capThreshold * incrementPerItem;
+                                    let uncapped = Math.max(0, Math.min(numPurchased, capThreshold - currentOwned));
+                                    let totalCost = uncapped * basePrice +
+                                                    incrementPerItem * (uncapped * currentOwned + uncapped * (uncapped - 1) / 2) +
+                                                    (numPurchased - uncapped) * maxPrice;
+                                    return Math.floor(totalCost * {{ gold_policy_mult|default(1.0) }});
                                 }
 
                                 function numberWithCommas(x) {
                                     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
                                 }
 
-                                let newPrice = sum_cost_linear(750000, 50000, cityCount, citiesamount)
+                                let newPrice = sum_cost_linear(750000, 50000, cityCount, citiesamount, 200)
                                 let newOutputPrice = numberWithCommas(newPrice)
                                 console.log("New City price: " + newOutputPrice)
 
@@ -198,19 +203,24 @@
                                 landamount = parseInt(landamount);
                                 current_land = parseInt(current_land) || 0;
 
-                                function sum_cost_linear(basePrice, incrementPerItem, currentOwned, numPurchased) {
-                                    // O(1) formula instead of O(n) loop for performance
-                                    // Sum of: basePrice + (currentOwned + i) * increment for i in 0..numPurchased-1
-                                    let totalCost = numPurchased * basePrice +
-                                                    incrementPerItem * (numPurchased * currentOwned + numPurchased * (numPurchased - 1) / 2);
-                                    return Math.round(totalCost);
+                                function sum_cost_linear(basePrice, incrementPerItem, currentOwned, numPurchased, capThreshold) {
+                                    // Mirrors land_city_purchase_cost() on the server: each unit costs
+                                    // basePrice + owned*increment, capped at basePrice + capThreshold*increment,
+                                    // then the "Free Trade" policy discount. Without the cap this estimate
+                                    // showed ~10x the real price for provinces with lots of land/cities.
+                                    let maxPrice = basePrice + capThreshold * incrementPerItem;
+                                    let uncapped = Math.max(0, Math.min(numPurchased, capThreshold - currentOwned));
+                                    let totalCost = uncapped * basePrice +
+                                                    incrementPerItem * (uncapped * currentOwned + uncapped * (uncapped - 1) / 2) +
+                                                    (numPurchased - uncapped) * maxPrice;
+                                    return Math.floor(totalCost * {{ gold_policy_mult|default(1.0) }});
                                 }
 
                                 function numberWithCommas(x) {
                                     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
                                 }
 
-                                let land_price = sum_cost_linear(520000, 25000, current_land, landamount)
+                                let land_price = sum_cost_linear(520000, 25000, current_land, landamount, 100)
                                 let land_output_price = numberWithCommas(land_price)
                                 console.log("New land price: " + land_output_price)
                                 landoutput.innerHTML = land_output_price;
