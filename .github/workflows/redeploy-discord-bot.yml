@@ -48,7 +48,7 @@ jobs:
 
       - name: Verify web bot API is reachable
         run: |
-          code="$(curl -s -o /dev/null -w '%{http_code}' https://affairsandorder.com/api/bot/health || true)"
+          code="$(curl -s -o /dev/null -w '%{http_code}' https://affairsandorder.org/api/bot/health || true)"
           if [ "$code" = "403" ] || [ "$code" = "200" ]; then
             echo "Web bot API responded HTTP $code (expected 403 without secret or 200 with secret)."
           else

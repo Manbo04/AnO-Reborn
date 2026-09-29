@@ -64,7 +64,7 @@ def register_commands(
         name="register",
         description="Link your Discord account to your AnO nation using a code from the account page",
     )
-    @app_commands.describe(code="8-character code from https://affairsandorder.com/account")
+    @app_commands.describe(code="8-character code from https://affairsandorder.org/account")
     async def register_cmd(interaction: discord.Interaction, code: str) -> None:
         await interaction.response.defer(ephemeral=True)
         try:
