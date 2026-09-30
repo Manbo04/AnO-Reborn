@@ -885,6 +885,57 @@ def bot_nation():
   return jsonify(snap)
 
 
+@bp.route("/api/bot/world_stats", methods=["GET"])
+def bot_world_stats():
+  """World-level stats for the Q&A bot. Only what any logged-in player can
+  already see on /countries, /coalitions and /rankings: counts, nation and
+  coalition names, top-10 population/military/alliance boards. No gold,
+  resources or anything per-nation private."""
+  err = _require_bot_secret()
+  if err:
+    return err
+  from influence_formula import influence_subquery_sql
+
+  def _count(sql):
+    try:
+      row = QueryHelper.fetch_one(sql)
+      return int(row[0]) if row else 0
+    except Exception:
+      logger.exception("world_stats count failed: %s", sql)
+      return None
+
+  def _rows(sql):
+    try:
+      return [list(r) for r in QueryHelper.fetch_all(sql)]
+    except Exception:
+      logger.exception("world_stats query failed")
+      return []
+
+  members_tbl = get_coalition_members_table() or "coalitions_legacy"
+  member_influence_sql = influence_subquery_sql(f"SELECT userid FROM {members_tbl}")
+  return jsonify({
+      "nation_count": _count("SELECT COUNT(*) FROM users"),
+      "province_count": _count("SELECT COUNT(*) FROM provinces"),
+      "coalition_count": _count("SELECT COUNT(*) FROM colNames"),
+      "active_war_count": _count("SELECT COUNT(*) FROM wars WHERE peace_date IS NULL"),
+      "nation_names": [r[0] for r in _rows("SELECT username FROM users ORDER BY id")],
+      "coalition_names": [r[0] for r in _rows("SELECT name FROM colNames ORDER BY id")],
+      "top_population": _rows(
+          "SELECT u.username, COALESCE(SUM(p.population), 0) FROM users u "
+          "JOIN provinces p ON u.id = p.userid GROUP BY u.id, u.username "
+          "ORDER BY 2 DESC LIMIT 10"),
+      "top_military": _rows(
+          "SELECT u.username, COALESCE(SUM(um.quantity), 0) FROM users u "
+          "JOIN user_military um ON u.id = um.user_id GROUP BY u.id, u.username "
+          "ORDER BY 2 DESC LIMIT 10"),
+      "top_alliances": _rows(
+          f"SELECT c.name, ROUND(COALESCE(SUM(inf.influence), 0)) FROM colNames c "
+          f"JOIN {members_tbl} cm ON c.id = cm.colid "
+          f"LEFT JOIN {member_influence_sql} inf ON inf.user_id = cm.userid "
+          f"GROUP BY c.id, c.name ORDER BY 2 DESC LIMIT 10"),
+  })
+
+
 @bp.route("/api/bot/wars", methods=["GET"])
 def bot_wars():
   err = _require_bot_secret()
