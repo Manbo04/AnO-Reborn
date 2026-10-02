@@ -58,7 +58,9 @@
                 </div>
 
                 <div class="account-action-form" style="margin-top: 15px;">
+                    {% if user.get('auth_type') != 'discord' %}
                     <input class="loginsignupinput account-action-form-input" type="password" name="current_password" placeholder="Enter current password to save details" required />
+                    {% endif %}
                     {{ game_button('Save Details', icon='save') }}
                 </div>
         {% endcall %}
@@ -166,7 +168,9 @@
             {% endif %}
 
             <form action="/generate_discord_link_code" method="POST" class="account-action-form">
+                {% if user.get('auth_type') != 'discord' %}
                 <input class="loginsignupinput account-action-form-input" type="password" name="password" placeholder="Enter current password" required />
+                {% endif %}
                 {{ game_button('Generate Bot Link Code', icon='smart_toy') }}
             </form>
         {% endcall %}
@@ -179,7 +183,9 @@
             {% endif %}
             <p style="margin-bottom: 10px; opacity: 0.8;">Generate a recovery key to regain access to your account if you lose your password. <strong>Save it securely</strong>, it will only be shown once.</p>
             <form action="/generate_recovery_key" method="POST" class="account-action-form">
+                {% if user.get('auth_type') != 'discord' %}
                 <input class="loginsignupinput account-action-form-input" type="password" name="password" placeholder="Enter current password to generate" required />
+                {% endif %}
                 {{ game_button('Generate Key', icon='key') }}
             </form>
         {% endcall %}

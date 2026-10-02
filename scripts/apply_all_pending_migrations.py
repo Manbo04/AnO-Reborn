@@ -101,6 +101,9 @@ MIGRATION_FILES = [
     "0094.sql",
     "0095_achievements.sql",
     "0096_cg_chains.sql",
+    "0097_spyinfo_sam_batteries.sql",
+    "0098_player_analytics.sql",
+    "0099_backfill_discord_id.sql",
 ]
 
 

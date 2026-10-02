@@ -352,21 +352,30 @@ def change():
     with get_request_cursor() as db:
         cId = session["user_id"]
 
-        password_raw = request.form.get("current_password")
-        if not password_raw:
-            return error(400, "No password provided")
-        password = password_raw.encode("utf-8")
-
-        email = request.form.get("email")
-        name = request.form.get("name")
-
-        db.execute("SELECT hash FROM users WHERE id=%s", (cId,))
+        auth_type_col = ", auth_type" if users_table_has_column("auth_type") else ""
+        db.execute(f"SELECT hash{auth_type_col} FROM users WHERE id=%s", (cId,))
         row = db.fetchone()
         if not row or not row[0]:
             return error(500, "Account data is missing. Please contact support.")
         hash_value = row[0].encode("utf-8")
+        user_auth = row[1] if len(row) > 1 and row[1] else "normal"
 
-        if bcrypt.checkpw(password, hash_value):
+        email = request.form.get("email")
+        name = request.form.get("name")
+
+        password_ok = False
+        if user_auth == "discord":
+            password_ok = True
+        else:
+            password_raw = request.form.get("current_password")
+            if not password_raw:
+                return error(400, "No password provided")
+            try:
+                password_ok = bcrypt.checkpw(password_raw.encode("utf-8"), hash_value)
+            except Exception:
+                password_ok = False
+
+        if password_ok:
             if email:
                 try:
                     db.execute("UPDATE users SET email=%s WHERE id=%s", (email, cId))
@@ -405,19 +414,26 @@ def generate_discord_link_code():
 
     with get_request_cursor() as db:
         cId = session["user_id"]
-        password_raw = request.form.get("password")
-        if not password_raw:
-            flash("You must provide your password to generate a Discord link code.")
-            return redirect("/account")
-
-        db.execute("SELECT hash FROM users WHERE id=%s", (cId,))
+        auth_type_col = ", auth_type" if users_table_has_column("auth_type") else ""
+        db.execute(f"SELECT hash{auth_type_col} FROM users WHERE id=%s", (cId,))
         row = db.fetchone()
         if not row or not row[0]:
             return error(500, "Account data is missing.")
 
-        if not bcrypt.checkpw(password_raw.encode("utf-8"), row[0].encode("utf-8")):
-            flash("Incorrect password.")
-            return redirect("/account")
+        user_auth = row[1] if len(row) > 1 and row[1] else "normal"
+        if user_auth != "discord":
+            password_raw = request.form.get("password")
+            if not password_raw:
+                flash("You must provide your password to generate a Discord link code.")
+                return redirect("/account")
+
+            try:
+                pw_matches = bcrypt.checkpw(password_raw.encode("utf-8"), row[0].encode("utf-8"))
+            except Exception:
+                pw_matches = False
+            if not pw_matches:
+                flash("Incorrect password.")
+                return redirect("/account")
 
     try:
         create_discord_link_code(cId)
@@ -464,20 +480,26 @@ def generate_recovery_key():
 
     with get_request_cursor() as db:
         cId = session["user_id"]
-
-        password_raw = request.form.get("password")
-        if not password_raw:
-            flash("You must provide your password to generate a recovery key.")
-            return redirect("/account")
-
-        db.execute("SELECT hash FROM users WHERE id=%s", (cId,))
+        auth_type_col = ", auth_type" if users_table_has_column("auth_type") else ""
+        db.execute(f"SELECT hash{auth_type_col} FROM users WHERE id=%s", (cId,))
         row = db.fetchone()
         if not row or not row[0]:
             return error(500, "Account data is missing.")
 
-        if not bcrypt.checkpw(password_raw.encode("utf-8"), row[0].encode("utf-8")):
-            flash("Incorrect password.")
-            return redirect("/account")
+        user_auth = row[1] if len(row) > 1 and row[1] else "normal"
+        if user_auth != "discord":
+            password_raw = request.form.get("password")
+            if not password_raw:
+                flash("You must provide your password to generate a recovery key.")
+                return redirect("/account")
+
+            try:
+                pw_matches = bcrypt.checkpw(password_raw.encode("utf-8"), row[0].encode("utf-8"))
+            except Exception:
+                pw_matches = False
+            if not pw_matches:
+                flash("Incorrect password.")
+                return redirect("/account")
 
         raw_key = create_recovery_key_for_user(db, cId)
         if not raw_key:

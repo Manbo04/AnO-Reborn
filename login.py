@@ -299,7 +299,7 @@ def login():
             discord_message = "Discord API temporarily unavailable. Please try again."
         elif discord_error == "unexpected":
             discord_message = (
-                "Discord login failed unexpectedly. Please try again or use normal login."
+                "Discord login failed unexpectedly. Please try again."
             )
         recaptcha_site_key = os.getenv("RECAPTCHA_SITE_KEY", "")
         # renders login.html when "/login" is acessed via get
@@ -403,15 +403,18 @@ def discord_login():
                 return redirect("/login?discord_error=unlinked")
             user_id = row[0]
 
-            # TODO: remove later, this is for old users
-            try:
-                db.execute(
-                    "SELECT education, soldiers FROM policies WHERE user_id=%s",
-                    (user_id,),
-                )
-            except Exception:
-                db.execute("INSERT INTO policies (user_id) VALUES (%s)", (user_id,))
-    except Exception:
+            _ensure_policies_row(db, user_id)
+            from database import users_table_has_column
+            if users_table_has_column("discord_id"):
+                try:
+                    db.execute(
+                        "UPDATE users SET discord_id = %s WHERE id = %s AND (discord_id IS NULL OR discord_id = '')",
+                        (discord_auth, user_id),
+                    )
+                except Exception:
+                    pass
+    except Exception as exc:
+        logging.getLogger(__name__).warning("discord_login exception for %s: %s", session.get("user_id"), exc)
         flash("Discord login failed unexpectedly. Please try again.")
         return redirect("/login?discord_error=unexpected")
 

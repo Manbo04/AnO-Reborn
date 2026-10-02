@@ -15,6 +15,8 @@ def account():
     with get_request_cursor(cursor_factory=RealDictCursor) as db:
         try:
             user_cols = "username, email, date"
+            if users_table_has_column("auth_type"):
+                user_cols += ", auth_type"
             if users_table_has_column("discord_id"):
                 user_cols += ", discord_id"
             if users_table_has_column("recovery_key"):
@@ -42,6 +44,7 @@ def account():
     if not user:
         return error(404, "Account not found")
     user.setdefault("discord_id", None)
+    user.setdefault("auth_type", "normal")
     reset_count = user.pop("reset_count", 0) or 0
 
     discord_bot_link = None

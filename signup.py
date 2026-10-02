@@ -510,6 +510,16 @@ def callback():
             duplicate = db.fetchone() is not None
 
         if duplicate:
+            from database import users_table_has_column
+            if users_table_has_column("discord_id"):
+                try:
+                    with get_request_cursor() as backfill_db:
+                        backfill_db.execute(
+                            "UPDATE users SET discord_id=%s WHERE (hash=%s AND auth_type='discord') AND (discord_id IS NULL OR discord_id = '')",
+                            (str(discord_user_id), str(discord_user_id)),
+                        )
+                except Exception:
+                    pass
             return redirect("/discord_login/")
 
         discord_email = (session.get("discord_email") or "").strip()
@@ -709,11 +719,18 @@ def discord_register():
                 # Create user
                 # Discord users are auto-verified since Discord verifies emails
                 date = str(datetime.date.today())
-                db.execute(
-                    "INSERT INTO users (username, email, hash, date, "
-                    "auth_type, is_verified) VALUES (%s, %s, %s, %s, %s, %s)",
-                    (username, email, discord_auth, date, "discord", True),
-                )
+                if users_table_has_column("discord_id"):
+                    db.execute(
+                        "INSERT INTO users (username, email, hash, date, "
+                        "auth_type, is_verified, discord_id) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                        (username, email, discord_auth, date, "discord", True, discord_auth),
+                    )
+                else:
+                    db.execute(
+                        "INSERT INTO users (username, email, hash, date, "
+                        "auth_type, is_verified) VALUES (%s, %s, %s, %s, %s, %s)",
+                        (username, email, discord_auth, date, "discord", True),
+                    )
 
                 # Get the new user ID
                 db.execute("SELECT id FROM users WHERE hash=%s", (discord_auth,))
