@@ -43,6 +43,18 @@
     margin-bottom: 2px;
 }
 
+.chat-message-sender-link {
+    text-decoration: none;
+    color: inherit;
+    display: inline-block;
+}
+
+.chat-message-sender-link:hover .chat-message-sender,
+.chat-message-sender-link:hover {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
 .chat-message-text {
     color: var(--colorOne);
     white-space: pre-wrap;

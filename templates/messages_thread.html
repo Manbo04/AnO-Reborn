@@ -15,7 +15,7 @@
                 {% if history and history|length > 0 %}
                     {% for m in history %}
                     <div class="chat-message{% if m.sender_id|string == session.user_id|string %} chat-message-mine{% endif %}">
-                        <span class="chat-message-sender">{{ render_nation_name(m.sender_id, m.sender_username, m.flair) }}</span>
+                        <a href="/country/id={{ m.sender_id }}" class="chat-message-sender-link" title="{{ m.sender_username }}"><span class="chat-message-sender">{{ render_nation_name(m.sender_id, m.sender_username, m.flair) }}</span></a>
                         <span class="chat-message-text">{{ m.content }}</span>
                     </div>
                     {% endfor %}
@@ -50,8 +50,10 @@
     function renderMessage(m) {
         var div = document.createElement('div');
         div.className = 'chat-message' + (String(m.sender_id) === String(currentUserId) ? ' chat-message-mine' : '');
-        var sender = document.createElement('span');
-        sender.className = 'chat-message-sender';
+        var sender = document.createElement('a');
+        sender.className = 'chat-message-sender chat-message-sender-link';
+        sender.href = '/country/id=' + encodeURIComponent(m.sender_id);
+        if (m.sender_username) sender.title = m.sender_username;
         sender.innerHTML = renderNationFlairHTML(m.sender_username, m.flair);
         var text = document.createElement('span');
         text.className = 'chat-message-text';

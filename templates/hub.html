@@ -29,7 +29,7 @@
                     <div class="game-row" style="gap: 8px;"><span class="material-icons-outlined" style="color: var(--success);">chat</span><strong style="font-size: 14px;">Global Chat</strong></div>
                     {% if online_sender_ids %}
                     <div class="game-online-stack">
-                        {% for uid in online_sender_ids %}<img src="/flag/country/{{ uid }}" alt="">{% endfor %}
+                        {% for uid in online_sender_ids %}<a href="/country/id={{ uid }}" class="game-online-avatar" title="View nation"><img src="/flag/country/{{ uid }}" alt=""></a>{% endfor %}
                     </div>
                     {% endif %}
                 </div>
@@ -41,9 +41,9 @@
                                here since list_global_chat_messages() returns oldest-first. #}
                             {% for m in chat_history|reverse %}
                             <div class="game-chat-msg{% if m.sender_id|string == session.user_id|string %} game-chat-msg--mine{% endif %}">
-                                <img src="/flag/country/{{ m.sender_id }}" alt="">
+                                <a href="/country/id={{ m.sender_id }}" class="game-chat-avatar" title="{{ m.sender_username }}"><img src="/flag/country/{{ m.sender_id }}" alt="{{ m.sender_username }}"></a>
                                 <div>
-                                    <div class="game-chat-name">{{ render_nation_name(m.sender_id, m.sender_username, m.flair) }}{% if m.sender_id|string == session.user_id|string %} (you){% endif %} <span class="game-chat-time">{{ m.created_at | timeago }}</span></div>
+                                    <div class="game-chat-name"><a href="/country/id={{ m.sender_id }}" class="game-chat-name-link" title="{{ m.sender_username }}">{{ render_nation_name(m.sender_id, m.sender_username, m.flair) }}</a>{% if m.sender_id|string == session.user_id|string %} (you){% endif %} <span class="game-chat-time">{{ m.created_at | timeago }}</span></div>
                                     <div class="game-chat-bubble">{{ m.content }}</div>
                                 </div>
                             </div>
@@ -183,11 +183,23 @@
     function renderMessageNode(m) {
         var div = document.createElement('div');
         var mine = String(m.sender_id) === String(currentUserId);
+        var senderName = m.sender_username || 'Unknown';
+        var senderHref = '/country/id=' + encodeURIComponent(m.sender_id);
         div.className = 'game-chat-msg' + (mine ? ' game-chat-msg--mine' : '');
-        div.innerHTML = '<img src="/flag/country/' + m.sender_id + '" alt="">' +
-            '<div><div class="game-chat-name"></div><div class="game-chat-bubble"></div></div>';
-        div.querySelector('.game-chat-name').innerHTML = renderNationFlairHTML(m.sender_username, m.flair) +
-            (mine ? ' (you)' : '') + ' · just now';
+        div.innerHTML = '<a href="' + senderHref + '" class="game-chat-avatar"><img src="/flag/country/' + encodeURIComponent(m.sender_id) + '" alt=""></a>' +
+            '<div><div class="game-chat-name"><a href="' + senderHref + '" class="game-chat-name-link"></a>' +
+            (mine ? ' (you)' : '') + ' <span class="game-chat-time">· just now</span></div><div class="game-chat-bubble"></div></div>';
+        var avatarLink = div.querySelector('.game-chat-avatar');
+        if (avatarLink) {
+            avatarLink.title = senderName;
+            var avatarImg = avatarLink.querySelector('img');
+            if (avatarImg) avatarImg.alt = senderName;
+        }
+        var nameLink = div.querySelector('.game-chat-name-link');
+        if (nameLink) {
+            nameLink.title = senderName;
+            nameLink.innerHTML = renderNationFlairHTML(senderName, m.flair);
+        }
         div.querySelector('.game-chat-bubble').textContent = m.content;
         return div;
     }

@@ -7215,14 +7215,34 @@ body.game-shell-active .dropdown-content a.active {
     width: 26px;
     height: 26px;
     border-radius: 50%;
-    margin-left: -8px;
     border: 2px solid var(--background);
     object-fit: cover;
     background: var(--game-glass-bg-strong);
+    display: block;
 }
 
-.game-online-stack img:first-child {
+.game-online-stack > img,
+.game-online-stack > a {
+    margin-left: -8px;
+}
+
+.game-online-stack > img:first-child,
+.game-online-stack > a:first-child {
     margin-left: 0;
+}
+
+.game-online-stack a {
+    display: inline-flex;
+    text-decoration: none;
+    border-radius: 50%;
+    position: relative;
+    transition: transform 0.15s ease;
+}
+
+.game-online-stack a:hover {
+    transform: scale(1.18);
+    z-index: 5;
+    cursor: pointer;
 }
 
 .game-chat-feed {
@@ -7252,6 +7272,21 @@ body.game-shell-active .dropdown-content a.active {
     align-items: flex-start;
 }
 
+.game-chat-avatar {
+    display: inline-flex;
+    flex-shrink: 0;
+    text-decoration: none;
+    border-radius: 50%;
+    margin-top: 2px;
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.game-chat-avatar:hover {
+    transform: scale(1.1);
+    filter: brightness(1.15);
+    cursor: pointer;
+}
+
 .game-chat-msg img {
     width: 26px;
     height: 26px;
@@ -7260,6 +7295,11 @@ body.game-shell-active .dropdown-content a.active {
     flex-shrink: 0;
     object-fit: cover;
     border: 1px solid var(--game-glass-border);
+}
+
+.game-chat-avatar img {
+    margin-top: 0;
+    cursor: pointer;
 }
 
 .game-chat-bubble {
@@ -7278,6 +7318,19 @@ body.game-shell-active .dropdown-content a.active {
     font-size: 12px;
     margin-bottom: 2px;
     color: var(--colorOne);
+}
+
+.game-chat-name-link {
+    color: inherit;
+    text-decoration: none;
+    font-weight: inherit;
+    transition: opacity 0.15s ease;
+}
+
+.game-chat-name-link:hover {
+    text-decoration: underline;
+    opacity: 0.85;
+    cursor: pointer;
 }
 
 .game-chat-time {
@@ -14205,6 +14258,18 @@ html.has-touch.game-reduced-motion .touch-active {
     font-weight: 600;
     color: var(--text-secondary);
     margin-bottom: 2px;
+}
+
+.chat-message-sender-link {
+    text-decoration: none;
+    color: inherit;
+    display: inline-block;
+}
+
+.chat-message-sender-link:hover .chat-message-sender,
+.chat-message-sender-link:hover {
+    text-decoration: underline;
+    cursor: pointer;
 }
 
 .chat-message-text {

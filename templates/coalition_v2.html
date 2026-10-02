@@ -716,8 +716,10 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                 function renderMessage(m) {
                     var div = document.createElement('div');
                     div.className = 'chat-message' + (String(m.sender_id) === String(currentUserId) ? ' chat-message-mine' : '');
-                    var sender = document.createElement('span');
-                    sender.className = 'chat-message-sender';
+                    var sender = document.createElement('a');
+                    sender.className = 'chat-message-sender chat-message-sender-link';
+                    sender.href = '/country/id=' + encodeURIComponent(m.sender_id);
+                    if (m.sender_username) sender.title = m.sender_username;
                     sender.innerHTML = renderNationFlairHTML(m.sender_username, m.flair);
                     var text = document.createElement('span');
                     text.className = 'chat-message-text';
@@ -816,12 +818,12 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                     <table class="templatetable templatetable2">
                         <tr><th>Role</th><th>About</th><th>Members</th></tr>
                         <tr><td>{{ role_labels["leader"] }}</td><td>Power over all aspects of the coalition.</td><td>{{ member_roles.get("leader") }}</td></tr>
-                        <tr><td>{{ role_labels["deputy_leader"] }}</td><td>Power over all aspects of the coalition, excluding coalition name and flag.</td><td>{{ member_roles.get("deputy_leader") }}</td></tr>
+                        <tr><td>{{ role_labels["deputy_leader"] }}</td><td>Power over members, roles, the bank, tax and treaties. Only the leader can edit the coalition's name, flag, description, type and settings, or delete it.</td><td>{{ member_roles.get("deputy_leader") }}</td></tr>
                         <tr><td>{{ role_labels["domestic_minister"] }}</td><td>Permission to add and remove members, and change roles of people below them.</td><td>{{ member_roles.get("domestic_minister") }}</td></tr>
                         <tr><td>{{ role_labels["banker"] }}</td><td>Able to accept withdrawal requests and withdraw resources from the bank{% if col_settings.bank_require_requests %} (your coalition requires requests for every withdrawal){% endif %}.</td><td>{{ member_roles.get("banker") }}</td></tr>
-                        <tr><td>{{ role_labels["tax_collector"] }}</td><td>Permission to edit tax brackets and change who is in them.</td><td>{{ member_roles.get("tax_collector") }}</td></tr>
+                        <tr><td>{{ role_labels["tax_collector"] }}</td><td>Permission to set the coalition's tax rate on members' gold income.</td><td>{{ member_roles.get("tax_collector") }}</td></tr>
                         <tr><td>{{ role_labels["foreign_ambassador"] }}</td><td>Power to add and remove treaties.</td><td>{{ member_roles.get("foreign_ambassador") }}</td></tr>
-                        <tr><td>{{ role_labels["general"] }}</td><td>Ability to declare coalition wars, edit war message, and edit war range.</td><td>{{ member_roles.get("general") }}</td></tr>
+                        <tr><td>{{ role_labels["general"] }}</td><td>Rank title only; no extra permissions beyond a regular member.</td><td>{{ member_roles.get("general") }}</td></tr>
                         <tr><td>{{ role_labels["member"] }}</td><td>Can deposit into the bank and request withdrawals.</td><td>{{ member_roles.get("member") }}</td></tr>
                     </table>
                 </div>
