@@ -223,6 +223,12 @@ body.page-hub.theme-light .game-page-overlay {
 
 .game-hero-badge .material-icons-outlined {
     font-size: 13px;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .game-hero h1 {
@@ -383,6 +389,12 @@ body.page-hub.theme-light .game-page-overlay {
 
 .game-btn .material-icons-outlined {
     font-size: 16px;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* ---------- Badges ---------- */
@@ -1046,6 +1058,8 @@ body.game-page-v2 .warflexparentcolors {
     color: #cfd6e2;
     cursor: pointer;
     transition: background .12s, color .12s;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 .game-icon-btn:hover {
@@ -1055,6 +1069,12 @@ body.game-page-v2 .warflexparentcolors {
 
 .game-icon-btn .material-icons-outlined {
     font-size: 18px;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Desktop: the theme toggle lives in the topbar icon row with search/bell/
@@ -1064,6 +1084,22 @@ body.game-page-v2 .warflexparentcolors {
     .navbar-theme-toggle {
         display: none !important;
     }
+}
+
+.navbar-theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.navbar-theme-toggle .material-icons-outlined {
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .game-topbar-notif-dot {
@@ -1078,8 +1114,8 @@ body.game-page-v2 .warflexparentcolors {
 }
 
 .game-topbar-avatar {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     border-radius: 9px;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.14);
@@ -1091,6 +1127,7 @@ body.game-page-v2 .warflexparentcolors {
     color: #fff;
     text-decoration: none;
     flex-shrink: 0;
+    box-sizing: border-box;
 }
 
 .game-topbar-avatar:hover {
@@ -1325,11 +1362,18 @@ body.game-shell-active .dropdown-content a.active {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    box-sizing: border-box;
 }
 
 .game-stat-icon .material-icons-outlined {
     font-size: 20px;
     color: var(--accent);
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .game-stat-label {

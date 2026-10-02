@@ -779,8 +779,8 @@ body:has(.navbarparent .templatecontainer) {
 
 .dropbtnchild {
     color: white;
-    font-size: 20px;
-    line-height: 45px;
+    font-size: 16px;
+    line-height: 1;
     border: none;
     height: 45px;
     margin: 5px 0;
@@ -790,6 +790,17 @@ body:has(.navbarparent .templatecontainer) {
     background: #1c2029;
     padding: 0 12px;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.dropbtnchild .material-icons-outlined {
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    font-size: 18px;
+    position: static;
 }
 
 .dropbtn:hover .dropbtnchild {
@@ -1881,7 +1892,6 @@ body:has(.navbarparent .templatecontainer) {
 
 .templatedivbutton span {
     font-size: 1.3rem;
-    right: 8px;
 }
 
 .templatecenteredbutton {
@@ -5819,6 +5829,83 @@ html.page-tutorial .resourcedivcontent {
     --game-panel-bg: var(--foregroundTwo);
 }
 
+/* ============================================================
+   Icon Alignment & Centering Master Reset
+   Eliminates legacy margin-right:5px / padding-bottom:2px on
+   .material-icons-outlined inside all flex/grid/button/tab/badge elements,
+   ensuring pixel-perfect horizontal and vertical centering everywhere.
+   ============================================================ */
+:is(
+    .game-btn,
+    .game-icon-btn,
+    .game-stat-icon,
+    .game-hero-badge,
+    .game-badge,
+    .section-tab,
+    .section-tabs-title,
+    .nav-hub-link,
+    .dropbtnchild,
+    .templatedivbutton,
+    .chat-send-btn,
+    .stat-label,
+    .wars-mil-chip,
+    .tip-card-icon,
+    .game-nav-item,
+    .game-hud,
+    .mil-stat,
+    .mil-cost,
+    .mil-upkeep,
+    .mil-tab,
+    .province-chip,
+    .province-stat-pill,
+    .province-stat-chip,
+    .resourcedivchild,
+    .ta-panel-title,
+    .store-package-gems,
+    .store-cosmetic-price,
+    .store-cosmetic-equipped-badge,
+    .unitcardcheck,
+    .game-row,
+    .game-spread
+) > .material-icons-outlined,
+:is(
+    .game-btn,
+    .game-icon-btn,
+    .game-stat-icon,
+    .game-hero-badge,
+    .game-badge,
+    .section-tab,
+    .section-tabs-title,
+    .nav-hub-link,
+    .dropbtnchild,
+    .templatedivbutton,
+    .chat-send-btn,
+    .stat-label,
+    .wars-mil-chip,
+    .tip-card-icon,
+    .game-nav-item,
+    .game-hud,
+    .mil-stat,
+    .mil-cost,
+    .mil-upkeep,
+    .mil-tab,
+    .province-chip,
+    .province-stat-pill,
+    .province-stat-chip,
+    .resourcedivchild
+) .material-icons-outlined:only-child,
+.icon-centered,
+.material-icons-outlined.icon-centered {
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    vertical-align: middle !important;
+}
+
+
 
 /* --- static/css/game-glass.css --- */
 /*
@@ -6046,6 +6133,12 @@ body.page-hub.theme-light .game-page-overlay {
 
 .game-hero-badge .material-icons-outlined {
     font-size: 13px;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .game-hero h1 {
@@ -6206,6 +6299,12 @@ body.page-hub.theme-light .game-page-overlay {
 
 .game-btn .material-icons-outlined {
     font-size: 16px;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* ---------- Badges ---------- */
@@ -6869,6 +6968,8 @@ body.game-page-v2 .warflexparentcolors {
     color: #cfd6e2;
     cursor: pointer;
     transition: background .12s, color .12s;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 .game-icon-btn:hover {
@@ -6878,6 +6979,12 @@ body.game-page-v2 .warflexparentcolors {
 
 .game-icon-btn .material-icons-outlined {
     font-size: 18px;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Desktop: the theme toggle lives in the topbar icon row with search/bell/
@@ -6887,6 +6994,22 @@ body.game-page-v2 .warflexparentcolors {
     .navbar-theme-toggle {
         display: none !important;
     }
+}
+
+.navbar-theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.navbar-theme-toggle .material-icons-outlined {
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .game-topbar-notif-dot {
@@ -6901,8 +7024,8 @@ body.game-page-v2 .warflexparentcolors {
 }
 
 .game-topbar-avatar {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     border-radius: 9px;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.14);
@@ -6914,6 +7037,7 @@ body.game-page-v2 .warflexparentcolors {
     color: #fff;
     text-decoration: none;
     flex-shrink: 0;
+    box-sizing: border-box;
 }
 
 .game-topbar-avatar:hover {
@@ -7148,11 +7272,18 @@ body.game-shell-active .dropdown-content a.active {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    box-sizing: border-box;
 }
 
 .game-stat-icon .material-icons-outlined {
     font-size: 20px;
     color: var(--accent);
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .game-stat-label {
@@ -8218,7 +8349,23 @@ body.game-shell-active .templatecontainer {
 }
 
 /* --- Floating resource ($) panel --- */
-.resourcediv,
+.resourcediv {
+    top: calc(var(--game-navbar-height, 55px) + 12px) !important;
+    right: 18px;
+    position: fixed;
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 50% !important;
+    background-color: #1c2029;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000000 !important;
+    transition: all 0.3s ease-in-out;
+}
+
 .resourcedivcontent {
     top: calc(var(--game-navbar-height, 55px) + 12px);
 }
@@ -8230,25 +8377,35 @@ body.game-shell-active .templatecontainer {
 }
 
 .resourcedivchild {
-    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
 }
 
 .resourceicon.material-icons-outlined {
-    /* Centred geometrically, not via the line box: the icon font's global
-       margin-right:5px + padding-bottom:2px (and platform font metrics) left
-       the $ off-centre in the circle (ieb, 2026-09-27). */
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    display: block;
-    width: 1em;
-    height: 1em;
-    margin: 0;
-    padding: 0;
-    line-height: 1;
+    font-size: 28px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: static;
+    transform: none;
+    width: auto;
+    height: auto;
+}
+
+.resourcedivshow {
+    right: 200px !important;
+    width: 48px !important;
+    border-radius: 50% !important;
 }
 
 @media all and (max-width: 500px) {
@@ -8731,6 +8888,12 @@ body.game-shell-active .section-tabs + .templatediv {
 
 .section-tabs-title .material-icons-outlined {
     font-size: 16px;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .section-tabs-strip {
@@ -8770,6 +8933,12 @@ body.game-shell-active .section-tabs + .templatediv {
 
 .section-tab .material-icons-outlined {
     font-size: 18px;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .section-tab:hover {
@@ -13164,6 +13333,196 @@ body.page-military .templatedivcontent .infodiv {
     color: var(--colorOne);
 }
 
+/* ============================================================
+   War Confrontation Screen (war_v2.html)
+   Battle matchup grid with centered VS, contained flag cards,
+   and clean morale/supplies progress bars.
+   ============================================================ */
+.war-matchup-panel {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 24px;
+    padding: 24px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+}
+
+@media (max-width: 768px) {
+    .war-matchup-panel {
+        grid-template-columns: 1fr;
+        gap: 18px;
+        padding: 16px;
+    }
+}
+
+.war-combatant {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.war-combatant-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+}
+
+.war-role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 3px 10px;
+    border-radius: 999px;
+    line-height: 1;
+}
+
+.war-role-badge--atk {
+    background: rgba(255, 60, 60, 0.18);
+    color: #ff6b7d;
+    border: 1px solid rgba(255, 60, 60, 0.35);
+}
+
+.war-role-badge--def {
+    background: rgba(0, 167, 225, 0.18);
+    color: #4da8da;
+    border: 1px solid rgba(0, 167, 225, 0.35);
+}
+
+.war-role-you {
+    font-size: 10px;
+    font-weight: 800;
+    opacity: 0.85;
+    margin-left: 2px;
+}
+
+.war-combatant-name {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--colorOne);
+    text-decoration: none;
+    transition: color 0.15s ease;
+    text-align: center;
+    word-break: break-word;
+    margin: 0;
+}
+
+.war-combatant-name:hover {
+    color: var(--accent);
+}
+
+.war-flag-wrap {
+    width: 100%;
+    max-width: 280px;
+    aspect-ratio: 16 / 9;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--game-glass-border, rgba(255, 255, 255, 0.12));
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    background: rgba(0, 0, 0, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.war-combatant-flag {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.war-stats-bars {
+    width: 100%;
+    max-width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.war-bar.progressbarparent {
+    margin: 0 !important;
+    width: 100% !important;
+    height: 28px !important;
+    border-radius: 6px !important;
+    background: rgba(0, 0, 0, 0.35) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.war-bar .progressbarchild {
+    height: 100%;
+    padding: 0;
+    transition: width 0.3s ease;
+}
+
+.war-bar .progressbarchildtext {
+    line-height: 28px;
+    font-size: 12px;
+    font-weight: 700;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    margin: 0;
+    width: 100%;
+}
+
+.war-vs-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    user-select: none;
+}
+
+.war-vs-text {
+    font-family: 'Impact', 'Arial Black', sans-serif;
+    font-size: 4rem;
+    font-style: italic;
+    font-weight: 900;
+    color: #ff3333;
+    text-transform: uppercase;
+    text-shadow: 3px 3px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 0 24px rgba(255, 51, 51, 0.6);
+    transform: skewX(-12deg);
+    margin: 0;
+    letter-spacing: 2px;
+}
+
+@media (max-width: 768px) {
+    .war-vs-text {
+        font-size: 2.8rem;
+    }
+}
+
+.war-action-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin: 20px 0 28px;
+}
+
+.war-action-wrap .game-btn {
+    font-size: 16px;
+    padding: 12px 32px;
+    border-radius: 12px;
+}
+
 
 /* --- static/css/game-trade.css --- */
 /*
@@ -14297,10 +14656,24 @@ html.has-touch.game-reduced-motion .touch-active {
     resize: none;
 }
 
-.chat-input-row .chat-send-btn {
+.chat-input-row .chat-send-btn,
+.chat-send-btn {
     min-height: 44px;
     min-width: 44px;
     flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.chat-send-btn .material-icons-outlined {
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* DM inbox list */

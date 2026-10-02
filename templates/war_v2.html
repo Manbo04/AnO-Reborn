@@ -9,219 +9,181 @@
 
     <div class="templatedivcontent">
 
-        <!--AGGRESSOR-->
-        {% if cId_type == "attacker" %}
-        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
-            <div class="templatedivflex2left">
-
-                <h2 class="templatecontentheadercenter templatelink"><a class="templatelink" href="/country/id={{ defender }}">{{ defender_name }}</a></h2>
-
-                <!-- cId is the Flask value for your country's Id-->
-                <!--defender nation flag-->
-                <img alt="Image" tabindex="0" class="unitimage" src="/flag/country/{{ defender }}" />
-
-                <div class="progressbarparent">
-                    <div class="progressbarchildtext">{{defender_info["morale"]}} / 100 Morale</div>
-                    <div class="progressbarchild" style="width:{{ defender_info['morale'] }}%">
+        <!-- WAR MATCHUP -->
+        <div class="war-matchup-panel game-glass game-panel">
+            <!-- Defender -->
+            <div class="war-combatant">
+                <div class="war-combatant-header">
+                    <span class="war-role-badge war-role-badge--def">Defender{% if cId_type == "defender" %} <span class="war-role-you">(You)</span>{% endif %}</span>
+                    <h2 class="war-combatant-name"><a href="/country/id={{ defender }}">{{ defender_name }}</a></h2>
+                </div>
+                <div class="war-flag-wrap">
+                    <img alt="{{ defender_name }} flag" tabindex="0" class="war-combatant-flag" src="/flag/country/{{ defender }}" />
+                </div>
+                <div class="war-stats-bars">
+                    <div class="progressbarparent war-bar">
+                        <div class="progressbarchildtext">{{ defender_info["morale"] }} / 100 Morale</div>
+                        <div class="progressbarchild" style="width: {{ defender_info['morale'] }}%;"></div>
+                    </div>
+                    <div class="progressbarparent war-bar">
+                        <div class="progressbarchildtext">{{ defender_info["supplies"] }} / 2000 Supplies</div>
+                        <div class="progressbarchild progressbargreen" style="width: {{ (defender_info['supplies'] / 20) | round(0, 'ceil') }}%;"></div>
                     </div>
                 </div>
-
-                <div class="progressbarparent">
-                    <div class="progressbarchildtext">{{defender_info["supplies"]}} / 2000 Supplies</div>
-                    <div class="progressbarchild progressbargreen" style="width: {{ (defender_info['supplies']/20) | round(0, 'ceil') }}%">
-                    </div>
-                </div>
-
             </div>
-            <div class="min templatedivflex2left" style="display: flex; align-items: center; justify-content: center; align-self: center;">
-                <h2 class="templatecontentheadercenter" style="font-family: 'Impact', 'Arial Black', sans-serif; font-size: 4.5rem; font-style: italic; font-weight: 900; color: #ff3333; text-transform: uppercase; text-shadow: 3px 3px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 0 20px rgba(255,51,51,0.5); transform: skewX(-15deg); user-select: none; margin: 0; padding: 20px;">VS</h2>
+
+            <!-- VS Badge -->
+            <div class="war-vs-badge">
+                <div class="war-vs-text">VS</div>
             </div>
-            <div class="templatedivflex2left">
 
-                <h2 class="templatecontentheadercenter templatelink"><a class="templatelink" href="/country/id={{ attacker }}">{{ attacker_name }}</a></h2>
-                <!--aggressor nation flag-->
-                <img alt="Image" tabindex="0" class="unitimage" src="/flag/country/{{ attacker }}" />
-
-                <div class="progressbarparent">
-                    <div class="progressbarchildtext">{{attacker_info["morale"]}} / 100 Morale</div>
-                    <div class="progressbarchild" style="width:{{ attacker_info['morale'] }}%">
-                    </div>
+            <!-- Attacker -->
+            <div class="war-combatant">
+                <div class="war-combatant-header">
+                    <span class="war-role-badge war-role-badge--atk">Attacker{% if cId_type == "attacker" %} <span class="war-role-you">(You)</span>{% endif %}</span>
+                    <h2 class="war-combatant-name"><a href="/country/id={{ attacker }}">{{ attacker_name }}</a></h2>
                 </div>
-
-                <div class="progressbarparent">
-                    <div class="progressbarchildtext">{{attacker_info["supplies"]}} / 2000 Supplies</div>
-                    <div class="progressbarchild progressbargreen" style="width: {{ (attacker_info['supplies']/20) | round(0, 'ceil') }}%">
+                <div class="war-flag-wrap">
+                    <img alt="{{ attacker_name }} flag" tabindex="0" class="war-combatant-flag" src="/flag/country/{{ attacker }}" />
+                </div>
+                <div class="war-stats-bars">
+                    <div class="progressbarparent war-bar">
+                        <div class="progressbarchildtext">{{ attacker_info["morale"] }} / 100 Morale</div>
+                        <div class="progressbarchild" style="width: {{ attacker_info['morale'] }}%;"></div>
+                    </div>
+                    <div class="progressbarparent war-bar">
+                        <div class="progressbarchildtext">{{ attacker_info["supplies"] }} / 2000 Supplies</div>
+                        <div class="progressbarchild progressbargreen" style="width: {{ (attacker_info['supplies'] / 20) | round(0, 'ceil') }}%;"></div>
                     </div>
                 </div>
             </div>
         </div>
-        {% endif %}
 
-        <!--CODE IT TO CHOOSE ON OR THE OTHER DEPENDING ON IF YOU ATTACKED, OR GOT ATTACKED-->
-        <!--DEFENDER-->
-        {% if cId_type == "defender" %}
-        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
-            <div class="templatedivflex2left">
+        <!-- ACTION BUTTON -->
+        <div class="war-action-wrap">
+            <a class="game-btn game-btn-primary game-btn-lg" href="/warchoose/{{ war_id }}">
+                <span class="material-icons-outlined">arrow_forward</span>Attack
+            </a>
+        </div>
 
-                <h2 class="templatecontentheadercenter templatelink"><a class="templatelink" href="/country/id={{ defender }}">{{ defender_name }}</a></h2>
-                <!--aggressor nation flag-->
-                <img alt="Image" tabindex="0" class="unitimage" src="/flag/country/{{ defender }}" />
+        <!-- ESPIONAGE -->
+        <div class="game-glass game-panel" style="margin-bottom: 24px; padding: 20px;">
+            <h2 class="templatecontentheaderleft" style="margin-top: 0;">
+                <span class="material-icons-outlined" style="vertical-align: middle; margin-right: 6px;">visibility</span>Espionage
+            </h2>
 
-                <div class="progressbarparent">
-                    <div class="progressbarchildtext">{{attacker_info["morale"]}} / 100 Morale</div>
-                    <div class="progressbarchild" style="width:{{ attacker_info['morale'] }}%">
+            <form method="post" action="/spyResult">
+                <input type="hidden" name="country" value="{{ peace_to_send }}" />
+                <input type="hidden" name="prep" value="1" />
+                <div class="stat-grid" style="gap: 10px; margin-bottom: 15px; margin-top: 10px;">
+                    <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
+                        <label class="stat-label" for="warType" style="margin: 0; font-weight: 600;">Choose operation</label>
+                        <select class="templateselect" style="margin: 0; padding: 6px; width: 60%; border-radius: 4px; border: 1px solid var(--border); background: var(--background); color: var(--colorOne);" name="spy_type" id="warType">
+                            <option class="templateoption" value="units">Spy on unit amounts</option>
+                            <option class="templateoption" value="resources">Spy on resources</option>
+                            <option class="templateoption" value="sabotage">Sabotage resources</option>
+                            <option class="templateoption" value="sabotage_strategic">Sabotage missiles &amp; nukes</option>
+                            <option class="templateoption" value="assassinate_spies">Assassinate spies</option>
+                        </select>
+                    </div>
+                    <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
+                        <label class="stat-label" for="spyCountInput" style="margin: 0; font-weight: 600;">Number of spies</label>
+                        <input class="loginsignupinput" style="margin: 0; padding: 6px; width: 60%; text-align: left;" id="spyCountInput" name="spies" type="number" min="1" max="{{ spyCount }}" placeholder="Max: {{ spyCount }}" required />
                     </div>
                 </div>
 
-                <div class="progressbarparent">
-                    <div class="progressbarchildtext">{{attacker_info["supplies"]}} / 2000 Supplies</div>
-                    <div class="progressbarchild progressbargreen" style="width: {{ (attacker_info['supplies']/20) | round(0, 'ceil') }}%">
+                <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 10px; gap: 12px;">
+                    <span class="stat-label" style="font-weight: 600; color: var(--text-secondary); background: var(--foregroundTwo); padding: 6px 12px; border-radius: 4px; border: 1px solid var(--border); text-align: center;">Success depends on your spies vs. theirs and their counter-intelligence</span>
+                    <button class="game-btn game-btn-primary" type="submit">
+                        <span class="material-icons-outlined">check</span>Perform
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- PEACE OFFER -->
+        <div class="game-glass game-panel" style="padding: 20px;">
+            <h2 class="templatecontentheaderleft" style="margin-top: 0;">
+                <span class="material-icons-outlined" style="vertical-align: middle; margin-right: 6px;">handshake</span>Peace Offer
+            </h2>
+
+            <form method="post" action="/send_peace_offer/{{war_id}}/{{peace_to_send}}">
+                <h3 class="templatecontentheadercenter" style="margin-top: 10px; font-size: 1.15rem;">Demand Resources</h3>
+
+                <div class="stat-grid" style="gap: 10px; margin-bottom: 20px;">
+                    <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
+                        <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'money')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Money</strong>
+                        <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="money" placeholder="Amount" />
+                    </div>
+                    <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
+                        <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Rations</strong>
+                        <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="rations" placeholder="Amount" />
+                    </div>
+                    <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
+                        <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'oil')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Oil</strong>
+                        <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="oil" placeholder="Amount" />
+                    </div>
+                    <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
+                        <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'coal')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Coal</strong>
+                        <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="coal" placeholder="Amount" />
+                    </div>
+                    <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
+                        <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'uranium')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Uranium</strong>
+                        <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="uranium" placeholder="Amount" />
+                    </div>
+                    <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
+                        <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'iron')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Iron</strong>
+                        <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="iron" placeholder="Amount" />
+                    </div>
+                    <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
+                        <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lead')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Lead</strong>
+                        <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="lead" placeholder="Amount" />
+                    </div>
+                    <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
+                        <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'bauxite')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Bauxite</strong>
+                        <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="bauxite" placeholder="Amount" />
+                    </div>
+                    <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
+                        <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'copper')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Copper</strong>
+                        <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="copper" placeholder="Amount" />
+                    </div>
+                    <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
+                        <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lumber')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Lumber</strong>
+                        <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="lumber" placeholder="Amount" />
+                    </div>
+                    <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
+                        <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'components')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Components</strong>
+                        <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="components" placeholder="Amount" />
+                    </div>
+                    <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
+                        <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'steel')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Steel</strong>
+                        <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="steel" placeholder="Amount" />
+                    </div>
+                    <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
+                        <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'consumer_goods')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Consumer Goods</strong>
+                        <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="consumer_goods" placeholder="Amount" />
+                    </div>
+                    <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
+                        <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'aluminium')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Aluminum</strong>
+                        <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="aluminium" placeholder="Amount" />
+                    </div>
+                    <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
+                        <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'gasoline')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Gasoline</strong>
+                        <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="gasoline" placeholder="Amount" />
+                    </div>
+                    <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
+                        <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'ammunition')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Ammunition</strong>
+                        <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="ammunition" placeholder="Amount" />
                     </div>
                 </div>
 
-            </div>
-            <div class="min templatedivflex2left" style="display: flex; align-items: center; justify-content: center; align-self: center;">
-                <h2 class="templatecontentheadercenter" style="font-family: 'Impact', 'Arial Black', sans-serif; font-size: 4.5rem; font-style: italic; font-weight: 900; color: #ff3333; text-transform: uppercase; text-shadow: 3px 3px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0 0 20px rgba(255,51,51,0.5); transform: skewX(-15deg); user-select: none; margin: 0; padding: 20px;">VS</h2>
-            </div>
-            <div class="templatedivflex2left">
-
-                <h2 class="templatecontentheadercenter"><a class="templatelink" href="/country/id={{ attacker }}">{{ attacker_name }}</a></h2>
-                <img alt="Image" tabindex="0" class="unitimage" src="/flag/country/{{ attacker }}" />
-
-                <div class="progressbarparent">
-                    <div class="progressbarchildtext">{{defender_info["morale"]}} / 100 Morale</div>
-                    <div class="progressbarchild" style="width:{{ defender_info['morale'] }}%"></div>
+                <div style="display: flex; justify-content: center; margin-top: 10px;">
+                    <button class="game-btn game-btn-primary game-btn-lg" type="submit">
+                        <span class="material-icons-outlined">arrow_forward</span>Send Offer
+                    </button>
                 </div>
-
-                <div class="progressbarparent">
-                    <div class="progressbarchildtext">{{defender_info["supplies"]}} / 2000 Supplies</div>
-                    <div class="progressbarchild progressbargreen" style="width: {{ (defender_info['supplies']/20) | round(0, 'ceil') }}%"></div>
-                </div>
-            </div>
+            </form>
         </div>
-
-        {% endif %}
-        <div class="templatedivflex2 divflex2center">
-            <!--
-            <div class="templatedivflex2left">
-
-                <a class="templatedivbutton templatecenteredbutton" href="/warchoose"><span class="material-icons-outlined">
-                    security
-                    </span>Defend</a>
-
-            </div>
-            -->
-            <div class="templatedivflex2left">
-                <a class="templatedivbutton templatecenteredbutton" href="/warchoose/{{ war_id }}"><span class="material-icons-outlined">
-                    arrow_forward
-                    </span>Attack</a>
-            </div>
-        </div>
-
-        <h2 class="templatecontentheaderleft">Espionage</h2>
-
-        <form method="post" action="/spyResult">
-            <input type="hidden" name="country" value="{{ peace_to_send }}" />
-            <input type="hidden" name="prep" value="1" />
-            <div class="stat-grid" style="gap: 10px; margin-bottom: 15px; margin-top: 10px;">
-                <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
-                    <label class="stat-label" for="warType" style="margin: 0; font-weight: 600;">Choose operation</label>
-                    <select class="templateselect" style="margin: 0; padding: 6px; width: 60%; border-radius: 4px; border: 1px solid var(--border); background: var(--background); color: var(--colorOne);" name="spy_type" id="warType">
-                        <option class="templateoption" value="units">Spy on unit amounts</option>
-                        <option class="templateoption" value="units">Spy on defensive units</option>
-                        <option class="templateoption" value="resources">Spy on resources</option>
-                        <option class="templateoption" value="resources">Assasinate spies</option>
-                    </select>
-                </div>
-                <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
-                    <label class="stat-label" for="spyCountInput" style="margin: 0; font-weight: 600;">Number of spies</label>
-                    <input class="loginsignupinput" style="margin: 0; padding: 6px; width: 60%; text-align: left;" id="spyCountInput" name="spies" type="number" min="1" max="{{ spyCount }}" placeholder="Max: {{ spyCount }}" required />
-                </div>
-            </div>
-
-            <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; gap: 15px;">
-                <span class="stat-label" style="font-weight: 600; color: var(--text-secondary); background: var(--foregroundTwo); padding: 6px 12px; border-radius: 4px; border: 1px solid var(--border);">{{ successChance }}% success chance</span>
-                <button class="templatedivbutton" type="submit" style="margin: 0; padding: 8px 16px;"><span class="material-icons-outlined">check</span>Perform</button>
-            </div>
-        </form>
-
-        <h2 class="templatecontentheaderleft">Peace Offer</h2>
-
-        <form method="post" action="/send_peace_offer/{{war_id}}/{{peace_to_send}}">
-            <h2 class="templatecontentheadercenter" style="margin-top: 10px;">Demand Resources</h2>
-
-            <div class="stat-grid" style="gap: 10px; margin-bottom: 20px;">
-                <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
-                    <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'money')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Money</strong>
-                    <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="money" placeholder="Amount" />
-                </div>
-                <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
-                    <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Rations</strong>
-                    <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="rations" placeholder="Amount" />
-                </div>
-                <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
-                    <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'oil')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Oil</strong>
-                    <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="oil" placeholder="Amount" />
-                </div>
-                <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
-                    <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'coal')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Coal</strong>
-                    <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="coal" placeholder="Amount" />
-                </div>
-                <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
-                    <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'uranium')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Uranium</strong>
-                    <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="uranium" placeholder="Amount" />
-                </div>
-                <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
-                    <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'iron')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Iron</strong>
-                    <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="iron" placeholder="Amount" />
-                </div>
-                <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
-                    <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lead')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Lead</strong>
-                    <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="lead" placeholder="Amount" />
-                </div>
-                <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
-                    <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'bauxite')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Bauxite</strong>
-                    <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="bauxite" placeholder="Amount" />
-                </div>
-                <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
-                    <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'copper')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Copper</strong>
-                    <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="copper" placeholder="Amount" />
-                </div>
-                <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
-                    <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lumber')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Lumber</strong>
-                    <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="lumber" placeholder="Amount" />
-                </div>
-                <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
-                    <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'components')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Components</strong>
-                    <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="components" placeholder="Amount" />
-                </div>
-                <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
-                    <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'steel')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Steel</strong>
-                    <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="steel" placeholder="Amount" />
-                </div>
-                <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
-                    <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'consumer_goods')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Consumer Goods</strong>
-                    <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="consumer_goods" placeholder="Amount" />
-                </div>
-                <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
-                    <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'aluminium')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Aluminum</strong>
-                    <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="aluminium" placeholder="Amount" />
-                </div>
-                <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
-                    <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'gasoline')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Gasoline</strong>
-                    <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="gasoline" placeholder="Amount" />
-                </div>
-                <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
-                    <strong class="stat-label" style="margin: 0;"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'ammunition')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Ammunition</strong>
-                    <input class="loginsignupinput stat-value" style="margin: 0; padding: 6px; width: 50%;" autocomplete="on" name="ammunition" placeholder="Amount" />
-                </div>
-            </div>
-
-            <button class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">
-                arrow_forward
-                </span>Send Offer</button>
-
-        </form>
 
     </div>
 </div>

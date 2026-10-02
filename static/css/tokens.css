@@ -144,3 +144,80 @@
 .theme-dark {
     --game-panel-bg: var(--foregroundTwo);
 }
+
+/* ============================================================
+   Icon Alignment & Centering Master Reset
+   Eliminates legacy margin-right:5px / padding-bottom:2px on
+   .material-icons-outlined inside all flex/grid/button/tab/badge elements,
+   ensuring pixel-perfect horizontal and vertical centering everywhere.
+   ============================================================ */
+:is(
+    .game-btn,
+    .game-icon-btn,
+    .game-stat-icon,
+    .game-hero-badge,
+    .game-badge,
+    .section-tab,
+    .section-tabs-title,
+    .nav-hub-link,
+    .dropbtnchild,
+    .templatedivbutton,
+    .chat-send-btn,
+    .stat-label,
+    .wars-mil-chip,
+    .tip-card-icon,
+    .game-nav-item,
+    .game-hud,
+    .mil-stat,
+    .mil-cost,
+    .mil-upkeep,
+    .mil-tab,
+    .province-chip,
+    .province-stat-pill,
+    .province-stat-chip,
+    .resourcedivchild,
+    .ta-panel-title,
+    .store-package-gems,
+    .store-cosmetic-price,
+    .store-cosmetic-equipped-badge,
+    .unitcardcheck,
+    .game-row,
+    .game-spread
+) > .material-icons-outlined,
+:is(
+    .game-btn,
+    .game-icon-btn,
+    .game-stat-icon,
+    .game-hero-badge,
+    .game-badge,
+    .section-tab,
+    .section-tabs-title,
+    .nav-hub-link,
+    .dropbtnchild,
+    .templatedivbutton,
+    .chat-send-btn,
+    .stat-label,
+    .wars-mil-chip,
+    .tip-card-icon,
+    .game-nav-item,
+    .game-hud,
+    .mil-stat,
+    .mil-cost,
+    .mil-upkeep,
+    .mil-tab,
+    .province-chip,
+    .province-stat-pill,
+    .province-stat-chip,
+    .resourcedivchild
+) .material-icons-outlined:only-child,
+.icon-centered,
+.material-icons-outlined.icon-centered {
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    vertical-align: middle !important;
+}
+

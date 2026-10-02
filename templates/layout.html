@@ -150,8 +150,9 @@
     /* Force bypass cache for resource menu button */
     .resourcedivshow {
         right: 200px !important;
-        width: 56px !important;
-        border-radius: 100px !important;
+        width: 48px !important;
+        height: 48px !important;
+        border-radius: 50% !important;
         background-color: #1c2029 !important;
         padding-left: 0 !important;
         box-shadow: rgba(58, 59, 69, 0.4) 0px 0px 6px 0px !important;
@@ -161,7 +162,9 @@
         opacity: 0 !important;
     }
     .resourcedivshow .resourcedivchild {
-        width: 56px !important;
+        width: 48px !important;
+        height: 48px !important;
+        border-radius: 50% !important;
     }
     
     /* Force tooltips to be above everything */
@@ -418,7 +421,7 @@
     </div>
     <button type="button" class="menubar-backdrop" id="menubar-backdrop" onclick="menubardrop()" aria-label="Close menu" tabindex="-1"></button>
 
-    <div class="resourcediv" id="resourcediv" style="top: 150px !important; z-index: 1000000 !important;">
+    <div class="resourcediv" id="resourcediv">
         <div class="resourcedivchild" onclick="resourcedivcontentshow()">
                 <span class="material-icons-outlined resourceicon">
                     monetization_on
@@ -439,7 +442,7 @@
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" alt="Rations" class="resource" loading="lazy" />
                 <p class="resourcetag">{{ resources["rations"] | weight_fmt }}</p>
-                <div class="resourceinfo">Rations keep your citizens alive, allows them to reproduce faster, and increases their taxes. Every 25000 citizens consume one ration</div>
+                <div class="resourceinfo">Rations keep your citizens alive, allows them to reproduce faster, and increases their taxes. About every 50,000 citizens consume one ration per hour (children slightly more, elderly slightly less).</div>
             </div>
             <p class="resource-section-label">Raw Resources</p>
             <div class="resourcetagparent" tabindex="0">
@@ -481,7 +484,7 @@
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'copper') ) }}?v=2" alt="Copper" class="resource" loading="lazy" />
                 <p class="resourcetag">{{ resources["copper"] | weight_fmt }}</p>
-                <div class="resourceinfo">Copper can be refined into consumer goods.</div>
+                <div class="resourceinfo">Copper is refined into components and ammunition.</div>
 
             </div>
             <div class="resourcetagparent" tabindex="0">
@@ -505,7 +508,7 @@
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'bullion') ) }}?v=2" alt="Bullion" class="resource" loading="lazy" />
                 <p class="resourcetag">{{ (resources.get("bullion") or 0) | weight_fmt }}</p>
-                <div class="resourceinfo">Bullion is refined gold mined in boreal forest and jungle biomes, used in jewelry and national reserves.</div>
+                <div class="resourceinfo">Bullion is refined gold mined in boreal forest and jungle biomes, used by jewelry stores to make luxury consumer goods.</div>
 
             </div>
             <p class="resource-section-label">Manufactured</p>

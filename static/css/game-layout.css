@@ -207,7 +207,23 @@ body.game-shell-active .templatecontainer {
 }
 
 /* --- Floating resource ($) panel --- */
-.resourcediv,
+.resourcediv {
+    top: calc(var(--game-navbar-height, 55px) + 12px) !important;
+    right: 18px;
+    position: fixed;
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 50% !important;
+    background-color: #1c2029;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000000 !important;
+    transition: all 0.3s ease-in-out;
+}
+
 .resourcedivcontent {
     top: calc(var(--game-navbar-height, 55px) + 12px);
 }
@@ -219,25 +235,35 @@ body.game-shell-active .templatecontainer {
 }
 
 .resourcedivchild {
-    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
 }
 
 .resourceicon.material-icons-outlined {
-    /* Centred geometrically, not via the line box: the icon font's global
-       margin-right:5px + padding-bottom:2px (and platform font metrics) left
-       the $ off-centre in the circle (ieb, 2026-09-27). */
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    display: block;
-    width: 1em;
-    height: 1em;
-    margin: 0;
-    padding: 0;
-    line-height: 1;
+    font-size: 28px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: static;
+    transform: none;
+    width: auto;
+    height: auto;
+}
+
+.resourcedivshow {
+    right: 200px !important;
+    width: 48px !important;
+    border-radius: 50% !important;
 }
 
 @media all and (max-width: 500px) {
@@ -720,6 +746,12 @@ body.game-shell-active .section-tabs + .templatediv {
 
 .section-tabs-title .material-icons-outlined {
     font-size: 16px;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .section-tabs-strip {
@@ -759,6 +791,12 @@ body.game-shell-active .section-tabs + .templatediv {
 
 .section-tab .material-icons-outlined {
     font-size: 18px;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .section-tab:hover {
