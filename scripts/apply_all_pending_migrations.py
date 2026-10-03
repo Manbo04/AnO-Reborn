@@ -107,6 +107,7 @@ MIGRATION_FILES = [
     "0100_add_news_is_read.sql",
     "0101_reimburse_24h_revenue.sql",
     "0102_personal_bank_accounts.sql",
+    "0103_personal_bank_balance_from_log.sql",
 ]
 
 

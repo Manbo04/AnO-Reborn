@@ -1815,6 +1815,22 @@ def withdraw(resource, amount, user_id, coalition_id, actor_id=None):
         except Exception:
             db.execute("ROLLBACK TO SAVEPOINT txn_log")
 
+        # Banker-approved payouts count against the recipient's personal
+        # balance too; otherwise a member could be paid back by a banker and
+        # then withdraw the same deposit again via withdraw_personal_from_bank.
+        try:
+            db.execute("SAVEPOINT personal_bal")
+            db.execute(
+                """
+                UPDATE col_bank_contributions
+                SET total_withdrawn = COALESCE(total_withdrawn, 0) + %s
+                WHERE coalition_id = %s AND user_id = %s AND resource = %s
+                """,
+                (amount, coalition_id, user_id, resource),
+            )
+        except Exception:
+            db.execute("ROLLBACK TO SAVEPOINT personal_bal")
+
 
 # Route from withdrawing from the bank
 def withdraw_from_bank(coalition_id):
