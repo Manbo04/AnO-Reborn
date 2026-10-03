@@ -248,8 +248,8 @@ def tax_income():
             last_row = db.fetchone()
             last_id = last_row[0] if last_row and last_row[0] is not None else 0
 
-            # Keep default chunks conservative to reduce lock time per run.
-            chunk_size = int(os.getenv("TAX_INCOME_CHUNK_SIZE", "250"))
+            # Keep default chunks large enough so all active users are processed in a single run.
+            chunk_size = int(os.getenv("TAX_INCOME_CHUNK_SIZE", "1000"))
             db.execute(
                 "SELECT id FROM users WHERE id > %s ORDER BY id ASC LIMIT %s",
                 (last_id, chunk_size),
@@ -258,14 +258,15 @@ def tax_income():
             all_user_ids = [u[0] for u in users]
 
             if not all_user_ids:
-                # Completed full cycle; reset cursor and immediately
+                # Completed full cycle; reset cursor in DB and immediately
                 # re-fetch from the beginning so this run still processes
-                # users (avoids wasting every other hourly invocation).
+                # users. Do NOT commit here as that would release transaction-scoped
+                # advisory locks (pg_try_advisory_xact_lock).
                 db.execute(
                     "UPDATE task_cursors SET last_id=0 WHERE task_name=%s",
                     ("tax_income",),
                 )
-                conn.commit()
+                last_id = 0
                 db.execute(
                     "SELECT id FROM users WHERE id > 0 ORDER BY id ASC LIMIT %s",
                     (chunk_size,),

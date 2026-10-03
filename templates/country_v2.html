@@ -978,7 +978,7 @@
     </div>
     <div class="templatedivflex2left stat-card" data-tippy-content="Your coalition leader sets a tax rate on member income. This amount is skimmed off your gross revenue every tick before you receive it &mdash; talk to your leadership if the rate feels too high, or leave the coalition to keep 100%.<br><br><a href='/my_coalition' style='color:#4da8da;text-decoration:underline;'>&#128214; View coalition</a>">
         <strong class="stat-label">Coalition tax</strong>
-        <span class="stat-value">-{{ revenue.get("coalition_tax", 0) | fmt }}</span>
+        <span class="stat-value">{% if revenue.get("coalition_tax", 0) > 0 %}-{% endif %}{{ revenue.get("coalition_tax", 0) | fmt }}</span>
     </div>
     {# Mirrors the Gross column so both columns keep the same row order (ieb, 2026-09-27). #}
     {% if bond_interest and (bond_interest.received or bond_interest.paid) %}
