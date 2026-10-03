@@ -322,14 +322,17 @@ def generate_province_revenue():  # Runs each hour
             if all_province_ids:
                 dbdict.execute(
                     """
-                    SELECT id, happiness, productivity, pollution, consumer_spending,
-                           energy, population,
-                           COALESCE(pop_children, 0) AS pop_children,
-                           COALESCE(pop_working, 0) AS pop_working,
-                           COALESCE(pop_elderly, 0) AS pop_elderly,
-                           COALESCE(CAST(citycount AS INTEGER), 0) AS citycount,
-                           COALESCE(location, 'Grassland') AS location
-                    FROM provinces WHERE id = ANY(%s)
+                    SELECT p.id, p.happiness, p.productivity, p.pollution,
+                           p.consumer_spending, p.energy, p.population,
+                           COALESCE(p.pop_children, 0) AS pop_children,
+                           COALESCE(p.pop_working, 0) AS pop_working,
+                           COALESCE(p.pop_elderly, 0) AS pop_elderly,
+                           COALESCE(CAST(p.citycount AS INTEGER), 0) AS citycount,
+                           -- biome lives on stats (nation-level), not provinces
+                           COALESCE(s.location, 'Grassland') AS location
+                    FROM provinces p
+                    LEFT JOIN stats s ON s.id = p.userId
+                    WHERE p.id = ANY(%s)
                 """,
                     (all_province_ids,),
                 )
