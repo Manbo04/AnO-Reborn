@@ -222,21 +222,35 @@
         <h2 class="templatecontentheaderleft">General</h2>
 
         <div class="infodiv">
+            <div class="game-settings-list">
+                <div class="game-setting-row">
+                    <div class="game-setting-info">
+                        <span class="material-icons-outlined game-setting-icon">dark_mode</span>
+                        <div class="game-setting-text">
+                            <span class="game-setting-title">Dark Mode</span>
+                            <span class="game-setting-desc">Switch between dark and light appearance</span>
+                        </div>
+                    </div>
+                    <label class="game-switch" for="slider">
+                        <input type="checkbox" onchange="toggleTheme()" id="slider" role="switch" aria-label="Dark Mode">
+                        <span class="game-switch-slider"></span>
+                    </label>
+                </div>
 
-            <!--
-            <input class="loginsignupinput" name="" placeholder="Discord Username" />
-            -->
-
-            <label class="templatecheckmarklabel fit">Dark Mode
-                <input type="checkbox" onchange="toggleTheme()" id="slider">
-                <span class="templatecheckmark center"></span>
-              </label>
-
-            <!-- <button id="templatedivbutton" class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">
-                        check
-                    </span>Update</button>
-                -->
-
+                <div class="game-setting-row">
+                    <div class="game-setting-info">
+                        <span class="material-icons-outlined game-setting-icon">wallpaper</span>
+                        <div class="game-setting-text">
+                            <span class="game-setting-title">Background Images</span>
+                            <span class="game-setting-desc">Display scenic photos behind pages. Turn off for a clean, solid background.</span>
+                        </div>
+                    </div>
+                    <label class="game-switch" for="bgImagesToggle">
+                        <input type="checkbox" onchange="toggleBackgroundImages()" id="bgImagesToggle" role="switch" aria-label="Background Images">
+                        <span class="game-switch-slider"></span>
+                    </label>
+                </div>
+            </div>
         </div>
     </div>
 

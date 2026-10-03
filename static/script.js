@@ -227,7 +227,8 @@ function normalizeThemeName(themeName) {
 function setTheme(themeName) {
     themeName = normalizeThemeName(themeName);
     try { localStorage.setItem("theme", themeName); } catch(e) {}
-    document.documentElement.className = themeName;
+    document.documentElement.classList.remove("theme-light", "theme-dark");
+    document.documentElement.classList.add(themeName);
     var slider = document.getElementById("slider");
     if (slider) slider.checked = (themeName === "theme-dark");
     /* Keep theme-color fixed (navbar color). Changing it made Safari retint the toolbar. */
@@ -240,12 +241,58 @@ function toggleTheme() {
     setTheme(current === "theme-dark" ? "theme-light" : "theme-dark");
 }
 
-// Apply saved theme on load (light default; dark available via toggle)
+// ---------------------------------------------------------------------------
+// Page background images toggle (enable/disable scenic backgrounds)
+// ---------------------------------------------------------------------------
+function isBackgroundImagesEnabled() {
+    try {
+        return localStorage.getItem("ano_bg_images") !== "off";
+    } catch(e) {
+        return true;
+    }
+}
+
+function setBackgroundImages(enabled) {
+    try {
+        localStorage.setItem("ano_bg_images", enabled ? "on" : "off");
+    } catch(e) {}
+
+    if (enabled) {
+        document.documentElement.classList.remove("no-bg-images");
+        document.documentElement.removeAttribute("data-bg-images");
+    } else {
+        document.documentElement.classList.add("no-bg-images");
+        document.documentElement.setAttribute("data-bg-images", "off");
+    }
+
+    var toggle = document.getElementById("bgImagesToggle");
+    if (toggle) toggle.checked = enabled;
+}
+
+function toggleBackgroundImages() {
+    setBackgroundImages(!isBackgroundImagesEnabled());
+}
+
+// Apply saved theme and background settings on load (light default; dark available via toggle)
 (function() {
     var theme = "theme-light";
     try { theme = normalizeThemeName(localStorage.getItem("theme")); } catch(e) {}
     setTheme(theme);
+    setBackgroundImages(isBackgroundImagesEnabled());
 })();
+
+document.addEventListener("DOMContentLoaded", function() {
+    var slider = document.getElementById("slider");
+    if (slider) {
+        var theme = "theme-light";
+        try { theme = normalizeThemeName(localStorage.getItem("theme")); } catch(e) {}
+        slider.checked = (theme === "theme-dark");
+    }
+    var bgToggle = document.getElementById("bgImagesToggle");
+    if (bgToggle) {
+        bgToggle.checked = isBackgroundImagesEnabled();
+    }
+});
 
 // ---------------------------------------------------------------------------
 // War selection helpers
