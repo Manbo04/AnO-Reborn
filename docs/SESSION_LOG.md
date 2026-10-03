@@ -4,6 +4,39 @@ Chronological log of debugging/feature sessions on this repo, moved out of CLAUD
 
 ---
 
+### Session: 2026-10-03 (Community Suggestions Implementation & Discord Notification)
+
+**Task**: Implement Community Suggestions from Affairs and Order Discord `#suggestions` Forum & Reply to Players via Discord Bot
+
+**What Was Done**:
+- **Personal Bank Accounts** (joshmd - thread 1555817583037382717):
+  - Created `migrations/0102_personal_bank_accounts.sql` adding `total_withdrawn BIGINT DEFAULT 0` to `col_bank_contributions`.
+  - Added `/withdraw_personal_from_bank/<coalition_id>` allowing all members to withdraw their own deposited funds without needing banker approval or filing a request.
+  - Updated `coalition()` route to compute `my_personal_bank_balances` and passed to `templates/coalition_v2.html` and `templates/coalition.html`.
+  - Added "Personal Balance" column and "Withdraw Personal" action button to the Bank table.
+- **Coalition Tax Deducting Net Income** (luciuskonst - thread 1555243428370055178):
+  - Dues calculation calculates and deducts strictly from net profit after building upkeep in `app_core/game_ticks/taxes.py` and `countries.py`.
+- **Remove Citizen Army for Naval and Air Attacks** (fikusmikus - thread 1554902994653282354):
+  - Citizen militia defense restricted to ground domain only in `wars/routes.py`.
+- **Show Battle History** (joshmd - thread 1555697704330461294):
+  - Battle outcome reports and casualty breakdowns for both defender and attacker inserted directly into `news` feed in `wars/routes.py`.
+- **Productivity De-obfuscation** (luciuskonst - thread 1553834960652214485):
+  - Clarified exact `+0.9% output per % productivity above 50%` formula in `templates/mechanics/revenue.html` and removed outdated farm land advice in `templates/mechanics/resources.html`.
+- **Per-Province Vertical Integration** (luciuskonst - thread 1554561637560623104):
+  - Integration bonus calculated on local province units in `app_core/economy/industry_bonuses.py` and labeled `Primary School (Basic):` in `templates/partials/province_info.html`.
+- **Natural Pollution Decay** (andythewinterdog - thread 1554673435534299136):
+  - Added hourly baseline natural decay + lush biome bonuses (forest, jungle, boreal, grassland) in `app_core/game_ticks/revenue.py`.
+- **Market Trade Ping** (theduke41 - thread 1554902436563525702):
+  - Added discord notifications to `#early-market` pinging `@Market Alerts` on new trade offers in `app_core/market/routes.py` and added `/market_alerts` slash command in `discord_bot/commands/community.py`.
+- **Provinces Table View** (andythewinterdog - thread 1555150379774124112):
+  - Added Card View vs Table View toggle in `templates/provinces_v2.html` with category filter pills (All, Mines, Processing, Power, Retail, Civic, Military) and live building search.
+- **Education Capacity Rebalance** (khedairiagamer7051 - thread 1546503017459880046):
+  - Rebalanced student capacities to 500 Primary School, 900 High School, 5,000 University in `app_core/game_ticks/population.py` and updated mechanics documentation.
+- **Discord Bot Notifications**:
+  - Responded to all 10 players in their respective Discord threads with ping `<@user_id>` confirming implementation. Excluded International community suggestions and background theme change threads as requested.
+
+---
+
 ### Session: 2026-10-03
 
 **Task**: Discord Scan Bug Fixes & Suggestions (Reported in past 8-24h)
