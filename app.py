@@ -709,6 +709,7 @@ def create_app():
     from app_core.world_map.routes import bp as world_map_bp
     from app_core.game_map.routes import bp as game_map_bp
     from app_core.market.routes import market_bp
+    from app_core.market.auto_order_routes import auto_orders_bp
     from app_core.store.routes import (
         store_bp,
         stripe_webhook as store_stripe_webhook,
@@ -735,6 +736,7 @@ def create_app():
     app.register_blueprint(world_map_bp)
     app.register_blueprint(game_map_bp)
     app.register_blueprint(market_bp)
+    app.register_blueprint(auto_orders_bp)
     app.register_blueprint(store_bp)
     app.register_blueprint(military_bp)
     app.register_blueprint(tutorial_api_bp)

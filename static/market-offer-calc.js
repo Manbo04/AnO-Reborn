@@ -11,8 +11,20 @@
         return isNaN(n) ? 0 : Math.max(0, n);
     }
 
+    // Offers priced in a nation currency carry data-currency-label; gold
+    // offers keep the game's usual "$" formatting.
+    // The label is a player-chosen currency name and the tooltip renders
+    // HTML (allowHTML), so it is escaped before use.
+    var currencyLabel = null;
+    function escapeHtml(text) {
+        return String(text).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
     function formatMoney(n) {
-        return '$' + n.toLocaleString();
+        return currencyLabel
+            ? n.toLocaleString() + ' ' + escapeHtml(currencyLabel)
+            : '$' + n.toLocaleString();
     }
 
     function isPurchaseForm(form) {
@@ -86,6 +98,7 @@
             amount = maxAmount;
             input.value = String(maxAmount);
         }
+        currencyLabel = input.getAttribute('data-currency-label');
         var feeAttr = parseInt(input.getAttribute('data-fee-percent'), 10);
         var feePercent = isNaN(feeAttr) ? DEFAULT_FEE_PERCENT : feeAttr;
         var subtotal = Math.round(amount * unitPrice);

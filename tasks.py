@@ -60,6 +60,7 @@ from app_core.game_ticks.disasters import run_natural_disasters
 from app_core.game_ticks.loan_interest import run_loan_interest
 from app_core.game_ticks.bond_tick import run_bond_tick
 from app_core.game_ticks.recurring_bank_trades import run_recurring_bank_trades
+from app_core.game_ticks.market_auto_orders import run_market_auto_orders
 from app_core.game_ticks.maintenance import backfill_missing_resources, cleanup_orphan_user_rows, execute_due_trade_agreements, _create_game_tick_log, _finalize_game_tick_log, global_tick
 
 
@@ -128,6 +129,13 @@ def task_bond_tick():
 @leader_only(ttl_seconds=300)
 def task_recurring_bank_trades():
     _run_with_deadlock_retries(run_recurring_bank_trades, "recurring_bank_trades")
+
+
+# Automatic market orders (migration 0104): top up each rule's offer hourly.
+@celery.task()
+@leader_only(ttl_seconds=300)
+def task_market_auto_orders():
+    _run_with_deadlock_retries(run_market_auto_orders, "market_auto_orders")
 
 
 # Runs once a day

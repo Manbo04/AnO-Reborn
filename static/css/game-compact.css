@@ -1,0 +1,257 @@
+/* ==========================================================================
+   Density pass (Helios, #suggestions "Market UI Rework", 2026-10-03):
+   "the UI is just SO spread out ... building anything requires pages of
+   scrolling to get to different buildings". Bundled after game-touch.css
+   and before the nation-theme cosmetics, so themes still own colours/fonts;
+   this file only tightens spacing and image sizes. Touch targets stay
+   >= 40px on touch screens, inputs stay 16px on phones (iOS zoom).
+   ========================================================================== */
+
+/* --- Shared page chrome --------------------------------------------------- */
+body.game-page-v2 .game-hero {
+    gap: 12px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+}
+
+body.game-page-v2 .game-hero .game-hero-sub { margin-top: 3px; }
+
+@media (max-width: 620px) {
+    body.game-page-v2 .game-hero { padding: 12px 12px; }
+    body.game-page-v2 .game-hero h1 { font-size: 1.45rem; }
+}
+
+body.game-page-v2 .game-panel { padding: 14px 16px; }
+
+@media (max-width: 620px) {
+    body.game-page-v2 .game-panel { padding: 12px 10px; }
+}
+
+body.game-page-v2 .game-panel-head { margin-bottom: 10px; }
+
+body.game-page-v2 .templatedivcontent {
+    padding-bottom: var(--game-space-md, 16px);
+}
+
+body.game-page-v2 .game-table th,
+body.game-page-v2 .game-table td {
+    padding-top: 7px;
+    padding-bottom: 7px;
+}
+
+/* Legacy two-column blocks carried a 20px auto margin on every column
+   (style.css .templatedivflex2left/right), which stacked into 40px gaps
+   between every block on phones. */
+body.game-page-v2 .templatedivflex2left,
+body.game-page-v2 .templatedivflex2right {
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+/* --- Province buildings: the "pages of scrolling" ------------------------- */
+/* Each building was a section header + a card split 50/50 between text and a
+   photo stretched to the card's full height (desktop) or a 200px photo under
+   the text (phones). The photo becomes a thumbnail strip and the text drives
+   the height. */
+body.page-province .menudiv { margin-bottom: 10px; }
+
+body.page-province .menudiv > h2.templatecontentheaderleft {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 7px;
+    padding-bottom: 7px;
+    font-size: 1.05rem;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    scroll-margin-top: 112px; /* fixed navbar + sticky jump bar */
+}
+
+body.page-province .menudiv .card-align-row > .templatedivflex2left {
+    padding: 0 12px 10px;
+}
+
+body.page-province .menudiv .card-align-row > .templatedivflex2left > :first-child {
+    margin-top: 8px;
+}
+
+body.page-province .menudiv .templatecontentheadercenter {
+    margin: 0 0 4px;
+    font-size: 0.98rem;
+    text-align: left;
+}
+
+body.page-province .menudiv .templatecontentpleft,
+body.page-province .menudiv .card-align-row ul {
+    margin: 0 0 4px;
+    padding-left: 0;
+    font-size: 0.86rem;
+    line-height: 1.4;
+    text-align: left !important; /* legacy column rules centre it on phones */
+}
+
+body.page-province .menudiv .purchasemilitarydiv {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+body.page-province .menudiv .purchasemilitarydiv > input {
+    flex: 1 1 110px;
+    max-width: 240px;
+    min-width: 90px;
+    width: auto;
+    margin: 0;
+}
+
+/* !important only because game-layout.css forces every .templatedivflex2
+   into a column with !important on phones; Buy and Sell fit side by side. */
+body.page-province .menudiv .purchasemilitarydiv .templatedivflex2.divflex2center {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: row !important;
+    gap: 6px;
+    margin: 0;
+    width: auto;
+}
+
+body.page-province .menudiv .purchasemilitarydiv .templatedivflex2.divflex2center > .templatedivflex2left {
+    flex: 0 0 auto;
+    width: auto;
+    margin: 0;
+    padding: 0;
+}
+
+/* Phones/tablets: photo becomes a 76px banner on top of the card. */
+@media (max-width: 768px) {
+    body.page-province .menudiv .card-align-row {
+        flex-direction: column;
+    }
+    body.page-province .menudiv .province-card-media {
+        order: -1;
+        width: 100%;
+        height: 76px;
+        margin: 0;
+        flex: 0 0 76px;
+    }
+    body.page-province .menudiv .province-card-media img.unitimage {
+        width: 100%;
+        height: 76px;
+        min-height: 0;
+        max-height: 76px;
+        aspect-ratio: auto;
+        object-fit: cover;
+        box-shadow: none;
+    }
+    body.page-province .menudiv .purchasemilitarydiv > input { font-size: 16px; }
+}
+
+/* Desktop: photo is a fixed 150px column; text sets the card height. */
+@media (min-width: 769px) {
+    body.page-province .menudiv .card-align-row > .province-card-media {
+        flex: 0 0 150px;
+        width: 150px;
+        max-width: 150px;
+    }
+    body.page-province .menudiv .province-card-media img.unitimage {
+        height: 100%;
+        min-height: 0;
+        max-height: none;
+        aspect-ratio: auto;
+        box-shadow: none;
+    }
+}
+
+/* Wide screens: two buildings per row. Tab panels are shown by adding the
+   "<name>click" class (static/script.js activateTab). Wide panels such as
+   the energy balance keep the full width. Selectors are spelled out rather
+   than using ":is()" because scripts/bundle_game_css.py's minifier strips
+   the space before ":" and would turn "body.x :is(...)" into "body.x:is(...)". */
+@media (min-width: 1200px) {
+    body.page-province .electricityclick,
+    body.page-province .retailclick,
+    body.page-province .worksclick,
+    body.page-province .militaryclick,
+    body.page-province .industryclick,
+    body.page-province .processingclick {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        align-items: start;
+    }
+    body.page-province .electricityclick > .menudiv,
+    body.page-province .retailclick > .menudiv,
+    body.page-province .worksclick > .menudiv,
+    body.page-province .militaryclick > .menudiv,
+    body.page-province .industryclick > .menudiv,
+    body.page-province .processingclick > .menudiv {
+        margin-bottom: 0;
+        min-width: 0;
+    }
+    body.page-province .electricityclick > *:not(.menudiv),
+    body.page-province .retailclick > *:not(.menudiv),
+    body.page-province .worksclick > *:not(.menudiv),
+    body.page-province .militaryclick > *:not(.menudiv),
+    body.page-province .industryclick > *:not(.menudiv),
+    body.page-province .processingclick > *:not(.menudiv),
+    body.page-province .menudiv.energy-balance-panel {
+        grid-column: 1 / -1;
+    }
+}
+
+/* --- Jump-to-building bar (static/js/building-jump.js) -------------------- */
+body.page-province .building-jump {
+    position: sticky;
+    top: var(--game-navbar-height, 55px);
+    z-index: 5;
+    display: flex;
+    gap: 6px;
+    margin: 0 0 10px;
+    padding: 8px 10px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    border: 1px solid var(--game-glass-border);
+    border-radius: var(--game-radius-md, 12px);
+    background: var(--game-glass-bg-strong);
+    backdrop-filter: var(--game-glass-blur);
+    -webkit-backdrop-filter: var(--game-glass-blur);
+}
+
+body.page-province .building-jump:empty { display: none; }
+
+body.page-province .building-jump-label {
+    flex: 0 0 auto;
+    align-self: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    color: var(--game-text-faint, var(--text-secondary));
+}
+
+body.page-province .building-jump a {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--game-glass-border);
+    border-radius: 999px;
+    color: var(--colorOne);
+    font-size: 0.82rem;
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+body.page-province .building-jump a:hover,
+body.page-province .building-jump a:focus-visible {
+    border-color: var(--accent);
+    color: var(--accent);
+    outline: none;
+}
+
+@media (min-width: 900px) {
+    body.page-province .building-jump { flex-wrap: wrap; overflow-x: visible; }
+}

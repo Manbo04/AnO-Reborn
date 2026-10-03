@@ -5,19 +5,24 @@ import logging
 from database import get_request_cursor, invalidate_user_cache, invalidate_view_cache, rollback_db_cursor, cache_response
 
 from .repositories import (
-    is_active_resource, get_user_resource_quantity, count_offers, get_offers,
+    is_active_resource, get_user_resource_quantity,
     get_offer_by_id, delete_offer, update_offer_amount, lock_users, get_user_gold_for_update,
     insert_offer, insert_trade, get_my_trades, get_my_offers, delete_trade, try_lock_trade,
     unlock_trade, get_trade_by_id, get_username, insert_news, delete_trade_by_id, user_exists,
     decrement_gold, increment_gold, is_embargoed, add_embargo, remove_embargo, list_embargoes,
-    get_user_gold, get_user_resource_quantities, get_my_currency_ids
+    get_user_gold, get_user_resource_quantities, get_my_currency_ids,
+    get_active_resources, get_resource_book, get_exchange_issuers, get_embargo_partners,
+    get_market_preferences, upsert_market_preferences, record_market_fill,
+    get_last_fill_prices,
 )
 from .fees import trade_fee, trade_fee_percent, union_partner_ids, max_affordable_amount
 from .services import give_resource, report_trade_error
 from .currency_pricing import (
     parse_currency_choice, currency_balances, get_currency_labels, get_currency_balance,
+    classify_offer_currency, gold_normalised, TAG_LABELS, TAG_SHORT,
 )
 from app_core.currency.repositories import take_currency, give_currency
+from .auto_orders import cancel_offer_with_refund
 from app_core.world_affairs.services import log_event
 
 # trades.amount/price/offeree/offer_id are Postgres INTEGER columns.
@@ -26,83 +31,206 @@ MAX_TRADE_INT = 2_147_483_647
 market_bp = Blueprint("market_bp", __name__)
 logger = logging.getLogger(__name__)
 
+def _record_fill(db, offer_id, resource, amount, price, currency_id, seller_id, buyer_id):
+    """Log a market fill for "last traded price" (order book + auto-order
+    alerts). Runs in a savepoint: a logging failure must never undo a trade
+    that has already moved resources and money in this transaction."""
+    try:
+        db.execute("SAVEPOINT market_fill")
+        record_market_fill(
+            db, offer_id, resource, amount, price, currency_id,
+            gold_normalised(price, currency_id), seller_id, buyer_id,
+        )
+        db.execute("RELEASE SAVEPOINT market_fill")
+    except Exception:
+        logger.exception("market fill log failed for offer %s", offer_id)
+        try:
+            db.execute("ROLLBACK TO SAVEPOINT market_fill")
+        except Exception:
+            logger.exception("savepoint rollback failed for offer %s", offer_id)
+
+
+MARKET_PER_SIDE_CHOICES = (10, 25, 50, 100)
+MARKET_DEFAULT_RESOURCE = "rations"
+
+
+def _book_row(row, cId, ctx):
+    """One order-book entry as a dict the template can read by name."""
+    user_id, offer_type, resource, amount, price, offer_id, username, currency_id = row
+    pct = (
+        variables.UNION_TRADE_FEE_PERCENT
+        if user_id in ctx["union_partners"]
+        else variables.TRADE_FEE_PERCENT
+    )
+    if offer_type == "sell":
+        # The viewer buys from this offer: capped by what they can pay
+        # (price + transport fee) in the offer's currency.
+        funds = ctx["my_currency"].get(currency_id, 0) if currency_id else ctx["my_gold"]
+        take = min(amount, max_affordable_amount(funds, price, pct))
+    else:
+        # The viewer sells into this offer: capped by their stock.
+        take = min(amount, ctx["my_resources"].get(resource, 0))
+    tag = classify_offer_currency(currency_id, cId, ctx["my_currency"], ctx["exchange_issuers"])
+    return {
+        "offer_id": offer_id,
+        "user_id": user_id,
+        "username": username,
+        "type": offer_type,
+        "resource": resource,
+        "amount": amount,
+        "price": price,
+        "total": price * amount,
+        "currency_id": currency_id,
+        "currency_label": ctx["labels"].get(currency_id, "currency") if currency_id else "Gold",
+        "gold_price": gold_normalised(price, currency_id),
+        "tag": tag,
+        "tag_label": TAG_LABELS[tag],
+        "tag_short": TAG_SHORT[tag],
+        "max_take": max(0, take),
+        "fee_percent": pct,
+    }
+
+
+def _hidden_by_preferences(offer, prefs, embargo_partners):
+    if prefs["hide_embargoed"] and offer["user_id"] in embargo_partners:
+        return True
+    if prefs["hide_unavailable"] and offer["tag"] == "unavailable":
+        return True
+    if prefs["hide_exchange"] and offer["tag"] == "exchange":
+        return True
+    if prefs["currency_mode"] == "gold" and offer["currency_id"]:
+        return True
+    if prefs["currency_mode"] == "currency" and offer["currency_id"] != prefs["currency_id"]:
+        return True
+    return False
+
+
 @market_bp.route("/market", methods=["GET"])
 @login_required
 @cache_response(ttl_seconds=30)
 def market():
+    """Order book for one resource (Market UI Rework, Helios 2026-10-03):
+    offers you can BUY from (cheapest first) beside offers you can SELL to
+    (best price first), sorted on the gold-normalised price and colour-tagged
+    by whether you can use the offer's currency at all."""
     with get_request_cursor(read_only=True) as db:
         cId = session["user_id"]
+        prefs = get_market_preferences(db, cId)
+        resources = get_active_resources(db)
 
-        filter_resource = request.values.get("filtered_resource")
-        price_type = request.values.get("price_type")
-        offer_type = request.values.get("offer_type")
+        resource = (
+            request.values.get("resource")
+            or request.values.get("filtered_resource")  # old links / bookmarks
+            or prefs["default_resource"]
+            or MARKET_DEFAULT_RESOURCE
+        )
+        if resource != "all" and resource not in resources:
+            if request.values.get("resource") or request.values.get("filtered_resource"):
+                return error(400, "No such resource")
+            resource = MARKET_DEFAULT_RESOURCE  # a saved default that was retired
 
-        page = request.values.get("page", default=1, type=int)
-        per_page = request.values.get("per_page", default=50, type=int)
-        if per_page not in [50, 100, 150]:
-            per_page = 50
+        per_side = request.values.get("per_side", default=25, type=int)
+        if per_side not in MARKET_PER_SIDE_CHOICES:
+            per_side = 25
 
-        if price_type is not None and price_type not in ["ASC", "DESC"]:
-            return error(400, "No such price type")
+        rows = get_resource_book(db, resource, cId)
+        currency_ids = {row[7] for row in rows if row[7]}
+        my_currency = currency_balances(db, cId)
+        ctx = {
+            "my_gold": get_user_gold(db, cId) or 0,
+            "my_resources": get_user_resource_quantities(db, cId),
+            "my_currency": my_currency,
+            "union_partners": union_partner_ids(db, cId),
+            "exchange_issuers": get_exchange_issuers(db, cId) if currency_ids else set(),
+            "labels": get_currency_labels(db, currency_ids | {cId} | set(my_currency)),
+        }
+        embargo_partners = get_embargo_partners(db, cId) if prefs["hide_embargoed"] else set()
 
-        if filter_resource is not None and filter_resource not in variables.RESOURCES:
+        asks, bids, hidden_count = [], [], 0
+        for row in rows:
+            offer = _book_row(row, cId, ctx)
+            if _hidden_by_preferences(offer, prefs, embargo_partners):
+                hidden_count += 1
+            elif offer["type"] == "sell":
+                asks.append(offer)
+            else:
+                bids.append(offer)
+        asks.sort(key=lambda o: (o["gold_price"], o["offer_id"]))
+        bids.sort(key=lambda o: (-o["gold_price"], o["offer_id"]))
+
+        best_ask = asks[0]["gold_price"] if asks else None
+        best_bid = bids[0]["gold_price"] if bids else None
+        last_fill = None
+        if resource != "all":
+            last_fill = get_last_fill_prices(db, [resource]).get(resource)
+
+        my_currencies = [(cId, ctx["labels"].get(cId, "Your currency") + " (yours)")]
+        my_currencies += sorted(
+            ((iid, ctx["labels"].get(iid, "currency")) for iid, amt in my_currency.items()
+             if iid != cId and amt > 0),
+            key=lambda pair: pair[1].lower(),
+        )
+
+        return render_template(
+            "market_v2.html",
+            resource=resource,
+            market_resources=resources,  # "resources" is taken by layout.html's HUD
+            asks=asks[:per_side],
+            bids=bids[:per_side],
+            asks_total=len(asks),
+            bids_total=len(bids),
+            best_ask=best_ask,
+            best_bid=best_bid,
+            spread=(best_ask - best_bid) if best_ask is not None and best_bid is not None else None,
+            last_fill=last_fill,
+            prefs=prefs,
+            my_currencies=my_currencies,
+            hidden_count=hidden_count,
+            per_side=per_side,
+            per_side_choices=MARKET_PER_SIDE_CHOICES,
+            gold_per_unit=variables.CURRENCY_GOLD_PER_UNIT,
+            tag_labels=TAG_LABELS,
+            cId=cId,
+        )
+
+
+@market_bp.route("/market/preferences", methods=["POST"])
+@login_required
+def market_preferences():
+    cId = session["user_id"]
+    with get_request_cursor() as db:
+        resources = get_active_resources(db)
+        default_resource = (request.form.get("default_resource") or "").strip() or None
+        if default_resource is not None and default_resource != "all" and default_resource not in resources:
             return error(400, "No such resource")
 
-        total_count = count_offers(db, filter_resource, offer_type)
-        total_pages = max(1, (total_count + per_page - 1) // per_page)
-        
-        if page < 1: page = 1
-        if page > total_pages: page = total_pages
-        offset = (page - 1) * per_page
+        currency_mode = request.form.get("currency_mode", "all")
+        if currency_mode not in ("all", "gold", "currency"):
+            return error(400, "Unknown currency filter")
+        currency_id = None
+        if currency_mode == "currency":
+            currency_id, cur_err = parse_currency_choice(db, request.form.get("currency_id"))
+            if cur_err:
+                return error(400, cur_err)
+            if currency_id is None:
+                return error(400, "Pick which currency to trade in, or choose another option.")
 
-        offers_data = get_offers(db, filter_resource, offer_type, price_type, per_page, offset)
-        
-        # "Max" button per offer (ieb, 2026-09-27): the most this player can
-        # actually take -- buying is capped by gold incl. the transport fee,
-        # selling by their stock of the resource. Same checks as
-        # buy_market_offer / sell_market_offer, three queries for the page.
-        my_gold = get_user_gold(db, cId) or 0
-        my_resources = get_user_resource_quantities(db, cId)
-        union_partners = union_partner_ids(db, cId)
-        # Offers priced in a nation currency (migration 0091) instead of gold.
-        offer_currency = {row[5]: row[7] for row in offers_data if row[7]}
-        currency_labels = get_currency_labels(db, offer_currency.values())
-        my_currency = currency_balances(db, cId) if offer_currency else {}
+        upsert_market_preferences(db, cId, {
+            "default_resource": default_resource,
+            "hide_unavailable": request.form.get("hide_unavailable") == "on",
+            "hide_exchange": request.form.get("hide_exchange") == "on",
+            "hide_embargoed": request.form.get("hide_embargoed") == "on",
+            "currency_mode": currency_mode,
+            "currency_id": currency_id,
+        })
 
-        offers = []
-        max_take = {}
-        fee_percent = {}
-        for row in offers_data:
-            user_id, offer_type_val, resource, amount, price, offer_id, username, currency_id = row
-            offers.append((user_id, offer_type_val, username, resource, amount, price, offer_id, price * amount))
-            pct = (
-                variables.UNION_TRADE_FEE_PERCENT
-                if user_id in union_partners
-                else variables.TRADE_FEE_PERCENT
-            )
-            fee_percent[offer_id] = pct
-            if offer_type_val == "sell":
-                funds = my_currency.get(currency_id, 0) if currency_id else my_gold
-                max_take[offer_id] = min(amount, max_affordable_amount(funds, price, pct))
-            else:
-                max_take[offer_id] = min(amount, my_resources.get(resource, 0))
+    try:
+        invalidate_view_cache("market", user_id=cId)
+    except Exception:
+        pass
+    flash("Market settings saved")
+    return redirect("/market")
 
-        template = "market_v2.html" if is_theme_v2_enabled("market") else "market.html"
-        return render_template(
-            template,
-            offers=offers,
-            max_take=max_take,
-            fee_percent=fee_percent,
-            offer_currency={oid: currency_labels.get(iid, "currency") for oid, iid in offer_currency.items()},
-            price_type=price_type,
-            cId=cId,
-            current_page=page,
-            total_pages=total_pages,
-            total_count=total_count,
-            per_page=per_page,
-            filtered_resource=filter_resource,
-            offer_type=offer_type,
-        )
 
 @market_bp.route("/buy_offer/<offer_id>", methods=["POST"])
 @login_required
@@ -199,6 +327,8 @@ def buy_market_offer(offer_id):
             delete_offer(db, offer_id)
         else:
             update_offer_amount(db, offer_id, new_offer_amount)
+        _record_fill(db, offer_id, resource, amount_wanted, price_for_one,
+                     currency_id, seller_id=seller_id, buyer_id=cId)
 
         try:
             buyer_name = get_username(db, cId) or "A nation"
@@ -307,6 +437,8 @@ def sell_market_offer(offer_id):
             delete_offer(db, offer_id)
         else:
             update_offer_amount(db, offer_id, new_offer_amount)
+        _record_fill(db, offer_id, resource, amount_wanted, price_for_one,
+                     currency_id, seller_id=seller_id, buyer_id=buyer_id)
 
         try:
             seller_name = get_username(db, seller_id) or "A nation"
@@ -508,18 +640,9 @@ def my_offers():
 def delete_offer_endpoint(offer_id):
     cId = session["user_id"]
     with get_request_cursor() as db:
-        deleted_row = delete_offer(db, offer_id, cId)
-        if not deleted_row:
+        # Same refund path the auto-order rules use when they cancel an offer.
+        if not cancel_offer_with_refund(db, offer_id, cId):
             return error(400, "Offer not found or already processed")
-
-        offer_type, amount, price, resource, currency_id = deleted_row
-
-        if offer_type == "buy" and currency_id:
-            give_currency(db, cId, currency_id, price * amount)
-        elif offer_type == "buy":
-            give_resource("bank", cId, "money", price * amount, cursor=db)
-        elif offer_type == "sell":
-            give_resource("bank", cId, resource, amount, cursor=db)
 
     return redirect("/my_offers")
 

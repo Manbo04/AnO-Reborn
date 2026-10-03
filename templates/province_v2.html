@@ -15,6 +15,7 @@
 {% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %}
 <script defer src="{{ url_for('static', filename='province-base.js') }}?v=11"></script>
 <script defer src="{{ url_for('static', filename='province-zones.js') }}?v=1"></script>
+<script defer src="{{ url_for('static', filename='js/building-jump.js') }}?v=1"></script>
 {% endif %}
 {% endblock %}
 {% block body %}
@@ -251,6 +252,7 @@
         {% endif %}
         {% if province["own"] %}
         <h2 class="templatecontentheaderleft" id="infrastructure">Infrastructure</h2>
+        <nav class="building-jump" aria-label="Jump to a building"></nav>
 
         <div class="templatedivflex2 menuflex2">
             <a href="javascript:void(0);" class="templatedivflex2left" id="provincecity" onclick="provincecity()">

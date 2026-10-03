@@ -1,0 +1,200 @@
+{% extends "layout.html" %} {% block title %} Auto Orders {% endblock %}{% block body_class %} page-market page-auto-orders game-page-v2{% endblock %}
+{% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+{% macro res_label(r) %}{{ r | replace('_', ' ') | title }}{% endmacro %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/market.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+
+    {% call game_hero('Auto Orders', badge_icon='autorenew', subtitle='Keep a buy or sell offer topped up automatically, checked every hour.') %}
+    <div class="game-row mb-hero-actions">
+        <a class="game-btn game-btn-secondary game-btn-sm" href="/market"><span class="material-icons-outlined">arrow_back</span>Market</a>
+        <a class="game-btn game-btn-secondary game-btn-sm" href="/my_offers">My Offers</a>
+    </div>
+    {% endcall %}
+
+    <div class="templatedivcontent mb-wrap">
+
+        <details class="game-glass ao-how"{% if not rules %} open{% endif %}>
+            <summary><span class="material-icons-outlined" aria-hidden="true">help_outline</span>How auto orders work</summary>
+            <div class="ao-how-body">
+                <p>An auto order keeps <b>one normal market offer</b> for a resource. Once an hour the game adds to it, but only as much as <b>every</b> limit you set allows:</p>
+                <ul>
+                    <li><b>Maximum on offer</b>: never more than this many units listed at once.</li>
+                    <li><b>Maximum per 24 hours</b>: never add more than this in any 24 hours, so a sudden war can't strip your stockpile before you react.</li>
+                    <li><b>Reserve</b>: when selling, always keep at least this much. When buying, stop once you hold this much.</li>
+                </ul>
+                <p><b>Example:</b> sell iron at 236 gold, at most 500 on offer, at most 500 per day. If 380 is still listed and 120 was added in the last 24h, the next check adds 120. If any limit is reached, nothing is added that hour.</p>
+                <p>The offer works exactly like one you post yourself: resources (or the gold/currency for buy offers) are set aside when they're listed, anyone can fill it, and deleting the rule returns whatever is still listed. Buyers pay the {{ trade_fee_percent }}% transport fee as usual.</p>
+            </div>
+        </details>
+
+        <section class="game-glass ao-form-panel" aria-labelledby="ao-form-h">
+            <h2 id="ao-form-h" class="ao-h">New auto order <span class="ao-h-sub">Saving a rule for a resource you already automate updates that rule.</span></h2>
+            <form method="POST" action="/market/auto_orders" class="ao-form" id="ao-form">
+                <div class="ao-type" role="radiogroup" aria-label="Buy or sell">
+                    <label><input type="radio" name="type" value="sell" checked><span>Sell</span></label>
+                    <label><input type="radio" name="type" value="buy"><span>Buy</span></label>
+                </div>
+
+                <div class="ao-grid">
+                    <label class="mb-field">
+                        <span>Resource</span>
+                        <select name="resource" class="game-select" required>
+                            {% for r in market_resources %}<option value="{{ r }}">{{ res_label(r) }}</option>{% endfor %}
+                        </select>
+                    </label>
+                    <label class="mb-field">
+                        <span>Price per unit</span>
+                        <input class="game-select ao-num" name="price" type="text" inputmode="numeric" placeholder="e.g. 236" required>
+                    </label>
+                    <label class="mb-field">
+                        <span>Currency</span>
+                        <select name="currency_id" class="game-select">
+                            <option value="gold">Gold</option>
+                            {% for iid, label in currencies %}<option value="{{ iid }}">{{ label }}</option>{% endfor %}
+                        </select>
+                    </label>
+                </div>
+
+                <fieldset class="mb-fieldset ao-limits">
+                    <legend>Limits (set at least one of the first two)</legend>
+                    <label class="ao-limit">
+                        <span>Never have more than</span>
+                        <input class="game-select ao-num" name="max_offer" type="text" inputmode="numeric" placeholder="no limit">
+                        <span>on offer</span>
+                    </label>
+                    <label class="ao-limit">
+                        <span>Add at most</span>
+                        <input class="game-select ao-num" name="max_per_day" type="text" inputmode="numeric" placeholder="no limit">
+                        <span>per 24 hours</span>
+                    </label>
+                    <label class="ao-limit">
+                        <span data-sell="Always keep at least" data-buy="Stop buying once I hold">Always keep at least</span>
+                        <input class="game-select ao-num" name="reserve_limit" type="text" inputmode="numeric" placeholder="optional">
+                        <span data-sell="in reserve" data-buy="or more">in reserve</span>
+                    </label>
+                    <label class="ao-limit">
+                        <span>Tell me when the market price is more than</span>
+                        <input class="game-select ao-num ao-pct" name="alert_pct" type="text" inputmode="numeric" placeholder="optional">
+                        <span>% away from my price</span>
+                    </label>
+                </fieldset>
+
+                <p class="ao-preview" id="ao-preview" aria-live="polite"></p>
+
+                <div class="game-row">
+                    <button type="submit" class="game-btn game-btn-primary game-btn-sm"><span class="material-icons-outlined">save</span>Save auto order</button>
+                    <button type="reset" class="game-btn game-btn-ghost game-btn-sm">Clear</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="game-glass ao-list" aria-labelledby="ao-list-h">
+            <h2 id="ao-list-h" class="ao-h">Your auto orders <span class="ao-h-sub">{{ rules|length }} of {{ max_rules }}</span></h2>
+            {% for r in rules %}
+            <div class="ao-rule{% if not r.active %} is-paused{% endif %}">
+                <div class="ao-rule-main">
+                    <div class="ao-rule-top">
+                        <span class="game-badge {{ 'game-badge-good' if r.type == 'sell' else 'game-badge-warn' }}">{{ 'Sell' if r.type == 'sell' else 'Buy' }}</span>
+                        <b>{{ res_label(r.resource) }}</b>
+                        <span>{{ r.price | commas }} {{ r.currency_label }}</span>
+                        <span class="ao-state">{{ 'Active' if r.active else 'Paused' }}</span>
+                    </div>
+                    <p class="ao-summary">{{ r.summary }}{% if r.alert_pct %} Alert at {{ r.alert_pct }}% price move.{% endif %}</p>
+                    <p class="ao-status">
+                        <b>{{ r.on_offer | commas }}</b> on the market now ·
+                        {% if r.last_run_at %}Last check {{ r.last_run_at.strftime('%d %b %H:%M') }} UTC: {{ r.last_status }}{% else %}Not checked yet. First top-up within the hour.{% endif %}
+                    </p>
+                </div>
+                <div class="ao-rule-actions">
+                    <button type="button" class="game-btn game-btn-ghost game-btn-sm ao-edit"
+                        data-type="{{ r.type }}" data-resource="{{ r.resource }}" data-price="{{ r.price }}"
+                        data-currency="{{ r.currency_id or 'gold' }}" data-max-offer="{{ r.max_offer or '' }}"
+                        data-max-per-day="{{ r.max_per_day or '' }}" data-reserve="{{ r.reserve_limit if r.reserve_limit is not none else '' }}"
+                        data-alert="{{ r.alert_pct or '' }}">Edit</button>
+                    <form method="POST" action="/market/auto_orders/{{ r.id }}/toggle">
+                        <input type="hidden" name="active" value="{{ '0' if r.active else '1' }}">
+                        <button type="submit" class="game-btn game-btn-ghost game-btn-sm">{{ 'Pause' if r.active else 'Resume' }}</button>
+                    </form>
+                    <form method="POST" action="/market/auto_orders/{{ r.id }}/delete">
+                        <button type="submit" class="game-btn game-btn-ghost game-btn-sm ao-delete" title="Deletes the rule and returns whatever is still on offer">Delete</button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <p class="mb-empty">No auto orders yet. Set one up above and it will start at the next hourly check.</p>
+            {% endfor %}
+        </section>
+    </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+    var form = document.getElementById('ao-form');
+    if (!form) return;
+    var preview = document.getElementById('ao-preview');
+
+    function num(name) {
+        var v = String(form.elements[name].value || '').replace(/[,\s]/g, '');
+        return /^\d+$/.test(v) ? parseInt(v, 10) : null;
+    }
+    function fmt(n) { return n.toLocaleString(); }
+    function kind() { return form.querySelector('input[name="type"]:checked').value; }
+    function selectedText(name) {
+        var el = form.elements[name];
+        return el.options[el.selectedIndex].text;
+    }
+
+    function update() {
+        var k = kind();
+        form.querySelectorAll('[data-sell]').forEach(function (el) {
+            el.textContent = el.getAttribute('data-' + k);
+        });
+        var price = num('price'), maxOffer = num('max_offer'), perDay = num('max_per_day'),
+            reserve = num('reserve_limit'), alertPct = num('alert_pct');
+        var res = selectedText('resource').toLowerCase();
+        var cur = form.elements.currency_id.value === 'gold' ? 'gold' : selectedText('currency_id').replace(' (yours)', '');
+        if (!price) { preview.textContent = 'Enter a price to see what this rule will do.'; return; }
+        if (maxOffer === null && perDay === null) {
+            preview.textContent = 'Set a maximum on offer, a maximum per 24 hours, or both.';
+            return;
+        }
+        var parts = ['Every hour: ' + k + ' ' + res + ' at ' + fmt(price) + ' ' + cur];
+        if (maxOffer !== null) parts.push('keep up to ' + fmt(maxOffer) + ' on offer');
+        if (perDay !== null) parts.push('add at most ' + fmt(perDay) + ' per 24 hours');
+        if (reserve !== null) {
+            parts.push(k === 'sell' ? 'never let your ' + res + ' fall below ' + fmt(reserve)
+                                    : 'stop once you hold ' + fmt(reserve));
+        }
+        var text = parts.join(', ') + '.';
+        if (alertPct !== null) text += ' Alert me if the market price moves more than ' + alertPct + '% from ' + fmt(price) + '.';
+        preview.textContent = text;
+    }
+
+    form.addEventListener('input', update);
+    form.addEventListener('change', update);
+    form.addEventListener('reset', function () { setTimeout(update, 0); });
+
+    document.querySelectorAll('.ao-edit').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var d = btn.dataset;
+            form.querySelector('input[name="type"][value="' + d.type + '"]').checked = true;
+            form.elements.resource.value = d.resource;
+            form.elements.price.value = d.price;
+            form.elements.currency_id.value = d.currency;
+            form.elements.max_offer.value = d.maxOffer;
+            form.elements.max_per_day.value = d.maxPerDay;
+            form.elements.reserve_limit.value = d.reserve;
+            form.elements.alert_pct.value = d.alert;
+            update();
+            form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+    update();
+})();
+</script>
+{% endblock %}

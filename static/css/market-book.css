@@ -1,0 +1,661 @@
+/* ==========================================================================
+   Market order book (templates/market_v2.html) — Market UI Rework,
+   Helios 2026-10-03. Mobile-first: one column of compact rows on phones,
+   BUY | SELL side by side from 900px. Each row is tinted by whether the
+   viewer can use the offer's currency (gold / held / exchange / no access),
+   with a text chip as well so the colour is never the only signal.
+   ========================================================================== */
+
+body.page-market {
+    --mb-gold: var(--gold, #d4a843);
+    --mb-held: var(--success, #2d9f6f);
+    --mb-exchange: var(--accent, #00a7e1);
+    --mb-unavailable: var(--danger, #d35649);
+}
+
+body.page-market .tag-gold { --mb-tag: var(--mb-gold); }
+body.page-market .tag-held { --mb-tag: var(--mb-held); }
+body.page-market .tag-exchange { --mb-tag: var(--mb-exchange); }
+body.page-market .tag-unavailable { --mb-tag: var(--mb-unavailable); }
+
+body.page-market .mb-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+body.page-market .mb-hero-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+/* --- Toolbar: resource picker + price summary ---------------------------- */
+body.page-market .mb-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 10px 20px;
+    padding: 12px 14px;
+}
+
+body.page-market .mb-pick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-end;
+    margin: 0;
+}
+
+body.page-market .mb-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    color: var(--game-text-faint, var(--text-secondary));
+}
+
+body.page-market .mb-field .game-select {
+    min-width: 150px;
+    min-height: 40px;
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: 16px; /* iOS zooms into anything smaller */
+}
+
+body.page-market .mb-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px 18px;
+    margin: 0;
+}
+
+body.page-market .mb-stats div { min-width: 0; }
+
+body.page-market .mb-stats dt {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--game-text-faint, var(--text-secondary));
+}
+
+body.page-market .mb-stats dd {
+    margin: 0;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+body.page-market .mb-cross {
+    color: var(--mb-held);
+    font-size: 0.85rem;
+}
+
+@media (min-width: 620px) {
+    body.page-market .mb-stats { grid-template-columns: repeat(4, auto); }
+}
+
+/* --- Legend + explanation ------------------------------------------------ */
+body.page-market .mb-key {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 14px;
+}
+
+body.page-market .mb-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+body.page-market .mb-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px 3px 8px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--mb-tag) 45%, transparent);
+    background: color-mix(in srgb, var(--mb-tag) 14%, var(--game-glass-bg-strong));
+    font-size: 0.8rem;
+    line-height: 1.3;
+}
+
+body.page-market .mb-chip::before,
+body.page-market .mb-dot {
+    content: "";
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--mb-tag);
+    flex: 0 0 auto;
+}
+
+body.page-market .mb-chip a { color: inherit; text-decoration: underline; }
+
+body.page-market .mb-note {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: var(--colorOne);
+    opacity: 0.85;
+}
+
+body.page-market .mb-note strong { opacity: 1; }
+
+body.page-market .mb-inline-icon {
+    font-size: 1em;
+    vertical-align: -2px;
+}
+
+/* --- Settings panel ------------------------------------------------------ */
+body.page-market .mb-settings { padding: 0; }
+
+body.page-market .mb-settings summary {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    min-height: 44px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-weight: 700;
+    list-style: none;
+}
+
+body.page-market .mb-settings summary::-webkit-details-marker { display: none; }
+
+body.page-market .mb-summary-hint {
+    font-weight: 400;
+    font-size: 0.8rem;
+    color: var(--game-text-faint, var(--text-secondary));
+}
+
+body.page-market .mb-settings-form {
+    display: grid;
+    gap: 12px;
+    padding: 0 14px 14px;
+}
+
+@media (min-width: 900px) {
+    body.page-market .mb-settings-form {
+        grid-template-columns: auto 1fr 1fr;
+        align-items: start;
+    }
+    body.page-market .mb-settings-form > button { grid-column: 1 / -1; justify-self: start; }
+}
+
+body.page-market .mb-fieldset {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+}
+
+body.page-market .mb-fieldset legend {
+    padding: 0;
+    margin-bottom: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--game-text-faint, var(--text-secondary));
+}
+
+body.page-market .mb-check {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 36px;
+    margin: 0;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+body.page-market .mb-check input { width: 18px; height: 18px; margin: 0; flex: 0 0 auto; }
+body.page-market .mb-check > span { display: inline-flex; align-items: center; gap: 6px; }
+body.page-market .mb-check-select .game-select { min-height: 36px; font-size: 16px; max-width: 100%; }
+
+body.page-market .mb-help {
+    margin: 2px 0 0 26px;
+    font-size: 0.78rem;
+    color: var(--game-text-faint, var(--text-secondary));
+}
+
+/* --- The book ------------------------------------------------------------ */
+body.page-market .mb-book {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+}
+
+@media (min-width: 900px) {
+    body.page-market .mb-book { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+body.page-market .mb-side {
+    padding: 0;
+    overflow: hidden;
+    container-type: inline-size;
+}
+
+body.page-market .mb-side-head {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 2px 10px;
+    padding: 10px 12px 8px;
+    border-bottom: 1px solid var(--game-glass-border);
+}
+
+body.page-market .mb-side-head h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.2;
+}
+
+body.page-market .mb-side-head h2 {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--colorOne);
+}
+
+body.page-market .mb-side-head h2 .material-icons-outlined { font-size: 1.15em; }
+body.page-market .mb-asks .mb-side-head h2 .material-icons-outlined { color: var(--mb-held); }
+body.page-market .mb-bids .mb-side-head h2 .material-icons-outlined { color: var(--mb-unavailable); }
+
+body.page-market .mb-side-head p {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--game-text-faint, var(--text-secondary));
+}
+
+/* Row: phones get nation / amount / price on one line and the trade form on
+   a second line; once the side is wide enough everything sits on one line. */
+body.page-market .mb-row,
+body.page-market .mb-cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 1fr);
+    gap: 4px 10px;
+    align-items: center;
+    padding: 6px 12px;
+}
+
+body.page-market .mb-row {
+    position: relative;
+    border-bottom: 1px solid var(--game-glass-border);
+    border-left: 3px solid var(--mb-tag);
+    background: color-mix(in srgb, var(--mb-tag) 10%, transparent);
+    font-size: 0.9rem;
+    line-height: 1.3;
+}
+
+body.page-market .mb-row:last-child { border-bottom: 0; }
+
+body.page-market .mb-cols {
+    display: none;
+    padding-top: 6px;
+    padding-bottom: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--game-text-faint, var(--text-secondary));
+    border-bottom: 1px solid var(--game-glass-border);
+}
+
+body.page-market .mb-nation {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+body.page-market .mb-nation a {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+    color: var(--accent);
+    text-decoration: none;
+}
+
+body.page-market .mb-res {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.78rem;
+    color: var(--game-text-faint, var(--text-secondary));
+}
+
+body.page-market .mb-res .game-icon-sm { width: 16px; height: 16px; }
+
+body.page-market .mb-amount,
+body.page-market .mb-price {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+body.page-market .mb-cell-label {
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--game-text-faint, var(--text-secondary));
+}
+
+body.page-market .mb-gold { font-weight: 700; }
+body.page-market .mb-gold small { font-weight: 400; font-size: 0.75em; }
+
+body.page-market .mb-orig {
+    font-size: 0.75rem;
+    color: var(--game-text-faint, var(--text-secondary));
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.page-market .mb-tag {
+    align-self: flex-start;
+    padding: 0 6px;
+    border-radius: 4px;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--mb-tag) 75%, var(--colorOne));
+    background: color-mix(in srgb, var(--mb-tag) 18%, transparent);
+}
+
+body.page-market .mb-trade {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+}
+
+body.page-market .mb-trade .market-input-wrap {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+}
+
+body.page-market .mb-trade .market-purchase-input {
+    width: 100%;
+    min-height: 40px;
+    font-size: 16px;
+}
+
+body.page-market .mb-trade .game-btn { min-height: 40px; flex: 0 0 auto; }
+
+@container (min-width: 480px) {
+    body.page-market .mb-row,
+    body.page-market .mb-cols {
+        grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 1fr) auto;
+    }
+    body.page-market .mb-cols { display: grid; }
+    body.page-market .mb-cell-label { display: none; }
+    body.page-market .mb-trade { grid-column: auto; }
+    body.page-market .mb-trade .market-input-wrap { flex: 0 0 auto; }
+    body.page-market .mb-trade .market-purchase-input { width: 88px; }
+}
+
+@media (min-width: 769px) and (pointer: fine) {
+    body.page-market .mb-trade .market-purchase-input,
+    body.page-market .mb-trade .game-btn { min-height: 32px; font-size: 14px; }
+    body.page-market .mb-field .game-select { min-height: 34px; font-size: 14px; }
+}
+
+body.page-market .mb-empty {
+    margin: 0;
+    padding: 14px 12px;
+    font-size: 0.9rem;
+    color: var(--game-text-faint, var(--text-secondary));
+}
+
+body.page-market .mb-more { margin: 0; text-align: center; }
+
+/* ==========================================================================
+   Auto Orders (templates/market_auto_orders.html)
+   ========================================================================== */
+body.page-auto-orders .ao-how { padding: 0; }
+
+body.page-auto-orders .ao-how summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 8px 14px;
+    font-weight: 700;
+    cursor: pointer;
+    list-style: none;
+}
+
+body.page-auto-orders .ao-how summary::-webkit-details-marker { display: none; }
+
+body.page-auto-orders .ao-how-body {
+    padding: 0 14px 12px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
+body.page-auto-orders .ao-how-body p { margin: 0 0 8px; }
+body.page-auto-orders .ao-how-body ul { margin: 0 0 8px; padding-left: 20px; }
+
+body.page-auto-orders .ao-form-panel,
+body.page-auto-orders .ao-list { padding: 12px 14px; }
+
+body.page-auto-orders .ao-h {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 10px;
+    margin: 0 0 10px;
+    font-size: 1.1rem;
+}
+
+body.page-auto-orders .ao-h-sub {
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--game-text-faint, var(--text-secondary));
+}
+
+body.page-auto-orders .ao-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+body.page-auto-orders .ao-type {
+    display: inline-flex;
+    align-self: flex-start;
+    border: 1px solid var(--game-glass-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+body.page-auto-orders .ao-type label { margin: 0; cursor: pointer; }
+body.page-auto-orders .ao-type input { position: absolute; opacity: 0; pointer-events: none; }
+
+body.page-auto-orders .ao-type span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0 22px;
+    font-weight: 700;
+}
+
+body.page-auto-orders .ao-type input:checked + span {
+    background: var(--accent);
+    color: #fff;
+}
+
+body.page-auto-orders .ao-type input:focus-visible + span {
+    outline: 2px solid var(--accent);
+    outline-offset: -4px;
+}
+
+body.page-auto-orders .ao-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+}
+
+@media (min-width: 620px) {
+    body.page-auto-orders .ao-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+body.page-auto-orders .ao-grid .game-select { width: 100%; min-width: 0; }
+
+body.page-auto-orders .ao-num {
+    min-height: 40px;
+    font-size: 16px;
+    text-transform: none;
+}
+
+body.page-auto-orders .ao-limits {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+body.page-auto-orders .ao-limit {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+body.page-auto-orders .ao-limit .ao-num { width: 130px; }
+body.page-auto-orders .ao-limit .ao-pct { width: 80px; }
+
+body.page-auto-orders .ao-preview {
+    margin: 0;
+    padding: 8px 12px;
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+body.page-auto-orders .ao-rule {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+    padding: 8px 0;
+    border-top: 1px solid var(--game-glass-border);
+}
+
+body.page-auto-orders .ao-rule.is-paused { opacity: 0.65; }
+body.page-auto-orders .ao-rule-main { min-width: 0; flex: 1 1 280px; }
+
+body.page-auto-orders .ao-rule-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+}
+
+body.page-auto-orders .ao-state {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--game-text-faint, var(--text-secondary));
+}
+
+body.page-auto-orders .ao-summary,
+body.page-auto-orders .ao-status {
+    margin: 3px 0 0;
+    font-size: 0.82rem;
+    line-height: 1.4;
+}
+
+body.page-auto-orders .ao-status { color: var(--game-text-faint, var(--text-secondary)); }
+
+body.page-auto-orders .ao-rule-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+body.page-auto-orders .ao-rule-actions form { margin: 0; }
+body.page-auto-orders .ao-rule-actions .game-btn { min-height: 36px; }
+body.page-auto-orders .ao-delete { color: var(--danger); }
+
+
+/* game-experience.css (max-width: 768px) stacks EVERY form on market pages
+   and stretches every input/button to full width with an 8px top margin.
+   That turned each order-book row into three stacked full-width controls,
+   so the order book's own controls opt back out of it. */
+@media (max-width: 768px) {
+    body.page-market .mb-trade.market-purchase-form,
+    body.page-market form.mb-pick,
+    body.page-market .ao-rule-actions form {
+        flex-direction: row;
+        width: auto;
+    }
+    body.page-market .mb-trade.market-purchase-form { width: 100%; }
+    body.page-market .mb-trade button,
+    body.page-market .mb-pick button,
+    body.page-market .mb-settings-form button,
+    body.page-auto-orders .ao-form button,
+    body.page-auto-orders .ao-rule-actions button {
+        width: auto;
+        margin-top: 0;
+    }
+    body.page-market .mb-trade .market-input-wrap { flex: 1 1 auto; }
+    body.page-market .mb-trade .market-purchase-input { width: 100%; }
+    body.page-market .mb-trade .market-offer-hint {
+        width: 16px;
+        min-width: 0;
+        min-height: 0;
+        height: 16px;
+    }
+    body.page-market .mb-check input,
+    body.page-auto-orders .ao-type input {
+        width: 18px;
+        min-width: 0;
+        min-height: 0;
+    }
+    body.page-market .mb-check-select .game-select { width: auto; flex: 1 1 140px; }
+    body.page-market .mb-field .game-select { width: 100%; }
+    body.page-market form.mb-pick { flex-wrap: wrap; }
+    body.page-market form.mb-pick .mb-field { flex: 1 1 130px; min-width: 0; }
+    body.page-market form.mb-pick .mb-field .game-select { min-width: 0; }
+    body.page-auto-orders .ao-limit .ao-num { width: 120px; }
+    body.page-auto-orders .ao-grid .game-select { width: 100%; margin: 0; }
+}
+
+/* Legacy .templatedivcontent rules centre text and inflate paragraph
+   line-height on phones; the market's own panels read left-aligned. */
+body.page-market .mb-wrap,
+body.page-market .mb-wrap p,
+body.page-market .mb-wrap li,
+body.page-market .mb-wrap label,
+body.page-market .mb-wrap legend {
+    text-align: left;
+}
+
+body.page-auto-orders .ao-how-body p,
+body.page-auto-orders .ao-how-body li {
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
+body.page-auto-orders .ao-how-body li { margin-bottom: 4px; }
+
+body.page-market .mb-wrap p.mb-more { text-align: center; }

@@ -98,55 +98,6 @@ def increment_resource(db, user_id, resource, amount):
     )
     return db.fetchone() is not None
 
-def count_offers(db, filter_resource, offer_type):
-    where_conditions = []
-    params = []
-    if filter_resource is not None:
-        where_conditions.append("o.resource = %s")
-        params.append(filter_resource)
-    if offer_type is not None:
-        where_conditions.append("o.type = %s")
-        params.append(offer_type)
-
-    where_clause = ""
-    if where_conditions:
-        where_clause = "WHERE " + " AND ".join(where_conditions)
-
-    count_query = f"SELECT COUNT(*) FROM offers o {where_clause}"
-    db.execute(count_query, tuple(params))
-    row = db.fetchone()
-    return (row[0] or 0) if row else 0
-
-def get_offers(db, filter_resource, offer_type, price_type, limit, offset):
-    where_conditions = []
-    params = []
-    if filter_resource is not None:
-        where_conditions.append("o.resource = %s")
-        params.append(filter_resource)
-    if offer_type is not None:
-        where_conditions.append("o.type = %s")
-        params.append(offer_type)
-
-    where_clause = ""
-    if where_conditions:
-        where_clause = "WHERE " + " AND ".join(where_conditions)
-
-    order_dir = "ASC"
-    if price_type == "DESC":
-        order_dir = "DESC"
-
-    query = f"""
-        SELECT o.user_id, o.type, o.resource, o.amount, o.price,
-               o.offer_id, u.username, o.currency_id
-        FROM offers o
-        INNER JOIN users u ON o.user_id = u.id
-        {where_clause}
-        ORDER BY o.price {order_dir}
-        LIMIT %s OFFSET %s
-    """
-    db.execute(query, tuple(params) + (limit, offset))
-    return db.fetchall()
-
 def get_offer_by_id(db, offer_id):
     db.execute(
         "SELECT resource, amount, price, user_id, type, currency_id FROM offers WHERE offer_id=%s FOR UPDATE",
@@ -385,3 +336,126 @@ def list_embargoes(db, embargoer_id):
     )
     return db.fetchall()
 
+
+
+# --- Order book (Market UI Rework, migration 0104) -------------------------
+
+def get_active_resources(db):
+    """Names of every tradable resource, in dictionary order."""
+    db.execute(
+        "SELECT name FROM resource_dictionary WHERE is_active=TRUE ORDER BY resource_id"
+    )
+    return [row[0] for row in db.fetchall()]
+
+def get_resource_book(db, resource, exclude_user_id):
+    """Every open offer for ``resource`` ('all' = every resource) except the
+    viewer's own (those live on /my_offers). Sorting is done by the caller on
+    the gold-normalised price, which SQL can't see."""
+    params = [exclude_user_id]
+    resource_clause = ""
+    if resource != "all":
+        resource_clause = "AND o.resource = %s"
+        params.append(resource)
+    db.execute(
+        f"""
+        SELECT o.user_id, o.type, o.resource, o.amount, o.price,
+               o.offer_id, u.username, o.currency_id
+        FROM offers o
+        INNER JOIN users u ON o.user_id = u.id
+        WHERE o.user_id <> %s {resource_clause}
+        ORDER BY o.offer_id
+        LIMIT 3000
+        """,
+        tuple(params),
+    )
+    return db.fetchall()
+
+def get_exchange_issuers(db, exclude_user_id):
+    """Currencies someone other than the viewer is selling on /currency_market."""
+    db.execute(
+        "SELECT DISTINCT issuer_id FROM currency_market_offers "
+        "WHERE type='sell' AND user_id <> %s",
+        (exclude_user_id,),
+    )
+    return {row[0] for row in db.fetchall()}
+
+def get_embargo_partners(db, user_id):
+    """Nations the user embargoes or is embargoed by (either direction)."""
+    db.execute(
+        "SELECT embargoed_id FROM market_embargoes WHERE embargoer_id=%s "
+        "UNION SELECT embargoer_id FROM market_embargoes WHERE embargoed_id=%s",
+        (user_id, user_id),
+    )
+    return {row[0] for row in db.fetchall()}
+
+MARKET_PREFERENCE_DEFAULTS = {
+    "default_resource": None,
+    "hide_unavailable": False,
+    "hide_exchange": False,
+    "hide_embargoed": True,
+    "currency_mode": "all",
+    "currency_id": None,
+}
+
+def get_market_preferences(db, user_id):
+    db.execute(
+        "SELECT default_resource, hide_unavailable, hide_exchange, hide_embargoed, "
+        "currency_mode, currency_id FROM market_preferences WHERE user_id=%s",
+        (user_id,),
+    )
+    row = db.fetchone()
+    if not row:
+        return dict(MARKET_PREFERENCE_DEFAULTS)
+    return dict(zip(MARKET_PREFERENCE_DEFAULTS.keys(), row))
+
+def upsert_market_preferences(db, user_id, prefs):
+    db.execute(
+        """
+        INSERT INTO market_preferences
+            (user_id, default_resource, hide_unavailable, hide_exchange,
+             hide_embargoed, currency_mode, currency_id, updated_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
+        ON CONFLICT (user_id) DO UPDATE SET
+            default_resource = EXCLUDED.default_resource,
+            hide_unavailable = EXCLUDED.hide_unavailable,
+            hide_exchange = EXCLUDED.hide_exchange,
+            hide_embargoed = EXCLUDED.hide_embargoed,
+            currency_mode = EXCLUDED.currency_mode,
+            currency_id = EXCLUDED.currency_id,
+            updated_at = NOW()
+        """,
+        (
+            user_id, prefs["default_resource"], prefs["hide_unavailable"],
+            prefs["hide_exchange"], prefs["hide_embargoed"],
+            prefs["currency_mode"], prefs["currency_id"],
+        ),
+    )
+
+def record_market_fill(db, offer_id, resource, amount, price, currency_id,
+                       gold_price, seller_id, buyer_id):
+    """One row per filled market offer, in the trade's own transaction."""
+    db.execute(
+        """
+        INSERT INTO market_fills
+            (offer_id, resource, amount, price, currency_id, gold_price,
+             seller_id, buyer_id)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """,
+        (int(offer_id), resource, int(amount), int(price), currency_id,
+         int(gold_price), seller_id, buyer_id),
+    )
+
+def get_last_fill_prices(db, resources):
+    """{resource: (gold_price, created_at)} of the latest fill per resource."""
+    if not resources:
+        return {}
+    db.execute(
+        """
+        SELECT DISTINCT ON (resource) resource, gold_price, created_at
+        FROM market_fills
+        WHERE resource = ANY(%s)
+        ORDER BY resource, created_at DESC
+        """,
+        (list(resources),),
+    )
+    return {row[0]: (int(row[1]), row[2]) for row in db.fetchall()}

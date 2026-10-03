@@ -97,6 +97,11 @@ CELERY_BEAT_SCHEDULE = {
         "task": "tasks.task_recurring_bank_trades",
         "schedule": get_crontab_env("RECURRING_BANK_TRADES_CRON", crontab(minute="7,22,37,52")),
     },
+    # Automatic market orders (migration 0104): hourly, off the :00 rush.
+    "market_auto_orders": {
+        "task": "tasks.task_market_auto_orders",
+        "schedule": get_crontab_env("MARKET_AUTO_ORDERS_CRON", crontab(minute="13")),
+    },
     "execute_trade_agreements": {
         "task": "tasks.task_execute_trade_agreements",
         "schedule": get_crontab_env("TRADE_AGR_CRON", crontab(minute="*/15")),
