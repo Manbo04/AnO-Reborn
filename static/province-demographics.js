@@ -121,7 +121,15 @@
 
     function initProvinceDemographicsChart() {
         var classic = document.getElementById('province-classic-view');
-        if (classic && classic.hidden) return false;
+        if (classic && (classic.hidden || classic.style.display === 'none')) return false;
+
+        var canvas = document.getElementById('provinceDemographicsChart');
+        if (!canvas) return false;
+
+        if (canvas.offsetParent === null) return false;
+
+        var rect = canvas.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return false;
 
         var data = parseDemographicsData();
         if (!data) return false;
@@ -131,23 +139,48 @@
         return renderChart(data);
     }
 
+    var retryCount = 0;
+    var maxRetries = 30;
+    var retryTimer = null;
+
+    function attemptInit() {
+        if (initProvinceDemographicsChart()) {
+            if (retryTimer) {
+                clearTimeout(retryTimer);
+                retryTimer = null;
+            }
+            return true;
+        }
+        if (retryCount < maxRetries) {
+            retryCount++;
+            if (retryTimer) clearTimeout(retryTimer);
+            retryTimer = setTimeout(function () {
+                retryTimer = null;
+                attemptInit();
+            }, 100);
+        }
+        return false;
+    }
+
     function scheduleInit() {
-        if (initProvinceDemographicsChart()) return;
-        window.addEventListener('load', function onLoad() {
-            window.removeEventListener('load', onLoad);
-            initProvinceDemographicsChart();
-        }, { once: true });
+        retryCount = 0;
+        attemptInit();
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function () {
+                attemptInit();
+            });
+        }
+        window.addEventListener('load', function () {
+            attemptInit();
+        });
     }
 
     window.initProvinceDemographicsChart = function () {
+        retryCount = 0;
         requestAnimationFrame(function () {
-            if (!initProvinceDemographicsChart()) scheduleInit();
+            attemptInit();
         });
     };
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', scheduleInit);
-    } else {
-        scheduleInit();
-    }
+    scheduleInit();
 })();

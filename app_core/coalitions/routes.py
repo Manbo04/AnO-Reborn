@@ -1843,7 +1843,7 @@ def withdraw_from_bank(coalition_id):
         amount = resource[1]
 
         if amount < 1:
-            return error(400, "Amount has to be greater than 1")
+            return error(400, "Amount must be at least 1")
 
         result = withdraw(name, amount, cId, coalition_id)
         # `withdraw` may return an error Response (via `error()`); if so,

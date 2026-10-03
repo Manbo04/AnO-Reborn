@@ -480,12 +480,22 @@ class CountryService:
             current_user_id = session.get("user_id")
             if CountryService._is_same_country(cId, current_user_id):
                 try:
-                    db.execute(
-                        "SELECT message,date,id FROM news WHERE destination_id=(%s) ORDER BY id DESC",
-                        (cId,),
-                    )
-                    news = db.fetchall()
-                    news_amount = len(news)
+                    try:
+                        db.execute(
+                            "SELECT message, date, id, COALESCE(is_read, FALSE) FROM news WHERE destination_id=(%s) ORDER BY id DESC",
+                            (cId,),
+                        )
+                        news = db.fetchall()
+                        news_amount = sum(1 for row in news if not row[3])
+                    except Exception:
+                        rollback_db_cursor(db)
+                        db.execute(
+                            "SELECT message, date, id FROM news WHERE destination_id=(%s) ORDER BY id DESC",
+                            (cId,),
+                        )
+                        raw_news = db.fetchall()
+                        news = [(r[0], r[1], r[2], False) for r in raw_news]
+                        news_amount = len(news)
                 except Exception:
                     rollback_db_cursor(db)
                     news = []

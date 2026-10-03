@@ -778,12 +778,16 @@
                             notifResults.innerHTML = '<div class="game-topbar-empty">No recent events.</div>';
                             return;
                         }
-                        notifResults.innerHTML = items.map(function (it) {
-                            return '<a class="game-topbar-notif" href="/country/id={{ session.user_id }}">' +
+                        var html = items.map(function (it) {
+                            return '<a class="game-topbar-notif" href="/country/id={{ session.user_id }}#news">' +
                                 '<span class="material-icons-outlined" style="font-size:16px;opacity:.75;flex-shrink:0;">article</span>' +
                                 '<span>' + escapeHtml(it.message) + '</span>' +
                                 '<span class="game-topbar-n-time">' + escapeHtml(it.when) + '</span></a>';
                         }).join('');
+                        html += '<div style="padding: 10px 14px; border-top: 1px solid var(--game-glass-border); text-align: center;">' +
+                            '<a href="/country/id={{ session.user_id }}#news" style="color: var(--accent); font-size: 12.5px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">' +
+                            '<span>View all in News</span> <span class="material-icons-outlined" style="font-size: 15px;">arrow_forward</span></a></div>';
+                        notifResults.innerHTML = html;
                     })
                     .catch(function () {
                         notifResults.innerHTML = '<div class="game-topbar-empty">Couldn\'t load notifications.</div>';
@@ -803,6 +807,7 @@
                 if (!wasOpen) {
                     notifDropdown.classList.add('show');
                     if (notifDot) notifDot.style.display = 'none';
+                    fetch('/api/news/mark_read', { method: 'POST', credentials: 'same-origin' }).catch(function() {});
                     if (!notifLoaded) { notifLoaded = true; loadNotifications(); } else { loadNotifications(); }
                 }
             });

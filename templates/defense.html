@@ -12,7 +12,7 @@
 
         <h2 class="templatecontentheaderleft">Manual Defense Selection</h2>
         <p class="templatecontentpleft landingpagecontent">
-            Select exactly 3 unit types to defend your nation. These units will take the brunt of enemy attacks and reduce damage to your provinces.
+            Select exactly 3 unit types as your saved defense. Note: every attack is currently declared as a Ground, Naval or Air attack, and you automatically defend with that domain's three unit types, so this selection does not change which units defend.
         </p>
 
         <form method="POST" action="/defense" style="margin-top: 2rem;">
@@ -66,8 +66,8 @@
 
         <h2 class="templatecontentheadercenter" style="margin-top: 3rem; font-size: 1.1rem;">How Defense Works</h2>
         <p class="templatecontentpleft landingpagecontent" style="max-width: 600px; margin: 1rem auto;">
-            Your selected defending units are automatically deployed when an enemy attacks your provinces.
-            These units reduce incoming damage and protect your economy. Choose units based on your military strength—typically your strongest unit types.
+            When an enemy attacks, they choose Ground (soldiers, tanks, artillery), Naval (destroyers, cruisers, submarines) or Air (fighter jets, bombers, attack helicopters).
+            You automatically defend with all three unit types of that domain, and fielding them costs supply from your side of the war. If you have none of those units, a citizen militia fights instead.
         </p>
 
     </div>

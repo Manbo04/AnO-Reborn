@@ -23,6 +23,10 @@ function activateTab(tabId, contentId, group) {
     var content = _el(contentId);
     if (tab) tab.classList.add(tabId + "click");
     if (content) content.classList.add(contentId + "click");
+
+    if (contentId === "news" && typeof markNewsRead === "function") {
+        markNewsRead();
+    }
 }
 
 // Define tab groups
@@ -82,12 +86,23 @@ Object.keys(TAB_GROUPS).forEach(function(groupName) {
     });
 });
 
-// Auto-activate the first tab of each group on page load (only if elements exist)
+// Auto-activate the first tab of each group on page load (or tab matching URL hash)
 document.addEventListener("DOMContentLoaded", function() {
+    var rawHash = (window.location.hash || "").replace("#", "").toLowerCase();
     Object.keys(TAB_GROUPS).forEach(function(groupName) {
         var group = TAB_GROUPS[groupName];
         if (group.length > 0 && _el(group[0].tab)) {
-            activateTab(group[0].tab, group[0].content, group);
+            var target = null;
+            if (rawHash) {
+                target = group.find(function(it) {
+                    return it.content.toLowerCase() === rawHash || it.tab.toLowerCase() === rawHash;
+                });
+            }
+            if (target && _el(target.tab)) {
+                activateTab(target.tab, target.content, group);
+            } else {
+                activateTab(group[0].tab, group[0].content, group);
+            }
         }
     });
 });
@@ -162,7 +177,19 @@ function numberWithCommas(x) {
 function pop_from_page(req_path, container_id) {
     var item = document.querySelector('[data-contain="' + container_id + '"]');
     fetch(req_path, { method: "POST" });
-    if (item) item.remove();
+    if (item) {
+        var feed = item.closest('.country-news-feed');
+        item.remove();
+        if (feed && !feed.querySelector('.country-news-item')) {
+            feed.outerHTML = '<div class="country-news-empty">' +
+                '<span class="material-icons-outlined country-news-empty-icon">mark_email_read</span>' +
+                '<div class="country-news-empty-title">All caught up</div>' +
+                '<p class="game-faint" style="margin: 4px 0 0; font-size: 13px;">No news reports or dispatches recorded for your nation yet.</p>' +
+                '</div>';
+            var clearBtn = document.getElementById('clearAllNewsBtn');
+            if (clearBtn) clearBtn.remove();
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------

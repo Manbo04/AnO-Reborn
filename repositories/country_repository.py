@@ -99,6 +99,11 @@ class CountryRepository:
                 "DELETE FROM news WHERE id=%s AND destination_id=%s",
                 (news_id, user_id)
             )
+        try:
+            from database import query_cache
+            query_cache.delete(f"notif_count_{user_id}")
+        except Exception:
+            pass
 
     @staticmethod
     def delete_own_account(cId: int):

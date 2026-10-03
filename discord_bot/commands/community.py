@@ -165,9 +165,12 @@ def register_commands(tree: app_commands.CommandTree, backend: BotBackend) -> No
     async def help_cmd(interaction: discord.Interaction) -> None:
         await interaction.response.send_message(
             "**Player commands**\n"
-            "`/register` `/me` `/nation` `/wars` `/resources` — link and check nation data\n\n"
+            "`/register` `/me` `/nation` `/wars` `/resources` — link and check nation data\n"
+            "`/bank-summary` — coalition bank activity (leader/deputy/banker only)\n\n"
             "**Info commands**\n"
-            "`/stats` `/patreon` `/status` `/changelog` `/site` `/tick` `/bugreport` `/suggest`",
+            "`/stats` `/patreon` `/status` `/changelog` `/site` `/tick` `/bugreport` `/suggest`\n\n"
+            "**Community**\n"
+            "`/rank` `/leaderboard` `/ticket open`",
             ephemeral=True,
         )
 
@@ -183,8 +186,8 @@ def register_commands(tree: app_commands.CommandTree, backend: BotBackend) -> No
             )
             return
         await interaction.followup.send(
-            f"🕒 The game tick runs **{info['interval_desc']}** "
-            "(production, consumption, tax, and upkeep all settle on this cycle).\n"
+            f"🕒 The global game tick runs **{info['interval_desc']}**. "
+            "Tax income, province production and military upkeep settle once per hour.\n"
             f"Next tick: <t:{info['next_at_epoch']}:R> (<t:{info['next_at_epoch']}:t>)."
         )
 

@@ -782,7 +782,9 @@ def warResult():
             defender.selected_units = fielded_units
             prev_defender = dict(fielded_units)
             citizen_pct = None
-            if sum(fielded_units.values()) == 0:
+            # Citizen army only defends on ground combat against land invasions.
+            # Air and naval attacks do not fight ground citizen militias (fikusmikus suggestion).
+            if (war_domain == "ground" or war_domain is None) and sum(fielded_units.values()) == 0:
                 pop_total, prov_count = war_supply.get_population_and_provinces(
                     db, eId
                 )
@@ -1021,6 +1023,41 @@ def warResult():
             defender.save(db_cursor=db)
         else:
             attacker.save(db_cursor=db)
+
+        # In-game notification via news table for both defender and attacker so defenders
+        # can see battle history and know what happened when attacked (joshmd suggestion).
+        try:
+            domain_name = (session.get("war_domain") or "ground").title()
+            d_loss_summary = ", ".join(
+                f"{q} {u.replace('_', ' ')}"
+                for u, q in (defender_result.get("unit_loss") or {}).items()
+                if q and q > 0
+            ) or "none"
+            a_loss_summary = ", ".join(
+                f"{q} {u.replace('_', ' ')}"
+                for u, q in (attacker_result.get("unit_loss") or {}).items()
+                if q and q > 0
+            ) or "none"
+
+            if winner == defender_name:
+                outcome_def = f"Victory! You successfully repelled the attack ({win_condition})."
+                outcome_att = f"Defeat. The defender repelled your assault ({win_condition})."
+            else:
+                outcome_def = f"Defeat! The attacker broke your lines ({win_condition})."
+                outcome_att = f"Victory! You won the battle ({win_condition})."
+
+            def_news = (
+                f"⚔️ BATTLE REPORT: {attacker_name} launched a {domain_name} assault on your nation! "
+                f"{outcome_def} Your casualties: {d_loss_summary}. Enemy casualties: {a_loss_summary}."
+            )
+            att_news = (
+                f"⚔️ BATTLE REPORT: Your {domain_name} assault on {defender_name} resolved. "
+                f"{outcome_att} Your casualties: {a_loss_summary}. Enemy casualties: {d_loss_summary}."
+            )
+            db.execute("INSERT INTO news (destination_id, message) VALUES (%s, %s)", (eId, def_news))
+            db.execute("INSERT INTO news (destination_id, message) VALUES (%s, %s)", (attacker.user_id, att_news))
+        except Exception as e:
+            logger.warning("Failed to record battle news: %s", e)
 
     session.pop("attack_units", None)
     session.pop("enemy_id", None)

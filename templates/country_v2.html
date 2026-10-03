@@ -1654,15 +1654,26 @@
             </style>
 
             {% if interactive_events and interactive_events|length > 0 %}
-            <h2 class="templatecontentheaderleft">Action Required</h2>
-            <div class="events-grid">
-                {% for evt in interactive_events %}
-                <div class="event-card glass-panel" onclick="openEventModal({{ evt.id }}, '{{ evt.title|replace('\n', '\\n')|replace('\'', '\\\'')|e }}', '{{ evt.description|replace('\n', '\\n')|replace('\'', '\\\'')|e }}', {{ evt.choices|tojson|forceescape }})">
-                    <h3 class="event-title">{{ evt.title }}</h3>
-                    <div class="event-date">{{ evt.created_at.strftime('%Y-%m-%d') if evt.created_at else 'Recent' }}</div>
-                    <div class="event-excerpt">{{ evt.description }}</div>
+            <div class="game-glass game-panel country-events-panel" style="margin-bottom: 24px;">
+                <div class="game-panel-head">
+                    <div>
+                        <div class="game-panel-title" style="display: flex; align-items: center; gap: 8px;">
+                            <span class="material-icons-outlined" style="color: var(--gold, #f0c040); font-size: 20px;">priority_high</span>
+                            <span>Action Required</span>
+                            <span class="game-badge game-badge-warn">{{ interactive_events|length }}</span>
+                        </div>
+                        <p class="game-faint" style="margin-top: 2px;">Decisions awaiting your presidential order.</p>
+                    </div>
                 </div>
-                {% endfor %}
+                <div class="events-grid">
+                    {% for evt in interactive_events %}
+                    <div class="event-card glass-panel" onclick="openEventModal({{ evt.id }}, '{{ evt.title|replace('\n', '\\n')|replace('\'', '\\\'')|e }}', '{{ evt.description|replace('\n', '\\n')|replace('\'', '\\\'')|e }}', {{ evt.choices|tojson|forceescape }})">
+                        <h3 class="event-title">{{ evt.title }}</h3>
+                        <div class="event-date">{{ evt.created_at.strftime('%Y-%m-%d') if evt.created_at else 'Recent' }}</div>
+                        <div class="event-excerpt">{{ evt.description }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
 
             <!-- Event Modal -->
@@ -1752,26 +1763,130 @@
             </script>
             {% endif %}
 
-            {% if news|length %}
-            <h2 class="templatecontentheaderleft">Reports & News</h2>
-            <table class="templatetable">
+            <div class="game-glass game-panel country-news-panel">
+                <div class="game-panel-head">
+                    <div>
+                        <div class="game-panel-title" style="display: flex; align-items: center; gap: 8px;">
+                            <span class="material-icons-outlined" style="color: var(--accent); font-size: 20px;">newspaper</span>
+                            <span>Reports & News</span>
+                            {% if news|length %}
+                            <span class="game-faint" style="font-size: 12px; font-weight: normal;">({{ news|length }} report{{ 's' if news|length != 1 else '' }})</span>
+                            {% endif %}
+                        </div>
+                        <p class="game-faint" style="margin-top: 2px;">Dispatches, financial transfers, intelligence logs, and military reports.</p>
+                    </div>
+                    {% if news|length %}
+                    <div class="country-news-actions">
+                        <button type="button" class="game-btn game-btn-ghost game-btn-sm" id="clearAllNewsBtn" onclick="clearAllNews()" title="Clear all news reports">
+                            <span class="material-icons-outlined" style="font-size: 16px;">clear_all</span>
+                            <span>Clear history</span>
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
 
-                {% for new in news %}
-                <tbody data-contain="{{new[2]}}">
-                    <tr>
-                        <th>
-                            <span class="material-icons-outlined">article</span>{{new[1]}}
-                            <span onclick="pop_from_page('/delete_news/{{new[2]}}', {{new[2]}})" class="material-icons-outlined dismiss-notification">highlight_off</span>
-                        </th>
-                    </tr>
-                    <tr>
-                        <td>{{ new[0] }}</td>
-                    </tr>
-                </tbody>
-                {% endfor %}
-            </table>
-            {% else %}
-            <h2 class="templatecontentheadercenter">You have no news</h2> {% endif %}
+                {% if news|length %}
+                <div class="country-news-feed" id="countryNewsFeed">
+                    {% for new in news %}
+                    {% set is_unread = (not new[3]) if new|length > 3 else false %}
+                    <div class="country-news-item{% if is_unread %} is-unread{% endif %}" data-contain="{{ new[2] }}">
+                        <div class="country-news-icon-col">
+                            <span class="country-news-icon material-icons-outlined">
+                                {% if 'interest' in new[0]|lower or '$' in new[0] or 'bonds' in new[0]|lower or 'sent' in new[0]|lower or 'received' in new[0]|lower or 'loan' in new[0]|lower %}
+                                    payments
+                                {% elif 'attack' in new[0]|lower or 'strike' in new[0]|lower or 'war' in new[0]|lower or 'destroyed' in new[0]|lower or 'casualt' in new[0]|lower or 'silo' in new[0]|lower or 'nuke' in new[0]|lower or 'defense' in new[0]|lower or 'defend' in new[0]|lower %}
+                                    shield
+                                {% elif 'spy' in new[0]|lower or 'intelligence' in new[0]|lower or 'sabotage' in new[0]|lower or 'agent' in new[0]|lower %}
+                                    visibility
+                                {% elif 'coalition' in new[0]|lower or 'treaty' in new[0]|lower or 'alliance' in new[0]|lower or 'ally' in new[0]|lower %}
+                                    handshake
+                                {% elif 'achievement' in new[0]|lower %}
+                                    emoji_events
+                                {% else %}
+                                    article
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="country-news-body">
+                            <div class="country-news-meta">
+                                <span class="country-news-date">
+                                    <span class="material-icons-outlined" style="font-size: 13px; vertical-align: -1px; opacity: 0.7;">schedule</span>
+                                    {{ new[1] if new[1] else 'Recent' }}
+                                </span>
+                                {% if is_unread %}
+                                <span class="game-badge game-badge-good country-news-new-badge">New</span>
+                                {% endif %}
+                            </div>
+                            <div class="country-news-text">{{ new[0] }}</div>
+                        </div>
+                        <div class="country-news-actions-col">
+                            <button type="button" class="country-news-dismiss-btn" onclick="pop_from_page('/delete_news/{{ new[2] }}', {{ new[2] }})" title="Remove from log" aria-label="Dismiss news item">
+                                <span class="material-icons-outlined">close</span>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="country-news-empty">
+                    <span class="material-icons-outlined country-news-empty-icon">mark_email_read</span>
+                    <div class="country-news-empty-title">All caught up</div>
+                    <p class="game-faint" style="margin: 4px 0 0; font-size: 13px;">No news reports or dispatches recorded for your nation yet.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <script>
+                function markNewsRead() {
+                    const badge = document.querySelector('#countrynews .menuflex2notification');
+                    const topDot = document.getElementById('nav-notif-dot');
+                    
+                    fetch('/api/news/mark_read', {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data && data.success) {
+                            if (badge) badge.remove();
+                            if (topDot) topDot.style.display = 'none';
+                            setTimeout(() => {
+                                document.querySelectorAll('.country-news-item.is-unread').forEach(el => {
+                                    el.classList.remove('is-unread');
+                                    const nb = el.querySelector('.country-news-new-badge');
+                                    if (nb) nb.remove();
+                                });
+                            }, 1200);
+                        }
+                    })
+                    .catch(() => {});
+                }
+
+                function clearAllNews() {
+                    if (!confirm('Are you sure you want to clear your entire news history?')) return;
+                    fetch('/api/news/clear_all', { method: 'POST' })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data && data.success) {
+                                const feed = document.getElementById('countryNewsFeed');
+                                if (feed) {
+                                    feed.outerHTML = `
+                                        <div class="country-news-empty">
+                                            <span class="material-icons-outlined country-news-empty-icon">mark_email_read</span>
+                                            <div class="country-news-empty-title">All caught up</div>
+                                            <p class="game-faint" style="margin: 4px 0 0; font-size: 13px;">No news reports or dispatches recorded for your nation yet.</p>
+                                        </div>
+                                    `;
+                                }
+                                const badge = document.querySelector('#countrynews .menuflex2notification');
+                                if (badge) badge.remove();
+                                const clearBtn = document.getElementById('clearAllNewsBtn');
+                                if (clearBtn) clearBtn.remove();
+                            }
+                        })
+                        .catch(() => alert('Failed to clear news.'));
+                }
+            </script>
 
         </div>
         <!--Edit-->

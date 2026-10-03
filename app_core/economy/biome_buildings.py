@@ -63,7 +63,7 @@ MINE_INFO: dict[str, dict[str, str]] = {
     "copper_mines": {
         "display_name": "Copper Mines",
         "resource": "copper",
-        "description": "Copper mines produce copper for your nation. Copper can be used to manufacture ammunition.",
+        "description": "Copper mines produce copper for your nation. Copper can be used to manufacture ammunition and components.",
     },
     "bauxite_mines": {
         "display_name": "Bauxite Mines",
@@ -88,7 +88,7 @@ MINE_INFO: dict[str, dict[str, str]] = {
     "lumber_mills": {
         "display_name": "Lumber Mills",
         "resource": "lumber",
-        "description": "Lumber mills produce lumber, a useful raw resource used to mines and farms.",
+        "description": "Lumber mills produce lumber, a useful raw resource used to build mines and farms.",
     },
     "silver_mines": {
         "display_name": "Silver Mines",
@@ -98,7 +98,7 @@ MINE_INFO: dict[str, dict[str, str]] = {
     "diamond_mines": {
         "display_name": "Diamond Mines",
         "resource": "diamonds",
-        "description": "Diamond mines extract rough diamonds from deep underground, used in jewelry and advanced production.",
+        "description": "Diamond mines extract rough diamonds from deep underground, used by jewelry stores to make luxury consumer goods.",
     },
     "bullion_mines": {
         "display_name": "Bullion Mines",

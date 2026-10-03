@@ -1021,3 +1021,179 @@ body.page-country .revenue .stat-value {
     margin-right: -6px;
     padding-right: 6px;
 }
+
+/* ==========================================================================
+   Country > News & Reports Tab (V2 Glass UI)
+   ========================================================================== */
+.country-news-panel {
+    margin-bottom: 24px;
+}
+
+.country-news-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.country-news-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.country-news-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 12px 14px;
+    background: var(--game-glass-bg);
+    border: 1px solid var(--game-glass-border);
+    border-radius: var(--game-radius-md, 8px);
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+    position: relative;
+}
+
+.country-news-item:hover {
+    background: var(--game-glass-bg-strong, rgba(255, 255, 255, 0.08));
+    border-color: rgba(var(--accent-rgb, 50, 180, 220), 0.35);
+}
+
+.country-news-item.is-unread {
+    border-left: 3px solid var(--accent);
+    background: color-mix(in srgb, var(--accent) 7%, var(--game-glass-bg));
+    box-shadow: 0 0 12px rgba(var(--accent-rgb, 50, 180, 220), 0.08);
+}
+
+.country-news-icon-col {
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--game-glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+}
+
+.country-news-item.is-unread .country-news-icon-col {
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    border-color: var(--accent);
+    color: #ffffff;
+}
+
+.country-news-icon {
+    font-size: 20px !important;
+}
+
+.country-news-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.country-news-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+}
+
+.country-news-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-variant-numeric: tabular-nums;
+}
+
+.country-news-new-badge {
+    font-size: 10px !important;
+    padding: 1px 6px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+}
+
+.country-news-text {
+    color: var(--colorOne, #f0f4fc);
+    font-size: 13.5px;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.country-news-actions-col {
+    flex-shrink: 0;
+    align-self: center;
+}
+
+.country-news-dismiss-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    opacity: 0.45;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.country-news-dismiss-btn .material-icons-outlined {
+    font-size: 18px;
+}
+
+.country-news-dismiss-btn:hover {
+    opacity: 1;
+    color: var(--danger, #ff5c6c);
+    background: rgba(255, 92, 108, 0.1);
+}
+
+.country-news-empty {
+    padding: 42px 20px;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.country-news-empty-icon {
+    font-size: 42px !important;
+    opacity: 0.35;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.country-news-empty-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--colorOne);
+}
+
+/* Event cards V2 harmonization */
+.country-events-panel .events-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 4px;
+}
+
+@media (max-width: 640px) {
+    .country-news-item {
+        gap: 10px;
+        padding: 10px 12px;
+    }
+    .country-news-icon-col {
+        width: 32px;
+        height: 32px;
+    }
+    .country-news-icon {
+        font-size: 18px !important;
+    }
+    .country-news-text {
+        font-size: 13px;
+    }
+}

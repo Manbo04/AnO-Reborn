@@ -6,7 +6,7 @@
 
 <div class="templatediv">
 
-    {{ game_hero('Currency Unions', badge_icon='currency_exchange', subtitle='Share one currency with other nations. A union needs at least ' ~ status.min_members ~ ' members before its benefits switch on.') }}
+    {{ game_hero('Currency Unions', badge_icon='currency_exchange', subtitle='Band together with other nations for cheaper trade and looser bond limits. A union needs at least ' ~ status.min_members ~ ' members before its benefits switch on.') }}
 
     <div class="templatedivcontent">
 
@@ -15,7 +15,7 @@
             <ul class="templatecontentpleft" style="margin: 6px 0 0 18px; line-height: 1.6; text-align: left;">
                 <li><strong>Cheaper trade:</strong> trades between members pay a {{ status.union_fee }}% transport fee instead of {{ status.fee }}%.</li>
                 <li><strong>Looser bond limits:</strong> members can have {{ status.bond_bonus_percent }}% more bond principal outstanding.</li>
-                <li><strong>One currency:</strong> every member uses the union's currency, and the union's combined and average stats are shown below.</li>
+                <li><strong>Shared identity:</strong> the union's name and currency name are shown on every member's nation page, and the union's combined and average stats are shown below. Each member still mints and redeems its own national currency.</li>
             </ul>
             <p class="templatecontentpleft" style="margin-top: 10px; opacity: .8; font-size: .9em; text-align: left;">You can be in one union at a time. The founder approves new members and can remove them. If the founder leaves, the longest-standing member takes over; if the last member leaves, the union is dissolved.</p>
         </div>

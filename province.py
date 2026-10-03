@@ -849,6 +849,14 @@ def province(pId):
 
                 with db.connection.cursor() as tuple_db:
                     own_policies = _load_policies(tuple_db, cId)
+                unemployment_penalty = 0
+                if variables.FEATURE_PHASE3_WORKFORCE and not upgrades.get("widespreadpropaganda"):
+                    try:
+                        from app_core.game_ticks.population import apply_workforce_hiring_and_debuffs
+                        debuffs = apply_workforce_hiring_and_debuffs(cId)
+                        unemployment_penalty = debuffs.get("happiness_penalty", 0)
+                    except Exception:
+                        pass
                 stat_breakdown = province_stat_breakdown(
                     {
                         k: province.get(k)
@@ -857,6 +865,8 @@ def province(pId):
                     units,
                     upgrades,
                     own_policies,
+                    unemployment_penalty=unemployment_penalty,
+                    has_power=has_power,
                 )
                 pop_cap_info = pop_cap_marginals(
                     province.get("citycount"), province.get("land")
@@ -2619,7 +2629,7 @@ from database import get_request_cursor
 @cache_response(ttl_seconds=45, public=True)
 def get_global_events():
     events = [
-        "🚨 BREAKING NEWS: New Balance Update! First Province now costs $2M! New player Grace Period active (no starvation)! Lumber is now a core building requirement for Tier 2 buildings. Steel Mills & Aluminium Refineries cost 50% less! 🚨"
+        "🚨 Starter tip: your first province costs 2M gold and your second 5M. New nations (1 province, 20 land or less) cannot starve. Many buildings need lumber to construct. 🚨"
     ] * 5  # Duplicate it a few times so it shows up frequently
     try:
         with get_request_cursor() as db:
@@ -2633,18 +2643,10 @@ def get_global_events():
             for res in db.fetchall():
                 events.append(f"New territory established: the province of {res[0]} has been settled.")
                 
-            # 3. Market shortages (resources with 0 quantity)
-            db.execute("""
-                SELECT rd.name 
-                FROM resource_dictionary rd
-                LEFT JOIN global_market gm ON rd.resource_id = gm.resource_id
-                WHERE gm.quantity IS NULL OR gm.quantity = 0
-                LIMIT 5
-            """)
-            for row in db.fetchall():
-                resource_name = str(row[0]).replace("_", " ").title()
-                events.append(f"Global market crisis: {resource_name} supplies have been completely exhausted!")
-                
+            # (3. "Global market crisis" headlines removed: they read the
+            # legacy global_market table, which nothing writes to any more,
+            # so every resource was falsely reported as "exhausted".)
+
             # 4. Recent treaties/alliances
             db.execute("SELECT name FROM colnames ORDER BY id DESC LIMIT 5")
             for res in db.fetchall():

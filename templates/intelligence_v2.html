@@ -8,7 +8,7 @@
 
 <div class="templatediv">
     {% set report_count = info|length if info else 0 %}
-    {{ game_hero('Intelligence', badge_text=(report_count ~ ' up-to-date report' ~ ('s' if report_count != 1 else '')) if report_count else None, badge_icon='person_search', subtitle='Spy reports gathered from your last successful missions. Reports go stale over time.') }}
+    {{ game_hero('Intelligence', badge_text=(report_count ~ ' report' ~ ('s' if report_count != 1 else '')) if report_count else None, badge_icon='person_search', subtitle='Spy reports gathered from your successful missions. Each figure is a snapshot from when your spies gathered it and is not updated afterwards.') }}
 
     <div class="templatedivcontent">
         {% call game_glass_panel("Operation Cooldowns", icon='timer', style='margin-bottom: var(--game-space-lg, 24px);') %}
@@ -81,7 +81,7 @@
         {% else %}
         <div class="game-glass" style="padding: 40px 24px; text-align: center;">
             <span class="material-icons-outlined" style="font-size: 34px; color: var(--text-secondary); margin-bottom: 10px; display: inline-block;">visibility_off</span>
-            <h2 class="templatecontentheadercenter" style="border: none; margin: 0;">No up-to-date intelligence</h2>
+            <h2 class="templatecontentheadercenter" style="border: none; margin: 0;">No intelligence yet</h2>
             <p style="color: var(--text-secondary); margin: 8px 0 0;">Send spies from the <a href="/wars">Wars</a> page to gather a report on another nation.</p>
         </div>
         {% endif %}

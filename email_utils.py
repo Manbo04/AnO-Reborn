@@ -393,7 +393,7 @@ def send_password_reset_email(to_email, username, token):
                 <p style="word-break: break-all; color: #666;">
                     {reset_url}
                 </p>
-                <p><strong>This link expires in 1 hour.</strong></p>
+                <p><strong>This link expires in 24 hours.</strong></p>
                 <p>If you didn't request this, you can safely ignore this email.</p>
             </div>
             <div class="footer">
@@ -415,7 +415,7 @@ def send_password_reset_email(to_email, username, token):
     create a new password:
     {reset_url}
 
-    This link expires in 1 hour.
+    This link expires in 24 hours.
 
     If you didn't request this, you can safely ignore this email.
     """

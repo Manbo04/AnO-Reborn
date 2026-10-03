@@ -70,7 +70,7 @@
                 </tr>
                 <tr style="background-color: rgba(0, 204, 0, 0.1); border-top: 2px solid #00cc00;">
                     <td colspan="4" style="text-align: center; padding: 0.5rem; color: #00cc00; font-weight: bold;">
-                        🛡️ Defending With:
+                        🛡️ Saved defense selection:
                         {% for unit_name in current_defense %}
                             {{ units[unit_name] }} {{ unit_name | title }}{% if not loop.last %},{% endif %}
                         {% endfor %}
@@ -155,7 +155,7 @@
                 </div>
                 <div class="wars-mechanics-item">
                     <h3>Damage &amp; Loot</h3>
-                    <p>Casualties are applied proportionally to the units involved. If the war type is Loot and the attacker wins, they may seize up to 10% of the defender's gold.</p>
+                    <p>Both sides lose units in every battle; the loser loses more, scaled by how decisive the win was, and no side can lose more of a unit type than it sent. If the war type is Loot and the attacker wins, they may seize up to 10% of the defender's gold.</p>
                 </div>
             </div>
         </div>

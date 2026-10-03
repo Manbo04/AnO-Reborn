@@ -93,6 +93,7 @@ def province_stat_breakdown(
     upgrades,
     policies,
     unemployment_penalty=0,
+    has_power=True,
 ):
     """Explain a province's happiness/pollution/productivity for display.
 
@@ -112,13 +113,22 @@ def province_stat_breakdown(
     }
     running = {stat: current.get(stat) or 0 for stat in EFFECT_STATS}
 
+    energy_consumers = getattr(variables, "ENERGY_CONSUMERS", ())
+
     for unit in variables.BUILDINGS:
         count = int(units.get(unit, 0) or 0)
         if count <= 0:
             continue
         eff, effminus = building_effects_per_unit(unit, upgrades, policies)
+        is_unpowered = (not has_power) and (unit in energy_consumers)
+
         for stat, per_unit in eff.items():
             if stat not in result:
+                continue
+            if is_unpowered:
+                result[stat]["sources"].append(
+                    {"name": unit, "count": count, "per_unit": per_unit, "total": 0, "idle": "Unpowered"}
+                )
                 continue
             total = effect_total(per_unit, count)
             running[stat] = apply_effect(running[stat], stat, total, "+", percentage_based)
@@ -128,6 +138,11 @@ def province_stat_breakdown(
         for stat, per_unit in effminus.items():
             if stat not in result:
                 continue
+            if is_unpowered:
+                result[stat]["sources"].append(
+                    {"name": unit, "count": count, "per_unit": -per_unit, "total": 0, "idle": "Unpowered"}
+                )
+                continue
             total = effect_total(per_unit, count)
             running[stat] = apply_effect(running[stat], stat, total, "-", percentage_based)
             result[stat]["sources"].append(
@@ -136,7 +151,8 @@ def province_stat_breakdown(
 
     happiness_extras = []
     if unemployment_penalty:
-        happiness_extras.append(("High unemployment", -unemployment_penalty))
+        label = f"High unemployment (>{int(variables.UNEMPLOYMENT_THRESHOLD * 100)}%)"
+        happiness_extras.append((label, -unemployment_penalty))
         running["happiness"] = max(0, running["happiness"] - unemployment_penalty)
     if variables.POLICY_UNIVERSAL_HEALTHCARE in policies:
         bonus = variables.POLICY_HEALTHCARE_HAPPINESS_BONUS

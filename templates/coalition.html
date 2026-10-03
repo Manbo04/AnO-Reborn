@@ -827,7 +827,7 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
             {% if user_role in ["leader", "deputy_leader", "tax_collector"] %}
             <h2 class="templatecontentheaderleft">Alliance Tax</h2>
             <div class="infodiv">
-                <p style="margin-bottom:10px;">Set a tax rate on members' gold income. Taxed gold is automatically deposited into the coalition bank each income tick.</p>
+                <p style="margin-bottom:10px;">Set a tax rate on members' net gold profit (after building upkeep). Taxed gold is automatically deposited into the coalition bank each income tick.</p>
                 <form action="/set_tax_rate/{{ colId }}" method="POST">
                     <div style="display:flex;align-items:center;justify-content:center;gap:15px;margin-bottom:15px;">
                         <label>Current Tax Rate: <strong>{{ tax_rate }}%</strong></label>

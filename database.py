@@ -4,6 +4,7 @@ Provides connection pooling, query helpers, and unified database access patterns
 """
 
 import psycopg2
+import psycopg2.pool
 from psycopg2.extras import RealDictCursor, execute_batch
 import hashlib
 import os
@@ -19,7 +20,8 @@ from urllib.parse import urlparse
 from collections import OrderedDict
 
 load_dotenv()
-if os.getenv("DATABASE_URL") and "interchange" in os.getenv("DATABASE_URL"):
+_db_check = os.getenv("DATABASE_PUBLIC_URL") or os.getenv("DATABASE_URL") or ""
+if any(k in _db_check for k in ("interchange", "rlwy.net", "railway.net", "proxy.rlwy")):
     os.environ["PGSSLMODE"] = "require"
 import config  # Parse Railway DATABASE_URL  # noqa: E402
 
@@ -105,6 +107,14 @@ class QueryCache:
             return
         sorted_keys = sorted(self.cache.keys(), key=lambda k: self.cache[k][1])
         for key in sorted_keys[:count]:
+            try:
+                del self.cache[key]
+            except KeyError:
+                pass
+
+    def delete(self, key):
+        """Remove a single key from cache"""
+        with self._lock:
             try:
                 del self.cache[key]
             except KeyError:
@@ -532,7 +542,8 @@ class DatabasePool:
 
                         def getconn(self):
                             kwargs = self._kwargs.copy()
-                            if "interchange" in kwargs.get("host", "") and "sslmode" not in kwargs: kwargs["sslmode"] = "require"
+                            if (os.getenv("PGSSLMODE") == "require" or any(k in kwargs.get("host", "") for k in ("interchange", "rlwy.net", "railway.net", "proxy.rlwy"))) and "sslmode" not in kwargs:
+                                kwargs["sslmode"] = "require"
                             return psycopg2.connect(**kwargs)
 
                         def putconn(self, conn, close=False):
@@ -563,7 +574,7 @@ class DatabasePool:
                     keepalives_idle=30,  # Sendkeepalive after 30 seconds idle
                     keepalives_interval=10,  # Retry every 10 seconds
                     keepalives_count=3,
-                    sslmode="require" if "interchange" in (os.getenv("LOCAL_PG_HOST") or os.getenv("PG_HOST", "")) else "prefer",
+                    sslmode=os.getenv("PGSSLMODE") or ("require" if any(k in (os.getenv("LOCAL_PG_HOST") or os.getenv("PG_HOST", "")) for k in ("interchange", "rlwy.net", "railway.net", "proxy.rlwy")) else "prefer"),
                 )
                 # Create a queue to track available slots with timeout support
                 self._available = queue.Queue(maxsize=maxconn)

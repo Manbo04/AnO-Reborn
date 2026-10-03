@@ -27,7 +27,7 @@
                     <span class="stat-value">${{ status.fee_charged | fmt }}</span>
                 </div>
             </div>
-            <p class="templatecontentpleft" style="margin-top: 14px;">The fee was added to your balance when you borrowed — no ongoing interest. Repay whenever you like, at your own pace.</p>
+            <p class="templatecontentpleft" style="margin-top: 14px;">The fee was added to your balance when you borrowed — no ongoing interest. You can repay in parts at any time, but a loan still open after 7 days counts as late and one open past 21 days is in default, both of which lower your credit (see How credit works).</p>
 
             <form action="/loans/repay" method="post" class="game-row" style="flex-wrap: wrap; margin-top: 10px;">
                 <input type="number" name="amount" placeholder="Repayment amount" class="loginsignupinput" style="flex: 1; min-width: 200px;" min="1" step="1" required>

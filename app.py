@@ -949,9 +949,8 @@ def create_app():
 
     def get_notification_count():
         """Real unread-news count for the topbar bell badge (see /api/notifications
-        for the dropdown's actual content). Same table country.html's own
-        Reports & News section reads/dismisses from (news.destination_id), so
-        this count naturally drops as the player dismisses items there.
+        for the dropdown's actual content). Drops as the player views the News tab
+        or opens notifications.
         """
         target_user_id = session.get("user_id")
         if not target_user_id:
@@ -964,8 +963,19 @@ def create_app():
 
         try:
             with get_db_cursor() as db:
-                db.execute("SELECT COUNT(*) FROM news WHERE destination_id=%s", (target_user_id,))
-                count = db.fetchone()[0] or 0
+                try:
+                    db.execute(
+                        "SELECT COUNT(*) FROM news WHERE destination_id=%s AND (is_read IS FALSE OR is_read IS NULL)",
+                        (target_user_id,),
+                    )
+                    count = db.fetchone()[0] or 0
+                except Exception:
+                    try:
+                        db.connection.rollback()
+                    except Exception:
+                        pass
+                    db.execute("SELECT COUNT(*) FROM news WHERE destination_id=%s", (target_user_id,))
+                    count = db.fetchone()[0] or 0
                 query_cache.set(cache_key, count, ttl_seconds=15)
                 return count
         except Exception:

@@ -37,7 +37,7 @@ STAFF_CHANNEL_BLUEPRINT = """
 | `#📢-realm-alerts` | public alerts |
 | `#🛡️-staff-commands` | staff only — hide from @everyone |
 
-Then bind each with `/guild_bind_panel` in that channel.
+Then bind each with `/guild bind_panel` in that channel.
 Lock `#🛡️-staff-commands` so only your staff role can view it.
 """
 
@@ -110,7 +110,7 @@ def register_commands(tree: app_commands.CommandTree) -> None:
         set_admin_role(str(interaction.guild.id), str(role.id))
         await interaction.response.send_message(
             f"Staff role set to {role.mention}. Members with this role or "
-            "**Administrator** may use `/guild_*` and `/admin_*`.",
+            "**Administrator** may use `/guild` and `/admin` commands.",
             ephemeral=True,
         )
 
@@ -125,7 +125,7 @@ def register_commands(tree: app_commands.CommandTree) -> None:
         settings = get_guild_settings(str(interaction.guild.id))
         if not settings or not settings.panel_channels:
             await interaction.response.send_message(
-                "No panels bound yet. See `/guild_setup_guide`.",
+                "No panels bound yet. See `/guild setup_guide`.",
                 ephemeral=True,
             )
             return

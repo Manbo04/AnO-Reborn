@@ -215,7 +215,13 @@ def get_revenue(cId, db=None):
         try:
             db.execute("SELECT education FROM policies WHERE user_id=%s", (cId,))
             policies_row = db.fetchone()
-            policies = policies_row[0] if policies_row else []
+            val = policies_row[0] if policies_row else []
+            if isinstance(val, (list, tuple, set)):
+                policies = val
+            elif isinstance(val, int):
+                policies = [val]
+            else:
+                policies = []
         except Exception:
             policies = []
 

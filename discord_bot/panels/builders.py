@@ -37,7 +37,8 @@ def build_readme_embed() -> discord.Embed:
             "• `/me` — your nation dashboard (economy, military, resources, wars)\n"
             "• `/nation` — look up any nation's full stats\n"
             "• `/wars` — list active wars for you or another nation\n"
-            "• `/resources` — top resources for you or another nation"
+            "• `/resources` — top resources for you or another nation\n"
+            "• `/bank-summary` — coalition bank activity (leader/deputy/banker only)"
         ),
         inline=False,
     )
@@ -67,7 +68,7 @@ def build_readme_embed() -> discord.Embed:
     embed.add_field(
         name="🛡️ Staff only",
         value=(
-            "`/guild_*` `/admin_*` `/levels` `/welcome` `/reactionrole` `/giveaway` — "
+            "`/guild` `/admin` `/levels` `/welcome` `/reactionrole` `/giveaway` — "
             "panels, broadcasts, and server config; non-admins cannot run these."
         ),
         inline=False,
@@ -103,7 +104,7 @@ def build_leaderboard_embed(rows: Optional[List[Dict[str, Any]]] = None) -> disc
             loc = row.get("location") or "?"
             lines.append(
                 f"**{i}.** [{row['username']}]({GAME_BASE_URL}/country/id={row['id']}) "
-                f"— **{int(row.get('influence') or 0):,}** influence · {loc}"
+                f"— **{int(row.get('influence') or 0):,}** gold · {loc}"
             )
         embed.add_field(name="Top 10", value="\n".join(lines)[:1020], inline=False)
     embed.set_footer(text=_footer())

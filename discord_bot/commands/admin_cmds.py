@@ -37,7 +37,7 @@ def register_commands(tree: app_commands.CommandTree, backend) -> None:
         settings = get_guild_settings(str(interaction.guild.id))
         if not settings or not settings.panel_channels.get("alerts"):
             await interaction.followup.send(
-                "Bind the alerts panel first: `/guild_bind_panel` in `#realm-alerts`.",
+                "Bind the alerts panel first: `/guild bind_panel` in `#realm-alerts`.",
                 ephemeral=True,
             )
             return

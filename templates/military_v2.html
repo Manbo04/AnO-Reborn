@@ -10,27 +10,27 @@
 {% set branches = [
     {'id': 'land', 'tab': 'militaryland', 'label': 'Army', 'icon': 'shield', 'units': [
         {'key': 'soldiers', 'name': 'Soldiers', 'img': 'soldiers',
-         'desc': 'Cheap and expendable. They need 1 munitions per 5,000 soldiers to fight at full strength, but still fight without it at 10% effectiveness. Counter artillery and attack helicopters, and can take resource control.'},
+         'desc': 'Cheap and expendable. Counter artillery and attack helicopters.'},
         {'key': 'artillery', 'name': 'Artillery', 'img': 'artillery',
-         'desc': 'Expensive, but devastating against tanks. Use 5 munitions and 1 gasoline per 100 artillery in battle, and can take field control.'},
+         'desc': 'Expensive, but devastating against tanks.'},
         {'key': 'tanks', 'name': 'Tanks', 'img': 'tanks',
-         'desc': 'Middle of the road in cost and power. Use 1 munitions and 2 gasoline per 100 tanks in battle. Great against soldiers, and can take field and city control.'},
+         'desc': 'Middle of the road in cost and power. Great against soldiers.'},
     ]},
     {'id': 'air', 'tab': 'militaryair', 'label': 'Air Force', 'icon': 'flight', 'units': [
         {'key': 'fighters', 'name': 'Fighter Jets', 'img': 'fighter_jets',
-         'desc': 'Dominant in the air. Strong against bombers, and can take air superiority.'},
+         'desc': 'Dominant in the air. Strong against bombers and attack helicopters.'},
         {'key': 'bombers', 'name': 'Bombers', 'img': 'bombers',
-         'desc': 'Deal massive damage to units below. Use 4 munitions and 10 gasoline per 100 bombers per attack. Annihilate soldiers, destroyers and submarines, and can take field control.'},
+         'desc': 'Deal massive damage to units below. Strong against soldiers, tanks, destroyers and submarines.'},
         {'key': 'apaches', 'name': 'Attack Helicopters', 'img': 'attack_helicopters',
-         'desc': 'Take on both land and air. Counter tanks and soldiers, and can take city control.'},
+         'desc': 'Take on both land and air. Counter tanks and soldiers.'},
     ]},
     {'id': 'water', 'tab': 'militarywater', 'label': 'Navy', 'icon': 'directions_boat', 'units': [
         {'key': 'submarines', 'name': 'Submarines', 'img': 'submarines',
-         'desc': 'Hide beneath the surface to counter cruisers. Can take depth control.'},
+         'desc': 'Hide beneath the surface to counter cruisers.'},
         {'key': 'cruisers', 'name': 'Cruisers', 'img': 'cruisers',
-         'desc': 'The powerhouse of the ocean, and very expensive. Counter destroyers, fighter jets and attack helicopters, and can blockade the enemy.'},
+         'desc': 'The powerhouse of the ocean, and very expensive. Counter destroyers, fighter jets and attack helicopters.'},
         {'key': 'destroyers', 'name': 'Destroyers', 'img': 'destroyers',
-         'desc': 'Advanced radar lets them find and counter submarines. Can blockade the enemy.'},
+         'desc': 'Advanced radar lets them find and counter submarines.'},
         {'key': 'aircraft_carriers', 'name': 'Aircraft Carriers', 'img': 'aircraft_carriers',
          'desc': 'The capital ship of your fleet. Each one raises how many fighter jets, bombers and attack helicopters you can field.'},
     ]},
@@ -42,13 +42,13 @@
         {'key': 'sam_batteries', 'name': 'SAM Batteries', 'img': 'sam_batteries',
          'desc': 'Surface-to-air missiles. They don\'t fight in normal battles, but shoot down part of every incoming kamikaze drone and cruise missile strike. More batteries means more interceptions, with diminishing returns (never 100%). Each army base supports 20.'},
         {'key': 'icbms', 'name': 'Ballistic Missiles', 'img': 'icbms',
-         'desc': 'Obliterate an enemy\'s infrastructure, collapsing their economy.'},
+         'desc': 'Launched at one type of enemy unit in a war, destroying part of it and wrecking public works in a random enemy province.'},
         {'key': 'nukes', 'name': 'Nukes', 'img': 'nukes',
          'desc': 'Annihilate everything your enemies love. Save them for your most hated adversary.'},
         {'key': 'kamikaze_drones', 'name': 'Kamikaze Drones', 'img': 'kamikaze_drones', 'stockpile': True,
          'desc': 'Cheap loitering munitions your Drone Sites build into a stockpile over time. Weak alone, they\'re launched in swarms at an enemy\'s buildings during a war.'},
         {'key': 'cruise_missiles', 'name': 'Cruise Missiles', 'img': 'cruise_missiles', 'stockpile': True,
-         'desc': 'Precision strikes your Missile Batteries build into a stockpile over time. Pricier and slower than drones, but a guaranteed hit.'},
+         'desc': 'Precision strikes your Missile Batteries build into a stockpile over time. Far pricier than drones, but a guaranteed hit.'},
     ]},
 ] %}
 
@@ -117,7 +117,7 @@
 
 <div class="templatediv">
 
-    {{ game_hero('Military', badge_icon='groups', badge_text='Manpower ' ~ (manpower | fmt), subtitle='Recruit and maintain your forces. Every unit needs manpower, which regenerates over time; how many you can field depends on your buildings.') }}
+    {{ game_hero('Military', badge_icon='groups', badge_text='Manpower ' ~ (manpower | fmt), subtitle='Recruit and maintain your forces. Most units need manpower, which regenerates over time; how many you can field depends on your buildings. A unit whose upkeep resource runs out deals no damage in battle until you restock it.') }}
 
     <div class="templatedivcontent">
 

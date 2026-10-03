@@ -1162,6 +1162,19 @@
             {% else %}
             <h2 class="templatecontentheadercenter">You have no news</h2> {% endif %}
 
+            <script>
+                function markNewsRead() {
+                    const badge = document.querySelector('#countrynews .menuflex2notification');
+                    const topDot = document.getElementById('nav-notif-dot');
+                    fetch('/api/news/mark_read', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(r => r.json()).then(data => {
+                        if (data && data.success) {
+                            if (badge) badge.remove();
+                            if (topDot) topDot.style.display = 'none';
+                        }
+                    }).catch(() => {});
+                }
+            </script>
         </div>
         <!--Edit-->
         <div class="edit country-customize" id="edit">

@@ -437,20 +437,89 @@ def api_notifications():
     items = []
     with get_request_cursor(read_only=True) as cur:
         try:
-            cur.execute(
-                "SELECT id, message, date FROM news WHERE destination_id=%s ORDER BY id DESC LIMIT 6",
-                (user_id,),
-            )
+            try:
+                cur.execute(
+                    "SELECT id, message, date, COALESCE(is_read, FALSE) FROM news WHERE destination_id=%s ORDER BY id DESC LIMIT 6",
+                    (user_id,),
+                )
+                rows = cur.fetchall()
+            except Exception:
+                cur.connection.rollback()
+                cur.execute(
+                    "SELECT id, message, date FROM news WHERE destination_id=%s ORDER BY id DESC LIMIT 6",
+                    (user_id,),
+                )
+                rows = [(*r, False) for r in cur.fetchall()]
+
             today = _date.today()
-            for row_id, message, day in cur.fetchall():
+            for r in rows:
+                row_id = r[0]
+                message = r[1]
+                day = r[2]
+                is_read = r[3] if len(r) > 3 else False
                 if day is None:
                     when = ""
                 else:
                     days_old = (today - day).days
                     when = "Today" if days_old <= 0 else ("Yesterday" if days_old == 1 else f"{days_old}d ago")
-                items.append({"id": row_id, "message": message, "when": when})
+                items.append({"id": row_id, "message": message, "when": when, "is_read": bool(is_read)})
         except Exception:
-            cur.connection.rollback()
+            try:
+                cur.connection.rollback()
+            except Exception:
+                pass
             items = []
 
     return jsonify({"items": items})
+
+
+@bp.route("/api/news/mark_read", methods=["POST"])
+@login_required
+def api_news_mark_read():
+    """Mark all unread news for the current user as seen/read."""
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"success": False, "error": "Unauthorized"}), 401
+
+    try:
+        with get_request_cursor() as cur:
+            try:
+                cur.execute(
+                    "UPDATE news SET is_read = TRUE WHERE destination_id = %s AND (is_read IS FALSE OR is_read IS NULL)",
+                    (user_id,),
+                )
+            except Exception:
+                cur.connection.rollback()
+
+        try:
+            from database import query_cache
+            query_cache.delete(f"notif_count_{user_id}")
+        except Exception:
+            pass
+
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@bp.route("/api/news/clear_all", methods=["POST"])
+@login_required
+def api_news_clear_all():
+    """Clear entire news history for the current user."""
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"success": False, "error": "Unauthorized"}), 401
+
+    try:
+        with get_request_cursor() as cur:
+            cur.execute("DELETE FROM news WHERE destination_id = %s", (user_id,))
+
+        try:
+            from database import query_cache
+            query_cache.delete(f"notif_count_{user_id}")
+        except Exception:
+            pass
+
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500

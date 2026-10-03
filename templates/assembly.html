@@ -76,6 +76,7 @@
         line-height: 1.5;
         color: var(--colorOne);
         overflow-wrap: anywhere;
+        white-space: pre-wrap;
     }
     .assembly-vote-row { display: flex; gap: 8px; }
     .assembly-vote-row .game-btn { flex: 1; min-height: 44px; }
@@ -186,11 +187,26 @@
                                 <button name="vote" value="abstain" type="submit" class="game-btn game-btn-secondary{% if prop.my_vote == 'abstain' %} is-mine{% endif %}">Abstain</button>
                             </form>
 
+                            {% set total_votes = ((prop.votes_for or 0) + (prop.votes_against or 0) + (prop.votes_abstain or 0))|round(1) %}
                             <div class="assembly-tally">
                                 <span class="game-badge game-badge-good">For {{ prop.votes_for|round(1) }}</span>
                                 <span class="game-badge game-badge-bad">Against {{ prop.votes_against|round(1) }}</span>
                                 <span class="game-badge game-badge-warn">Abstain {{ prop.votes_abstain|round(1) }}</span>
+                                <span class="game-badge game-badge-subtle">Total {{ total_votes }}</span>
                                 {% if prop.my_vote %}<span class="game-faint" style="align-self: center;">You voted {{ prop.my_vote }}</span>{% endif %}
+                            </div>
+                            <div class="assembly-vote-bar" style="margin-top: 8px; width: 100%;">
+                                <div class="game-spread game-faint" style="font-size: 11px; margin-bottom: 3px;">
+                                    <span>{% if total_votes > 0 %}{{ (((prop.votes_for or 0) / total_votes) * 100)|round }}% in favor{% else %}No votes yet{% endif %}</span>
+                                    <span>{{ total_votes }} votes cast</span>
+                                </div>
+                                <div style="height: 6px; display: flex; border-radius: 3px; overflow: hidden; background: var(--surfaceTwo, rgba(255,255,255,0.08));">
+                                    {% if total_votes > 0 %}
+                                    <div style="width: {{ (((prop.votes_for or 0) / total_votes) * 100)|round(1) }}%; background: var(--success);" title="For: {{ prop.votes_for }}"></div>
+                                    <div style="width: {{ (((prop.votes_against or 0) / total_votes) * 100)|round(1) }}%; background: var(--danger);" title="Against: {{ prop.votes_against }}"></div>
+                                    <div style="width: {{ (((prop.votes_abstain or 0) / total_votes) * 100)|round(1) }}%; background: #eab308;" title="Abstain: {{ prop.votes_abstain }}"></div>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                         {% endfor %}
@@ -215,7 +231,18 @@
                                 <span class="game-badge {{ 'game-badge-good' if prop.status == 'passed' else 'game-badge-bad' }}">{{ prop.status|capitalize }}</span>
                             </div>
                             {% if prop.text %}<p class="assembly-item-text" style="margin-bottom: 6px;">{{ prop.text }}</p>{% endif %}
-                            <div class="game-faint">For {{ prop.votes_for|round(1) }} &middot; Against {{ prop.votes_against|round(1) }}</div>
+                            {% set total_res_votes = ((prop.votes_for or 0) + (prop.votes_against or 0) + (prop.votes_abstain or 0))|round(1) %}
+                            <div class="game-spread game-faint" style="font-size: 11.5px; margin-bottom: 4px;">
+                                <span>For {{ prop.votes_for|round(1) }} &middot; Against {{ prop.votes_against|round(1) }} &middot; Abstain {{ prop.votes_abstain|round(1) }}</span>
+                                <span>Total: {{ total_res_votes }}</span>
+                            </div>
+                            <div style="height: 5px; display: flex; border-radius: 3px; overflow: hidden; background: var(--surfaceTwo, rgba(255,255,255,0.08));">
+                                {% if total_res_votes > 0 %}
+                                <div style="width: {{ (((prop.votes_for or 0) / total_res_votes) * 100)|round(1) }}%; background: var(--success);" title="For: {{ prop.votes_for }}"></div>
+                                <div style="width: {{ (((prop.votes_against or 0) / total_res_votes) * 100)|round(1) }}%; background: var(--danger);" title="Against: {{ prop.votes_against }}"></div>
+                                <div style="width: {{ (((prop.votes_abstain or 0) / total_res_votes) * 100)|round(1) }}%; background: #eab308;" title="Abstain: {{ prop.votes_abstain }}"></div>
+                                {% endif %}
+                            </div>
                         </div>
                         {% endfor %}
                     </div>

@@ -6,8 +6,6 @@ import variables
 BUILDING_DISPLAY_NAMES = {
     "coal_burners": "Coal power plants",
     "oil_burners": "Oil power plants",
-    "malls": "Fulfillment centers",
-    "monorails": "Bullet trains",
 }
 
 CITY_UNITS = frozenset(

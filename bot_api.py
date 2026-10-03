@@ -1035,7 +1035,7 @@ def bot_heuristics_sync():
     if action == "spam_warning":
         try:
             QueryHelper.execute("INSERT INTO events (user_id, title, message, created_at) VALUES (%s, %s, %s, NOW())", 
-                (user_id, "Discord Warning", "You received a spam warning on our Discord server. Continued violations may affect your in-game standing."))
+                (user_id, "Discord Warning", "You received a spam warning on our Discord server. Continued violations may lead to moderation action on the Discord server."))
         except:
             pass
         return jsonify({"ok": True, "message": "Spam warning synced"})

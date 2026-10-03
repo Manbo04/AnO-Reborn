@@ -4,6 +4,35 @@ Chronological log of debugging/feature sessions on this repo, moved out of CLAUD
 
 ---
 
+### Session: 2026-10-03
+
+**Task**: Discord Scan Bug Fixes & Suggestions (Reported in past 8-24h)
+
+**What Was Done**:
+- **Discord Scan**: Scanned Affairs and Order Discord forum and text channels (`bug-reports`, `suggestions`, `general`, `chat`, `ask-the-bot`) for recent player issues and suggestions.
+- **Treasury draining with positive net profit & Coalition tax on net income**:
+  - Preloaded user building upkeep in `app_core/game_ticks/taxes.py` and taxed `taxable_profit = max(0, money - upkeep)` so alliance tax is on net profit after upkeep, preventing bankruptcy on members with positive gross tax but high upkeep.
+  - Updated `countries.py` tax deduction calculation to deduct tax from net profit after building upkeep.
+  - Updated `templates/coalition.html` and `templates/coalition_v2.html` descriptions.
+- **Happiness Stuck at 3% ("they say it'll make you happy. they lie")**:
+  - Exposed unemployment penalty (>30% unemployment docks 10 happiness per tick) in `app_core/economy/province_effects.py` and `province.py`.
+  - Added power awareness (`has_power`) to `province_stat_breakdown`; unpowered energy-consuming buildings are now marked `Unpowered` with 0 net effect.
+  - Displayed `Unpowered` badge in `templates/partials/province_info.html`.
+- **Battle History Notifications for Defender**:
+  - In `wars/routes.py`, regular combat now records battle reports in the `news` table for both defender and attacker detailing combat domain, casualties on both sides, victory/defeat outcome, and war conclusion notice if war ended.
+- **Remove Citizen Army for Naval and Air Attacks**:
+  - In `wars/routes.py`, citizen militia defense is now strictly limited to ground domain (`war_domain == "ground" or war_domain is None`). Air and naval assaults no longer face citizen army militias.
+- **World Assembly Formatting & Vote Indicators**:
+  - In `templates/assembly.html`, added `white-space: pre-wrap;` to resolution descriptions to preserve formatting and line breaks.
+  - Added vote progress bars and vote breakdown counts (For, Against, Abstain, % in favor) to open proposals and past resolutions.
+- **Province Demographics Chart Blanking Fix**:
+  - In `static/province-demographics.js`, replaced brittle one-shot `load` listener with a resilient polling retry loop (up to 30 attempts at 100ms) with visibility detection (`canvas.offsetParent !== null` and non-zero dimensions) and tab switch integration.
+- **News Seen / Read Status & Migration**:
+  - Implemented `is_read` column tracking on `news` with index (`migrations/0100_add_news_is_read.sql`).
+  - Added unit test coverage `tests/test_news_seen_status.py` and `tests/test_monetary_net_deficit.py`.
+
+---
+
 ### Session: 2026-07-05
 
 **Task**: Production outage — 502 sitewide

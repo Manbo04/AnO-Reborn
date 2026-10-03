@@ -194,11 +194,11 @@
 
 <div class="templatediv">
 
-    {{ game_hero('All Technologies', badge_icon='engineering', badge_text=(unlocked_ids|length ~ ' of ' ~ tech_rows|length ~ ' researched') if unlocked_ids is defined and tech_rows is defined else None, subtitle='One-time nationwide upgrades — permanent effects, no upkeep.') }}
+    {{ game_hero('All Technologies', badge_icon='engineering', badge_text=(unlocked_ids|length ~ ' of ' ~ tech_rows|length ~ ' researched') if unlocked_ids is defined and tech_rows is defined else None, subtitle='One-time nationwide upgrades — no upkeep.') }}
 
     <div class="templatedivcontent">
 
-        <p class="templatecontentpleft landingpagecontent">Country projects are ample, expensive public works endeavours that can increase production, decrease construction costs, increase efficacy in war, and even unlock new technologies to improve your economy and military. All projects are researched using {{ research_cost_resource }}.
+        <p class="templatecontentpleft landingpagecontent">Country projects are ample, expensive public works endeavours that can increase production, decrease upkeep costs, increase efficacy in war, and even unlock new technologies to improve your economy and military. All projects are researched using {{ research_cost_resource }}.
         </p>
 
         {% if tech_rows and tech_rows|length > 0 %}
@@ -249,7 +249,7 @@
                             <p class="templatecontentpleft">Reworking of existing nuclear reactors and regulation of future nuclear reactors results in +6 energy produced per reactor
                             </p>
 
-                            <ul>Costs {{ tech_costs.get("betterengineering", 0) | weight_fmt }} components</ul>
+                            <ul>Costs {{ tech_costs.get("betterengineering", 0) | weight_fmt }} {{ research_cost_resource }}</ul>
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["betterengineering"] %}
                                 <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/betterEngineering">
@@ -278,7 +278,7 @@
                             <p class="templatecontentpleft">With research into optimized construction methods and rebuilding of existing structures, upkeep costs for all existing and future industry infrastructure is decreased by 20%
                             </p>
 
-                            <ul>Costs {{ tech_costs.get("cheapermaterials", 0) | weight_fmt }} components</ul>
+                            <ul>Costs {{ tech_costs.get("cheapermaterials", 0) | weight_fmt }} {{ research_cost_resource }}</ul>
                             <div class="purchasemilitarydiv">
 
                                 {% if upgrades["cheapermaterials"] %}
@@ -311,7 +311,7 @@
                             <p class="templatecontentpleft">Outdated malls are replaced with fulfillment centers, delivering goods to consumers. Consequently, upkeep for malls is decreased by 30%
                             </p>
 
-                            <ul>Costs {{ tech_costs.get("onlineshopping", 0) | weight_fmt }} components</ul>
+                            <ul>Costs {{ tech_costs.get("onlineshopping", 0) | weight_fmt }} {{ research_cost_resource }}</ul>
                             <div class="purchasemilitarydiv">
 
                                 {% if not upgrades["onlineshopping"] %}
@@ -347,7 +347,7 @@
                             <p class="templatecontentpleft">Government regulation and implementation of new building standards, green energy quotas, and energy use results in retail producing 25% less pollution
                             </p>
 
-                            <ul>Costs {{ tech_costs.get("governmentregulation", 0) | weight_fmt }} components</ul>
+                            <ul>Costs {{ tech_costs.get("governmentregulation", 0) | weight_fmt }} {{ research_cost_resource }}</ul>
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["governmentregulation"] %}
                                 <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/governmentRegulation">
@@ -379,7 +379,7 @@
                             <p class="templatecontentpleft">Implementation of a national health institution allows for organization and effective distribution and communication, increasing each hospital's happiness increase by 30%
                             </p>
 
-                            <ul>Costs {{ tech_costs.get("nationalhealthinstitution", 0) | weight_fmt }} components</ul>
+                            <ul>Costs {{ tech_costs.get("nationalhealthinstitution", 0) | weight_fmt }} {{ research_cost_resource }}</ul>
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["nationalhealthinstitution"] %}
                                 <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/nationalHealthInstitution">
@@ -413,7 +413,7 @@
                             <p class="templatecontentpleft">Re-creation of existing and future monorails, railways, and metros into high speed rail increases productivity increase by 20%
                             </p>
 
-                            <ul>Costs {{ tech_costs.get("highspeedrail", 0) | weight_fmt }} components</ul>
+                            <ul>Costs {{ tech_costs.get("highspeedrail", 0) | weight_fmt }} {{ research_cost_resource }}</ul>
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["highspeedrail"] %}
                                 <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/highSpeedRail">
@@ -448,7 +448,7 @@
                             <p class="templatecontentpleft">The implementation of automation and advanced technologies into conventional farming increases farm output by 50%
                             </p>
 
-                            <ul>Costs {{ tech_costs.get("advancedmachinery", 0) | weight_fmt }} components</ul>
+                            <ul>Costs {{ tech_costs.get("advancedmachinery", 0) | weight_fmt }} {{ research_cost_resource }}</ul>
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["advancedmachinery"] %}
                                 <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/advancedMachinery">
@@ -480,7 +480,7 @@
                             <p class="templatecontentpleft">Research and development into explosives allows for more effective bauxite harvesting, increasing production by 45%
                             </p>
 
-                            <ul>Costs {{ tech_costs.get("strongerexplosives", 0) | weight_fmt }} components</ul>
+                            <ul>Costs {{ tech_costs.get("strongerexplosives", 0) | weight_fmt }} {{ research_cost_resource }}</ul>
                             <div class="purchasemilitarydiv">
 
                                 {% if not upgrades["strongerexplosives"] %}
@@ -510,10 +510,10 @@
 
                             <h3 class="templatecontentheadercenter">Widespread Propaganda</h3>
 
-                            <p class="templatecontentpleft">Use of propaganda in media, news, and through devices allows for easy recruitment of soldiers, bringing costs down by 35%
+                            <p class="templatecontentpleft">Use of propaganda in media, news, and through devices keeps your citizens content, removing the happiness penalty caused by high unemployment
                             </p>
 
-                            <ul>Costs {{ tech_costs.get("widespreadpropaganda", 0) | weight_fmt }} components</ul>
+                            <ul>Costs {{ tech_costs.get("widespreadpropaganda", 0) | weight_fmt }} {{ research_cost_resource }}</ul>
                             {% if tech_prereq_names.get("widespreadpropaganda") %}<p class="templatecontentpleft"><strong>Requires:</strong> {{ tech_prereq_names.get("widespreadpropaganda") }}</p>{% endif %}
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["widespreadpropaganda"] %}
@@ -548,7 +548,7 @@
                             <p class="templatecontentpleft">Increased funding and construction of new operative bases allows for the ability to recruit and maintain more spies by a factor of 40%
                             </p>
 
-                            <ul>Costs {{ tech_costs.get("increasedfunding", 0) | weight_fmt }} components</ul>
+                            <ul>Costs {{ tech_costs.get("increasedfunding", 0) | weight_fmt }} {{ research_cost_resource }}</ul>
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["increasedfunding"] %}
                                 <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/increasedFunding">
@@ -579,7 +579,7 @@
                             <p class="templatecontentpleft">Research and development into technologies allows for cheaper and quicker production of components, decreasing resources needed to make components by 25%
                             </p>
 
-                            <ul>Costs {{ tech_costs.get("automationintegration", 0) | weight_fmt }} components</ul>
+                            <ul>Costs {{ tech_costs.get("automationintegration", 0) | weight_fmt }} {{ research_cost_resource }}</ul>
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["automationintegration"] %}
                                 <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/automationIntegration">
@@ -612,7 +612,7 @@
                             <p class="templatecontentpleft">Heavy subsidisation of the steel industry allows for investments into large scale projects, decreasing the iron and coal each Steel Mill uses by 30% (gold upkeep is unchanged)
                             </p>
 
-                            <ul>Costs {{ tech_costs.get("largerforges", 0) | weight_fmt }} components</ul>
+                            <ul>Costs {{ tech_costs.get("largerforges", 0) | weight_fmt }} {{ research_cost_resource }}</ul>
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["largerforges"] %}
                                 <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/largerForges">
@@ -644,7 +644,7 @@
                             </p>
 
                             <p class="templatecontentpleft text-info" style="margin-bottom: 4px;"><strong>Requires:</strong> 2 Universities nationwide</p>
-                            <ul>Costs {{ tech_costs.get("integratedsteelmaking", 0) | weight_fmt }} components</ul>
+                            <ul>Costs {{ tech_costs.get("integratedsteelmaking", 0) | weight_fmt }} {{ research_cost_resource }}</ul>
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["integratedsteelmaking"] %}
                                 <button type="submit" class="templatedivbutton templatecenteredbutton d-flex-center" formaction="/upgrades_sb/buy/integratedSteelmaking"><span class="material-icons-outlined">add_circle_outline</span>Research</button> {% endif %} {% if upgrades["integratedsteelmaking"] %}
@@ -673,7 +673,7 @@
                             </p>
 
                             <p class="templatecontentpleft text-info" style="margin-bottom: 4px;"><strong>Requires:</strong> 2 Universities nationwide</p>
-                            <ul>Costs {{ tech_costs.get("electricarcfurnace", 0) | weight_fmt }} components</ul>
+                            <ul>Costs {{ tech_costs.get("electricarcfurnace", 0) | weight_fmt }} {{ research_cost_resource }}</ul>
                             <div class="purchasemilitarydiv">
                                 {% if not upgrades["electricarcfurnace"] %}
                                 <button type="submit" class="templatedivbutton templatecenteredbutton d-flex-center" formaction="/upgrades_sb/buy/electricArcFurnace"><span class="material-icons-outlined">add_circle_outline</span>Research</button> {% endif %} {% if upgrades["electricarcfurnace"] %}
@@ -698,10 +698,10 @@
 
                         <h3 class="templatecontentheadercenter">Looting Teams</h3>
 
-                        <p class="templatecontentpleft">Looting teams will acquire military supplies from annexed establishments, increasing war supplies production by 10%
+                        <p class="templatecontentpleft">Looting teams strip resources from defeated enemies: when you win a war, you take 30% of the loser's resources instead of 20%
                         </p>
 
-                        <ul>Costs {{ tech_costs.get("lootingteams", 0) | weight_fmt }} components</ul>
+                        <ul>Costs {{ tech_costs.get("lootingteams", 0) | weight_fmt }} {{ research_cost_resource }}</ul>
                         {% if tech_prereq_names.get("lootingteams") %}<p class="templatecontentpleft"><strong>Requires:</strong> {{ tech_prereq_names.get("lootingteams") }}</p>{% endif %}
                         <div class="purchasemilitarydiv">
                             {% if not upgrades["lootingteams"] %}
@@ -731,10 +731,10 @@
 
                         <h3 class="templatecontentheadercenter">Organized Supply Lines</h3>
 
-                        <p class="templatecontentpleft">Organized supply lines gives annexed citizens jobs producing resources for your war economy, further increasing war supplies production by 15%
+                        <p class="templatecontentpleft">Organized supply lines gives annexed citizens jobs producing resources for your war economy, increasing war supplies production by 15%
                         </p>
 
-                        <ul>Costs {{ tech_costs.get("organizedsupplylines", 0) | weight_fmt }} components</ul>
+                        <ul>Costs {{ tech_costs.get("organizedsupplylines", 0) | weight_fmt }} {{ research_cost_resource }}</ul>
                         <div class="purchasemilitarydiv">
                             {% if not upgrades["organizedsupplylines"] %}
                             <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/organizedSupplyLines">
@@ -764,7 +764,7 @@
                         <p class="templatecontentpleft">Large storehouses allows for greater storage of war supplies, increasing max supplies by 25%
                         </p>
 
-                        <ul>Costs {{ tech_costs.get("largestorehouses", 0) | weight_fmt }} components</ul>
+                        <ul>Costs {{ tech_costs.get("largestorehouses", 0) | weight_fmt }} {{ research_cost_resource }}</ul>
                         <div class="purchasemilitarydiv">
                             {% if not upgrades["largestorehouses"] %}
                             <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/largeStoreHouses">
@@ -793,10 +793,10 @@
 
                         <h3 class="templatecontentheadercenter">Ballistic Missile Silos</h3>
 
-                        <p class="templatecontentpleft">Ballistic missile silos provides countries with the ability to develop and deploy ballistic missiles
+                        <p class="templatecontentpleft">Ballistic missile research lays the groundwork for inter-continental ballistic missiles. It has no effect on its own
                         </p>
 
-                        <ul>Costs {{ tech_costs.get("ballisticmissilesilo", 0) | weight_fmt }} components</ul>
+                        <ul>Costs {{ tech_costs.get("ballisticmissilesilo", 0) | weight_fmt }} {{ research_cost_resource }}</ul>
                         {% if tech_prereq_names.get("ballisticmissilesilo") %}<p class="templatecontentpleft"><strong>Requires:</strong> {{ tech_prereq_names.get("ballisticmissilesilo") }}</p>{% endif %}
                         <div class="purchasemilitarydiv">
                             {% if not upgrades["ballisticmissilesilo"] %}
@@ -832,7 +832,7 @@
 
                         {% if tech_prereq_names.get("icbmsilo") %}<p class="templatecontentpleft" style="margin-bottom: 4px;"><strong>Requires:</strong> {{ tech_prereq_names.get("icbmsilo") }}</p>{% endif %}
                         <p class="templatecontentpleft text-info" style="margin-bottom: 4px;"><strong>Requires:</strong> 2 Universities nationwide</p>
-                        <ul>Costs {{ tech_costs.get("icbmsilo", 0) | weight_fmt }} components</ul>
+                        <ul>Costs {{ tech_costs.get("icbmsilo", 0) | weight_fmt }} {{ research_cost_resource }}</ul>
                         <div class="purchasemilitarydiv">
                             {% if not upgrades["icbmsilo"] %}
                             <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/ICBMsilo">
@@ -861,12 +861,12 @@
 
                         <h3 class="templatecontentheadercenter">Nuclear Testing Facility</h3>
 
-                        <p class="templatecontentpleft">Nuclear testing facilities gives countries the ability to create nuclear warheads and establish nuclear reactors
+                        <p class="templatecontentpleft">Nuclear testing facilities gives countries the ability to create nuclear warheads
                         </p>
 
                         {% if tech_prereq_names.get("nucleartestingfacility") %}<p class="templatecontentpleft" style="margin-bottom: 4px;"><strong>Requires:</strong> {{ tech_prereq_names.get("nucleartestingfacility") }}</p>{% endif %}
                         <p class="templatecontentpleft text-info" style="margin-bottom: 4px;"><strong>Requires:</strong> 2 Universities nationwide</p>
-                        <ul>Costs {{ tech_costs.get("nucleartestingfacility", 0) | weight_fmt }} components</ul>
+                        <ul>Costs {{ tech_costs.get("nucleartestingfacility", 0) | weight_fmt }} {{ research_cost_resource }}</ul>
                         <div class="purchasemilitarydiv">
                             {% if not upgrades["nucleartestingfacility"] %}
                             <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/nuclearTestingFacility">
