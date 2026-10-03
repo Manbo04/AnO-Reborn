@@ -55,6 +55,31 @@ Chronological log of debugging/feature sessions on this repo, moved out of CLAUD
 
 ---
 
+### Session: 2026-10-03 (Feature & Community Response)
+
+**Task**: Background Images & Glass Overlay Toggle, Account Dark Mode Switch, and Discord Player Notification
+
+**What Was Done**:
+- **Background Image & Frost Removal (Player Request by Silent)**:
+  - Addressed suggestion in thread `"Add an option to remove background images from pages"` by player `Silent`: added setting to completely disable background images and frosted glass blurs/overlays across all pages, rendering a clean, solid, distraction-free background.
+  - Implemented setting in `static/script.js` (`isBackgroundImagesEnabled()`, `setBackgroundImages()`, `toggleBackgroundImages()`) using `localStorage` key `ano_background_images` and CSS class `no-bg-images` / attribute `data-bg-images="off"`.
+  - Added inline `<script>` in `templates/layout.html` head to prevent FOUC / flash of background image during page load.
+  - Updated `static/css/game-glass.css` with `.no-bg-images` styles: hides `.game-page-bg` and `.game-page-overlay`, sets `body` background to `var(--background) !important`, and turns glass cards into solid `var(--foreground)` without blur.
+  - Re-bundled CSS with `python3 scripts/bundle_game_css.py` (`style.css` and `style.min.css`).
+- **Account Settings UI Modernization**:
+  - In `templates/account_v2.html` and `templates/account.html`, modernized the settings section in the General tab with `.game-settings-list` and styled `.game-switch` toggles:
+    - **Dark Mode**: Replaced legacy raw checkbox with modern slider toggle synced with top navbar.
+    - **Background Images**: Modern slider toggle controlling page background images and overlays.
+- **Testing & Deployment**:
+  - Created `tests/test_account_settings_toggles.py` covering both switches, default states, and HTML structures. All 6 tests pass.
+  - Committed (`0c98ce62`) and pushed to `master`; automatically deployed and verified live on Railway (`https://affairsandorder.org/account`).
+- **Discord Bot Notification to Requester**:
+  - Per project instructions, contacted `Silent` (`silentvoices`, user ID `138867089728339968`) directly in their suggestion thread (`1555797476232138782`) via the Affairs and Order Bot (`Affairs and Order`, bot user ID `1447272377896669236`).
+  - Posted reply (message ID `1555869607112216608`) notifying them that the background images toggle is implemented and live in the Account settings (General tab).
+  - Updated `scripts/discord_reply.py` to support local env token fallback (`4d36b2d2`).
+
+---
+
 ### Session: 2026-07-05
 
 **Task**: Production outage — 502 sitewide
