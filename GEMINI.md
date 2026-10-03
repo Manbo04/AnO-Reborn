@@ -35,4 +35,5 @@ production serves). Do not hand-edit `style.min.css`.
 
 ## 🤖 DISCORD AUTOMATION
 
-When reading Discord messages to generate replies or fix bugs, completely ignore messages that just contain an emote or are otherwise non-actionable. Do not generate generic 'Recommendation: Ignore' replies, as this clutters the chat.
+- **Automatic Responses via Discord Bot**: You can and should always use the Affairs and Order Discord bot (`discord_bot/`) to respond automatically to players and threads (e.g., bug reports, announcements, status updates). This is the mandatory, default way you should always communicate fixes and responses back to Discord.
+- When reading Discord messages to generate replies or fix bugs, completely ignore messages that just contain an emote or are otherwise non-actionable. Do not generate generic 'Recommendation: Ignore' replies, as this clutters the chat.

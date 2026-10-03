@@ -195,7 +195,7 @@ disagree about who holds the lock, background economy ticks silently stop.
 - `web` — the Flask app above.
 - `discord_bot/` — a standalone Discord bot service (`discord.py`), started via `python -m discord_bot.main`,
   talking to `web` through `bot_api.py` (`BOT_API_SECRET`-authenticated endpoints: `/api/bot/register`,
-  `/me`, `/nation`, `/wars`, `/resources`).
+  `/me`, `/nation`, `/wars`, `/resources`). You can and should always use the Affairs and Order Discord bot to respond automatically to players and threads (e.g. bug reports, status updates). This is the mandatory way you should always do it.
 - `mcp-server/` — the "ano-game MCP" Node/TypeScript server referenced above, queries the game DB directly via `pg`.
 - `celery-worker` / beat — the background task runners.
 
