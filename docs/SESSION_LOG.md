@@ -33,6 +33,28 @@ Chronological log of debugging/feature sessions on this repo, moved out of CLAUD
 
 ---
 
+### Session: 2026-10-03 (continued)
+
+**Task**: Tax Income 2-Hour Skip Fix, Food Production Crisis Resolution & 24h Revenue Reimbursement
+
+**What Was Done**:
+- **Tax Tick Cursor & Lock Bug Fix**:
+  - In `app_core/game_ticks/taxes.py`, `tax_income()` previously updated `task_cursors.tax_income` to `max(all_user_ids)` at the end of each run. On the subsequent hour, querying `WHERE id > last_id` found zero users, triggering an empty-chunk branch that executed an early `conn.commit()`. This prematurely released the PostgreSQL transaction-level advisory lock (`pg_try_advisory_xact_lock`), causing every odd hour tick to abort and taxes to run only every 2 hours instead of 1 hour.
+  - Set `TAX_INCOME_CHUNK_SIZE` to 1000 so all active users (168) are processed within a single pass.
+  - Removed premature `conn.commit()` in the empty-chunk branch to preserve transaction locks.
+  - Updated cursor update logic: `next_cursor = 0 if len(users) < chunk_size else max(all_user_ids)`. The cursor now resets to 0 at the end of the pass, guaranteeing hourly execution every single hour.
+- **Root Cause of Food Crisis**:
+  - In `app_core/game_ticks/revenue.py`, agricultural buildings require monetary upkeep. Missing tax revenue drained player treasuries to 0 gold, which set `affordable_units = 0` for farms and food processing, halting food output while hourly population consumption continued, starving nations.
+- **Player Reimbursement**:
+  - Created `scripts/reimburse_players_24h.py` and migration `migrations/0101_reimburse_24h_revenue.sql` (tracked in `scripts/apply_all_pending_migrations.py` and executed via `scripts/start_production.sh`).
+  - Reimburses all players 24 hours of missing revenue (`max(24 * hourly_base, 2 * last_24h_history, last_24h_history)`) atomically into `stats.gold` and writes to `nation_revenue_history`.
+  - Replenishes food/rations in `user_economy` to at least a 24-hour supply for all nations to restore starved populations immediately.
+  - Resets `task_cursors.tax_income` to 0 and records idempotent completion in `player_reimbursements`.
+- **Tests**:
+  - Created offline regression tests in `tests/test_tax_income_cursor_reset.py` verifying cursor reset to 0 and empty-chunk lock preservation. All tests pass.
+
+---
+
 ### Session: 2026-07-05
 
 **Task**: Production outage — 502 sitewide

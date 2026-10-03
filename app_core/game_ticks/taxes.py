@@ -767,14 +767,15 @@ def tax_income():
             except Exception:
                 pass
 
-            # Update the progress cursor to the last processed user so subsequent
-            # task runs resume from the next ID and avoid reprocessing the same set
+            # Update the progress cursor.
+            # If this chunk reached the end of the user table (fewer than chunk_size users returned),
+            # reset cursor to 0 so the next hourly tick runs from the beginning and never skips an hour!
             try:
                 if all_user_ids:
-                    last_processed = max(all_user_ids)
+                    next_cursor = 0 if len(users) < chunk_size else max(all_user_ids)
                     db.execute(
                         "UPDATE task_cursors SET last_id=%s WHERE task_name=%s",
-                        (last_processed, "tax_income"),
+                        (next_cursor, "tax_income"),
                     )
                     try:
                         conn.commit()

@@ -105,6 +105,7 @@ MIGRATION_FILES = [
     "0098_player_analytics.sql",
     "0099_backfill_discord_id.sql",
     "0100_add_news_is_read.sql",
+    "0101_reimburse_24h_revenue.sql",
 ]
 
 
