@@ -819,3 +819,18 @@ DATABASE_PUBLIC_URL=... python3 scripts/apply_all_pending_migrations.py
 **What to watch**:
 - Physical resource simulation remains strictly gated by `simulated_funds` (idle buildings still do not produce physical resources when broke).
 
+
+## 2026-10-04 — Market UI Rework (Helios, #suggestions)
+
+**What was done** (dc3d40f6, migration 0104 applied to prod by hand first):
+- `/market` rebuilt as an order book per resource: BUY (sell offers, cheapest first) beside SELL (buy offers, best price first), sorted on a gold-normalised price, colour+text tag per offer (gold / held / exchange / unavailable), cheapest/highest/gap/last-trade summary. `templates/market.html` and the old paginated `count_offers`/`get_offers` were deleted.
+- `market_preferences` + `POST /market/preferences`; `market_fills` logs every market fill; Auto Orders (`/market/auto_orders`, `app_core/market/auto_orders.py`, hourly tick `app_core/game_ticks/market_auto_orders.py` at :13).
+- Density pass `static/css/game-compact.css` + `static/js/building-jump.js` (province building list ~50–60% shorter).
+
+**What to watch:**
+- First auto-order ticks (celery `tasks.task_market_auto_orders`): check `market_auto_orders.last_status` values and that no deadlock/`handle_exception` noise appears in celery logs.
+- `layout.html` sets `resources` for the HUD and shadows any template context var of that name.
+- `scripts/bundle_game_css.py` minifier removes the space before `:` — descendant pseudo selectors (`a :is()`, `a :not()`) silently break in `style.min.css`.
+- `templates/market_v2.html` is now always rendered for `/market` (the `market` THEME_V2 flag is no longer consulted there).
+
+**Next steps:** none required; possible follow-up is fixing the minifier and auditing existing CSS for the `x :pseudo` pattern.
