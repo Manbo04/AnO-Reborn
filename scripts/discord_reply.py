@@ -15,7 +15,28 @@ import sys
 import urllib.request
 
 
+import os
+
+
 def token() -> str | None:
+    tok = (os.getenv("DISCORD_BOT_TOKEN") or "").strip()
+    if tok:
+        return tok
+    env_paths = [
+        "/Users/dede/AnO-Orchestrator/.env",
+        os.path.expanduser("~/.config/panoptis/bot_token"),
+    ]
+    for ep in env_paths:
+        if os.path.exists(ep):
+            try:
+                with open(ep, "r", encoding="utf-8") as f:
+                    for line in f:
+                        if line.startswith("DISCORD_BOT_TOKEN="):
+                            val = line.split("=", 1)[1].strip()
+                            if val:
+                                return val
+            except Exception:
+                pass
     try:
         r = subprocess.run(
             ["railway", "variables", "--service", "bot", "--json"],
