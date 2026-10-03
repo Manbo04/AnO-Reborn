@@ -615,7 +615,10 @@ def get_revenue(cId, db=None):
                 ctax_row = db.fetchone()
                 if ctax_row:
                     tax_rate = ctax_row[1]
-                    coalition_tax_deducted = int(ti_money * tax_rate / 100)
+                    total_building_upkeep = sum(op.get("cost", 0) for op in upkeep_queue)
+                    taxable_profit = max(0, ti_money - total_building_upkeep)
+                    if taxable_profit > 0 and tax_rate > 0:
+                        coalition_tax_deducted = int(taxable_profit * tax_rate / 100)
             except Exception:
                 rollback_db_cursor(db)
 
@@ -625,9 +628,18 @@ def get_revenue(cId, db=None):
         if coalition_tax_deducted:
             revenue["coalition_tax"] = coalition_tax_deducted
 
-        # Money-constrained simulation of the upkeep tick, like the real
-        # task runner: buildings run in order while the treasury covers their
-        # upkeep. Right after the :25 upkeep tick the treasury is at its
+        # Total building operating costs (upkeep). Unconditionally subtracted from
+        # monetary net so players see their true hourly profit or deficit.
+        # Previously, if treasury was empty or upkeep exceeded tax income, unaffordable
+        # buildings hit `continue` in the simulated loop below and were skipped from
+        # the money deduction, falsely showing a positive monetary net to deficit nations.
+        total_building_upkeep = sum(upkeep_op["cost"] for upkeep_op in upkeep_queue)
+        revenue["net"]["money"] -= total_building_upkeep
+        revenue["building_upkeep"] = total_building_upkeep
+
+        # Money-constrained simulation of the upkeep tick for physical resources:
+        # buildings produce and consume resources only while the treasury covers
+        # their upkeep. Right after the :25 upkeep tick the treasury is at its
         # hourly low but the :00 tax payout arrives before the next upkeep
         # bill, so count it -- otherwise a nation that just spent its gold
         # saw every net at 0 until taxes landed (ieb, 2026-09-22).
@@ -637,7 +649,6 @@ def get_revenue(cId, db=None):
             if simulated_funds < upkeep_op["cost"]:
                 continue
             simulated_funds -= upkeep_op["cost"]
-            revenue["net"]["money"] -= upkeep_op["cost"]
             for resource, delta in upkeep_op["net"].items():
                 revenue["net"][resource] += delta
 
@@ -726,6 +737,7 @@ def get_revenue(cId, db=None):
         }
         if "coalition_tax" in revenue:
             filtered_revenue["coalition_tax"] = revenue["coalition_tax"]
+        filtered_revenue["building_upkeep"] = total_building_upkeep
         # Tax the nation receives at the next payout (after coalition tax);
         # the province page uses it for the same upkeep-budget check.
         filtered_revenue["next_tax_income"] = next_tax_income

@@ -592,7 +592,11 @@
 <div class="stat-grid">
     <div class="templatedivflex2left stat-card">
         <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'money')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Monetary net</strong>
-        <span class="stat-value">{{ revenue["net"]["money"] | fmt }}</span>
+        <span class="stat-value {% if revenue['net']['money'] < 0 %}text-danger{% elif revenue['net']['money'] > 0 %}text-success{% endif %}">{% if revenue['net']['money'] > 0 %}+{% endif %}{{ revenue["net"]["money"] | fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card" data-tippy-content="Total hourly operating costs for all active buildings in your provinces. Deducted every tick.">
+        <strong class="stat-label">Building upkeep</strong>
+        <span class="stat-value {% if revenue.get('building_upkeep', 0) > 0 %}text-danger{% endif %}">{% if revenue.get("building_upkeep", 0) > 0 %}-{% endif %}{{ revenue.get("building_upkeep", 0) | fmt }}</span>
     </div>
     <div class="templatedivflex2left stat-card" data-tippy-content="Your coalition leader sets a tax rate on member income. This amount is skimmed off your gross revenue every tick before you receive it &mdash; talk to your leadership if the rate feels too high, or leave the coalition to keep 100%.<br><br><a href='/my_coalition' style='color:#4da8da;text-decoration:underline;'>&#128214; View coalition</a>">
         <strong class="stat-label">Coalition tax</strong>

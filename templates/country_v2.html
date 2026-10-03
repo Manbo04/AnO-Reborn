@@ -253,7 +253,7 @@
                     </div>
                     <div style="margin-bottom: 14px;">
                         <div class="game-spread" style="font-size: 12.5px; margin-bottom: 6px;">
-                            <span class="game-row" style="gap: 7px;"><img class="game-icon-sm" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}?v=3" alt=""><span class="game-faint" data-tippy-content="How much of this hour's rations need you have in stock. A full bar means at least one hour covered &mdash; there is no cap on how much food you can store.">Food reserves</span></span>
+                            <span class="game-row" style="gap: 7px;"><img class="game-icon-sm" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}?v=3" alt=""><span class="game-faint" data-tippy-content="How much of this hour's rations need you have in stock. A full bar means at least one hour covered. There is no hard storage cap, but rations above your buffer (14 days of need plus extra storage from distribution buildings) spoil at 2% per hour.">Food reserves</span></span>
                             {# Shown as hours of cover: a bare "100%" read like a storage cap. #}
                             <span>{% if rations_need and resources.rations >= rations_need %}{{ ((resources.rations / rations_need) | int) | fmt }}h of rations{% else %}{{ rations_pct | round }}% of this hour's need{% endif %}</span>
                         </div>
@@ -970,7 +970,11 @@
 <div class="stat-grid">
     <div class="templatedivflex2left stat-card">
         <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'money')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Monetary net</strong>
-        <span class="stat-value">{{ revenue["net"]["money"] | fmt }}</span>
+        <span class="stat-value {% if revenue['net']['money'] < 0 %}text-danger{% elif revenue['net']['money'] > 0 %}text-success{% endif %}">{% if revenue['net']['money'] > 0 %}+{% endif %}{{ revenue["net"]["money"] | fmt }}</span>
+    </div>
+    <div class="templatedivflex2left stat-card" data-tippy-content="Total hourly operating costs for all active buildings in your provinces. Deducted every tick.">
+        <strong class="stat-label">Building upkeep</strong>
+        <span class="stat-value {% if revenue.get('building_upkeep', 0) > 0 %}text-danger{% endif %}">{% if revenue.get("building_upkeep", 0) > 0 %}-{% endif %}{{ revenue.get("building_upkeep", 0) | fmt }}</span>
     </div>
     <div class="templatedivflex2left stat-card" data-tippy-content="Your coalition leader sets a tax rate on member income. This amount is skimmed off your gross revenue every tick before you receive it &mdash; talk to your leadership if the rate feels too high, or leave the coalition to keep 100%.<br><br><a href='/my_coalition' style='color:#4da8da;text-decoration:underline;'>&#128214; View coalition</a>">
         <strong class="stat-label">Coalition tax</strong>
@@ -1786,7 +1790,7 @@
                             <span class="material-icons-outlined country-customize-section-icon" aria-hidden="true">badge</span>
                             <div>
                                 <h3 id="country-name-heading" class="country-customize-section-title">Nation Name</h3>
-                                <p class="country-customize-section-hint">Choose a powerful name for your country. Letters and numbers only.</p>
+                                <p class="country-customize-section-hint">Choose a powerful name for your country. 3–20 characters: letters, numbers and spaces.</p>
                             </div>
                         </div>
                         <div class="country-lore-editor-wrap" style="padding: 15px 20px;">
@@ -1829,7 +1833,7 @@
                                 <h3 id="country-biome-heading" class="country-customize-section-title">Homeland biome</h3>
                                 <p class="country-customize-section-hint country-biome-warning">
                                     <span class="material-icons-outlined" aria-hidden="true">warning</span>
-                                    Changing biome removes all industry buildings in every province.
+                                    Changing biome removes your pumpjacks, lumber mills and coal, iron, copper, bauxite, lead and uranium mines in every province.
                                 </p>
                             </div>
                         </div>
@@ -2130,6 +2134,7 @@
                                 <div>Elderly population +20% consumer goods consumption</div>
                                 <div>Elderly death rate -30%</div>
                                 <div>Happiness +5 per province</div>
+                                <div>Universities cost 14% more gold</div>
 
                             </li>
                         </div>
@@ -2145,6 +2150,7 @@
 
                                 <div>Graduation rates +50%</div>
                                 <div>Happiness +3 per province</div>
+                                <div>All buildings cost 4% less gold</div>
 
                             </li>
                         </div>
@@ -2160,6 +2166,7 @@
 
                                 <div>Industrial building upkeep -30%</div>
                                 <div>Pollution from industry +30%</div>
+                                <div>University productivity and happiness bonus +10%</div>
 
                             </li>
                         </div>
@@ -3017,7 +3024,6 @@
                             <option value="components" class="templateoption ">Components</option>
                             <option value="steel" class="templateoption ">Steel</option>
                             <option value="consumer_goods" class="templateoption ">Consumer Goods</option>
-                            <option value="copper_plates" class="templateoption ">Copper Plates</option>
                             <option value="aluminium" class="templateoption ">Aluminium</option>
                             <option value="gasoline" class="templateoption ">Gasoline</option>
                             <option value="ammunition" class="templateoption ">Ammunition</option>

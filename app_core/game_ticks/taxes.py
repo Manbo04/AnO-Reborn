@@ -464,6 +464,35 @@ def tax_income():
                 print(f"Coalition tax preload skipped: {e}")
                 conn.rollback()
 
+            # Preload building upkeep for members paying coalition tax so tax applies
+            # only to net profit (gross revenue minus upkeep) instead of gross revenue.
+            user_building_upkeep = {}
+            if coalition_tax_map:
+                try:
+                    dbdict.execute(
+                        """
+                        SELECT ub.user_id, bd.name, COALESCE(SUM(ub.quantity), 0) AS qty
+                        FROM user_buildings ub
+                        JOIN building_dictionary bd ON bd.building_id = ub.building_id
+                        WHERE ub.user_id = ANY(%s)
+                        GROUP BY ub.user_id, bd.name
+                        """,
+                        (list(coalition_tax_map.keys()),),
+                    )
+                    for row in dbdict.fetchall():
+                        if isinstance(row, dict):
+                            uid = row.get("user_id")
+                            bname = row.get("name")
+                            qty = row.get("qty") or 0
+                        else:
+                            uid = row[0]
+                            bname = row[1]
+                            qty = row[2] if len(row) > 2 else 0
+                        cost_per = variables.NEW_INFRA.get(bname, {}).get("money", 0)
+                        user_building_upkeep[uid] = user_building_upkeep.get(uid, 0) + (qty * cost_per)
+                except Exception as e:
+                    print(f"Building upkeep preload error for coalition tax: {e}")
+
             # Prepare batch updates
             money_updates = []
             cg_updates = []
@@ -566,12 +595,16 @@ def tax_income():
                 if not money:
                     continue
 
-                # Alliance tax: deduct % from income and deposit to coalition bank
+                # Alliance tax: deduct % from NET profit (gross revenue minus building upkeep)
+                # so building operating costs are protected and members do not bleed money.
                 tax_deducted = 0
                 if user_id in coalition_tax_map:
                     col_id, tax_rate = coalition_tax_map[user_id]
-                    tax_deducted = int(money * tax_rate / 100)
-                    tax_deducted = min(money, tax_deducted)
+                    upkeep = user_building_upkeep.get(user_id, 0)
+                    taxable_profit = max(0, money - upkeep)
+                    if taxable_profit > 0 and tax_rate > 0:
+                        tax_deducted = int(taxable_profit * tax_rate / 100)
+                        tax_deducted = min(money, tax_deducted)
                     if tax_deducted > 0:
                         money -= tax_deducted
                         coalition_bank_deposits[col_id] = (
