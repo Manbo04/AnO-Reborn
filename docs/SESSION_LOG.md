@@ -718,3 +718,24 @@ DATABASE_PUBLIC_URL=... python3 scripts/apply_all_pending_migrations.py
 - `tests/test_military_rebalance.py` / `test_normalized_military.py` need a live DB and fail identically before and after.
 - Unit descriptions were tightened (facts unchanged, "figher" typo fixed). The stale 150-per-base note was dropped.
 - The legacy `military.html` (non-v2) was not touched.
+
+### Session: 2026-10-03 — Fix treasury draining with false positive Net Monetary Profit
+
+**Problem** (reported by Kurai & luciuskonst in `#bug-reports`):
+- Players with empty treasuries or running economic deficits saw positive numbers under "Monetary net" on the country page ("Net Raw") even though their treasury was draining every hour.
+- Root causes:
+  1. In `countries.py` (`get_revenue`), `revenue["net"]["money"] -= upkeep_op["cost"]` was nested inside the `simulated_funds` check for physical resource production. When treasury was empty or upkeep exceeded tax income, unaffordable buildings skipped deduction, hiding the building upkeep deficit.
+  2. Coalition tax was previously deducted from gross tax revenue rather than net profit, eroding operating margins.
+  3. The "Net Raw" panel had no stat card for Building Upkeep, leaving players unaware of their total hourly building expenses.
+
+**What was done**:
+- `countries.py`: Unconditionally deducted `total_building_upkeep` from `revenue["net"]["money"]` and exposed `building_upkeep` in `filtered_revenue`. Adjusted coalition tax in projection to apply against net taxable profit (`max(0, ti_money - total_building_upkeep)`).
+- `app_core/game_ticks/taxes.py`: Aligned alliance tax in hourly tick to deduct percentage from net profit (`max(0, money - upkeep)`), protecting building operating costs.
+- `templates/country_v2.html` & `templates/country.html`: Added a dedicated `Building upkeep` stat card under `Net Raw`, styled `Monetary net` with conditional red/green color, and guarded against `-0` in coalition tax display.
+- `tests/test_monetary_net_deficit.py`: Added 2 unit regression tests verifying full building upkeep is deducted when treasury is 0 or upkeep exceeds taxes.
+- Documented Discord automation rule in `CLAUDE.md`, `GEMINI.md`, and global memory (`user_global.md`, `claude_memory_ano.md`).
+- Commits: `f0ef7e03`, `25c3711d`, `ef6d2ca2`.
+
+**What to watch**:
+- Physical resource simulation remains strictly gated by `simulated_funds` (idle buildings still do not produce physical resources when broke).
+
