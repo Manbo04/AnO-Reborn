@@ -146,7 +146,7 @@
             {% set pct_hs = (((province.get('edu_highschool') or 0) / total_edu) * 100) | round(1) if total_edu > 0 else 0 %}
             {% set pct_col = (((province.get('edu_college') or 0) / total_edu) * 100) | round(1) if total_edu > 0 else 0 %}
             <tr>
-                <td>Basic (None):</td>
+                <td>Primary School (Basic):</td>
                 <td>{{ (province.get('edu_none') or 0) | commas }} ({{ pct_none }}%)</td>
             </tr>
             <tr>

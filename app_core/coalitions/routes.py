@@ -671,11 +671,12 @@ def coalition(coalition_id):
 
         # Fetch bank contribution history (visible to leaders and each member for their own row)
         bank_contributions = []
+        my_personal_bank_balances = {}
         if userInCurCol:
             try:
                 db.execute(
                     """
-                    SELECT cbc.user_id, u.username, s.flag_data, cbc.resource, cbc.total_deposited
+                    SELECT cbc.user_id, u.username, s.flag_data, cbc.resource, cbc.total_deposited, COALESCE(cbc.total_withdrawn, 0)
                     FROM col_bank_contributions cbc
                     JOIN users u ON u.id = cbc.user_id
                     LEFT JOIN stats s ON s.userid = cbc.user_id
@@ -687,14 +688,31 @@ def coalition(coalition_id):
                 bank_contributions = db.fetchall()
             except Exception:
                 rollback_db_cursor(db)
+                try:
+                    db.execute(
+                        """
+                        SELECT cbc.user_id, u.username, s.flag_data, cbc.resource, cbc.total_deposited, 0
+                        FROM col_bank_contributions cbc
+                        JOIN users u ON u.id = cbc.user_id
+                        LEFT JOIN stats s ON s.userid = cbc.user_id
+                        WHERE cbc.coalition_id = %s
+                        ORDER BY u.username, cbc.resource
+                        """,
+                        (coalition_id,),
+                    )
+                    bank_contributions = db.fetchall()
+                except Exception:
+                    rollback_db_cursor(db)
 
         # Group contributions by user: {user_id: {username, flag_data, resources: {res: amount}}}
         contributions_by_user = {}
         for row in bank_contributions:
-            uid, uname, flag_data, res, amt = row
+            uid, uname, flag_data, res, amt, withdrawn = row
             if uid not in contributions_by_user:
                 contributions_by_user[uid] = {"username": uname, "flag_data": flag_data, "resources": {}}
             contributions_by_user[uid]["resources"][res] = amt
+            if uid == cId:
+                my_personal_bank_balances[res] = max(0, amt - withdrawn)
 
         # Recent bank transaction log. Tax income is its own log so daily tax
         # rows don't push real deposits/withdrawals out of view (luciuskonst's
@@ -777,6 +795,7 @@ def coalition(coalition_id):
             pending_applications=pending_applications,
             name_changes_used=name_changes_used,
             contributions_by_user=contributions_by_user,
+            my_personal_bank_balances=my_personal_bank_balances,
             bank_transactions=bank_transactions,
             tax_transactions=tax_transactions,
             can_see_all_bank_logs=can_see_all_bank_logs,
@@ -1855,6 +1874,128 @@ def withdraw_from_bank(coalition_id):
     return redirect(f"/coalition/{coalition_id}")
 
 
+# Route for members withdrawing from their personal deposited balance
+def withdraw_personal_from_bank(coalition_id):
+    cId = session["user_id"]
+
+    with get_request_cursor() as db:
+        guard = _require_coalition_member(db, cId, coalition_id)
+        if guard:
+            return guard
+
+    resources = ["money"] + variables.RESOURCES
+    withdrew_resources = []
+
+    for res in resources:
+        try:
+            resource = request.form.get(res)
+        except (KeyError, AttributeError):
+            resource = ""
+
+        if resource is not None and resource != "":
+            resource = resource.replace(",", "").strip()
+            if not resource:
+                continue
+            try:
+                amt = int(resource)
+            except Exception:
+                return error(400, f"Invalid amount for {res}")
+            if amt > 0:
+                withdrew_resources.append((res, amt))
+
+    if not withdrew_resources:
+        flash("No resources specified to withdraw.", "warning")
+        return redirect(f"/coalition/{coalition_id}")
+
+    with get_request_cursor() as db:
+        for name, amount in withdrew_resources:
+            if amount < 1:
+                return error(400, "Amount must be at least 1")
+
+            try:
+                db.execute(
+                    """
+                    SELECT total_deposited, COALESCE(total_withdrawn, 0)
+                    FROM col_bank_contributions
+                    WHERE coalition_id = %s AND user_id = %s AND resource = %s
+                    FOR UPDATE
+                    """,
+                    (coalition_id, cId, name),
+                )
+                row = db.fetchone()
+            except Exception:
+                rollback_db_cursor(db)
+                row = None
+
+            if not row:
+                flash(f"You have no personal deposit of {name} to withdraw.", "warning")
+                return redirect(f"/coalition/{coalition_id}")
+
+            deposited, withdrawn = row
+            available = max(0, deposited - withdrawn)
+            if amount > available:
+                flash(
+                    f"You can only withdraw up to your personal balance of {available:,} {name}.",
+                    "warning",
+                )
+                return redirect(f"/coalition/{coalition_id}")
+
+            update_statement = f"UPDATE colBanks SET {name}={name}-%s WHERE colId=%s AND {name}>=%s RETURNING {name}"
+            db.execute(update_statement, (amount, coalition_id, amount))
+            b_row = db.fetchone()
+            if not b_row:
+                flash(f"The alliance bank does not have enough {name} in vault.", "warning")
+                return redirect(f"/coalition/{coalition_id}")
+
+            db.execute(
+                """
+                UPDATE col_bank_contributions
+                SET total_withdrawn = COALESCE(total_withdrawn, 0) + %s
+                WHERE coalition_id = %s AND user_id = %s AND resource = %s
+                """,
+                (amount, coalition_id, cId, name),
+            )
+
+            if name == "money":
+                db.execute("UPDATE stats SET gold=gold+%s WHERE id=%s RETURNING gold", (amount, cId))
+            else:
+                db.execute(
+                    "SELECT resource_id FROM resource_dictionary WHERE name = %s",
+                    (name,),
+                )
+                res_row = db.fetchone()
+                if not res_row:
+                    return error(400, f"Invalid resource: {name}")
+                resource_id = res_row[0]
+
+                db.execute(
+                    """
+                    INSERT INTO user_economy (user_id, resource_id, quantity)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT (user_id, resource_id)
+                    DO UPDATE SET quantity = user_economy.quantity + %s
+                    """,
+                    (cId, resource_id, amount, amount),
+                )
+
+            try:
+                db.execute("SAVEPOINT txn_log")
+                db.execute(
+                    """
+                    INSERT INTO col_bank_transactions
+                        (coalition_id, user_id, actor_id, resource, amount, direction)
+                    VALUES (%s, %s, %s, %s, %s, 'withdraw')
+                    """,
+                    (coalition_id, cId, cId, name, amount),
+                )
+            except Exception:
+                db.execute("ROLLBACK TO SAVEPOINT txn_log")
+
+    _invalidate_bank_caches(coalition_id)
+    flash("Successfully withdrew from your personal bank account.", "success")
+    return redirect(f"/coalition/{coalition_id}")
+
+
 # Route for requesting a resource from the coalition bank
 def request_from_bank(coalition_id):
     cId = session["user_id"]
@@ -2794,6 +2935,9 @@ def register_coalitions_routes(app_instance):
     update_col_info_wrapped = login_required(update_col_info)
     deposit_into_bank_wrapped = login_required(require_post_origin(deposit_into_bank))
     withdraw_from_bank_wrapped = login_required(require_post_origin(withdraw_from_bank))
+    withdraw_personal_from_bank_wrapped = login_required(
+        require_post_origin(withdraw_personal_from_bank)
+    )
     request_from_bank_wrapped = login_required(require_post_origin(request_from_bank))
     remove_bank_request_wrapped = login_required(require_post_origin(remove_bank_request))
     accept_bank_request_wrapped = login_required(require_post_origin(accept_bank_request))
@@ -2898,6 +3042,11 @@ def register_coalitions_routes(app_instance):
     app_instance.add_url_rule(
         "/withdraw_from_bank/<coalition_id>",
         view_func=withdraw_from_bank_wrapped,
+        methods=["POST"],
+    )
+    app_instance.add_url_rule(
+        "/withdraw_personal_from_bank/<coalition_id>",
+        view_func=withdraw_personal_from_bank_wrapped,
         methods=["POST"],
     )
     app_instance.add_url_rule(

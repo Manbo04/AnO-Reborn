@@ -41,6 +41,21 @@ class ProvinceService:
                 for pid, used_city, used_land in db.fetchall():
                     slots_used[pid] = {"city": int(used_city), "land": int(used_land)}
 
+                db.execute(
+                    """
+                    SELECT ub.province_id, bd.name, ub.quantity
+                    FROM user_buildings ub
+                    JOIN building_dictionary bd ON bd.building_id = ub.building_id
+                    WHERE ub.user_id = %s AND ub.province_id = ANY(%s) AND ub.quantity > 0
+                    """,
+                    (user_id, page_ids),
+                )
+                province_buildings = {}
+                for pid, bname, qty in db.fetchall():
+                    if pid not in province_buildings:
+                        province_buildings[pid] = {}
+                    province_buildings[pid][bname] = int(qty)
+
         # Projected population change per province next tick -- the same
         # cached projection (and shared tick formula) the nation page uses.
         growth_rates = {}
@@ -60,6 +75,7 @@ class ProvinceService:
         return {
             "provinces": provinces,
             "slots_used": slots_used,
+            "province_buildings": province_buildings if page_ids else {},
             "growth_rates": growth_rates,
             "provinces_with_images": provinces_with_images,
             "current_page": current_page,

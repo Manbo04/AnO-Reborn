@@ -342,6 +342,67 @@ def marketoffer():
     template = "marketoffer_v2.html" if is_theme_v2_enabled("marketoffer") else "marketoffer.html"
     return render_template(template, currencies=currencies)
 
+
+def notify_market_ping(user_id: int, offer_type: str, resource: str, amount: int, price: int):
+    """Notify Discord #early-market (1449182898728079380) with @Market Alerts (1554905946835394572)."""
+    import threading
+
+    def _send():
+        import json
+        import os
+        import urllib.request
+        from database import QueryHelper
+
+        token = os.getenv("DISCORD_BOT_TOKEN")
+        if not token:
+            try:
+                orch_env = "/Users/dede/vivobook-archive/AnO-Orchestrator/.env"
+                if os.path.exists(orch_env):
+                    with open(orch_env) as f:
+                        for line in f:
+                            if line.startswith("DISCORD_BOT_TOKEN="):
+                                token = line.strip().split("=", 1)[1]
+                                break
+            except Exception:
+                pass
+        if not token:
+            return
+
+        username = None
+        try:
+            row = QueryHelper.fetch_one("SELECT username FROM users WHERE id=%s", (user_id,))
+            if row:
+                username = row[0]
+        except Exception:
+            pass
+
+        nation_str = f"**{username}**" if username else "A nation"
+        type_str = offer_type.upper()
+        res_display = resource.replace("_", " ").title()
+        content = (
+            f"📢 <@&1554905946835394572> **New Market Offer!**\n"
+            f"{nation_str} posted a **{type_str}** offer: **{amount:,}** {res_display} at **{price:,}** gold each!\n"
+            f"View offers: <https://affairsandorder.org/market>"
+        )
+        url = "https://discord.com/api/v10/channels/1449182898728079380/messages"
+        headers = {
+            "Authorization": f"Bot {token}",
+            "Content-Type": "application/json",
+            "User-Agent": "AffairsAndOrder/1.0",
+        }
+        payload = json.dumps({
+            "content": content,
+            "allowed_mentions": {"roles": ["1554905946835394572"]},
+        }).encode("utf-8")
+        try:
+            req = urllib.request.Request(url, data=payload, headers=headers, method="POST")
+            urllib.request.urlopen(req, timeout=5)
+        except Exception as e:
+            logger.warning("Failed to send market ping to Discord: %s", e)
+
+    threading.Thread(target=_send, daemon=True).start()
+
+
 @market_bp.route("/post_offer/<offer_type>", methods=["POST"])
 @login_required
 def post_offer(offer_type):
@@ -417,6 +478,7 @@ def post_offer(offer_type):
             insert_offer(db, cId, offer_type, resource, amount, price)
 
         flash("You just posted a market offer")
+        notify_market_ping(cId, offer_type, resource, amount, price)
     return redirect("/market")
 
 @market_bp.route("/my_offers", methods=["GET"])

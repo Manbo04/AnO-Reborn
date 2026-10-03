@@ -343,3 +343,21 @@ def register_commands(tree: app_commands.CommandTree, backend: BotBackend) -> No
         await _decide(interaction, message_id, "implemented", "Implemented")
 
     tree.add_command(suggestion_group)
+
+    @tree.command(name="market_alerts", description="Toggle Market Alerts role to get notified when new market offers are posted")
+    async def cmd_market_alerts(interaction: discord.Interaction) -> None:
+        if not interaction.guild:
+            await interaction.response.send_message("This command can only be used in the server.", ephemeral=True)
+            return
+        role = interaction.guild.get_role(1554905946835394572)
+        if not role:
+            role = discord.utils.find(lambda r: "market alerts" in r.name.lower(), interaction.guild.roles)
+        if not role:
+            await interaction.response.send_message("Market Alerts role could not be found.", ephemeral=True)
+            return
+        if role in interaction.user.roles:
+            await interaction.user.remove_roles(role)
+            await interaction.response.send_message("🔕 You will no longer receive Market Alerts.", ephemeral=True)
+        else:
+            await interaction.user.add_roles(role)
+            await interaction.response.send_message("🔔 Subscribed to Market Alerts! You will be pinged when new offers go live in <#1449182898728079380>.", ephemeral=True)

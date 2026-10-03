@@ -69,17 +69,22 @@ def provinces():
     
     data = ProvinceService.get_user_provinces_paginated(cId, page)
 
+    view_mode = request.args.get('view', 'cards')
+
     template = "provinces_v2.html" if is_theme_v2_enabled("provinces") else "provinces.html"
     return render_template(
         template,
         provinces=data["provinces"],
         provinces_with_images=data["provinces_with_images"],
         slots_used=data.get("slots_used", {}),
+        province_buildings=data.get("province_buildings", {}),
+        building_categories=variables.INFRA_TYPE_BUILDINGS,
         growth_rates=data.get("growth_rates", {}),
         current_page=data["current_page"],
         total_pages=data["total_pages"],
         total_count=data["total_count"],
         total_population=data["total_population"],
+        view_mode=view_mode,
     )
 
 
@@ -511,7 +516,7 @@ def province(pId):
                 if bname in PROCESSING_BUILDINGS:
                     entry["integration"] = round(b["integration"] * 100, 1)
                     entry["self_sufficiency"] = int(
-                        round(self_sufficiency(bname, nation_counts) * 100)
+                        round(self_sufficiency(bname, units) * 100)
                     )
                 industry_bonus[bname] = entry
         except Exception:

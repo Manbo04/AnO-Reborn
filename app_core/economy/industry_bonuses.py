@@ -106,7 +106,7 @@ def production_bonuses(
     province_counts: Mapping[str, int],
     land: int,
     city_count: int,
-    nation_counts: Mapping[str, int],
+    nation_counts: Mapping[str, int] = None,
 ) -> dict:
     """Both bonuses for one building type in one province.
 
@@ -119,7 +119,8 @@ def production_bonuses(
         province_counts.get(building, 0) or 0,
         province_slots_for(building, land, city_count),
     )
-    integration = integration_bonus(building, nation_counts)
+    # Vertical integration bonus is calculated per-province based on locally produced inputs
+    integration = integration_bonus(building, province_counts)
     return {
         "scale": scale,
         "integration": integration,

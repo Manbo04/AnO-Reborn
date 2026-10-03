@@ -327,7 +327,8 @@ def generate_province_revenue():  # Runs each hour
                            COALESCE(pop_children, 0) AS pop_children,
                            COALESCE(pop_working, 0) AS pop_working,
                            COALESCE(pop_elderly, 0) AS pop_elderly,
-                           COALESCE(CAST(citycount AS INTEGER), 0) AS citycount
+                           COALESCE(CAST(citycount AS INTEGER), 0) AS citycount,
+                           COALESCE(location, 'Grassland') AS location
                     FROM provinces WHERE id = ANY(%s)
                 """,
                     (all_province_ids,),
@@ -351,6 +352,7 @@ def generate_province_revenue():  # Runs each hour
                                 "pop_working": row[8] if len(row) > 8 else 0,
                                 "pop_elderly": row[9] if len(row) > 9 else 0,
                                 "citycount": row[10] if len(row) > 10 else 0,
+                                "location": row[11] if len(row) > 11 else "Grassland",
                             }
                         # Reset energy to 0 (will be built up by nuclear_reactors)
                         prov_dict["energy"] = 0
@@ -1157,6 +1159,17 @@ def generate_province_revenue():  # Runs each hour
 
                     province_updates = []
                     for pid, data in provinces_data.items():
+                        # Natural pollution decay (AndyTheHusky suggestion):
+                        # Smog naturally dissipates over time. High pollution clears faster,
+                        # tapering as air quality clears. Vegetated biomes absorb extra pollution.
+                        curr_poll = data.get("pollution", 0)
+                        if curr_poll > 0:
+                            decay = max(1, int(round(curr_poll * 0.05)))
+                            loc = str(data.get("location") or "Grassland").lower()
+                            if any(b in loc for b in ("jungle", "boreal", "forest", "grassland")):
+                                decay += 1
+                            data["pollution"] = max(0, curr_poll - decay)
+
                         # Emit a metric if pollution changes by >= 6 percentage points
                         try:
                             new_poll = min(100, max(0, data.get("pollution", 0)))

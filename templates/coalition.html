@@ -407,6 +407,7 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                             <tr>
                                 <th>Resource</th>
                                 <th>Bank Balance</th>
+                                <th>Personal Balance</th>
                                 <th>Your Resources</th>
                                 <th>Amount</th>
                             </tr>
@@ -430,25 +431,32 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                                 ("Ammunition", "ammunition", resources.get("ammunition", 0))
                             ] %}
                             {% for label, key, my_amt in res_list %}
+                            {% set my_personal = my_personal_bank_balances.get(key, 0) if my_personal_bank_balances else 0 %}
                             <tr>
                                 <td>{{ label }}:</td>
                                 <td>{{ bankRaw.get(key, 0) | commas if bankRaw else "—" }}</td>
+                                <td style="color: {% if my_personal > 0 %}#4ade80{% else %}var(--text-secondary){% endif %};">{{ my_personal | commas }}</td>
                                 <td>{{ my_amt | commas }}</td>
                                 <td><input class="loginsignupinput" autocomplete="on" name="{{ key }}" placeholder="Amount" /></td>
                             </tr>
                             {% endfor %}
                         </table>
                     </div>
-                    <div class="templatedivflex2 divflex2center">
+                    <div class="templatedivflex2 divflex2center" style="gap: 8px; flex-wrap: wrap;">
                         <div class="templatedivflex2left">
                             <button formaction="/deposit_into_bank/{{ colId }}" onclick="return confirm('Are you sure you want to deposit these resources?');" class="templatedivbutton templatecenteredbutton" type="submit">
                                 <span class="material-icons-outlined">arrow_downward</span>Deposit
                             </button>
                         </div>
+                        <div class="templatedivflex2left">
+                            <button formaction="/withdraw_personal_from_bank/{{ colId }}" onclick="return confirm('Are you sure you want to withdraw these resources from your personal deposited balance?');" class="templatedivbutton templatecenteredbutton" type="submit" title="Withdraw up to your personal deposited balance instantly without banker approval">
+                                <span class="material-icons-outlined">account_balance_wallet</span>Withdraw Personal
+                            </button>
+                        </div>
                         {% if user_role in ["leader", "deputy_leader", "banker"] %}
                         <div class="templatedivflex2left">
-                            <button formaction="/withdraw_from_bank/{{ colId }}" onclick="return confirm('Are you sure you want to withdraw these resources?');" class="templatedivbutton templatecenteredbutton" type="submit">
-                                <span class="material-icons-outlined">arrow_upward</span>Withdraw
+                            <button formaction="/withdraw_from_bank/{{ colId }}" onclick="return confirm('Are you sure you want to withdraw these resources from alliance reserves?');" class="templatedivbutton templatecenteredbutton" type="submit">
+                                <span class="material-icons-outlined">arrow_upward</span>Withdraw (Alliance)
                             </button>
                         </div>
                         {% else %}
