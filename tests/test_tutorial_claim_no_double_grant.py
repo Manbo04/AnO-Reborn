@@ -3,8 +3,8 @@ while auditing app_core/tutorial/ during the account cross-contamination
 investigation (unrelated to that bug, found along the way).
 
 claim_tutorial_reward() (the direct /api/tutorial/claim endpoint) and
-advance_tutorial_step_by_action() (called as a side effect of building
-purchases) both read tutorial_chapters_claimed/tutorial_graduated_at,
+a building-purchase side effect (since removed; the Command Briefing tour
+now claims through the same atomic helpers) both read tutorial_chapters_claimed/tutorial_graduated_at,
 checked membership in Python, then wrote back an unconditional UPDATE
 with no lock and no atomic guard -- two concurrent claims for the same
 chapter (or two concurrent graduation claims) both read "not yet

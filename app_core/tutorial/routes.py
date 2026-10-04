@@ -109,11 +109,9 @@ def claim_tutorial_reward():
     concurrent graduation claims) both read "not yet claimed" before
     either commits, both pass the check, and both call _apply_rewards(),
     double-granting real gold/resources for a single milestone.
-    Also called from advance_tutorial_step_by_action() below as a side
-    effect of building purchases, which don't uniformly hold a per-user
-    lock around this call (some purchase paths do, e.g. mass_purchase
-    across several provinces in one request does not) -- rather than
-    relying on every caller to remember a lock, both claim paths below
+    The Command Briefing tour (tour.py) claims through the same helpers
+    from concurrent page loads -- rather than relying on every caller to
+    remember a lock, both claim paths below
     now use an atomic conditional UPDATE (PostgreSQL's array containment
     operator for the chapter array, a plain NULL check for the
     already-a-single-value graduation timestamp) so the idempotency
@@ -196,45 +194,46 @@ def claim_tutorial_reward():
     )
 
 
-def advance_tutorial_step_by_action(db, user_id: int, action: str) -> None:
-    """FIXED 2026-09-23: see claim_tutorial_reward()'s docstring -- this
-    had the exact same non-atomic read-check-write race on
-    tutorial_chapters_claimed. Called as a side effect of building
-    purchases (app_core/economy/building_purchase.py), and not every
-    purchase path holds a per-user lock around that call (mass-purchase
-    across several provinces in one request does not), so this can't rely
-    on caller locking -- now uses the same atomic _claim_chapter() helper
-    the direct claim API uses.
-    """
-    # Map the string action to the corresponding chapter index
-    ACTION_CHAPTER_MAP = {
-        "build_farm": 0,
-        "build_distribution_center": 1,
-        "build_mine": 2,
-        "build_food_bank": 3,
-    }
+# ---------------------------------------------------------------------------
+# Command Briefing (in-game guided tour) -- see app_core/tutorial/tour.py
+# ---------------------------------------------------------------------------
+def _tour_response(visited=None):
+    from app_core.tutorial.tour import compute_tour
 
-    target_chapter = ACTION_CHAPTER_MAP.get(action)
-    if target_chapter is None:
-        return
-
-    chapter_reward = _claim_chapter(db, user_id, target_chapter)
-    if chapter_reward is None:
-        # Already claimed (by this call or a concurrent one) -- nothing to do.
-        return
-
-    if chapter_reward:
-        _apply_rewards(db, user_id, chapter_reward)
-
-    db.execute(
-        "UPDATE stats SET tutorial_step = %s WHERE id = %s AND tutorial_step < %s",
-        (target_chapter + 1, user_id, target_chapter + 1),
-    )
-
-    # Invalidate user cache to ensure UI updates
+    user_id = session["user_id"]
     try:
-        from database import invalidate_user_cache
-        invalidate_user_cache(user_id)
+        with get_request_cursor() as db:
+            state = compute_tour(db, user_id, visited=visited)
     except Exception:
-        pass
+        import logging
 
+        logging.getLogger(__name__).exception("tour state failed for %s", user_id)
+        return jsonify({"ok": False}), 500
+    if state.get("graduated"):
+        session.pop("tour_active", None)
+    state["active"] = bool(session.get("tour_active"))
+    return jsonify(state)
+
+
+@bp.route("/api/tour/state", methods=["GET"])
+@login_required
+def tour_state():
+    return _tour_response()
+
+
+@bp.route("/api/tour/visit", methods=["POST"])
+@login_required
+def tour_visit():
+    from app_core.tutorial.tour import STEP_INDEX
+
+    key = (request.get_json(silent=True) or {}).get("step")
+    if key not in STEP_INDEX:
+        return jsonify({"ok": False, "error": "unknown step"}), 400
+    return _tour_response(visited=key)
+
+
+@bp.route("/api/tour/dismiss", methods=["POST"])
+@login_required
+def tour_dismiss():
+    session.pop("tour_active", None)
+    return jsonify({"ok": True})

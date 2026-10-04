@@ -170,6 +170,12 @@ def post_signup_redirect(user_id: int, *, has_recovery_key: bool = False) -> str
             provinces = _province_count(db, user_id)
         if provinces == 0:
             return "/createprovince"
-    # Brand-new nations go straight into the guided tutorial (Dede, 2026-10-04);
-    # the onboarding checklist still shows in-game afterwards.
-    return "/tutorial?onboard=1"
+    # Brand-new nations go straight into the in-game Command Briefing tour
+    # (app_core/tutorial/tour.py), which opens with a welcome screen.
+    try:
+        from flask import session
+
+        session["tour_active"] = True
+    except Exception:
+        pass
+    return "/country?briefing=start"

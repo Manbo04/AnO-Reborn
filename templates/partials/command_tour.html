@@ -1,0 +1,7 @@
+{# Command Briefing: in-game guided tour for new nations (static/tour.js, static/tour.css,
+   app_core/tutorial/tour.py). Only rendered while session["tour_active"] is set — by signup
+   (onboarding.service.post_signup_redirect) or by visiting /tutorial while logged in. #}
+<link rel="stylesheet" href="{{ url_for('static', filename='landing/fonts.css') }}?v=1">
+<link rel="stylesheet" href="{{ url_for('static', filename='tour.css') }}?v={{ asset_version }}">
+<div id="command-briefing" class="cb-root" data-nation="{{ country_name or '' }}" data-flag="{{ url_for('main_bp.serve_flag', flag_type='country', flag_id=session.get('user_id')) }}"></div>
+<script src="{{ url_for('static', filename='tour.js') }}?v={{ asset_version }}" defer></script>

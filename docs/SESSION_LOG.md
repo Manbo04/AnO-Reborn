@@ -858,3 +858,17 @@ DATABASE_PUBLIC_URL=... python3 scripts/apply_all_pending_migrations.py
 
 **What to watch**
 - `tests/test_onboarding.py::test_onboarding_fully_complete` fails identically on master (pre-existing).
+
+## 2026-10-05 — Command Briefing: in-game guided tour replaces the /tutorial course
+
+**What was done**
+- New `app_core/tutorial/tour.py`: 9 missions done in the real game — survey nation (/country), inspect capital, build power, farm, general store, a biome extractor, visit market, recruit soldiers, browse coalitions. Building/army steps are verified from `user_buildings`/`user_military`; visit steps are reported by the page. Completion reuses `stats.tutorial_chapters_claimed` (atomic `_claim_chapter`, pays `CHAPTER_REWARDS[i]` once) and `tutorial_graduated_at` (pays `GRADUATION_REWARD` once).
+- API in `app_core/tutorial/routes.py`: `GET /api/tour/state`, `POST /api/tour/visit`, `POST /api/tour/dismiss`.
+- UI: `templates/partials/command_tour.html` + `static/tour.js` + `static/tour.css` — welcome overlay with the nation's flag, a mission card (bottom sheet on phones, bottom-right on desktop) with progress, rewards, "Take me there"/"Show me", a spotlight that pre-fills "1" in the Buy amount, completion toasts, graduation overlay. Minimize to a pill; "End briefing" (two taps).
+- Activation: `session["tour_active"]` set by `post_signup_redirect()` (now redirects to `/country?briefing=start`) and by `/tutorial` for logged-in players. Logged-out visitors still get the old /tutorial page as a public guide. Onboarding checklist hidden while the tour runs.
+- Removed: stale TutorialSpotlight script in layout.html (+ class in tutorial.js), global tutorial.js/css include for logged-in pages, `advance_tutorial_step_by_action()` + its building-purchase hook (mapped buildings to old chapter indices; "mines" never matched a real building) and its test.
+- Tests: `tests/test_command_tour.py`.
+
+**What to watch**
+- Tour only appears for sessions with `tour_active` (new signups / anyone opening /tutorial). Logging in on a new device mid-tour won't show it until /tutorial is opened.
+- Visit steps trust the client (rewards are small and claimable once).

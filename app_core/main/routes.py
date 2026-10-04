@@ -221,6 +221,12 @@ def _load_tutorial_chapters() -> list:
 
 @bp.route("/tutorial", methods=["GET"])
 def tutorial():
+    # Logged-in players get the hands-on Command Briefing (in-game guided tour,
+    # app_core/tutorial/tour.py) instead of the old read-and-quiz course, which
+    # stays as a public guide for visitors and search engines.
+    if session.get("user_id"):
+        session["tour_active"] = True
+        return redirect("/country?briefing=start")
     # Values mirror static/tutorial.js fallbacks; the quiz answers reference
     # them, so keep the two places in sync if game balance changes.
     tutorial_constants = {
