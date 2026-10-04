@@ -584,6 +584,13 @@
     {% include "partials/game_hud.html" %}
 
     <div class="templatecontainer">
+        {% set rotating = rotating_ads | default({}) %}
+        {% if rotating.top_ad and session.get('user_id') %}
+        <a class="nation-top-banner" href="{{ rotating.top_ad.target_url }}" target="_blank" rel="noopener">
+            <img src="{{ rotating.top_ad.image_url }}" alt="Nation banner" onerror="this.parentNode.remove()" />
+            <span class="tip-card-playertag">Nation banner</span>
+        </a>
+        {% endif %}
         {% include 'partials/onboarding_checklist.html' %}
         {% include 'partials/onboarding_tutorial_popup.html' %}
         {% if session.get('user_id') %}{% include 'partials/section_tabs.html' %}{% endif %}

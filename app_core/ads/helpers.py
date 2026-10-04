@@ -152,12 +152,12 @@ def load_rotating_ads(get_db_cursor) -> Dict[str, Optional[dict]]:
     side_ad_left = None
     side_ad_right = None
     def _image_src(ad_id, image_data, image_url):
-        # Prefer the DB-backed serve route (survives redeploys); fall back to
-        # the raw stored URL only for rows uploaded before migration 0077
-        # ever got a chance to backfill image_data.
+        # Only DB-backed images: static/uploads/ads/ is wiped on every Railway
+        # redeploy, so a raw image_url fallback renders as a broken image.
+        # Served from a neutral path -- ad blockers blank anything under /ads/.
         if image_data:
-            return f"/ads/image/{ad_id}"
-        return normalize_ad_image_url(image_url)
+            return f"/media/banner/{ad_id}"
+        return None
 
     try:
         with get_db_cursor(read_only=True) as db:
@@ -165,7 +165,7 @@ def load_rotating_ads(get_db_cursor) -> Dict[str, Optional[dict]]:
                 """
                 SELECT id, image_url, target_url, image_data
                 FROM advertisements
-                WHERE status = 'approved' AND ad_type = 'top'
+                WHERE status = 'approved' AND ad_type = 'top' AND image_data IS NOT NULL
                 ORDER BY RANDOM() LIMIT 1
                 """
             )
@@ -179,7 +179,7 @@ def load_rotating_ads(get_db_cursor) -> Dict[str, Optional[dict]]:
                 """
                 SELECT id, image_url, target_url, image_data
                 FROM advertisements
-                WHERE status = 'approved' AND ad_type = 'side'
+                WHERE status = 'approved' AND ad_type = 'side' AND image_data IS NOT NULL
                 ORDER BY RANDOM() LIMIT 2
                 """
             )
