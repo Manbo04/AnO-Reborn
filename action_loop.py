@@ -256,7 +256,7 @@ def start_research(user_id: int, tech_id: int) -> ActionResult:
             )
 
         # Education Rework: Universities requirement for late-game tech
-        LATE_TECHS = {"integrated_steelmaking", "electric_arc_furnace", "nuclear_testing_facility", "icbm_silo"}
+        LATE_TECHS = {"integrated_steelmaking", "electric_arc_furnace", "nuclear_testing_facility", "icbm_silo", "star_wars_project"}
         if tech_name_internal in LATE_TECHS:
             db.execute("SELECT 1 FROM user_tech WHERE user_id=%s AND tech_id=%s", (user_id, tech_id))
             has_record = bool(db.fetchone())

@@ -906,8 +906,24 @@ def province(pId):
         except Exception:
             pass
         template = "province_v2.html" if is_theme_v2_enabled("province") else "province.html"
+        iron_dome = None
+        if province.get("own"):
+            try:
+                from app_core.military import iron_dome as _dome
+
+                with get_request_cursor() as _db:
+                    iron_dome = {
+                        "count": _dome.province_domes(_db, pId),
+                        "max": _dome.MAX_DOMES_PER_PROVINCE,
+                        "gold": _dome.DOME_GOLD_COST,
+                        "resources": _dome.DOME_RESOURCE_COSTS,
+                        "star_wars": _dome.has_star_wars(_db, cId),
+                    }
+            except Exception:
+                iron_dome = None
         return render_template(
             template,
+            iron_dome=iron_dome,
             gold_policy_mult=gold_policy_mult,
             province=province,
             stat_breakdown=stat_breakdown,
@@ -1535,6 +1551,33 @@ def delete_province(pId):
         pass
 
     return redirect("/provinces")
+
+
+@bp.route("/province/<int:pId>/iron_dome", methods=["POST"])
+@login_required
+@require_post_origin
+def province_iron_dome(pId):
+    """Buy or dismantle Iron Domes in this province (migration 0104)."""
+    from app_core.military.iron_dome import change_domes
+
+    cId = session["user_id"]
+    way = request.form.get("way")
+    try:
+        amount = int(request.form.get("amount", "0"))
+    except (TypeError, ValueError):
+        return error(400, "Invalid amount")
+    with get_request_cursor() as db:
+        ok, msg = change_domes(db, cId, pId, way, amount)
+    if not ok:
+        return error(400, msg)
+    try:
+        from database import invalidate_view_cache
+
+        invalidate_user_cache(cId)
+        invalidate_view_cache("province", user_id=cId)
+    except Exception:
+        pass
+    return redirect(f"/province/{pId}")
 
 
 @bp.route("/province/<int:pId>/set-capital", methods=["POST"])

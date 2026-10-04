@@ -2182,6 +2182,12 @@ def drone_strike():
 
         sam_intercepted = min(drones_count, int(drones_count * sam_intercept_pct))
         remaining_after_sam = drones_count - sam_intercepted
+        # Iron Dome (migration 0104) engages whatever got past the SAMs.
+        from app_core.military.iron_dome import roll_intercepts
+
+        dome_intercepted = roll_intercepts(db, target_id, remaining_after_sam, "kamikaze_drones")
+        sam_intercepted += dome_intercepted
+        remaining_after_sam -= dome_intercepted
 
         intercept_effectiveness = random.uniform(0.5, 1.5)
         fighter_intercepted = min(remaining_after_sam, int(defender_interceptors * intercept_effectiveness))
@@ -2310,6 +2316,12 @@ def cruise_missile_strike():
             (missiles_count, attacker_id, unit_id),
         )
 
+        # Iron Dome (migration 0104): average province coverage vs a nationwide strike.
+        from app_core.military.iron_dome import roll_intercepts
+
+        dome_intercepted = roll_intercepts(db, target_id, missiles_count, "cruise_missiles")
+        missiles_count -= dome_intercepted
+
         damage_points = missiles_count * 8
         pop_result = None
         if strike_target == POPULATION_TARGET:
@@ -2336,12 +2348,16 @@ def cruise_missile_strike():
         _strike_news(
             db, attacker_id, target_id,
             attacker_msg=(
-                f"Your {missiles_count} cruise missile(s) struck {{target_name}} unopposed. "
+                f"Your {missiles_count} cruise missile(s) struck {{target_name}}"
+                + (f" ({dome_intercepted} shot down by Iron Dome)" if dome_intercepted else " unopposed")
+                + ". "
                 f"Result: {damage_report}."
             ),
             defender_msg=(
                 f"🚨 UNDER ATTACK: {{attacker_name}} struck you with {missiles_count} cruise "
-                f"missile(s). Result: {damage_report}."
+                f"missile(s)"
+                + (f" (your Iron Domes shot down {dome_intercepted} more)" if dome_intercepted else "")
+                + f". Result: {damage_report}."
             ),
         )
 

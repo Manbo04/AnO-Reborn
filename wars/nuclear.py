@@ -23,7 +23,7 @@ half the population, zero happiness, 40% of every building). What it does now:
   retaliation. The penalty is stored in nuclear_strikes and decays to zero
   over the struck province's 7-day recovery timer
   (influence_formula.NUCLEAR_PENALTY_DECAY_DAYS).
-* No interception. Two-step confirmation in the UI. Both sides get news.
+* Iron Domes in the struck province may intercept it (migration 0104). Two-step confirmation in the UI. Both sides get news.
 
 Pure math lives in the top half (unit-tested without a DB); the DB flow is
 plan_strike() (read-only preview) and execute_strike() (locked, atomic).
@@ -305,6 +305,35 @@ def execute_strike(db, attacker_id, war_id, province_id) -> dict:
     )
     if not db.fetchone():
         raise StrikeError("You don't have any nukes.")
+
+    # Iron Dome (migration 0104): the struck province's domes get one shot at
+    # the warhead. The nuke is spent either way; an intercept does no damage.
+    from app_core.military.iron_dome import roll_intercepts
+
+    if roll_intercepts(db, plan["enemy_id"], 1, "nukes", province_id=province_id):
+        prov_name = target.get("name", "the province")
+        db.execute(
+            "INSERT INTO news (destination_id, message) VALUES (%s, %s), (%s, %s)",
+            (
+                plan["enemy_id"],
+                f"🛡️ IRON DOME: {plan['attacker_name']} launched a nuke at your province "
+                f"{prov_name}. Your Iron Domes shot it down. No damage was done.",
+                attacker_id,
+                f"🛡️ Your nuke at {plan['enemy_name']}'s province {prov_name} was "
+                f"intercepted by Iron Dome. No damage was done.",
+            ),
+        )
+        return {
+            "intercepted": True,
+            "attacker_name": plan["attacker_name"],
+            "enemy_name": plan["enemy_name"],
+            "enemy_id": plan["enemy_id"],
+            "province_name": prov_name,
+            "deaths": 0, "death_pct": 0.0, "cities_destroyed": 0,
+            "buildings_destroyed": 0, "happiness_lost": 0, "multiplier": 1.0,
+            "is_retaliation": plan["is_retaliation"], "cost": 0,
+            "influence_before": plan["influence"], "recovery_days": RECOVERY_DAYS,
+        }
 
     # Lock the province row and recompute from its current values.
     db.execute(

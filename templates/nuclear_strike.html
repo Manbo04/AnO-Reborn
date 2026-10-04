@@ -37,6 +37,10 @@
     {{ game_hero('Nuclear Strike Report', badge_icon='dangerous', badge_text=('Retaliation' if result.is_retaliation else 'First strike'), subtitle=result.enemy_name ~ ' — ' ~ result.province_name) }}
     <div class="nuke-wrap">
         <div class="game-glass nuke-panel">
+            {% if result.intercepted %}
+            <h2 class="templatecontentheaderleft">Intercepted over {{ result.province_name }}</h2>
+            <p class="nuke-note">{{ result.enemy_name }}'s Iron Domes shot your warhead down. The nuke is spent, but no damage was done and your influence is untouched.</p>
+            {% else %}
             <h2 class="templatecontentheaderleft">Impact on {{ result.province_name }}</h2>
             <div class="nuke-stats">
                 <div class="nuke-stat"><strong>Killed</strong><span>{{ "{:,}".format(result.deaths) }} ({{ "%.1f"|format(result.death_pct) }}%)</span></div>
@@ -48,6 +52,7 @@
             <p class="nuke-note">This province was already hit recently, so the blast did only {{ "%.0f"|format(result.multiplier * 100) }}% of full damage.</p>
             {% endif %}
             <p class="nuke-note">Your influence took a <b>{{ "{:,}".format(result.cost) }}</b> penalty. It fades away over {{ result.recovery_days }} days as the province recovers. {{ result.enemy_name }} has been notified.</p>
+            {% endif %}
             <div class="nuke-actions">
                 {{ game_button('Back to war', icon='arrow_back', href='/wars') }}
                 {{ game_button('View ' ~ result.enemy_name, icon='flag', href='/country/id=' ~ result.enemy_id, variant='secondary') }}
