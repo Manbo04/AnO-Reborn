@@ -294,6 +294,9 @@ function found(){if(submitting||!$('#terms').checked||!captchaOk())return;
   $('#stamp').textContent='FOUNDED';$('#stamp').classList.add('ok');$('#dstatus').textContent='Founded';
   $('#found').classList.add('on');fireworks();
   try{$('#flag_png').value=flagCanvas.toDataURL('image/png')}catch(e){}
+  // New nations start on the dark theme with scenic backgrounds on (the game's
+  // light-theme fallback only exists for old browsers with nothing saved).
+  try{localStorage.setItem('theme','theme-dark');localStorage.setItem('ano_bg_images','on')}catch(e){}
   submitting=true;setTimeout(()=>$('#form').submit(),reduce?0:1700);
 }
 /* founding burst: radial light rays + sparks */
