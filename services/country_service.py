@@ -453,6 +453,7 @@ class CountryService:
             attacker_drones = 0
             attacker_cruise_missiles = 0
             at_war_with_target = False
+            strike_targets = []
         
             uId = session.get("user_id")
         
@@ -491,6 +492,22 @@ class CountryService:
                             (uId, cId, cId, uId),
                         )
                         at_war_with_target = db.fetchone() is not None
+                        if at_war_with_target:
+                            # Only offer buildings this nation actually has, so
+                            # drones aren't wasted on targets that don't exist.
+                            from wars.routes import STRIKE_TARGET_BUILDINGS, STRIKE_TARGET_LABELS
+                            db.execute(
+                                "SELECT bd.name, ub.quantity FROM user_buildings ub "
+                                "JOIN building_dictionary bd ON bd.building_id = ub.building_id "
+                                "WHERE ub.user_id=%s AND bd.name = ANY(%s) AND ub.quantity > 0",
+                                (cId, list(STRIKE_TARGET_BUILDINGS.values())),
+                            )
+                            owned = dict(db.fetchall())
+                            strike_targets = [
+                                (key, STRIKE_TARGET_LABELS[key], owned[bname])
+                                for key, bname in STRIKE_TARGET_BUILDINGS.items()
+                                if owned.get(bname, 0) > 0
+                            ]
                     except Exception:
                         rollback_db_cursor(db)
 
@@ -792,6 +809,7 @@ class CountryService:
             "attacker_drones": attacker_drones,
             "attacker_cruise_missiles": attacker_cruise_missiles,
             "at_war_with_target": at_war_with_target,
+            "strike_targets": strike_targets,
             "target_silos": target_silos,
             "target_has_nuclear_facility": target_has_nuclear_facility,
             "colFlag": colFlag,

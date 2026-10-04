@@ -3077,7 +3077,14 @@
             </div>
         </form>
         {% endif %}
-        {% if at_war_with_target and attacker_drones > 0 %}
+        {% if at_war_with_target and (attacker_drones > 0 or attacker_cruise_missiles > 0) and not strike_targets %}
+        <div class="infodiv">
+            <h2 class="templatecontentheaderleft">Drone &amp; Missile Strikes</h2>
+            <p>This nation has no silos, steel mills, component factories, aluminium refineries or oil refineries, so there's nothing for drones or cruise missiles to hit right now.</p>
+        </div>
+        {% endif %}
+
+        {% if at_war_with_target and attacker_drones > 0 and strike_targets %}
         <form action="/drone_strike" method="POST">
             <input type="hidden" name="target_id" value="{{ cId }}">
             <h2 class="templatecontentheaderleft " style="color: #ffaa00;">Kamikaze Drone Strike</h2>
@@ -3086,11 +3093,9 @@
                     <div class="templatedivflex2left">
                         <label for="drone_strike_target">Target</label>
                         <select class="templateselect" id="drone_strike_target" name="strike_target">
-                            <option value="silo" class="templateoption">Missile Silos</option>
-                            <option value="steel_mills" class="templateoption">Steel Mills</option>
-                            <option value="component_factories" class="templateoption">Component Factories</option>
-                            <option value="aluminium_refineries" class="templateoption">Aluminium Refineries</option>
-                            <option value="oil_refineries" class="templateoption">Oil Refineries</option>
+                            {% for key, label, qty in strike_targets %}
+                            <option value="{{ key }}" class="templateoption">{{ label }} ({{ qty }})</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="templatedivflex2left">
@@ -3108,7 +3113,7 @@
         </form>
         {% endif %}
 
-        {% if at_war_with_target and attacker_cruise_missiles > 0 %}
+        {% if at_war_with_target and attacker_cruise_missiles > 0 and strike_targets %}
         <form action="/cruise_missile_strike" method="POST">
             <input type="hidden" name="target_id" value="{{ cId }}">
             <h2 class="templatecontentheaderleft " style="color: #ff7a00;">Cruise Missile Strike</h2>
@@ -3117,11 +3122,9 @@
                     <div class="templatedivflex2left">
                         <label for="missile_strike_target">Target</label>
                         <select class="templateselect" id="missile_strike_target" name="strike_target">
-                            <option value="silo" class="templateoption">Missile Silos</option>
-                            <option value="steel_mills" class="templateoption">Steel Mills</option>
-                            <option value="component_factories" class="templateoption">Component Factories</option>
-                            <option value="aluminium_refineries" class="templateoption">Aluminium Refineries</option>
-                            <option value="oil_refineries" class="templateoption">Oil Refineries</option>
+                            {% for key, label, qty in strike_targets %}
+                            <option value="{{ key }}" class="templateoption">{{ label }} ({{ qty }})</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="templatedivflex2left">

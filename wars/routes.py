@@ -1967,6 +1967,25 @@ STRIKE_TARGET_BUILDINGS = {
     "aluminium_refineries": "aluminium_refineries",
     "oil_refineries": "oil_refineries",
 }
+STRIKE_TARGET_LABELS = {
+    "silo": "Missile Silos",
+    "steel_mills": "Steel Mills",
+    "component_factories": "Component Factories",
+    "aluminium_refineries": "Aluminium Refineries",
+    "oil_refineries": "Oil Refineries",
+}
+
+
+def _target_has_building(db, target_id, strike_target):
+    db.execute(
+        "SELECT COALESCE(SUM(ub.quantity), 0) FROM user_buildings ub "
+        "JOIN building_dictionary bd ON bd.building_id = ub.building_id "
+        "WHERE ub.user_id = %s AND bd.name = %s",
+        (target_id, STRIKE_TARGET_BUILDINGS[strike_target]),
+    )
+    return int(db.fetchone()[0] or 0) > 0
+
+
 # Damage points needed to destroy 1 of the target building. Silos are
 # reinforced military infrastructure (matches strategic_airstrike's existing
 # 15); ordinary economic buildings are softer.
@@ -2074,6 +2093,11 @@ def drone_strike():
 
         if not _require_active_war(db, attacker_id, target_id):
             return error(403, "You are not at war with this nation.")
+        if not _target_has_building(db, target_id, strike_target):
+            return error(
+                400,
+                f"They have no {STRIKE_TARGET_LABELS[strike_target]} to hit. Pick another target.",
+            )
 
         db.execute(
             """
@@ -2213,6 +2237,11 @@ def cruise_missile_strike():
 
         if not _require_active_war(db, attacker_id, target_id):
             return error(403, "You are not at war with this nation.")
+        if not _target_has_building(db, target_id, strike_target):
+            return error(
+                400,
+                f"They have no {STRIKE_TARGET_LABELS[strike_target]} to hit. Pick another target.",
+            )
 
         db.execute(
             """
