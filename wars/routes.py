@@ -1138,6 +1138,41 @@ def warResult():
                     defender.user_id,
                 )
             defender_result["infra_damage"] = infra_damage_effects
+
+            # Battle aftermath (2026-10-04 rebalance, wars/aftermath.py):
+            # civilian deaths on a won ground/bomber attack, the loser's
+            # growth frozen for 12h, and a won bomber attack also hitting the
+            # defender's soldiers/tanks. Own connection, best effort -- must
+            # never undo the already-committed fight results.
+            aftermath = None
+            try:
+                from database import get_db_connection as _am_gdc
+                from wars import aftermath as war_aftermath
+
+                a_fight_losses = getattr(attacker, "_fight_losses", None) or {}
+                surviving_attackers = {
+                    u: max(0, int(q or 0) - int(a_fight_losses.get(u, 0) or 0))
+                    for u, q in prev_attacker.items()
+                }
+                with _am_gdc() as _am_conn:
+                    _am_cur = _am_conn.cursor()
+                    aftermath = war_aftermath.apply_battle_aftermath(
+                        _am_cur,
+                        attacker.user_id,
+                        defender.user_id,
+                        winner == attacker.user_id,
+                        war_domain,
+                        surviving_attackers,
+                        win_condition,
+                    )
+                    _am_conn.commit()
+            except Exception:
+                logger.exception(
+                    "battle aftermath failed attacker=%s defender=%s",
+                    attacker.user_id,
+                    defender.user_id,
+                )
+            defender_result["aftermath"] = aftermath
             if winner == defender.user_id:
                 winner = defender_name
             else:
@@ -1213,6 +1248,22 @@ def warResult():
                 f"⚔️ BATTLE REPORT: Your {domain_name} assault on {defender_name} resolved. "
                 f"{outcome_att} Your casualties: {a_loss_summary}. Enemy casualties: {d_loss_summary}."
             )
+            am = defender_result.get("aftermath") or {}
+            if am.get("civilian_deaths"):
+                d = f"{int(am['civilian_deaths']):,}"
+                def_news += f" {d} civilians were killed."
+                att_news += f" {d} enemy civilians were killed."
+            if am.get("bomber_ground_losses"):
+                g = ", ".join(
+                    f"{q:,} {u}" for u, q in am["bomber_ground_losses"].items()
+                )
+                def_news += f" Bombers also destroyed {g} on the ground."
+                att_news += f" Your bombers also destroyed {g} on the ground."
+            if am.get("frozen") is not None:
+                if am["frozen"] == eId:
+                    def_news += " Your population won't grow for 12 hours."
+                else:
+                    att_news += " Your population won't grow for 12 hours."
             looted = int((attacker_result.get("loot") or {}).get("money") or 0)
             if looted > 0:
                 att_news += f" You looted {looted:,} gold."

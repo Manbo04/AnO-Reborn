@@ -181,8 +181,9 @@ def province_stat_breakdown(
 def pop_cap_marginals(cities, land):
     """Max-population numbers behind the city/land tooltips.
 
-    Cities and land raise max population on a saturating curve (see
-    calc_province_population_delta): cap * (1 - exp(-n / softness)). Each
+    Cities and land (counted across the WHOLE nation since the 2026-10-04
+    rebalance) raise comfort population on a saturating curve (see
+    population.nation_comfort): cap * (1 - exp(-n / softness)). Each
     extra city/land adds less than the one before. Returns what the NEXT
     one adds right now, the total from cities/land so far, the curve caps,
     and the "diminishing returns" thresholds: at `softness` owned you have

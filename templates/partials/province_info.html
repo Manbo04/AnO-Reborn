@@ -62,13 +62,13 @@
             </tr>
             <tr>
                 <td><strong class="tooltipparent" tabindex="0">
-                    <div class="tooltip">Each city slot allows one more city building and raises max population, with diminishing returns: {% if pop_cap_info %}your next city adds about {{ pop_cap_info.city_next | commas }} max population. Cities can add up to {{ pop_cap_info.city_cap | commas }} in total; you reach ~63% of that at {{ pop_cap_info.city_soft }} cities and ~95% at {{ pop_cap_info.city_95 }}, after which extra cities barely raise it. City prices stop rising after 200 cities.{% else %}each extra city adds a bit less than the last.{% endif %}</div>
+                    <div class="tooltip">Each city slot allows one more city building and raises your nation's comfort population (cities in all your provinces count together), with diminishing returns: {% if pop_cap_info %}your next city adds about {{ pop_cap_info.city_next | commas }}. Cities can add up to {{ pop_cap_info.city_cap | commas }} in total; you reach ~63% of that at {{ pop_cap_info.city_soft }} cities and ~95% at {{ pop_cap_info.city_95 }}, after which extra cities barely raise it. City prices stop rising after 200 cities.{% else %}each extra city adds a bit less than the last.{% endif %}</div>
                     <span class="material-icons-outlined">business</span>City slots:</strong></td>
                 <td>{{ province['citycount'] - province['free_cityCount'] }} used / {{ province['citycount'] }}</td>
             </tr>
             <tr>
                 <td><strong class="tooltipparent" tabindex="0">
-                    <div class="tooltip">Each land slot allows one more land building, adds 2% tax income (up to +100% at {% if pop_cap_info %}{{ pop_cap_info.land_tax_max }}{% else %}51{% endif %} land) and raises max population with diminishing returns: {% if pop_cap_info %}your next land adds about {{ pop_cap_info.land_next | commas }} max population. Land can add up to {{ pop_cap_info.land_cap | commas }} in total; ~63% of that at {{ pop_cap_info.land_soft }} land and ~95% at {{ pop_cap_info.land_95 }}. Land prices stop rising after 100 land.{% else %}each extra land adds a bit less than the last.{% endif %}</div>
+                    <div class="tooltip">Each land slot allows one more land building, adds 2% tax income (up to +100% at {% if pop_cap_info %}{{ pop_cap_info.land_tax_max }}{% else %}51{% endif %} land) and raises your nation's comfort population (land in all your provinces counts together) with diminishing returns: {% if pop_cap_info %}your next land adds about {{ pop_cap_info.land_next | commas }}. Land can add up to {{ pop_cap_info.land_cap | commas }} in total; ~63% of that at {{ pop_cap_info.land_soft }} land and ~95% at {{ pop_cap_info.land_95 }}. Land prices stop rising after 100 land.{% else %}each extra land adds a bit less than the last.{% endif %}</div>
                     <span class="material-icons-outlined">landscape</span>Land slots:</strong></td>
                 <td>{{ province['land'] - province['free_land'] }} used / {{ province['land'] }}</td>
             </tr>

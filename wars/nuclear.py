@@ -13,6 +13,8 @@ half the population, zero happiness, 40% of every building). What it does now:
 * **Buildings and cities** are destroyed in proportion to how much of the
   province the blast covers (INFRA_LETHALITY).
 * **Happiness in the struck province drops hard** (HAPPINESS_HIT points).
+* **Fallout (2026-10-04).** Radiation also kills 1% of the target's whole
+  nation and freezes its population growth for 24h (wars/aftermath.py).
 * **Repeat strikes** on the same province within REPEAT_WINDOW_HOURS do less:
   each earlier strike halves the damage, fading linearly over the 72h window.
 * **Influence cost for the launcher.** A first strike costs FIRST_STRIKE_COST
@@ -402,6 +404,19 @@ def execute_strike(db, attacker_id, war_id, province_id) -> dict:
     )
     buildings_destroyed = int(db.fetchone()[0] or 0)
 
+    # 2026-10-04 rebalance (wars/aftermath.py): radiation kills
+    # NUKE_FALLOUT_DEATHS of the target's WHOLE nation (so spreading out over
+    # many provinces doesn't make a nation nuke-proof) and its population
+    # can't grow for NUKE_FREEZE_HOURS.
+    from wars import aftermath as war_aftermath
+
+    fallout_deaths = war_aftermath.kill_civilians(
+        db, plan["enemy_id"], war_aftermath.NUKE_FALLOUT_DEATHS
+    )
+    war_aftermath.freeze_growth(
+        db, plan["enemy_id"], war_aftermath.NUKE_FREEZE_HOURS, "nuked"
+    )
+
     now = datetime.now(timezone.utc)
     cost = plan["cost"]
     db.execute(
@@ -440,6 +455,7 @@ def execute_strike(db, attacker_id, war_id, province_id) -> dict:
         "cost": cost,
         "influence_before": plan["influence"],
         "recovery_days": RECOVERY_DAYS,
+        "fallout_deaths": fallout_deaths,
     }
 
     kind = "retaliatory nuclear strike" if plan["is_retaliation"] else "nuclear strike"
@@ -448,12 +464,15 @@ def execute_strike(db, attacker_id, war_id, province_id) -> dict:
         f"province {prov['name']}. {dmg['deaths']:,} people were killed "
         f"({result['death_pct']:.1f}% of the province), {dmg['cities_destroyed']:,} "
         f"cities and {buildings_destroyed:,} buildings were destroyed, and "
-        f"happiness there fell by {dmg['happiness_lost']}."
+        f"happiness there fell by {dmg['happiness_lost']}. Radiation killed "
+        f"{fallout_deaths:,} more across your nation, and your population "
+        f"won't grow for {war_aftermath.NUKE_FREEZE_HOURS} hours."
     )
     attacker_news = (
         f"☢️ Your {kind} hit {plan['enemy_name']}'s province {prov['name']}: "
         f"{dmg['deaths']:,} killed, {dmg['cities_destroyed']:,} cities and "
-        f"{buildings_destroyed:,} buildings destroyed. The world's reaction costs "
+        f"{buildings_destroyed:,} buildings destroyed, plus {fallout_deaths:,} "
+        f"radiation deaths across their nation. The world's reaction costs "
         f"you {cost:,} influence, recovering over {RECOVERY_DAYS} days."
     )
     db.execute(

@@ -100,109 +100,146 @@ def calc_education_graduation(pop_children, policies, primary_buildings, hs_buil
     }
 
 
-def calc_province_population_delta(
-    curPop,
-    cities,
-    land,
-    happiness,
-    pollution,
-    legacy_max_population,
-    pop_working,
-    rations_ratio,
-    grace_period,
-):
-    """Pure per-province population-growth math for a single tick, given
-    this nation's already-aggregated `rations_ratio` (fraction of this
-    tick's total rations need actually met, 0..1) and whether the
-    new-nation starvation grace period applies.
-
-    Extracted out of population_growth()'s calc_population_growth() so a
-    read-only projection (the nation page's growth-rate display, see
-    services/country_service.py) can call the *exact* formula the tick
-    applies instead of a second hand-copied version -- see countries.py's
-    "Net Raw" rations-tax projection comment for the bug shape (numbers
-    silently drifting apart) that this avoids repeating.
-
-    Returns the net population delta for this tick (already includes
-    starvation deaths, so it can be negative).
-    """
-    # Saturating curve (approaches a cap asymptotically) instead of the
-    # old unbounded linear terms, so buying unlimited cities/land no
-    # longer produces unbounded maxPop.
-    city_contribution = variables.CITY_POP_CAP * (
-        1 - math.exp(-cities / variables.CITY_POP_SOFTNESS)
+def nation_comfort(total_cities, total_land, happiness=50, pollution=50):
+    """Comfortable population for a whole nation (NOT per province -- see
+    variables.NATION_COMFORT_BASE for why). Saturating curve on total
+    cities/land, scaled by the nation's population-weighted happiness and
+    pollution the same way the old per-province max population was."""
+    c = max(0.0, float(total_cities or 0))
+    l = max(0.0, float(total_land or 0))
+    comfort = (
+        variables.NATION_COMFORT_BASE
+        + variables.CITY_POP_CAP * (1 - math.exp(-c / variables.CITY_POP_SOFTNESS))
+        + variables.LAND_POP_CAP * (1 - math.exp(-l / variables.LAND_POP_SOFTNESS))
     )
-    land_contribution = variables.LAND_POP_CAP * (
-        1 - math.exp(-land / variables.LAND_POP_SOFTNESS)
-    )
-    maxPop = variables.DEFAULT_MAX_POPULATION + city_contribution + land_contribution
-
     happiness_multiplier = (
         (happiness - 50) * variables.DEFAULT_HAPPINESS_GROWTH_MULTIPLIER / 50
     )
     pollution_multiplier = (
         (pollution - 50) * -variables.DEFAULT_POLLUTION_GROWTH_MULTIPLIER / 50
     )
+    comfort = int(comfort * (1 + happiness_multiplier + pollution_multiplier))
+    return max(variables.NATION_COMFORT_BASE, comfort)
 
-    maxPop = int(maxPop * (1 + happiness_multiplier + pollution_multiplier))
-    if maxPop < variables.DEFAULT_MAX_POPULATION:
-        maxPop = variables.DEFAULT_MAX_POPULATION
-    # Grandfather floor: population that already existed before this
-    # curve shipped never gets retroactively shrunk -- it just stops
-    # growing further until legitimate new land/city purchases push
-    # the curve's result past this floor.
-    if legacy_max_population > maxPop:
-        maxPop = legacy_max_population
 
-    if rations_ratio > 1:
-        rations_ratio = 1
-    elif rations_ratio < 0:
-        rations_ratio = 0
+def overcrowding_efficiency(nation_population, comfort):
+    """Share of their normal capacity distribution buildings still serve.
+    1.0 up to comfort, then sqrt(comfort / population): 4x over comfort =
+    50%, so a huge nation needs far more distribution to stay fed."""
+    pop = float(nation_population or 0)
+    if comfort <= 0 or pop <= comfort:
+        return 1.0
+    return math.sqrt(comfort / pop)
 
-    # Squared so growth falls off steeply once distribution capacity
-    # can't keep up with population, not just linearly (player-reported
-    # over-fast growth while significantly under distribution capacity).
-    base_growth_rate = (rations_ratio**2) * 0.15
 
-    pop_ratio = curPop / maxPop if maxPop > 0 else 1
-    diminishing_factor = max(
-        variables.POP_GROWTH_DIMINISHING_FLOOR, 1 - (pop_ratio**2)
+def distribution_fix_active(now=None):
+    now = now or datetime.datetime.now(datetime.timezone.utc)
+    return now >= variables.DISTRIBUTION_FIX_START
+
+
+def distributable_rations(warehouse, dist_cap, nation_population, comfort, now=None):
+    """Rations that can actually reach people this tick.
+
+    dist_cap is in PEOPLE served (RATIONS_DISTRIBUTION_PER_BUILDING), the
+    warehouse is in RATIONS. Before DISTRIBUTION_FIX_START this keeps the old
+    (buggy) min(warehouse, people) comparison, which almost never limited
+    anything; after it, covered people are converted to rations and shrunk
+    by overcrowding_efficiency()."""
+    warehouse = max(0, int(warehouse or 0))
+    if dist_cap is None:
+        return warehouse
+    if not distribution_fix_active(now):
+        return min(warehouse, dist_cap)
+    covered_people = dist_cap * overcrowding_efficiency(nation_population, comfort)
+    return min(warehouse, int(covered_people // variables.RATIONS_PER))
+
+
+def calc_nation_growth(nation_population, comfort, rations_ratio, frozen=False):
+    """People added to a whole nation this tick (before starvation).
+    Based on the population the nation actually has, so war deaths slow it
+    down; slows to POP_GROWTH_DIMINISHING_FLOOR past comfort (no hard cap).
+    A nation that recently lost a battle / was nuked is frozen (0)."""
+    if frozen:
+        return 0
+    rations_ratio = min(1.0, max(0.0, float(rations_ratio or 0)))
+    pop = max(0, int(nation_population or 0))
+    pop_ratio = pop / comfort if comfort > 0 else 1
+    diminishing = max(variables.POP_GROWTH_DIMINISHING_FLOOR, 1 - pop_ratio**2)
+    raw = (
+        variables.POP_GROWTH_RATE * pop
+        + variables.POP_GROWTH_SEED_RATE * comfort
     )
-    growth_rate = base_growth_rate * diminishing_factor
+    return int(round((rations_ratio**2) * diminishing * raw))
 
-    capacity_growth = int(round((maxPop / 100) * growth_rate))
 
-    # Organic births: tied to actual working population instead of
-    # just spare capacity under maxPop, so the demographic pipeline
-    # (children -> working -> elderly -> death) can sustain itself
-    # once capacity_growth throttles near the cap. Same throttles as
-    # capacity growth (diminishing_factor, rations_ratio) so it can't
-    # outrun starvation or the population cap on its own.
-    birth_contribution = int(
-        round(
-            (pop_working or 0)
-            * variables.DEMO_BIRTH_RATE
-            * diminishing_factor
-            * (rations_ratio**2)
+def province_capacity_weight(cities, land):
+    """How a nation's growth is shared between its provinces: by how much
+    room each one has (cities/land), so new provinces fill up over time."""
+    return (
+        variables.DEFAULT_MAX_POPULATION
+        + (cities or 0) * variables.CITY_MAX_POPULATION_ADDITION
+        + (land or 0) * variables.LAND_MAX_POPULATION_ADDITION
+    )
+
+
+def build_nation_contexts(province_rows):
+    """Aggregate province rows (dicts with userid, population, citycount,
+    land, happiness, pollution) into per-nation totals + comfort."""
+    agg = {}
+    for row in province_rows:
+        uid = row["userid"]
+        pop = int(row.get("population") or 0)
+        a = agg.setdefault(
+            uid,
+            {"pop": 0, "cities": 0, "land": 0, "provinces": 0,
+             "happy_w": 0.0, "poll_w": 0.0, "weight": 0},
         )
+        a["pop"] += pop
+        a["cities"] += int(row.get("citycount") or 0)
+        a["land"] += int(row.get("land") or 0)
+        a["provinces"] += 1
+        a["happy_w"] += pop * float(row.get("happiness") or 0)
+        a["poll_w"] += pop * float(row.get("pollution") or 0)
+        a["weight"] += province_capacity_weight(row.get("citycount"), row.get("land"))
+    for a in agg.values():
+        happiness = a["happy_w"] / a["pop"] if a["pop"] else 50
+        pollution = a["poll_w"] / a["pop"] if a["pop"] else 50
+        a["comfort"] = nation_comfort(a["cities"], a["land"], happiness, pollution)
+    return agg
+
+
+def load_frozen_users(cursor, user_ids):
+    """User ids whose growth is frozen right now (population_growth_freezes,
+    migration 0106). Empty set if the table doesn't exist yet."""
+    cursor.execute("SELECT to_regclass('population_growth_freezes') IS NOT NULL")
+    row = cursor.fetchone()
+    exists = row[0] if not isinstance(row, dict) else list(row.values())[0]
+    if not exists or not user_ids:
+        return set()
+    cursor.execute(
+        "SELECT user_id FROM population_growth_freezes "
+        "WHERE user_id = ANY(%s) AND frozen_until > now()",
+        (list(user_ids),),
     )
+    out = set()
+    for r in cursor.fetchall():
+        out.add(r["user_id"] if isinstance(r, dict) else r[0])
+    return out
 
-    newPop = capacity_growth + birth_contribution
-    # Hard cap: never let growth push a province past maxPop this
-    # tick, regardless of how capacity_growth/births combine (the
-    # anti-whale-exploit ceiling from the 2026-08-26 rebalance).
-    if curPop >= maxPop:
-        newPop = 0
-    else:
-        newPop = max(0, min(newPop, maxPop - curPop))
 
+def calc_province_population_delta(
+    curPop, nation_growth, weight_share, rations_ratio, grace_period
+):
+    """Net population change for one province this tick: its share of the
+    nation's growth minus starvation (up to 1%/h at 0 rations coverage).
+    Shared by the tick and the nation-page projection (get_population_growth)
+    so the two can't drift apart."""
+    growth = int(round(nation_growth * max(0.0, min(1.0, weight_share))))
+    rations_ratio = min(1.0, max(0.0, float(rations_ratio or 0)))
     starvation_deaths = 0
     if rations_ratio < 1.0 and not grace_period:
-        # Up to 1% of the current population dies per hour at 0 rations
-        starvation_rate = (1.0 - rations_ratio) * 0.01
-        starvation_deaths = int(round(curPop * starvation_rate))
-
-    return newPop - starvation_deaths
+        starvation_deaths = int(round((curPop or 0) * (1.0 - rations_ratio) * 0.01))
+    return growth - starvation_deaths
 
 
 def get_population_growth(cId, db=None):
@@ -235,10 +272,7 @@ def get_population_growth(cId, db=None):
     with reuse_or_new_cursor(db, read_only=True) as active_db:
         active_db.execute(
             """
-            SELECT population, citycount, land, happiness, pollution,
-                   COALESCE(pop_working, 0) AS pop_working,
-                   COALESCE(legacy_max_population, 0) AS legacy_max_population,
-                   id
+            SELECT population, citycount, land, happiness, pollution, id
             FROM provinces WHERE userId = %s
             """,
             (cId,),
@@ -255,18 +289,25 @@ def get_population_growth(cId, db=None):
             query_cache.set(cache_key, result)
             return result
 
-        total_land = sum((row[2] or 0) for row in province_rows)
-        grace_period = (len(province_rows) <= 1) and (total_land <= 20)
+        rows = [
+            {
+                "userid": cId,
+                "population": r[0] or 0,
+                "citycount": r[1] or 0,
+                "land": r[2] or 0,
+                "happiness": r[3] or 0,
+                "pollution": r[4] or 0,
+                "id": r[5],
+            }
+            for r in province_rows
+        ]
+        nation = build_nation_contexts(rows)[cId]
+        grace_period = (nation["provinces"] <= 1) and (nation["land"] <= 20)
 
-        # Matches population_growth()'s own (simpler, non-demographic-
-        # weighted) rations-need formula exactly -- NOT app_core.game_ticks
-        # .food.rations_needed(), which applies the Rationing Program policy
-        # multiplier and demographic weighting that the actual growth tick
-        # does not use for this ratio.
+        # Same (non-demographic-weighted) rations need as population_growth().
         total_needed = 0
-        for row in province_rows:
-            curPop = row[0] or 0
-            needed = curPop // variables.RATIONS_PER
+        for row in rows:
+            needed = row["population"] // variables.RATIONS_PER
             total_needed += needed if needed >= 1 else 1
 
         active_db.execute(
@@ -300,37 +341,37 @@ def get_population_growth(cId, db=None):
                 )
                 dist_cap += (qty or 0) * cap
 
-        effective_rations = (
-            min(rations_warehouse, dist_cap)
-            if dist_cap is not None
-            else rations_warehouse
+        effective_rations = distributable_rations(
+            rations_warehouse, dist_cap, nation["pop"], nation["comfort"]
         )
         rations_ratio = (
             effective_rations / total_needed if total_needed > 0 else 0
         )
+        frozen = cId in load_frozen_users(active_db, [cId])
+        nation_growth = calc_nation_growth(
+            nation["pop"], nation["comfort"], rations_ratio, frozen=frozen
+        )
 
         total_delta = 0
-        current_population = 0
         per_province = {}
-        for row in province_rows:
-            curPop = row[0] or 0
-            current_population += curPop
+        for row in rows:
+            share = (
+                province_capacity_weight(row["citycount"], row["land"])
+                / nation["weight"]
+                if nation["weight"]
+                else 0
+            )
             province_delta = calc_province_population_delta(
-                curPop=curPop,
-                cities=row[1] or 0,
-                land=row[2] or 0,
-                happiness=int(row[3] or 0),
-                pollution=row[4] or 0,
-                legacy_max_population=row[6] or 0,
-                pop_working=row[5] or 0,
+                curPop=row["population"],
+                nation_growth=nation_growth,
+                weight_share=share,
                 rations_ratio=rations_ratio,
                 grace_period=grace_period,
             )
-            # Per-province breakdown for the province page / provinces list
-            # (same formula, same nation-wide rations ratio as the tick).
-            per_province[str(row[7])] = int(province_delta)
+            per_province[str(row["id"])] = int(province_delta)
             total_delta += province_delta
 
+        current_population = nation["pop"]
         percent = (
             (total_delta / current_population) * 100 if current_population > 0 else 0.0
         )
@@ -340,6 +381,8 @@ def get_population_growth(cId, db=None):
             "percent": percent,
             "current_population": int(current_population),
             "per_province": per_province,
+            "comfort": int(nation["comfort"]),
+            "growth_frozen": frozen,
         }
         query_cache.set(cache_key, result)
         return result
@@ -409,6 +452,10 @@ def population_growth():  # Function for growing population
             uid = prov["userid"]
             user_total_provinces[uid] = user_total_provinces.get(uid, 0) + 1
             user_total_land[uid] = user_total_land.get(uid, 0) + (prov["land"] or 0)
+
+        # Nation-level comfort / growth (2026-10-04 rebalance): computed once
+        # per nation, then shared out to provinces by capacity weight.
+        nation_ctx = build_nation_contexts(all_provinces)
 
         if not all_provinces:
             try:
@@ -506,11 +553,15 @@ def population_growth():  # Function for growing population
         user_effective_rations = {}
         for uid, needed in user_total_rations_needed.items():
             warehouse = ration_map.get(uid, 0) or 0
-            if variables.FEATURE_RATIONS_DISTRIBUTION:
-                dist_cap = dist_cap_map.get(uid, 0)
-                distributable = min(warehouse, dist_cap)
-            else:
-                distributable = warehouse
+            nation = nation_ctx.get(uid) or {"pop": 0, "comfort": 1}
+            dist_cap = (
+                dist_cap_map.get(uid, 0)
+                if variables.FEATURE_RATIONS_DISTRIBUTION
+                else None
+            )
+            distributable = distributable_rations(
+                warehouse, dist_cap, nation["pop"], nation["comfort"]
+            )
             actually_consumed = min(needed, distributable)
             user_effective_rations[uid] = distributable
 
@@ -532,38 +583,41 @@ def population_growth():  # Function for growing population
 
             user_rations_to_deduct[uid] = actually_consumed + spoilage
 
-        def calc_population_growth(province_row):
-            """Calculate population growth for a single province.
-
-            Delegates the actual math to calc_province_population_delta()
-            (module-level, above) so the tick and the nation-page growth-rate
-            projection in services/country_service.py share one formula.
-            """
-            user_id = province_row["userid"]
-            curPop = province_row["population"] or 0
-
-            total_needed = user_total_rations_needed.get(user_id, 1)
-            effective_rations = user_effective_rations.get(user_id, 0) or 0
-            rations_ratio = effective_rations / total_needed if total_needed > 0 else 0
-
-            grace_period = (user_total_provinces.get(user_id, 1) <= 1) and (user_total_land.get(user_id, 1) <= 20)
-
-            delta = calc_province_population_delta(
-                curPop=curPop,
-                cities=province_row["citycount"] or 0,
-                land=province_row["land"] or 0,
-                happiness=int(province_row.get("happiness") or 0),
-                pollution=province_row.get("pollution") or 0,
-                legacy_max_population=province_row.get("legacy_max_population") or 0,
-                pop_working=province_row.get("pop_working") or 0,
-                rations_ratio=rations_ratio,
-                grace_period=grace_period,
+        frozen_users = load_frozen_users(db, all_user_ids)
+        nation_growth_map = {}
+        for uid, nation in nation_ctx.items():
+            total_needed = user_total_rations_needed.get(uid, 1)
+            effective_rations = user_effective_rations.get(uid, 0) or 0
+            ratio = effective_rations / total_needed if total_needed > 0 else 0
+            nation["rations_ratio"] = ratio
+            nation_growth_map[uid] = calc_nation_growth(
+                nation["pop"], nation["comfort"], ratio, frozen=uid in frozen_users
             )
 
+        def calc_population_growth(province_row):
+            """New population for one province: its capacity-weighted share
+            of the nation's growth minus starvation (same math as the
+            nation-page projection, get_population_growth)."""
+            user_id = province_row["userid"]
+            curPop = province_row["population"] or 0
+            nation = nation_ctx[user_id]
+            grace_period = (user_total_provinces.get(user_id, 1) <= 1) and (user_total_land.get(user_id, 1) <= 20)
+            share = (
+                province_capacity_weight(province_row["citycount"], province_row["land"])
+                / nation["weight"]
+                if nation["weight"]
+                else 0
+            )
+            delta = calc_province_population_delta(
+                curPop=curPop,
+                nation_growth=nation_growth_map.get(user_id, 0),
+                weight_share=share,
+                rations_ratio=nation.get("rations_ratio", 0),
+                grace_period=grace_period,
+            )
             fullPop = int(curPop + delta)
             if fullPop < 0:
                 fullPop = 0
-
             return fullPop
 
         # PHASE 3 + 4: Process and write in chunks to avoid holding

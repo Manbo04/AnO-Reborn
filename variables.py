@@ -19,23 +19,46 @@ DEFAULT_MAX_POPULATION = 1000000
 CITY_MAX_POPULATION_ADDITION = 750000
 LAND_MAX_POPULATION_ADDITION = 120000
 
-# Saturating curve replacing the old linear/unbounded cityCount and land maxPop
-# terms: contribution = CAP * (1 - exp(-units / SOFTNESS)); slope at 0 ~= CAP/SOFTNESS,
-# tuned to roughly match the old linear rate (750k/city, 120k/land) at normal
-# scale, saturating hard at extreme scale (thousands of cities/land).
-CITY_POP_CAP = 50_000_000
-CITY_POP_SOFTNESS = 67
-LAND_POP_CAP = 20_000_000
-LAND_POP_SOFTNESS = 167
+# Population rebalance (2026-10-04, agreed with The_kaiser in staff-chat).
+#
+# "Comfort" population is computed ONCE PER NATION from its total cities and
+# land, on a saturating curve: BASE + CAP * (1 - exp(-units / SOFTNESS)).
+# It used to be computed per province (each province had its own 1M base and
+# its own curve), so splitting the same cities/land over 80 provinces gave
+# ~24x the room -- province spam was the best way to grow. Initial slope is
+# unchanged (~750k per city, ~120k per land); it flattens out around ~855M.
+# Comfort is NOT a hard cap: growth slows to POP_GROWTH_DIMINISHING_FLOOR of
+# normal past it, and distribution buildings lose effectiveness past it
+# (see overcrowding_efficiency in population.py), which is what limits huge
+# nations -- they have to keep building distribution or start starving.
+NATION_COMFORT_BASE = 5_000_000
+CITY_POP_CAP = 600_000_000
+CITY_POP_SOFTNESS = 800
+LAND_POP_CAP = 250_000_000
+LAND_POP_SOFTNESS = 2083
 
-# Minimum growth-rate multiplier once a nation is near/at its population cap
-# (diminishing_factor floor in calc_population_growth). Was 0.05: births
-# collapsed to ~5% of the uncapped rate near cap while children_to_working
-# graduation kept draining pop_children at a flat rate regardless, so
-# long-running near-cap nations saw their children bracket collapse toward
-# zero (2026-09-02 finding). Raised so births near cap can keep pace with
-# graduation without removing the cap-slowing effect entirely.
-POP_GROWTH_DIMINISHING_FLOOR = 0.3
+# Hourly growth is based on the people a nation actually has (it used to be
+# 0.15% of max population per hour no matter how many lived there, so killing
+# people in a war didn't slow growth at all). growth/h =
+#   rations_ratio^2 * diminishing * (POP_GROWTH_RATE * population
+#                                    + POP_GROWTH_SEED_RATE * comfort)
+# where diminishing = max(FLOOR, 1 - (population / comfort)^2). The small seed
+# term lets new/empty nations get going.
+POP_GROWTH_RATE = 0.004
+POP_GROWTH_SEED_RATE = 0.00005
+POP_GROWTH_DIMINISHING_FLOOR = 0.05
+
+# Fix for distribution buildings never limiting anything: the tick compared
+# "people the buildings can serve" with "rations in stock" (different units),
+# so e.g. 1 food bank (250k people) "fed" a 191M nation. From this moment on
+# only covered people count as fed, and past comfort every distribution
+# building serves sqrt(comfort / population) of its normal amount. Delayed
+# 48h after announcing so under-covered nations can build first.
+import datetime as _dt_rebalance
+
+DISTRIBUTION_FIX_START = _dt_rebalance.datetime(
+    2026, 10, 6, 16, 0, 0, tzinfo=_dt_rebalance.timezone.utc
+)
 
 DEFAULT_PRODUCTIVITY_PRODUCTION_MULTIPLIER = 0.009  # 9%
 

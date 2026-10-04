@@ -873,9 +873,16 @@ def province(pId):
                     unemployment_penalty=unemployment_penalty,
                     has_power=has_power,
                 )
-                pop_cap_info = pop_cap_marginals(
-                    province.get("citycount"), province.get("land")
-                )
+                # Comfort population is nation-wide (2026-10-04
+                # rebalance), so the marginals use the nation's totals.
+                with db.connection.cursor() as tuple_db:
+                    tuple_db.execute(
+                        "SELECT COALESCE(SUM(citycount), 0), COALESCE(SUM(land), 0) "
+                        "FROM provinces WHERE userId = %s",
+                        (cId,),
+                    )
+                    nation_cities, nation_land = tuple_db.fetchone()
+                pop_cap_info = pop_cap_marginals(nation_cities, nation_land)
             except Exception:
                 rollback_db_cursor(db)
                 stat_breakdown = None
@@ -1427,15 +1434,27 @@ def get_province_price(user_id):
         count_row = db.fetchone()
         current_province_amount = count_row[0] if count_row else 0
 
-        multiplier = 1 + (0.16 * current_province_amount)
-        if current_province_amount == 0:
-            price = 2000000
-        elif current_province_amount == 1:
-            price = 5000000
-        else:
-            price = int(8000000 * multiplier)
+        return province_price_for_count(current_province_amount)
 
-        return price
+
+# Past this many provinces each new one costs PROVINCE_PRICE_GROWTH more on
+# top of the linear price (2026-10-04 rebalance: 80 provinces in 3 days was
+# far too easy). Existing provinces are never affected.
+PROVINCE_PRICE_SOFT_LIMIT = 20
+PROVINCE_PRICE_GROWTH = 1.08
+
+
+def province_price_for_count(current_province_amount):
+    """Price of the next province for a nation that owns this many."""
+    if current_province_amount == 0:
+        return 2000000
+    if current_province_amount == 1:
+        return 5000000
+    price = 8000000 * (1 + (0.16 * current_province_amount))
+    extra = current_province_amount - PROVINCE_PRICE_SOFT_LIMIT
+    if extra > 0:
+        price *= PROVINCE_PRICE_GROWTH**extra
+    return int(price)
 
 
 PROVINCE_RENAME_COST = 10_000_000
