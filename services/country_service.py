@@ -508,6 +508,16 @@ class CountryService:
                                 for key, bname in STRIKE_TARGET_BUILDINGS.items()
                                 if owned.get(bname, 0) > 0
                             ]
+                            from wars.routes import POPULATION_TARGET, POPULATION_TARGET_LABEL
+                            db.execute(
+                                "SELECT COALESCE(MAX(population), 0) FROM provinces WHERE userid=%s",
+                                (cId,),
+                            )
+                            top_pop = int(db.fetchone()[0] or 0)
+                            if top_pop > 0:
+                                strike_targets.append(
+                                    (POPULATION_TARGET, POPULATION_TARGET_LABEL, f"{top_pop:,} in largest province")
+                                )
                     except Exception:
                         rollback_db_cursor(db)
 

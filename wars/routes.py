@@ -25,7 +25,7 @@ import random
 import traceback
 
 import variables
-from wars.service import apply_building_damage
+from wars.service import apply_building_damage, apply_population_strike
 from app_core.world_affairs.services import log_event
 
 # Add any other necessary imports here
@@ -1976,7 +1976,37 @@ STRIKE_TARGET_LABELS = {
 }
 
 
+# "population" is the one strike target that isn't a building: it hits the
+# enemy's most populous province instead (wars/service.apply_population_strike).
+# Share of that province killed per drone hit / per cruise missile, capped
+# per strike so one big launch can't empty a province.
+POPULATION_TARGET = "population"
+POPULATION_TARGET_LABEL = "Population Centres"
+POP_KILL_PER_DRONE_HIT = 0.0002
+POP_KILL_PER_MISSILE = 0.003
+POP_KILL_CAP_PER_STRIKE = 0.02
+
+
+def _valid_strike_target(strike_target):
+    return strike_target == POPULATION_TARGET or strike_target in STRIKE_TARGET_BUILDINGS
+
+
+def _population_report(result):
+    if not result:
+        return "found no population to hit"
+    name, deaths, happiness_lost = result
+    if deaths <= 0:
+        return f"hit {name} but caused no casualties"
+    return f"killed {deaths:,} people in {name} (-{happiness_lost} happiness)"
+
+
 def _target_has_building(db, target_id, strike_target):
+    if strike_target == POPULATION_TARGET:
+        db.execute(
+            "SELECT 1 FROM provinces WHERE userid = %s AND COALESCE(population, 0) > 0 LIMIT 1",
+            (target_id,),
+        )
+        return db.fetchone() is not None
     db.execute(
         "SELECT COALESCE(SUM(ub.quantity), 0) FROM user_buildings ub "
         "JOIN building_dictionary bd ON bd.building_id = ub.building_id "
@@ -2071,7 +2101,7 @@ def drone_strike():
 
     if attacker_id == target_id:
         return error(400, "You cannot strike yourself!")
-    if strike_target not in STRIKE_TARGET_BUILDINGS:
+    if not _valid_strike_target(strike_target):
         return error(400, "Invalid target")
     if drones_count <= 0:
         return error(400, "Must launch at least 1 drone.")
@@ -2096,7 +2126,7 @@ def drone_strike():
         if not _target_has_building(db, target_id, strike_target):
             return error(
                 400,
-                f"They have no {STRIKE_TARGET_LABELS[strike_target]} to hit. Pick another target.",
+                f"They have no {STRIKE_TARGET_LABELS.get(strike_target, POPULATION_TARGET_LABEL)} to hit. Pick another target.",
             )
 
         db.execute(
@@ -2162,10 +2192,19 @@ def drone_strike():
         hits = int(surviving_drones * random.uniform(0.5, 0.9))
         damage_points = hits * 2
 
-        destroyed, had_target = apply_building_damage(
-            db, target_id, STRIKE_TARGET_BUILDINGS[strike_target],
-            damage_points, STRIKE_TARGET_THRESHOLDS[strike_target],
-        )
+        pop_result = None
+        if strike_target == POPULATION_TARGET:
+            destroyed, had_target = 0, True
+            if hits > 0:
+                pop_result = apply_population_strike(
+                    db, target_id,
+                    min(POP_KILL_CAP_PER_STRIKE, hits * POP_KILL_PER_DRONE_HIT),
+                )
+        else:
+            destroyed, had_target = apply_building_damage(
+                db, target_id, STRIKE_TARGET_BUILDINGS[strike_target],
+                damage_points, STRIKE_TARGET_THRESHOLDS[strike_target],
+            )
 
         soldiers_lost = 0
         if hits > 0 and random.random() < 0.10:
@@ -2186,7 +2225,12 @@ def drone_strike():
                     (soldiers_lost, target_id, s_row[1]),
                 )
 
-        if not had_target:
+        if strike_target == POPULATION_TARGET:
+            damage_report = (
+                _population_report(pop_result) if hits > 0
+                else "failed to inflict meaningful damage"
+            )
+        elif not had_target:
             damage_report = f"found no {strike_target.replace('_', ' ')} to destroy"
         elif destroyed > 0:
             damage_report = f"destroyed {destroyed} {strike_target.replace('_', ' ')}"
@@ -2226,7 +2270,7 @@ def cruise_missile_strike():
 
     if attacker_id == target_id:
         return error(400, "You cannot strike yourself!")
-    if strike_target not in STRIKE_TARGET_BUILDINGS:
+    if not _valid_strike_target(strike_target):
         return error(400, "Invalid target")
     if missiles_count <= 0:
         return error(400, "Must launch at least 1 missile.")
@@ -2240,7 +2284,7 @@ def cruise_missile_strike():
         if not _target_has_building(db, target_id, strike_target):
             return error(
                 400,
-                f"They have no {STRIKE_TARGET_LABELS[strike_target]} to hit. Pick another target.",
+                f"They have no {STRIKE_TARGET_LABELS.get(strike_target, POPULATION_TARGET_LABEL)} to hit. Pick another target.",
             )
 
         db.execute(
@@ -2267,12 +2311,22 @@ def cruise_missile_strike():
         )
 
         damage_points = missiles_count * 8
-        destroyed, had_target = apply_building_damage(
-            db, target_id, STRIKE_TARGET_BUILDINGS[strike_target],
-            damage_points, STRIKE_TARGET_THRESHOLDS[strike_target],
-        )
+        pop_result = None
+        if strike_target == POPULATION_TARGET:
+            destroyed, had_target = 0, True
+            pop_result = apply_population_strike(
+                db, target_id,
+                min(POP_KILL_CAP_PER_STRIKE, missiles_count * POP_KILL_PER_MISSILE),
+            )
+        else:
+            destroyed, had_target = apply_building_damage(
+                db, target_id, STRIKE_TARGET_BUILDINGS[strike_target],
+                damage_points, STRIKE_TARGET_THRESHOLDS[strike_target],
+            )
 
-        if not had_target:
+        if strike_target == POPULATION_TARGET:
+            damage_report = _population_report(pop_result)
+        elif not had_target:
             damage_report = f"found no {strike_target.replace('_', ' ')} to destroy"
         elif destroyed > 0:
             damage_report = f"destroyed {destroyed} {strike_target.replace('_', ' ')}"
