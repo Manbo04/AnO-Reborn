@@ -119,6 +119,14 @@
                     arrow_forward
                     </span>Attack</a>
             </div>
+            {% if repeat_attack %}
+            <div class="templatedivflex2left">
+                <form action="/war/{{ repeat_attack.war_id }}/repeat_attack" method="post">
+                    <button type="submit" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">replay</span>Repeat last attack</button>
+                </form>
+                <p class="repeat-attack-label">{{ repeat_attack.label }}</p>
+            </div>
+            {% endif %}
         </div>
 
         <h2 class="templatecontentheaderleft">Espionage</h2>

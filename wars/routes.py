@@ -259,6 +259,12 @@ def peace_offers():
                     None,
                     {"option": "peace_offer_id", "value": offer_id},
                 )
+                try:
+                    _record_peace_news(
+                        db, cId, author_id, dict(zip(resources, amounts))
+                    )
+                except Exception:
+                    rollback_db_cursor(db)
                 return redirect("/peace_offers")
 
             return error(400, "No decision was made.")
@@ -270,6 +276,29 @@ def peace_offers():
         outgoing_peace_offers=outgoing,
         incoming_counter=incoming_counter,
         outgoing_counter=outgoing_counter,
+    )
+
+
+def _record_peace_news(db, accepter_id, author_id, paid):
+    """News for both sides when a peace offer ends a war (Silent, 2026-10-04)."""
+    db.execute(
+        "SELECT id, username FROM users WHERE id IN (%s, %s)", (accepter_id, author_id)
+    )
+    names = {row[0]: row[1] for row in db.fetchall()}
+    accepter = names.get(accepter_id, "Unknown")
+    author = names.get(author_id, "Unknown")
+    terms = ", ".join(
+        f"{int(a):,} {r.replace('_', ' ')}" for r, a in paid.items() if int(a or 0)
+    )
+    author_msg = f"🕊️ PEACE: {accepter} accepted your peace offer. The war is over." + (
+        f" You received: {terms}." if terms else ""
+    )
+    accepter_msg = f"🕊️ PEACE: You accepted {author}'s peace offer. The war is over." + (
+        f" You paid: {terms}." if terms else ""
+    )
+    db.execute(
+        "INSERT INTO news (destination_id, message) VALUES (%s, %s), (%s, %s)",
+        (author_id, author_msg, accepter_id, accepter_msg),
     )
 
 
@@ -472,10 +501,113 @@ def war_with_id(war_id):
             spyCount=spyCount,
             successChance=successChance,
             peace_to_send=enemy_id,
+            repeat_attack=_repeat_attack_ctx(war_id),
         )
 
 
 # ...existing code...
+
+
+# "Repeat last attack" (Silent, 2026-10-04): raiding meant walking
+# war -> warchoose -> waramount (-> wartarget) -> warResult for every single
+# strike. The last attack sent in each war is remembered in the session so
+# it can be fired again in one click from the war page or the result page.
+_LAST_ATTACK_MAX_WARS = 10
+
+
+def _remember_last_attack(war_id, entry):
+    if not war_id:
+        return
+    store = dict(session.get("last_attack") or {})
+    key = str(war_id)
+    store.pop(key, None)
+    store[key] = entry
+    while len(store) > _LAST_ATTACK_MAX_WARS:
+        store.pop(next(iter(store)))
+    session["last_attack"] = store
+
+
+def _last_attack_for(war_id):
+    if not war_id:
+        return None
+    entry = (session.get("last_attack") or {}).get(str(war_id))
+    if not isinstance(entry, dict) or not entry.get("units"):
+        return None
+    return entry
+
+
+def _last_attack_label(entry):
+    parts = [
+        f"{int(q):,} {u.replace('_', ' ')}"
+        for u, q in (entry.get("units") or {}).items()
+        if int(q or 0) > 0
+    ]
+    label = ", ".join(parts) or "nothing"
+    if entry.get("target"):
+        label += f" at their {entry['target'].replace('_', ' ')}"
+    return label
+
+
+def _repeat_attack_ctx(war_id):
+    entry = _last_attack_for(war_id)
+    if not entry:
+        return None
+    return {"war_id": war_id, "label": _last_attack_label(entry)}
+
+
+@wars_bp.route("/war/<int:war_id>/repeat_attack", methods=["POST"])
+@login_required
+@check_required
+def repeat_attack(war_id):
+    """Re-send the last attack made in this war with one click. Amounts are
+    capped at what's still owned, so losses from the previous strike don't
+    turn the button into an error."""
+    cId = session["user_id"]
+    entry = _last_attack_for(war_id)
+    if not entry:
+        return error(400, "No previous attack to repeat in this war.")
+    with get_request_cursor() as db:
+        db.execute(
+            "SELECT attacker, defender FROM wars WHERE id=%s AND peace_date IS NULL",
+            (war_id,),
+        )
+        row = db.fetchone()
+    if not row or cId not in (row[0], row[1]):
+        return error(400, "This war is over or you're not in it.")
+    eId = row[1] if cId == row[0] else row[0]
+
+    wanted = {u: int(q or 0) for u, q in (entry.get("units") or {}).items()}
+    if any(u not in Military.allUnits for u in wanted):
+        return error(400, "Invalid unit type!")
+    owned = Military.get_military(cId)
+    owned.update(Military.get_special(cId))
+    units = {u: min(q, int(owned.get(u, 0) or 0)) for u, q in wanted.items()}
+    if not sum(units.values()):
+        return error(400, "You have none of those units left to send.")
+
+    attack_units = Units(cId, war_id=war_id)
+    if entry.get("special"):
+        target = entry.get("target")
+        if len(units) != 1 or not target or target not in Military.allUnits:
+            return error(400, "Invalid attack request. Please start again.")
+        err = attack_units.attach_units(units, 1)
+        if err:
+            return error(400, err)
+        session["enemy_id"] = eId
+        session["war_domain"] = None
+        session["attack_units"] = attack_units.__dict__
+        return _resolve_special_attack(attack_units, eId, target)
+
+    domain = entry.get("domain")
+    if domain not in Military.UNIT_DOMAINS or len(units) != 3:
+        return error(400, "Invalid attack request. Please start again.")
+    err = attack_units.attach_units(units, 3)
+    if err:
+        return error(400, err)
+    session["enemy_id"] = eId
+    session["war_domain"] = domain
+    session["attack_units"] = attack_units.__dict__
+    return redirect("/warResult")
 
 
 @wars_bp.route("/warchoose/<int:war_id>", methods=["GET", "POST"])
@@ -599,6 +731,64 @@ def warAmount():
             return error(400, "Invalid attack request. Please start again.")
 
 
+def _resolve_special_attack(attack_units, eId, target):
+    """Fire a special-unit strike at one enemy unit type (wartarget POST and
+    the repeat-attack button both land here)."""
+    target_amount = Military.get_particular_units_list(eId, [target])
+    defender = Units(eId, {target: target_amount[0]}, selected_units_list=[target])
+    # FIXED 2026-09-23: same replay race as warResult() (see its
+    # docstring for the full mechanism) -- attack_units is sourced
+    # from the client-side signed session cookie with no server-side
+    # session store, and this POST route has no idempotency check
+    # before Military.special_fight() applies casualties/infra damage
+    # and decrements the attacker's special unit via its own
+    # independent, immediately-committing connection. A double-click
+    # or resubmitted POST carrying the same still-valid stale cookie
+    # could apply a second round of damage from a single special
+    # attack (e.g. a nuke/ICBM sent via this legacy special-unit path,
+    # separate from the dedicated /nuclear_strike route also fixed
+    # this session). Reuses the same wars.last_attack_resolved_at gate
+    # (migrations/0081) added for warResult -- one shared "has this
+    # war's most recent attack already been resolved" gate covers
+    # both paths a war's combat can be resolved through.
+    if attack_units.war_id is not None:
+        now_ts = time.time()
+        with get_request_cursor() as db:
+            db.execute(
+                """
+                UPDATE wars SET last_attack_resolved_at = %s
+                WHERE id = %s
+                  AND (last_attack_resolved_at IS NULL OR %s - last_attack_resolved_at >= 1)
+                RETURNING id
+                """,
+                (now_ts, attack_units.war_id, now_ts),
+            )
+            if not db.fetchone():
+                session.pop("attack_units", None)
+                session.pop("enemy_id", None)
+                session.pop("war_domain", None)
+                return error(
+                    400,
+                    "This attack was already resolved. Please start a new attack.",
+                )
+            # Commit the guard now: special_fight() updates this same wars
+            # row on its own connection, and an uncommitted row lock here
+            # makes it wait on us until the 30s statement timeout.
+            db.connection.commit()
+
+    requested = {u: int(q or 0) for u, q in (attack_units.selected_units or {}).items()}
+    special_fight_result = Military.special_fight(
+        attack_units, defender, defender.selected_units_list[0]
+    )
+    if isinstance(special_fight_result, str):
+        return special_fight_result
+    _remember_last_attack(
+        attack_units.war_id, {"special": True, "units": requested, "target": target}
+    )
+    session["from_wartarget"] = special_fight_result
+    return redirect("/warResult")
+
+
 @wars_bp.route("/wartarget", methods=["GET", "POST"])
 @login_required
 def warTarget():
@@ -638,8 +828,6 @@ def warTarget():
         target = request.form.get("targeted_unit")
         if not target or target not in Military.allUnits:
             return error(400, "Invalid target unit type")
-        target_amount = Military.get_particular_units_list(eId, [target])
-        defender = Units(eId, {target: target_amount[0]}, selected_units_list=[target])
         attack_unit_session = session.get("attack_units")
         if not attack_unit_session:
             return error(
@@ -654,53 +842,7 @@ def warTarget():
                 "Attack session expired. Please start again.",
             )
 
-        # FIXED 2026-09-23: same replay race as warResult() (see its
-        # docstring for the full mechanism) -- attack_units is sourced
-        # from the client-side signed session cookie with no server-side
-        # session store, and this POST route has no idempotency check
-        # before Military.special_fight() applies casualties/infra damage
-        # and decrements the attacker's special unit via its own
-        # independent, immediately-committing connection. A double-click
-        # or resubmitted POST carrying the same still-valid stale cookie
-        # could apply a second round of damage from a single special
-        # attack (e.g. a nuke/ICBM sent via this legacy special-unit path,
-        # separate from the dedicated /nuclear_strike route also fixed
-        # this session). Reuses the same wars.last_attack_resolved_at gate
-        # (migrations/0081) added for warResult -- one shared "has this
-        # war's most recent attack already been resolved" gate covers
-        # both paths a war's combat can be resolved through.
-        if attack_units.war_id is not None:
-            now_ts = time.time()
-            with get_request_cursor() as db:
-                db.execute(
-                    """
-                    UPDATE wars SET last_attack_resolved_at = %s
-                    WHERE id = %s
-                      AND (last_attack_resolved_at IS NULL OR %s - last_attack_resolved_at >= 1)
-                    RETURNING id
-                    """,
-                    (now_ts, attack_units.war_id, now_ts),
-                )
-                if not db.fetchone():
-                    session.pop("attack_units", None)
-                    session.pop("enemy_id", None)
-                    session.pop("war_domain", None)
-                    return error(
-                        400,
-                        "This attack was already resolved. Please start a new attack.",
-                    )
-                # Commit the guard now: special_fight() updates this same wars
-                # row on its own connection, and an uncommitted row lock here
-                # makes it wait on us until the 30s statement timeout.
-                db.connection.commit()
-
-        special_fight_result = Military.special_fight(
-            attack_units, defender, defender.selected_units_list[0]
-        )
-        if isinstance(special_fight_result, str):
-            return special_fight_result
-        session["from_wartarget"] = special_fight_result
-        return redirect("warResult")
+        return _resolve_special_attack(attack_units, eId, target)
 
 
 @wars_bp.route("/warResult", methods=["GET"])
@@ -901,6 +1043,9 @@ def warResult():
                 return error(
                     500, "An error occurred during the battle. Please try again."
                 )
+            _remember_last_attack(
+                war_id_for_guard, {"domain": war_domain, "units": prev_attacker}
+            )
             # Charge the defense AFTER the fight: persist_fight_results()
             # updates this same wars row on its own connection, so locking it
             # here first would stall that update (see the 2026-09-26 note).
@@ -1068,6 +1213,10 @@ def warResult():
                 f"⚔️ BATTLE REPORT: Your {domain_name} assault on {defender_name} resolved. "
                 f"{outcome_att} Your casualties: {a_loss_summary}. Enemy casualties: {d_loss_summary}."
             )
+            looted = int((attacker_result.get("loot") or {}).get("money") or 0)
+            if looted > 0:
+                att_news += f" You looted {looted:,} gold."
+                def_news += f" They looted {looted:,} gold."
             db.execute("INSERT INTO news (destination_id, message) VALUES (%s, %s)", (eId, def_news))
             db.execute("INSERT INTO news (destination_id, message) VALUES (%s, %s)", (attacker.user_id, att_news))
         except Exception as e:
@@ -1093,6 +1242,7 @@ def warResult():
         win_condition=win_condition,
         defender_result=defender_result,
         attacker_result=attacker_result,
+        repeat_attack=_repeat_attack_ctx(attacker.war_id),
     )
 
 

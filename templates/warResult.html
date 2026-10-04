@@ -8,6 +8,30 @@
 /* Built on game-glass + theme tokens so it reads in light and dark themes
    (the old version hardcoded dark-only panels on a bare page). */
 .page-war-result { --wr-warn: #d97706; }
+.war-result-actions {
+    display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start;
+    gap: 12px; margin-top: 20px;
+}
+.war-result-actions .game-btn { min-height: 44px; }
+
+/* Repeat last attack (war page + result page) */
+.war-action-wrap { flex-wrap: wrap; }
+.repeat-attack-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+}
+.repeat-attack-label {
+    font-size: 12px;
+    color: var(--text-secondary, inherit);
+    opacity: 0.85;
+    max-width: 280px;
+    text-align: center;
+    line-height: 1.35;
+}
+
 .battle-intensity {
     display: inline-flex; align-items: center; gap: 6px;
     margin: 0 0 18px; padding: 6px 12px;
@@ -257,9 +281,22 @@
         </div>
 
         <br>
-        <a class="game-btn game-btn-primary game-btn-lg templatecenteredbutton" href="/wars" style="margin-top: 20px;">
-            <span class="material-icons-outlined">arrow_forward</span> Continue
-        </a>
+        <div class="war-result-actions">
+            {% if repeat_attack %}
+            <form action="/war/{{ repeat_attack.war_id }}/repeat_attack" method="post" class="repeat-attack-form">
+                <button type="submit" class="game-btn game-btn-primary game-btn-lg">
+                    <span class="material-icons-outlined">replay</span> Attack again
+                </button>
+                <div class="repeat-attack-label">{{ repeat_attack.label }}</div>
+            </form>
+            <a class="game-btn game-btn-lg" href="/war/{{ repeat_attack.war_id }}">
+                <span class="material-icons-outlined">tune</span> Change attack
+            </a>
+            {% endif %}
+            <a class="game-btn {% if not repeat_attack %}game-btn-primary {% endif %}game-btn-lg" href="/wars">
+                <span class="material-icons-outlined">arrow_forward</span> Continue
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}

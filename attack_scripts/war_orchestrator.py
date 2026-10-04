@@ -147,6 +147,34 @@ def _determine_win_label(win_type: Optional[int]) -> str:
     return "close victory"
 
 
+def _format_spoils(spoils):
+    return ", ".join(
+        f"{int(amount):,} {resource.replace('_', ' ')}"
+        for resource, amount in spoils.items()
+        if amount
+    )
+
+
+def _record_war_end_news(db, winner_id, loser_id, spoils):
+    db.execute("SELECT id, username FROM users WHERE id IN (%s, %s)", (winner_id, loser_id))
+    names = {row[0]: row[1] for row in db.fetchall()}
+    winner_name = names.get(winner_id, "Unknown")
+    loser_name = names.get(loser_id, "Unknown")
+    taken = _format_spoils(spoils)
+    winner_msg = (
+        f"🏳️ WAR OVER: {loser_name}'s morale broke. You won the war! "
+        + (f"Spoils of war: {taken}." if taken else "They had nothing left to loot.")
+    )
+    loser_msg = (
+        f"🏳️ WAR OVER: Your morale broke and you lost the war against {winner_name}. "
+        + (f"They took: {taken}." if taken else "They found nothing to loot.")
+    )
+    db.execute(
+        "INSERT INTO news (destination_id, message) VALUES (%s, %s), (%s, %s)",
+        (winner_id, winner_msg, loser_id, loser_msg),
+    )
+
+
 def persist_fight_results(
     winner,
     loser,
@@ -240,6 +268,7 @@ def persist_fight_results(
                 loot_multiplier = 0.3 if winner_upgrades.get("lootingteams") else 0.2
 
                 # Transfer resources from loser to winner
+                war_spoils = {}
                 for resource in Economy.resources:
                     db.execute(
                         """
@@ -253,6 +282,8 @@ def persist_fight_results(
                     )
                     resource_amount = fetchone_first(db, 0) or 0
                     transfer_amount = int(float(resource_amount) * loot_multiplier)
+                    if transfer_amount > 0:
+                        war_spoils[resource] = transfer_amount
 
                     db.execute(
                         """
@@ -320,6 +351,15 @@ def persist_fight_results(
                     claim_bounties(db, loser.user_id, winner.user_id)
                 except Exception:
                     logger.exception("Bounty payout failed for war_id=%s", war_id)
+
+                # Both sides get a permanent record of how the war ended and
+                # what was taken (Silent suggestion, 2026-10-04).
+                try:
+                    _record_war_end_news(
+                        db, winner.user_id, loser.user_id, war_spoils
+                    )
+                except Exception:
+                    logger.exception("War-end news failed for war_id=%s", war_id)
 
             # Persist the new morale value
             db.execute(

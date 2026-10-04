@@ -75,6 +75,14 @@
             <a class="game-btn game-btn-primary game-btn-lg" href="/warchoose/{{ war_id }}">
                 <span class="material-icons-outlined">arrow_forward</span>Attack
             </a>
+            {% if repeat_attack %}
+            <form action="/war/{{ repeat_attack.war_id }}/repeat_attack" method="post" class="repeat-attack-form">
+                <button type="submit" class="game-btn game-btn-lg" title="Send the same attack again">
+                    <span class="material-icons-outlined">replay</span>Repeat last attack
+                </button>
+                <div class="repeat-attack-label">{{ repeat_attack.label }}</div>
+            </form>
+            {% endif %}
         </div>
 
         <!-- ESPIONAGE -->
