@@ -15893,6 +15893,114 @@ body.page-province .building-jump a:focus-visible {
     body.page-province .building-jump { flex-wrap: wrap; overflow-x: visible; }
 }
 
+/* --- Additional Density Pass --- */
+
+/* Fix marketoffer horizontal scroll by capping select inputs */
+body.game-page-v2 select,
+body.game-page-v2 input {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Global table density on phones */
+@media (max-width: 600px) {
+    body.game-page-v2 .templatetable td,
+    body.game-page-v2 .templatetable th,
+    body.game-page-v2 .game-table td,
+    body.game-page-v2 .game-table th {
+        padding-top: 5px;
+        padding-bottom: 5px;
+        font-size: 13px;
+    }
+    body.game-page-v2 .templatetable td .material-icons-outlined,
+    body.game-page-v2 .game-table td .material-icons-outlined {
+        font-size: 18px;
+        vertical-align: text-bottom;
+    }
+}
+
+/* Military */
+@media (max-width: 600px) {
+    body.page-military .mil-unit-media {
+        height: 80px;
+    }
+    body.page-military .mil-unit-body {
+        padding: 10px 12px 12px;
+        gap: 6px;
+    }
+    body.page-military .mil-unit-head h3 {
+        font-size: 15px;
+    }
+}
+
+/* Upgrades (Projects) */
+@media (max-width: 600px) {
+    body.page-upgrades .warflexparentcolors .templatedivflex2left:not(:has(.unitimage)) {
+        padding: 10px 12px !important;
+    }
+    body.page-upgrades .warflexparentcolors h3.templatecontentheadercenter {
+        margin-bottom: 4px !important;
+        font-size: 14px !important;
+    }
+    body.page-upgrades .warflexparentcolors .templatecontentpleft {
+        margin-bottom: 6px !important;
+        font-size: 13px !important;
+        line-height: 1.35 !important;
+    }
+    body.page-upgrades .warflexparentcolors .templatedivflex2left:has(.unitimage) {
+        padding: 10px 10px 0 !important;
+    }
+    body.page-upgrades .tech-grid-form .warflexparentcolors .unitimage {
+        height: 70px !important;
+        min-height: 70px !important;
+        max-height: 70px !important;
+    }
+}
+
+/* Store */
+@media (max-width: 600px) {
+    body.page-store .game-panel-grid {
+        gap: 8px;
+    }
+    body.page-store .store-cosmetic-card {
+        flex-direction: row;
+        align-items: center;
+    }
+    body.page-store .store-cosmetic-preview {
+        flex: 0 0 100px;
+        height: auto;
+        aspect-ratio: 1/1;
+        border-radius: 6px;
+        margin: 8px 0 8px 8px;
+    }
+    body.page-store .store-cosmetic-body {
+        flex: 1 1 auto;
+        padding: 10px 12px 10px 10px;
+    }
+    body.page-store .store-cosmetic-name {
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+    body.page-store .store-cosmetic-action-form {
+        margin-top: 6px;
+    }
+    body.page-store .store-section-intro {
+        margin-bottom: 12px;
+    }
+}
+body.page-marketoffer .templateselect {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Legacy flex columns could overflow the phone viewport. */
+body.game-page-v2 .templatedivflex2left,
+body.game-page-v2 .templatedivflex2right {
+    min-width: 0;
+    max-width: 100%;
+}
+
 
 /* --- static/css/chat.css --- */
 /* Coalition chat + nation direct messages — mobile-first. */
