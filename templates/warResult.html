@@ -199,8 +199,8 @@
                         </div>
                         <div class="progress-container" style="margin: 5px 0;">
                             {% set s_pool = defender_result["supply"]["pool_after"] %}
-                            {% set s_cap = 2000 %}
-                            {% set s_pct = (s_pool / s_cap * 100)|round %}
+                            {% set s_cap = defender_result["supply"]["cap"] or 2000 %}
+                            {% set s_pct = [(s_pool / s_cap * 100), 100]|min|round %}
                             <div class="progress-fill wr-supply-fill" style="width: {{s_pct}}%;"></div>
                         </div>
                         <div class="casualty-counter">

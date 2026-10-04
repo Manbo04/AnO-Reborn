@@ -63,3 +63,27 @@ def test_citizen_army_losses():
             
     losses = supply.citizen_army_losses({"tanks": 100, "soldiers": 1000}, 0.10, rng=MockRNG())
     assert losses == {"tanks": 10, "soldiers": 100}
+
+
+def test_army_supply_value_counts_only_conventional_units():
+    costs = {"soldiers": 1, "tanks": 5, "nukes": 1000}
+    assert supply.army_supply_value({"soldiers": 200_000, "tanks": 5000, "nukes": 3}, costs) == 225_000
+
+
+def test_supply_cap_scales_with_army_but_has_floor():
+    assert supply.supply_cap(0) == 2000
+    assert supply.supply_cap(4000) == 2000
+    assert supply.supply_cap(225_000) == 56_250
+
+
+def test_hourly_regen_fills_cap_in_about_a_day():
+    assert supply.hourly_regen(2000, 20) == 84
+    assert supply.hourly_regen(56_250, 20) * 24 >= 56_250
+    assert supply.hourly_regen(2000, 20, 1.15) == 97
+
+
+def test_starting_supplies_favour_the_defender():
+    atk, dfn = supply.starting_supplies(56_250, 56_250)
+    assert dfn > atk
+    assert supply.starting_supplies(2000, 2000) == (400, 1000)
+    assert supply.starting_supplies(100, 100) == (200, 200)

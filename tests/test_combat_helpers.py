@@ -140,3 +140,52 @@ def test_compute_unit_casualties_caps_at_sent_amount():
     )
     assert winner_pairs == [("tanks", 5)]
     assert loser_pairs == [("soldiers", 3)]
+
+
+class _MidRng:
+    """uniform() always returns the midpoint, so results are exact."""
+
+    def uniform(self, a, b):
+        return (a + b) / 2.0
+
+
+def test_casualties_scale_with_big_battles():
+    # 100k vs 100k soldiers, clear win (win_type 2): loser loses ~6% of what
+    # it sent instead of the old flat ~25 units.
+    _, loser_pairs = compute_unit_casualties(
+        0.5, 2.0, ["soldiers"], ["soldiers"],
+        {"soldiers": 100_000}, {"soldiers": 100_000}, rng=_MidRng(),
+    )
+    assert loser_pairs == [("soldiers", pytest.approx(6000))]
+
+
+def test_casualties_small_battles_keep_flat_losses():
+    # 50 vs 50: the share (~3 units) is below the old flat roll, so the old
+    # number still applies.
+    _, loser_pairs = compute_unit_casualties(
+        0.5, 2.0, ["soldiers"], ["soldiers"],
+        {"soldiers": 50}, {"soldiers": 50}, rng=_MidRng(),
+    )
+    assert loser_pairs == [("soldiers", pytest.approx(2.0 * 6.25 * 2))]
+
+
+def test_winner_never_loses_more_share_than_loser():
+    winner_pairs, loser_pairs = compute_unit_casualties(
+        1.0, 1.1, ["tanks"], ["tanks"],
+        {"tanks": 50_000}, {"tanks": 50_000}, rng=_MidRng(),
+    )
+    assert winner_pairs[0][1] <= loser_pairs[0][1]
+
+
+def test_morale_does_not_scale_with_army_size():
+    small = compute_morale_delta({"soldiers": 2000}, {"soldiers": 2000}, {"soldiers": 2000}, False, 2.0)
+    huge = compute_morale_delta({"soldiers": 500_000}, {"soldiers": 500_000}, {"soldiers": 500_000}, False, 2.0)
+    assert small == huge
+    assert 10 <= small <= 25
+
+
+def test_morale_annihilation_capped_and_token_raid_minimal():
+    rout = compute_morale_delta({"tanks": 10}, {"tanks": 100_000}, {"tanks": 10}, False, 5)
+    assert rout == 40
+    raid = compute_morale_delta({}, {"soldiers": 1}, {}, False, 5)
+    assert raid == 1

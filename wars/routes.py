@@ -433,8 +433,19 @@ def war_with_id(war_id):
         attacker_name = usernames.get(attacker, "Unknown")
         defender_name = usernames.get(defender, "Unknown")
 
-        defender_info = {"morale": defender_morale, "supplies": defender_supplies}
-        attacker_info = {"morale": attacker_morale, "supplies": attacker_supplies}
+        from wars import supply as war_supply
+
+        supply_caps = war_supply.get_supply_caps(db, (attacker, defender))
+        defender_info = {
+            "morale": defender_morale,
+            "supplies": defender_supplies,
+            "supply_cap": supply_caps.get(defender, war_supply.SUPPLY_CAP_MIN),
+        }
+        attacker_info = {
+            "morale": attacker_morale,
+            "supplies": attacker_supplies,
+            "supply_cap": supply_caps.get(attacker, war_supply.SUPPLY_CAP_MIN),
+        }
 
         if cId == defender:
             cId_type = "defender"
@@ -955,6 +966,9 @@ def warResult():
                 "owned": sum(int(v or 0) for v in defenseunits.values()),
                 "fielded": sum(fielded_units.values()),
                 "floor": war_supply.DEFENDER_SUPPLY_FLOOR,
+                "cap": war_supply.get_supply_caps(db, (eId,)).get(
+                    eId, war_supply.SUPPLY_CAP_MIN
+                ),
             }
 
             # FIXED 2026-09-23: found live while auditing wars/ during the
@@ -1438,6 +1452,9 @@ def declare_war():
             )
             new_war_row = db.fetchone()
             new_war_id = new_war_row[0] if new_war_row else None
+            from wars import supply as war_supply
+
+            war_supply.seed_starting_supplies(db, new_war_id, attacker.id, defender.id)
             db.execute("SELECT username FROM users WHERE id=(%s)", (attacker.id,))
             attacker_row = db.fetchone()
             attacker_name = (
@@ -1568,12 +1585,19 @@ def join_war_as_ally(war_id):
             start_dates = time.time()
             db.execute(
                 "INSERT INTO wars (attacker, defender, war_type, agressor_message, "
-                "start_date, last_visited) VALUES (%s, %s, %s, %s, %s, %s)",
+                "start_date, last_visited) VALUES (%s, %s, %s, %s, %s, %s) "
+                "RETURNING id",
                 (
                     ally_id, original_attacker_id, "Sustained",
                     f"{ally_name} joins the fight in defense of their ally!",
                     start_dates, start_dates,
                 ),
+            )
+            ally_war_row = db.fetchone()
+            from wars import supply as war_supply
+
+            war_supply.seed_starting_supplies(
+                db, ally_war_row[0] if ally_war_row else None, ally_id, original_attacker_id
             )
             db.execute(
                 "INSERT INTO news(destination_id, message) VALUES (%s, %s)",
@@ -1666,6 +1690,9 @@ def wars():
                         tuple(war_ids),
                     )
                     war_details = {row[0]: row[1:] for row in db.fetchall()}
+                    from wars import supply as war_supply
+
+                    supply_caps = war_supply.get_supply_caps(db, all_user_ids)
 
                     # Fetch all usernames AND flags at once
                     user_placeholders = ",".join(["%s"] * len(all_user_ids))
@@ -1701,12 +1728,18 @@ def wars():
                         details = war_details.get(war_id, (100, 0, 100, 0))
                         attacker_info["morale"] = details[0]
                         attacker_info["supplies"] = details[1]
+                        attacker_info["supply_cap"] = supply_caps.get(
+                            attacker, war_supply.SUPPLY_CAP_MIN
+                        )
 
                         defender_info["name"] = def_data["name"]
                         defender_info["id"] = defender
                         defender_info["flag"] = def_data["flag"]
                         defender_info["morale"] = details[2]
                         defender_info["supplies"] = details[3]
+                        defender_info["supply_cap"] = supply_caps.get(
+                            defender, war_supply.SUPPLY_CAP_MIN
+                        )
 
                         war_info[war_id] = {"att": attacker_info, "def": defender_info}
             except Exception:

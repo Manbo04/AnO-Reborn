@@ -30,6 +30,7 @@ DB helpers so they can be unit-tested without a database.
 """
 
 import math
+import os
 import random
 from typing import Dict, Iterable, Optional, Tuple
 
@@ -55,6 +56,100 @@ def unit_supply_costs() -> Dict[str, int]:
     from units import Units
 
     return {iface.unit_type: int(iface.supply_cost) for iface in Units.allUnitInterfaces}
+
+
+# ---------------------------------------------------------------------------
+# Army-scaled supply (2026-10-04, ivegottogodosomething / DNS feedback)
+#
+# A flat 2000 cap meant no attack could ever use more than ~2000 infantry or
+# 400 tanks, so building past that was pointless. Each side's cap on a war
+# now scales with the supply value of its conventional army, the pool fills
+# in about SUPPLY_FILL_HOURS, and the war opens in the defender's favour:
+# the attacker starts mobilising from a small share of its cap while the
+# defender starts half-stocked.
+# ---------------------------------------------------------------------------
+
+# Only units that fight in the ground/air/naval domains count toward the cap
+# (missiles, nukes, spies and SAMs have their own paths).
+CONVENTIONAL_UNITS = (
+    "soldiers", "tanks", "artillery",
+    "destroyers", "cruisers", "submarines",
+    "fighters", "bombers", "apaches",
+)
+# Same env knob the hourly refill uses (app_core/game_ticks/maintenance.py).
+SUPPLY_CAP_MIN = int(os.getenv("WAR_SUPPLY_CAP", "2000"))
+SUPPLY_CAP_ARMY_SHARE = 0.25
+SUPPLY_FILL_HOURS = 24
+ATTACKER_START_SHARE = 0.2
+DEFENDER_START_SHARE = 0.5
+
+
+def army_supply_value(units: Dict[str, int], costs: Optional[Dict[str, int]] = None) -> int:
+    """Supply it would cost to send every conventional unit at once."""
+    costs = costs or unit_supply_costs()
+    return int(
+        sum(
+            max(0, int(units.get(u, 0) or 0)) * costs.get(u, 1)
+            for u in CONVENTIONAL_UNITS
+        )
+    )
+
+
+def supply_cap(army_value: int, base_cap: int = SUPPLY_CAP_MIN) -> int:
+    return max(int(base_cap), int(round((army_value or 0) * SUPPLY_CAP_ARMY_SHARE)))
+
+
+def hourly_regen(cap: int, base_regen: int = 0, bonus: float = 1.0) -> int:
+    """Per-hour refill: enough to fill the cap in SUPPLY_FILL_HOURS."""
+    per_hour = max(int(base_regen), int(math.ceil(cap / float(SUPPLY_FILL_HOURS))))
+    return int(round(per_hour * bonus))
+
+
+def starting_supplies(attacker_cap: int, defender_cap: int) -> Tuple[int, int]:
+    return (
+        max(DEFENDER_SUPPLY_FLOOR, int(round(attacker_cap * ATTACKER_START_SHARE))),
+        max(DEFENDER_SUPPLY_FLOOR, int(round(defender_cap * DEFENDER_START_SHARE))),
+    )
+
+
+def get_army_supply_values(db, user_ids: Iterable[int]) -> Dict[int, int]:
+    """user_id -> army_supply_value, one query for any number of users."""
+    ids = sorted({int(u) for u in user_ids if u is not None})
+    if not ids:
+        return {}
+    db.execute(
+        """
+        SELECT um.user_id, LOWER(ud.name), COALESCE(um.quantity, 0)
+        FROM user_military um
+        JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
+        WHERE um.user_id = ANY(%s) AND LOWER(ud.name) = ANY(%s)
+        """,
+        (ids, list(CONVENTIONAL_UNITS)),
+    )
+    per_user: Dict[int, Dict[str, int]] = {u: {} for u in ids}
+    for row in db.fetchall():
+        uid, name, qty = row[0], row[1], row[2]
+        per_user.setdefault(uid, {})[name] = per_user.get(uid, {}).get(name, 0) + int(qty or 0)
+    costs = unit_supply_costs()
+    return {u: army_supply_value(units, costs) for u, units in per_user.items()}
+
+
+def get_supply_caps(db, user_ids: Iterable[int]) -> Dict[int, int]:
+    return {u: supply_cap(v) for u, v in get_army_supply_values(db, user_ids).items()}
+
+
+def seed_starting_supplies(db, war_id, attacker_id: int, defender_id: int) -> None:
+    """Set a new war's opening pools from both sides' army-scaled caps."""
+    if not war_id:
+        return
+    caps = get_supply_caps(db, (attacker_id, defender_id))
+    atk, dfn = starting_supplies(
+        caps.get(attacker_id, SUPPLY_CAP_MIN), caps.get(defender_id, SUPPLY_CAP_MIN)
+    )
+    db.execute(
+        "UPDATE wars SET attacker_supplies=%s, defender_supplies=%s WHERE id=%s",
+        (atk, dfn, war_id),
+    )
 
 
 def defense_supply_budget(pool: Optional[int]) -> int:
