@@ -74,6 +74,8 @@ def admin_ads():
 
 
 @bp.route("/ads/image/<int:ad_id>")
+# Neutral alias: ad blockers (EasyList "/ads/*") blank the /ads/ URL.
+@bp.route("/media/banner/<int:ad_id>")
 def serve_ad_image(ad_id):
     """Serve an ad's image from the DB (migration 0077), falling back to its
     stored image_url for rows uploaded before the DB copy existed -- see

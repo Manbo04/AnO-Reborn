@@ -45,7 +45,7 @@ def test_load_rotating_ads_caches_results():
             calls["count"] += 1
 
         def fetchone(self):
-            return (1, "/static/uploads/ads/top.png", "https://example.com", None)
+            return (1, "/static/uploads/ads/top.png", "https://example.com", "base64data")
 
         def fetchall(self):
             return []
@@ -55,14 +55,14 @@ def test_load_rotating_ads_caches_results():
 
     first = load_rotating_ads(fake_get_cursor)
     second = load_rotating_ads(fake_get_cursor)
-    assert first["top_ad"]["image_url"] == "/static/uploads/ads/top.png"
-    assert second["top_ad"]["image_url"] == "/static/uploads/ads/top.png"
+    assert first["top_ad"]["image_url"] == "/media/banner/1"
+    assert second["top_ad"]["image_url"] == "/media/banner/1"
     assert calls["count"] == 2
 
 
 def test_load_rotating_ads_prefers_db_image_route_when_image_data_present():
     """Regression test: an approved ad with a persisted DB copy (migration
-    0077) should be served via /ads/image/<id>, not the raw stored URL that
+    0077) should be served via /media/banner/<id>, not the raw stored URL that
     may 404 after a redeploy wipes static/uploads/ads/."""
     reset_ad_cache()
 
@@ -83,7 +83,7 @@ def test_load_rotating_ads_prefers_db_image_route_when_image_data_present():
             return []
 
     result = load_rotating_ads(lambda **kwargs: FakeCursor())
-    assert result["top_ad"]["image_url"] == "/ads/image/7"
+    assert result["top_ad"]["image_url"] == "/media/banner/7"
 
 
 def test_save_ad_image_upload_rejects_missing_file(tmp_path):
@@ -331,3 +331,41 @@ def test_set_user_password_preserves_discord_snowflake():
     calls = [c[0][0].strip() for c in db.execute.call_args_list]
     assert any("SET discord_id = hash" in q for q in calls)
     assert any("UPDATE users SET hash" in q for q in calls)
+
+
+def test_load_rotating_ads_skips_rows_without_db_image():
+    """Rows with no persisted image_data only have a static/uploads path that
+    Railway wipes on redeploy -- rendering it shows a broken banner."""
+    reset_ad_cache()
+
+    class FakeCursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def execute(self, *args, **kwargs):
+            pass
+
+        def fetchone(self):
+            return (1, "/static/uploads/ads/gone.png", "https://example.com", None)
+
+        def fetchall(self):
+            return [(2, "/static/uploads/ads/gone2.png", "https://example.com", None)]
+
+    result = load_rotating_ads(lambda **kwargs: FakeCursor())
+    assert result["top_ad"] is None
+    assert result["side_ad_left"] is None
+
+
+def test_ad_image_served_on_neutral_alias():
+    """/media/banner/<id> must route to the same handler as /ads/image/<id>
+    (ad blockers blank anything under /ads/)."""
+    client = _ads_only_test_client()
+    with patch(
+        "app_core.ads.routes.ad_service.get_ad_image",
+        return_value=("aGVsbG8=", None),
+    ):
+        resp = client.get("/media/banner/1")
+    assert resp.status_code == 200

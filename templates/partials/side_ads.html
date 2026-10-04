@@ -45,8 +45,8 @@
     {% endfor %}
     {% if rotating.side_ad_left %}
     <a class="tip-card tip-card--player" href="{{ rotating.side_ad_left.target_url }}" target="_blank" rel="noopener" hidden>
-        <img src="{{ rotating.side_ad_left.image_url }}" alt="Player advertisement" loading="lazy" />
-        <span class="tip-card-playertag">Player ad</span>
+        <img src="{{ rotating.side_ad_left.image_url }}" alt="Nation banner" />
+        <span class="tip-card-playertag">Nation banner</span>
     </a>
     {% endif %}
 </aside>
@@ -61,8 +61,8 @@
     {% endfor %}
     {% if rotating.side_ad_right %}
     <a class="tip-card tip-card--player" href="{{ rotating.side_ad_right.target_url }}" target="_blank" rel="noopener" hidden>
-        <img src="{{ rotating.side_ad_right.image_url }}" alt="Player advertisement" loading="lazy" />
-        <span class="tip-card-playertag">Player ad</span>
+        <img src="{{ rotating.side_ad_right.image_url }}" alt="Nation banner" />
+        <span class="tip-card-playertag">Nation banner</span>
     </a>
     {% endif %}
 </aside>
@@ -76,6 +76,20 @@
 
     rails.forEach(function (rail) {
         var ads = Array.prototype.slice.call(rail.querySelectorAll('.tip-card'));
+        // Drop player banners whose image is broken or blocked (ad blockers)
+        // instead of rotating an empty card into the rail.
+        ads = ads.filter(function (card) {
+            var img = card.querySelector('img');
+            if (!img) return true;
+            if (img.complete && img.naturalWidth === 0) { card.remove(); return false; }
+            img.addEventListener('error', function () {
+                var k = ads.indexOf(card);
+                if (k !== -1) ads.splice(k, 1);
+                if (current === card && ads.length) { idx = idx % ads.length; show(ads[idx]); }
+                card.remove();
+            });
+            return true;
+        });
         if (!ads.length) return;
         // Shuffle once per page load; offset the two rails so they differ.
         for (var i = ads.length - 1; i > 0; i--) {

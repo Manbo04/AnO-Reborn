@@ -8344,6 +8344,16 @@ body.game-reduced-motion .game-market-card::after {
     --game-breakpoint-lg: 1024px;
 }
 
+/* Grow the content column on big/high-res monitors instead of stranding a
+   1200px strip in the middle of a 1440p/4K screen. With the side rails
+   showing (fine pointer, >=1500px) leave ~210px gutters for them. */
+@media (min-width: 1500px) {
+    :root { --page-content-max: min(1800px, calc(100vw - 420px)); }
+}
+@media (min-width: 1500px) and (pointer: coarse) {
+    :root { --page-content-max: min(1800px, 94vw); }
+}
+
 /* --- Shared responsive panel utilities --- */
 .game-stack {
     display: flex;
@@ -8675,7 +8685,7 @@ body.page-country .templatedivcontent .infodiv {
        gutter is too narrow to hold them (~196px each side). A flat
        calc(90% - 380px) squeezed every page to 700px on wide monitors even
        though the 1200px-capped container never reaches the rails. */
-    body.has-side-tips .templatediv { width: min(90%, calc(100vw - 400px)); }
+    body.has-side-tips .templatediv { width: 96%; }
 }
 
 @media (max-width: 1499px), (pointer: coarse) {
@@ -8779,6 +8789,23 @@ body.page-country .templatedivcontent .infodiv {
     border-radius: 999px;
     background: rgba(0, 0, 0, 0.55);
     color: rgba(255, 255, 255, 0.85);
+}
+
+.nation-top-banner {
+    position: relative;
+    display: block;
+    width: fit-content;
+    max-width: min(728px, calc(100% - 24px));
+    margin: 12px auto 0;
+    border-radius: 10px;
+    overflow: hidden;
+    line-height: 0;
+}
+.nation-top-banner img { display: block; max-width: 100%; height: auto; }
+.nation-top-banner .tip-card-playertag {
+    position: absolute; top: 6px; right: 6px; line-height: 1.4;
+    font-size: 0.62rem; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+    background: rgba(0, 0, 0, 0.55); color: rgba(255, 255, 255, 0.85);
 }
 
 @media (prefers-reduced-motion: reduce) {
