@@ -363,3 +363,665 @@ body.game-page-v2 .templatedivflex2right {
     min-width: 0;
     max-width: 100%;
 }
+
+/* --- Mechanics --- */
+body.page-mechanics .templatedivcontent {
+    padding-top: 4px;
+}
+body.page-mechanics .templatetable th,
+body.page-mechanics .templatetable td {
+    padding: 5px 8px;
+    font-size: 13px;
+    line-height: 1.35;
+}
+body.page-mechanics .templatetable {
+    margin-bottom: 6px;
+}
+body.page-mechanics .templatecontentpleft {
+    margin: 4px 0 8px;
+    font-size: 13.5px;
+    line-height: 1.4;
+}
+body.page-mechanics .templatecontentheader {
+    margin-top: 6px;
+    margin-bottom: 4px;
+    font-size: 1rem;
+}
+body.page-mechanics .templatecontentheaderleft {
+    margin: 12px 0 6px;
+    font-size: 1.15rem;
+}
+body.page-mechanics .tutorialdiv {
+    margin-bottom: 10px;
+}
+body.page-mechanics .tutorialdiv .templatedivflex2left {
+    padding: 8px 10px;
+}
+body.page-mechanics .templatedivbutton {
+    min-height: 40px;
+    padding: 6px 14px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+@media (max-width: 600px) {
+    body.page-mechanics .menuflex2 {
+        gap: 6px;
+    }
+    body.page-mechanics .menuflex2 .templatedivflex2left {
+        padding: 0 6px;
+    }
+}
+@media (min-width: 900px) {
+    body.page-mechanics .tutorialdiv {
+        display: flex;
+        flex-direction: row;
+        gap: 16px;
+    }
+    body.page-mechanics .tutorialdiv > .templatedivflex2left {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+}
+
+/* --- Statistics --- */
+body.page-statistics .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px 8px;
+    margin: 8px 0;
+    width: 100%;
+}
+body.page-statistics .stat-card {
+    padding: 8px 10px;
+    margin: 0 !important; /* overrides legacy .templatedivflex2left auto margins */
+    min-width: 0;
+}
+body.page-statistics .stat-label {
+    font-size: 11.5px;
+    margin-bottom: 2px;
+}
+body.page-statistics .stat-value {
+    font-size: 14px;
+}
+body.page-statistics .templatedivcontent .game-panel {
+    padding: 10px 12px;
+    margin-bottom: 10px;
+}
+body.page-statistics .templatecontentheaderleft {
+    margin: 10px 0 6px;
+    font-size: 1.1rem;
+}
+@media (min-width: 900px) {
+    body.page-statistics .stat-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px 10px;
+    }
+}
+
+/* --- Currency Market --- */
+body.page-currency-market .game-panel {
+    margin-bottom: 10px !important; /* overrides inline margin-bottom: 18px */
+    padding: 12px 14px;
+}
+body.page-currency-market .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px 8px;
+    margin: 6px 0;
+    width: 100%;
+}
+body.page-currency-market .stat-card {
+    padding: 8px 10px;
+    margin: 0 !important; /* overrides legacy .templatedivflex2left auto margins */
+    min-width: 0;
+}
+body.page-currency-market .cm-grid {
+    gap: 8px;
+}
+body.page-currency-market .cm-card {
+    padding: 10px 12px;
+}
+body.page-currency-market .cm-row {
+    gap: 6px;
+}
+body.page-currency-market .cm-row input,
+body.page-currency-market .cm-row select {
+    min-height: 40px;
+}
+body.page-currency-market .cm-row .game-btn {
+    min-height: 40px;
+}
+@media (min-width: 900px) {
+    body.page-currency-market .templatedivcontent {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        align-items: start;
+    }
+    body.page-currency-market .templatedivcontent > div:first-child,
+    body.page-currency-market .templatedivcontent > div:nth-child(4),
+    body.page-currency-market .templatedivcontent > div:nth-child(5) {
+        grid-column: 1 / -1;
+    }
+    body.page-currency-market .stat-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* --- Bonds --- */
+body.page-bonds .game-panel {
+    margin-bottom: 10px !important; /* overrides inline margin-bottom: 18px */
+    padding: 12px 14px;
+}
+body.page-bonds .templatecontentpleft {
+    width: 100% !important; /* overrides legacy 80% width that caused severe text wrapping */
+    box-sizing: border-box;
+    font-size: 13.5px;
+    line-height: 1.4;
+    margin: 4px 0 6px;
+}
+body.page-bonds ol.templatecontentpleft {
+    padding-left: 18px;
+}
+body.page-bonds p.templatecontentpleft {
+    padding-left: 0;
+}
+body.page-bonds .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px 8px;
+    margin: 8px 0;
+    width: 100%;
+}
+body.page-bonds .stat-card {
+    padding: 8px 10px;
+    margin: 0 !important; /* overrides legacy .templatedivflex2left auto margins */
+    min-width: 0;
+}
+body.page-bonds .templatecontentheaderleft {
+    margin: 10px 0 6px;
+    font-size: 1.1rem;
+}
+body.page-bonds .templateoutertablediv {
+    margin-bottom: 10px;
+}
+body.page-bonds .templatetable th,
+body.page-bonds .templatetable td {
+    padding: 6px 8px;
+    font-size: 13px;
+}
+body.page-bonds .game-row {
+    gap: 8px;
+    margin-top: 8px !important;
+}
+body.page-bonds .game-row input,
+body.page-bonds .game-row select {
+    min-height: 40px;
+}
+body.page-bonds .game-btn {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px;
+    box-sizing: border-box;
+}
+@media (min-width: 900px) {
+    body.page-bonds .templatedivcontent {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        align-items: start;
+    }
+    body.page-bonds .templatedivcontent > h2,
+    body.page-bonds .templatedivcontent > .templateoutertablediv {
+        grid-column: 1 / -1;
+    }
+}
+
+/* --- Recruitments --- */
+body.page-recruitments .recruitment-grid {
+    gap: 8px;
+    margin: 10px 0;
+}
+body.page-recruitments .recruitment-card {
+    padding: 10px 12px;
+}
+body.page-recruitments .recruitment-card h2 {
+    font-size: 16px;
+    margin: 0 0 2px;
+}
+body.page-recruitments .recruitment-card-type {
+    margin: 0 0 4px;
+}
+body.page-recruitments .recruitment-card-desc {
+    margin: 0 0 8px;
+    font-size: 13.5px;
+    line-height: 1.4;
+    -webkit-line-clamp: 3;
+}
+body.page-recruitments .recruitment-card-actions {
+    gap: 8px;
+}
+body.page-recruitments .recruitment-card-actions .game-btn {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px;
+    box-sizing: border-box;
+}
+@media (min-width: 900px) {
+    body.page-recruitments .recruitment-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 12px;
+        margin: 14px 0;
+    }
+}
+
+/* --- Currency Unions --- */
+body.page-currency-unions .game-panel {
+    margin-bottom: 10px !important; /* overrides inline margin-bottom: 18px */
+    padding: 12px 14px;
+}
+body.page-currency-unions .templatecontentpleft {
+    width: 100% !important; /* overrides legacy 80% width */
+    box-sizing: border-box;
+    font-size: 13.5px;
+    line-height: 1.4;
+    margin: 4px 0 6px;
+}
+body.page-currency-unions ul.templatecontentpleft {
+    padding-left: 18px;
+}
+body.page-currency-unions p.templatecontentpleft {
+    padding-left: 0;
+}
+body.page-currency-unions .templatecontentheaderleft {
+    margin: 10px 0 6px;
+    font-size: 1.1rem;
+}
+body.page-currency-unions .templateoutertablediv {
+    margin-bottom: 10px;
+}
+body.page-currency-unions .templatetable th,
+body.page-currency-unions .templatetable td {
+    padding: 6px 8px;
+    font-size: 13px;
+}
+body.page-currency-unions .game-row {
+    gap: 8px;
+}
+body.page-currency-unions .game-row input,
+body.page-currency-unions .game-row select {
+    min-height: 40px;
+}
+body.page-currency-unions .game-btn {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px;
+    box-sizing: border-box;
+}
+@media (min-width: 900px) {
+    body.page-currency-unions .templatedivcontent {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        align-items: start;
+    }
+    body.page-currency-unions .templatedivcontent > h2,
+    body.page-currency-unions .templatedivcontent > .templateoutertablediv {
+        grid-column: 1 / -1;
+    }
+}
+
+/* --- Loans --- */
+body.page-loans .game-panel {
+    margin-bottom: 10px !important; /* overrides inline margin-bottom: 18px */
+    padding: 12px 14px;
+}
+body.page-loans .templatecontentpleft {
+    width: 100% !important; /* overrides legacy 80% width */
+    box-sizing: border-box;
+    font-size: 13.5px;
+    line-height: 1.4;
+    margin: 4px 0 6px;
+}
+body.page-loans .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px 8px;
+    margin: 8px 0;
+    width: 100%;
+}
+body.page-loans .stat-card {
+    padding: 8px 10px;
+    margin: 0 !important; /* overrides legacy .templatedivflex2left auto margins */
+    min-width: 0;
+}
+body.page-loans .templatecontentheaderleft {
+    margin: 10px 0 6px;
+    font-size: 1.1rem;
+}
+body.page-loans .templateoutertablediv {
+    margin-bottom: 10px;
+}
+body.page-loans .templatetable th,
+body.page-loans .templatetable td {
+    padding: 6px 8px;
+    font-size: 13px;
+}
+body.page-loans .game-row {
+    gap: 8px;
+    margin-top: 8px !important;
+}
+body.page-loans .game-row input,
+body.page-loans .game-row select {
+    min-height: 40px;
+}
+body.page-loans .game-btn {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px;
+    box-sizing: border-box;
+}
+@media (min-width: 900px) {
+    body.page-loans .templatedivcontent {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        align-items: start;
+    }
+    body.page-loans .templatedivcontent > h2,
+    body.page-loans .templatedivcontent > .templateoutertablediv {
+        grid-column: 1 / -1;
+    }
+}
+
+/* --- Find Targets --- */
+body.page-find-targets .landingpagecontent,
+html:has(link[href*="/find_targets"]) body .landingpagecontent {
+    padding: 8px 12px;
+    margin: 4px 0 10px;
+    font-size: 13.5px;
+    line-height: 1.4;
+}
+body.page-find-targets .templatecontentheaderleft,
+html:has(link[href*="/find_targets"]) body .templatecontentheaderleft {
+    margin: 10px 0 4px;
+    font-size: 1.1rem;
+}
+body.page-find-targets form.infodiv,
+html:has(link[href*="/find_targets"]) body form.infodiv {
+    padding: 10px 14px;
+    margin-bottom: 12px !important;
+}
+body.page-find-targets .templatedivflex2,
+html:has(link[href*="/find_targets"]) body .templatedivflex2 {
+    gap: 8px;
+    margin: 6px 0;
+}
+body.page-find-targets .templatedivflex2left,
+body.page-find-targets .templatedivflex2right,
+html:has(link[href*="/find_targets"]) body .templatedivflex2left,
+html:has(link[href*="/find_targets"]) body .templatedivflex2right {
+    margin: 2px 0;
+}
+body.page-find-targets .templatedivbutton,
+html:has(link[href*="/find_targets"]) body .templatedivbutton {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px;
+    box-sizing: border-box;
+}
+body.page-find-targets .loginsignupinput,
+body.page-find-targets .templateselect,
+html:has(link[href*="/find_targets"]) body .loginsignupinput,
+html:has(link[href*="/find_targets"]) body .templateselect {
+    min-height: 40px;
+}
+
+/* --- Treaties --- */
+body.page-treaties .game-panel {
+    margin-bottom: 10px !important; /* overrides inline margin-bottom: 18px */
+    padding: 12px 14px;
+}
+body.page-treaties .templatecontentheaderleft {
+    margin: 6px 0;
+    font-size: 1.1rem;
+}
+body.page-treaties .templatetable th,
+body.page-treaties .templatetable td {
+    padding: 6px 8px;
+    font-size: 13px;
+}
+body.page-treaties .templateoutertablediv {
+    margin-bottom: 4px;
+}
+body.page-treaties .game-row {
+    gap: 8px;
+}
+body.page-treaties .game-row input,
+body.page-treaties .game-row select {
+    min-height: 40px;
+}
+body.page-treaties .game-btn {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px;
+    box-sizing: border-box;
+}
+@media (min-width: 900px) {
+    body.page-treaties .templatedivcontent {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        align-items: start;
+    }
+}
+
+/* --- Provinces List --- */
+body.page-provinces .game-grid-3 {
+    gap: 8px;
+}
+body.page-provinces .game-mini-card {
+    padding: 10px 12px;
+}
+body.page-provinces .game-mini-card > .game-spread {
+    margin-bottom: 8px !important;
+}
+body.page-provinces .game-mini-card > div[style*="flex-direction: column"] {
+    gap: 4px !important;
+}
+
+/* --- Create Province --- */
+body.page-createprovince .landingpagecontent,
+html:has(link[href*="/createprovince"]) body .landingpagecontent {
+    padding: 8px 12px;
+    margin: 4px 0 10px;
+    font-size: 13.5px;
+    line-height: 1.4;
+}
+body.page-createprovince .menudiv,
+html:has(link[href*="/createprovince"]) body .menudiv {
+    margin-bottom: 10px;
+    padding: 10px 12px;
+}
+body.page-createprovince .infodiv,
+html:has(link[href*="/createprovince"]) body .infodiv {
+    padding: 8px 10px;
+}
+body.page-createprovince .templatedivflex2.divflex2center,
+html:has(link[href*="/createprovince"]) body .templatedivflex2.divflex2center {
+    display: flex;
+    flex-direction: row !important; /* overrides phone column force from game-layout.css */
+    gap: 8px;
+    align-items: center;
+    margin-top: 6px;
+}
+body.page-createprovince .templatedivflex2.divflex2center > .templatedivflex2left,
+html:has(link[href*="/createprovince"]) body .templatedivflex2.divflex2center > .templatedivflex2left {
+    flex: 1 1 auto;
+    margin: 0;
+    padding: 0;
+}
+body.page-createprovince .loginsignupinput,
+html:has(link[href*="/createprovince"]) body .loginsignupinput {
+    min-height: 40px;
+    font-size: 16px;
+}
+body.page-createprovince .templatedivbutton,
+html:has(link[href*="/createprovince"]) body .templatedivbutton {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 16px;
+    box-sizing: border-box;
+}
+@media (max-width: 768px) {
+    body.page-createprovince .unitimage,
+    html:has(link[href*="/createprovince"]) body .unitimage {
+        max-height: 90px;
+        width: 100%;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+}
+
+/* --- Intelligence --- */
+body.page-intelligence .game-panel,
+html:has(link[href*="/intelligence"]) body .game-panel {
+    margin-bottom: 10px !important;
+    padding: 12px 14px;
+}
+body.page-intelligence .templatecontentheaderleft,
+html:has(link[href*="/intelligence"]) body .templatecontentheaderleft {
+    margin: 6px 0;
+    font-size: 1.1rem;
+}
+body.page-intelligence .templatetable th,
+body.page-intelligence .templatetable td,
+html:has(link[href*="/intelligence"]) body .templatetable th,
+html:has(link[href*="/intelligence"]) body .templatetable td {
+    padding: 6px 8px;
+    font-size: 13px;
+}
+body.page-intelligence .templateoutertablediv,
+html:has(link[href*="/intelligence"]) body .templateoutertablediv {
+    margin-bottom: 4px;
+}
+body.page-intelligence .game-glass:not(.game-panel),
+html:has(link[href*="/intelligence"]) body .game-glass:not(.game-panel) {
+    padding: 20px 16px !important; /* overrides inline 40px padding */
+    margin-bottom: 12px !important;
+}
+
+/* --- Mass Purchase --- */
+body.page-mass-purchase .mass-purchase-controls {
+    gap: 8px !important;
+    margin-bottom: 10px !important;
+}
+body.page-mass-purchase .mass-purchase-preview {
+    padding: 10px 12px !important;
+    margin-bottom: 10px !important;
+}
+body.page-mass-purchase .mass-purchase-select-all {
+    margin-bottom: 8px !important;
+}
+body.page-mass-purchase .landingpagecontent {
+    padding: 8px 12px;
+    margin-top: 12px;
+    font-size: 13.5px;
+    line-height: 1.4;
+}
+body.page-mass-purchase .templatetable th,
+body.page-mass-purchase .templatetable td {
+    padding: 6px 8px;
+    font-size: 13px;
+}
+body.page-mass-purchase .templateoutertablediv {
+    margin-bottom: 8px;
+}
+body.page-mass-purchase .templateselect,
+body.page-mass-purchase .loginsignupinput {
+    min-height: 40px;
+}
+body.page-mass-purchase .game-btn,
+body.page-mass-purchase .templatedivbutton {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px;
+    box-sizing: border-box;
+}
+@media (min-width: 900px) {
+    body.page-mass-purchase .mass-purchase-controls {
+        flex-direction: row !important;
+        align-items: center;
+    }
+}
+
+/* --- My Offers --- */
+body.page-my-offers .game-panel {
+    margin-bottom: 10px !important;
+    padding: 12px 14px;
+}
+body.page-my-offers .templatecontentheaderleft {
+    margin: 6px 0;
+    font-size: 1.1rem;
+}
+body.page-my-offers .templatetable th,
+body.page-my-offers .templatetable td {
+    padding: 6px 8px;
+    font-size: 13px;
+}
+body.page-my-offers .templateoutertablediv {
+    margin-bottom: 4px;
+}
+body.page-my-offers .game-btn,
+body.page-my-offers .templatedivbutton {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px;
+    box-sizing: border-box;
+}
+@media (min-width: 900px) {
+    body.page-my-offers .templatedivcontent {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        align-items: start;
+    }
+    body.page-my-offers .templatedivcontent > div:first-child {
+        grid-column: 1 / -1;
+    }
+}
+
+/* --- Messages --- */
+body.page-messages .dm-conversation-list {
+    gap: 4px;
+}
+body.page-messages .dm-conversation-row {
+    padding: 8px 12px;
+    min-height: 42px;
+}
+body.page-messages .templatecontentpleft {
+    padding: 10px 14px !important;
+    font-size: 13.5px;
+    line-height: 1.4;
+    margin: 0;
+}
