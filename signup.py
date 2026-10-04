@@ -166,6 +166,13 @@ def init_user_game_data(db, user_id, continent):
     from app_core.onboarding.service import ensure_starter_province
     ensure_starter_province(db, user_id)
 
+    # Optional flag / leader / party / currency / capital / lore picked on the
+    # signup page (all three signup routes post the same customization fields).
+    from flask import has_request_context, request as _req
+    if has_request_context() and _req.method == "POST":
+        from app_core.onboarding.customization import apply_signup_customization
+        apply_signup_customization(db, user_id, _req.form)
+
 
 
 OAUTH2_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID")

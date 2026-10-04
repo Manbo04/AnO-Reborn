@@ -10,7 +10,7 @@
 <head>
 {% include 'landing/_head.html' %}
 {% if recaptcha_site_key %}<script src="https://www.google.com/recaptcha/api.js" async defer></script>{% endif %}
-<link rel="stylesheet" href="{{ url_for('static', filename='landing/auth.css') }}?v=1">
+<link rel="stylesheet" href="{{ url_for('static', filename='landing/auth.css') }}?v=2">
 </head>
 <body>
 
@@ -27,10 +27,11 @@
 <main>
   <aside class="dossier" aria-live="polite">
     <div class="stamp" id="stamp">UNCLAIMED</div>
-    <div class="flagbox">FLAG<br>SET AFTER<br>FOUNDING</div>
+    <div class="flagbox" id="flagbox">FLAG<br>SET AFTER<br>FOUNDING</div>
     <div class="lbl">Nation dossier</div>
     <div class="dname empty" id="dname">Your Nation</div>
-    <div class="dmeta"><span>Territory · <b id="dbiome">Tundra</b></span><span>Leader · <b>You</b></span><span>Status · <b id="dstatus">Awaiting orders</b></span></div>
+    <img class="dflag" id="dflag" alt="">
+    <div class="dmeta"><span>Territory · <b id="dbiome">Tundra</b></span><span>Leader · <b id="dleader">You</b></span><span id="dcapw" hidden>Capital · <b id="dcap"></b></span><span id="dpartyw" hidden>Party · <b id="dparty"></b></span><span id="dcurw" hidden>Currency · <b id="dcur"></b></span><span>Status · <b id="dstatus">Awaiting orders</b></span></div>
     <div class="dres" id="dres"></div>
   </aside>
 
@@ -38,7 +39,8 @@
     <nav class="steps" aria-label="Enlistment steps">
       <button type="button" class="on" data-go="0"><span>Step 01</span><b>Identity</b></button>
       <button type="button" data-go="1" disabled><span>Step 02</span><b>Territory</b></button>
-      <button type="button" data-go="2" disabled><span>Step 03</span><b>Orders</b></button>
+      <button type="button" data-go="2" disabled><span>Step 03</span><b>Customize</b></button>
+      <button type="button" data-go="3" disabled><span>Step 04</span><b>Orders</b></button>
     </nav>
     {% if way == "discord" %}<form class="panes" id="form" action="/discord_signup" method="POST" novalidate>
     {% elif way == "google" %}<form class="panes" id="form" action="/google_signup" method="POST" novalidate>
@@ -80,11 +82,36 @@
         <p class="hint">Your biome decides what your provinces can produce. Every biome grows rations; the rest is up to the land.</p>
         <div class="biomes" id="biomes" role="radiogroup" aria-label="Biome"></div>
         <div class="binfo" id="binfo"></div>
-        <div class="row"><button type="button" class="linkbtn" data-next="0">◂ Back</button><button type="button" class="btn primary" data-next="2">Final orders ▸</button></div>
+        <div class="row"><button type="button" class="linkbtn" data-next="0">◂ Back</button><button type="button" class="btn primary" data-next="2">Customize ▸</button></div>
       </div>
 
       <!-- STEP 3 -->
       <div class="pane" data-pane="2">
+        <h2 class="display scr" data-text="Make it yours">Make it yours</h2>
+        <p class="hint">Design your flag and name the people in charge. Everything here is optional and can be changed later from your nation's Edit tab.</p>
+        <input type="hidden" name="flag_png" id="flag_png">
+        <div class="flagstage">
+          <canvas id="flag" width="300" height="200" aria-label="Your flag preview"></canvas>
+          <div class="flagtools"><button type="button" class="ftool" id="dice">⚄ Random</button><label class="ftool" for="flagup">Upload</label><input type="file" id="flagup" accept="image/png,image/jpeg,image/webp,image/gif" hidden></div>
+        </div>
+        <div class="clabel">Pattern</div>
+        <div class="chips-row" id="patterns" role="group" aria-label="Flag pattern"></div>
+        <div class="clabel">Emblem</div>
+        <div class="chips-row" id="emblems" role="group" aria-label="Flag emblem"></div>
+        <div class="clabel">Colors</div>
+        <div class="slots" id="slots" role="group" aria-label="Color to edit"></div>
+        <div class="palette" id="palette"></div>
+        <div class="grid2">
+          <div class="field"><input id="leader_name" name="leader_name" type="text" placeholder=" " maxlength="60" autocomplete="off"><label for="leader_name">Leader name <span class="opt">OPTIONAL</span></label><span class="bar"></span></div>
+          <div class="field"><input id="capital_name" name="capital_name" type="text" placeholder=" " maxlength="40" autocomplete="off"><label for="capital_name">Capital city <span class="opt">OPTIONAL</span></label><span class="bar"></span></div>
+          <div class="field"><input id="ruling_party" name="ruling_party" type="text" placeholder=" " maxlength="60" autocomplete="off"><label for="ruling_party">Ruling party <span class="opt">OPTIONAL</span></label><span class="bar"></span></div>
+          <div class="field"><input id="currency_name" name="currency_name" type="text" placeholder=" " maxlength="40" autocomplete="off"><label for="currency_name">Currency name <span class="opt">OPTIONAL</span></label><span class="bar"></span></div>
+        </div>
+        <div class="field"><textarea id="description" name="description" placeholder=" " maxlength="1000"></textarea><label for="description">Motto or national story <span class="opt">OPTIONAL</span></label><span class="bar"></span></div>
+        <div class="row"><button type="button" class="linkbtn" data-next="1">◂ Back</button><button type="button" class="btn primary" data-next="3">Final orders ▸</button></div>
+      </div>
+
+      <div class="pane" data-pane="3">
         <h2 class="display scr" data-text="Final orders">Final orders</h2>
         <p class="hint">One last check, commander. Then the world finds out you exist.</p>
         <div class="field"><select id="heard" name="heard_from" aria-label="How did you hear about Affairs and Order? (optional)">
@@ -93,7 +120,7 @@
         <label class="check"><input type="checkbox" id="terms" name="terms_agree" value="1"><span class="box"></span><span>I'm at least 13 years old and agree to the <a href="/terms" target="_blank" rel="noreferrer">Terms of Service</a> and <a href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</a>.</span></label>
         <span class="err" id="e-terms"></span>
         {% if recaptcha_site_key %}<div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}" data-theme="dark"></div>{% endif %}
-        <div class="row" style="margin-top:14px"><button type="button" class="linkbtn" data-next="1">◂ Back</button><span></span></div>
+        <div class="row" style="margin-top:14px"><button type="button" class="linkbtn" data-next="2">◂ Back</button><span></span></div>
         <button type="button" class="btn primary hold" id="hold"><span class="fill" id="holdFill"></span><span class="txt">Found nation</span></button>
         <div class="holdhint">Press and hold to found · Enter on keyboard</div>
       </div>
@@ -180,7 +207,77 @@ function goStep(n){if(n>step&&step===0&&!valid1())return;
 $$('[data-next]').forEach(b=>b.onclick=()=>goStep(+b.dataset.next));
 $$('.steps button').forEach(b=>b.onclick=()=>goStep(+b.dataset.go));
 let submitting=false;
-$('#form').addEventListener('submit',e=>{if(!submitting){e.preventDefault();if(step<2)goStep(step+1)}});
+$('#form').addEventListener('submit',e=>{if(!submitting){e.preventDefault();if(step<3)goStep(step+1)}});
+
+
+/* ---------- flag designer ---------- */
+const flagCanvas=$('#flag'),fg=flagCanvas.getContext('2d');
+const PALETTE=['#c8102e','#e4572e','#f2a900','#ffd166','#2e7d32','#00843d','#7bc043','#00a3e0','#1e5aa8','#002868','#5b2a86','#111111','#ffffff','#8b5e3c','#5fd4ff'];
+const FL={pattern:'tri-h',emblem:'star',c:['#002868','#ffffff','#c8102e','#ffd166'],upload:null};
+let slot=0;
+function star(g,x,y,r,n=5,inner=.45){g.beginPath();for(let i=0;i<n*2;i++){const a=-Math.PI/2+i*Math.PI/n,rr=i%2?r*inner:r;g.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr)}g.closePath();g.fill()}
+const PATTERNS={
+  'solid':(g,W,H,c)=>{g.fillStyle=c[0];g.fillRect(0,0,W,H)},
+  'bi-h':(g,W,H,c)=>{g.fillStyle=c[0];g.fillRect(0,0,W,H/2);g.fillStyle=c[1];g.fillRect(0,H/2,W,H/2)},
+  'tri-h':(g,W,H,c)=>{[0,1,2].forEach(i=>{g.fillStyle=c[i];g.fillRect(0,i*H/3,W,H/3+1)})},
+  'tri-v':(g,W,H,c)=>{[0,1,2].forEach(i=>{g.fillStyle=c[i];g.fillRect(i*W/3,0,W/3+1,H)})},
+  'nordic':(g,W,H,c)=>{g.fillStyle=c[0];g.fillRect(0,0,W,H);g.fillStyle=c[1];g.fillRect(W*.28,0,W*.16,H);g.fillRect(0,H*.4,W,H*.2);g.fillStyle=c[2];g.fillRect(W*.31,0,W*.1,H);g.fillRect(0,H*.44,W,H*.12)},
+  'diag':(g,W,H,c)=>{g.fillStyle=c[0];g.fillRect(0,0,W,H);g.fillStyle=c[1];g.beginPath();g.moveTo(W,0);g.lineTo(W,H);g.lineTo(0,H);g.fill();g.strokeStyle=c[2];g.lineWidth=H*.12;g.beginPath();g.moveTo(0,H);g.lineTo(W,0);g.stroke()},
+  'canton':(g,W,H,c)=>{for(let i=0;i<7;i++){g.fillStyle=i%2?c[1]:c[2];g.fillRect(0,i*H/7,W,H/7+1)}g.fillStyle=c[0];g.fillRect(0,0,W*.45,H*4/7)},
+  'saltire':(g,W,H,c)=>{g.fillStyle=c[0];g.fillRect(0,0,W,H);g.strokeStyle=c[1];g.lineWidth=H*.18;g.beginPath();g.moveTo(0,0);g.lineTo(W,H);g.moveTo(W,0);g.lineTo(0,H);g.stroke()},
+  'hoist':(g,W,H,c)=>{g.fillStyle=c[1];g.fillRect(0,0,W,H/2);g.fillStyle=c[2];g.fillRect(0,H/2,W,H/2);g.fillStyle=c[0];g.beginPath();g.moveTo(0,0);g.lineTo(W*.42,H/2);g.lineTo(0,H);g.fill()},
+  'border':(g,W,H,c)=>{g.fillStyle=c[1];g.fillRect(0,0,W,H);g.fillStyle=c[0];g.fillRect(H*.12,H*.12,W-H*.24,H*.76)},
+  'quarter':(g,W,H,c)=>{g.fillStyle=c[0];g.fillRect(0,0,W/2,H/2);g.fillRect(W/2,H/2,W/2,H/2);g.fillStyle=c[1];g.fillRect(W/2,0,W/2,H/2);g.fillRect(0,H/2,W/2,H/2)},
+  'stripes':(g,W,H,c)=>{for(let i=0;i<9;i++){g.fillStyle=i%2?c[1]:c[0];g.fillRect(0,i*H/9,W,H/9+1)}}
+};
+const EMBLEMS={
+  'none':null,
+  'star':(g,x,y,r)=>star(g,x,y,r),
+  'stars':(g,x,y,r)=>{for(let i=0;i<5;i++){const a=-Math.PI/2+i*2*Math.PI/5;star(g,x+Math.cos(a)*r*.75,y+Math.sin(a)*r*.75,r*.28)}},
+  'sun':(g,x,y,r)=>{g.beginPath();g.arc(x,y,r*.45,0,7);g.fill();for(let i=0;i<16;i++){const a=i*Math.PI/8;g.beginPath();g.moveTo(x+Math.cos(a-.09)*r*.55,y+Math.sin(a-.09)*r*.55);g.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r);g.lineTo(x+Math.cos(a+.09)*r*.55,y+Math.sin(a+.09)*r*.55);g.fill()}},
+  'crescent':(g,x,y,r,bg)=>{g.beginPath();g.arc(x,y,r*.8,0,7);g.fill();g.save();g.globalCompositeOperation='destination-out';g.beginPath();g.arc(x+r*.28,y-r*.05,r*.68,0,7);g.fill();g.restore();star(g,x+r*.45,y,r*.26)},
+  'ring':(g,x,y,r)=>{g.lineWidth=r*.18;g.strokeStyle=g.fillStyle;g.beginPath();g.arc(x,y,r*.7,0,7);g.stroke();g.beginPath();g.arc(x,y,r*.25,0,7);g.fill()},
+  'shield':(g,x,y,r)=>{g.beginPath();g.moveTo(x-r*.7,y-r*.8);g.lineTo(x+r*.7,y-r*.8);g.lineTo(x+r*.7,y);g.quadraticCurveTo(x+r*.6,y+r*.7,x,y+r*.95);g.quadraticCurveTo(x-r*.6,y+r*.7,x-r*.7,y);g.closePath();g.fill()},
+  'crown':(g,x,y,r)=>{g.beginPath();g.moveTo(x-r*.85,y+r*.55);g.lineTo(x-r*.85,y-r*.45);g.lineTo(x-r*.42,y);g.lineTo(x,y-r*.7);g.lineTo(x+r*.42,y);g.lineTo(x+r*.85,y-r*.45);g.lineTo(x+r*.85,y+r*.55);g.closePath();g.fill()},
+  'cross':(g,x,y,r)=>{g.fillRect(x-r*.18,y-r*.85,r*.36,r*1.7);g.fillRect(x-r*.75,y-r*.18,r*1.5,r*.36)},
+  'gear':(g,x,y,r)=>{for(let i=0;i<10;i++){g.save();g.translate(x,y);g.rotate(i*Math.PI/5);g.fillRect(-r*.14,-r*.95,r*.28,r*.4);g.restore()}g.beginPath();g.arc(x,y,r*.68,0,7);g.fill();g.save();g.globalCompositeOperation='destination-out';g.beginPath();g.arc(x,y,r*.28,0,7);g.fill();g.restore()},
+  'diamond':(g,x,y,r)=>{g.beginPath();g.moveTo(x,y-r*.9);g.lineTo(x+r*.6,y);g.lineTo(x,y+r*.9);g.lineTo(x-r*.6,y);g.closePath();g.fill()}
+};
+function drawFlag(g,W,H,o){g.clearRect(0,0,W,H);
+  if(o.upload){const im=o.upload,s=Math.max(W/im.width,H/im.height);g.drawImage(im,(W-im.width*s)/2,(H-im.height*s)/2,im.width*s,im.height*s);return}
+  PATTERNS[o.pattern](g,W,H,o.c);
+  const em=EMBLEMS[o.emblem];if(!em)return;
+  let x=W/2,y=H/2,r=H*.28;
+  if(o.pattern==='canton'){x=W*.225;y=H*2/7;r=H*.2}else if(o.pattern==='hoist'){x=W*.15;r=H*.15}else if(o.pattern==='nordic'){x=W*.36;y=H/2;r=H*.13}
+  // emblem drawn on its own layer so destination-out cut-outs don't punch through the field
+  const L=document.createElement('canvas');L.width=W;L.height=H;const l=L.getContext('2d');l.fillStyle=o.c[3];em(l,x,y,r);g.drawImage(L,0,0);
+}
+let wobble=null;
+function render(){drawFlag(fg,300,200,FL);const url=flagCanvas.toDataURL('image/png');
+  const fb=$('#flagbox');fb.classList.add('has');fb.innerHTML=`<img alt="Your flag" src="${url}">`;$('#dflag').src=url}
+function chipCanvas(w,h,fn){const c=document.createElement('canvas');c.width=w*2;c.height=h*2;fn(c.getContext('2d'),c.width,c.height);return c}
+function buildChips(){
+  const pr=$('#patterns');pr.innerHTML='';Object.keys(PATTERNS).forEach(k=>{const b=document.createElement('button');b.type='button';b.className='pchip';b.setAttribute('aria-label','Pattern '+k);b.setAttribute('aria-pressed',!FL.upload&&FL.pattern===k);
+    b.appendChild(chipCanvas(48,32,(g,W,H)=>PATTERNS[k](g,W,H,FL.c)));b.onclick=()=>{FL.pattern=k;FL.upload=null;update()};pr.appendChild(b)});
+  const er=$('#emblems');er.innerHTML='';Object.keys(EMBLEMS).forEach(k=>{const b=document.createElement('button');b.type='button';b.className='echip';b.setAttribute('aria-label','Emblem '+k);b.setAttribute('aria-pressed',!FL.upload&&FL.emblem===k);
+    if(EMBLEMS[k]){b.appendChild(chipCanvas(26,26,(g,W,H)=>{g.fillStyle='#e8eef5';EMBLEMS[k](g,W/2,H/2,W*.45)}))}else{b.textContent='∅'}
+    b.onclick=()=>{FL.emblem=k;FL.upload=null;update()};er.appendChild(b)});
+  const sl=$('#slots');sl.innerHTML='';['Field 1','Field 2','Field 3','Emblem'].forEach((n,i)=>{const b=document.createElement('button');b.type='button';b.className='slot';b.setAttribute('aria-pressed',slot===i);b.innerHTML=`<i style="background:${FL.c[i]}"></i>${n}`;b.onclick=()=>{slot=i;buildChips()};sl.appendChild(b)});
+}
+function buildPalette(){const p=$('#palette');p.innerHTML='';PALETTE.forEach(col=>{const b=document.createElement('button');b.type='button';b.className='sw';b.style.background=col;b.setAttribute('aria-label','Color '+col);b.onclick=()=>{FL.c[slot]=col;FL.upload=null;update()};p.appendChild(b)});
+  const cb=document.createElement('label');cb.className='sw custom';cb.title='Custom color';cb.innerHTML='<input type="color" aria-label="Custom color">';cb.querySelector('input').oninput=e=>{FL.c[slot]=e.target.value;FL.upload=null;update()};p.appendChild(cb)}
+function update(){buildChips();render()}
+function randomFlag(){const pick=a=>a[Math.random()*a.length|0];const keys=Object.keys(PATTERNS);FL.pattern=pick(keys);FL.emblem=pick(Object.keys(EMBLEMS));
+  const cols=[...PALETTE].sort(()=>Math.random()-.5);FL.c=[cols[0],cols[1],cols[2],cols[3]];
+  if(FL.c[3]===FL.c[0])FL.c[3]='#ffffff';FL.upload=null;update()}
+$('#dice').onclick=randomFlag;
+$('#flagup').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;if(f.size>5e6){alertMsg('That image is over 5 MB. Pick a smaller one.');return}
+  const im=new Image();im.onload=()=>{FL.upload=im;update();URL.revokeObjectURL(im.src)};im.onerror=()=>alertMsg("That file couldn't be read as an image.");im.src=URL.createObjectURL(f)});
+function alertMsg(m){const h=$('.pane[data-pane="2"] .hint');h.textContent=m;h.style.color='var(--hot)'}
+buildPalette();randomFlag();
+/* live dossier for profile fields */
+[['leader_name','#dleader',null,'You'],['capital_name','#dcap','#dcapw'],['ruling_party','#dparty','#dpartyw'],['currency_name','#dcur','#dcurw']].forEach(([id,out,wrap,def])=>{
+  const el=$('#'+id);el.addEventListener('input',()=>{const v=el.value.trim();$(out).textContent=v||def||'';if(wrap)$(wrap).hidden=!v})});
 
 /* hold to found */
 const hold=$('#hold'),fill=$('#holdFill');let ht=null,h0=0;
@@ -196,6 +293,7 @@ function found(){if(submitting||!$('#terms').checked||!captchaOk())return;
   const name=nm.value.trim()||'Your Nation';$('#foundName').textContent=name;$('#fBiome').textContent=BIOMES[biome][0].toUpperCase();
   $('#stamp').textContent='FOUNDED';$('#stamp').classList.add('ok');$('#dstatus').textContent='Founded';
   $('#found').classList.add('on');fireworks();
+  try{$('#flag_png').value=flagCanvas.toDataURL('image/png')}catch(e){}
   submitting=true;setTimeout(()=>$('#form').submit(),reduce?0:1700);
 }
 /* founding burst: radial light rays + sparks */

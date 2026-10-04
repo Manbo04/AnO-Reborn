@@ -170,7 +170,6 @@ def post_signup_redirect(user_id: int, *, has_recovery_key: bool = False) -> str
             provinces = _province_count(db, user_id)
         if provinces == 0:
             return "/createprovince"
-        status = get_onboarding_status(db, user_id)
-    if status["show_checklist"]:
-        return status["next_href"]
-    return "/country"
+    # Brand-new nations go straight into the guided tutorial (Dede, 2026-10-04);
+    # the onboarding checklist still shows in-game afterwards.
+    return "/tutorial?onboard=1"

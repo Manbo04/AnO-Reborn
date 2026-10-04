@@ -847,3 +847,14 @@ DATABASE_PUBLIC_URL=... python3 scripts/apply_all_pending_migrations.py
 - The landing ticker and globe event feed are illustrative (fictional nation names), not live game data — candidate to wire to real wars/market events.
 - Pre-existing failing tests unchanged (test_login_page_flow x2, test_referrals x2 — fail identically on master without a DB).
 - three.js r128 + topojson loaded from cdnjs (already in CSP script-src).
+
+## 2026-10-04 — Signup customization step + new accounts go straight to the tutorial
+
+**What was done**
+- `templates/signup.html`: new step 3 "Customize" — canvas flag designer (12 patterns, 10 emblems, 4 color slots + custom picker, random, upload-your-own), leader name, capital city, ruling party, currency name, motto/national story; all mirrored live on the nation dossier. Flag exported as a 300x200 PNG data URL in hidden `flag_png`.
+- `app_core/onboarding/customization.py::apply_signup_customization()` — called from `signup.init_user_game_data()` (all three signup paths) on POST. Same length caps as `countries.update_info()`; starter province renamed to the capital and flagged `is_capital`; flag decoded, verified with PIL, stored via `helpers.compress_flag_image` into `users.flag/flag_data`. Savepoint-wrapped and best-effort: never blocks account creation.
+- `app_core/onboarding/service.py::post_signup_redirect()` now returns `/tutorial?onboard=1` for new nations (was the onboarding checklist's first step).
+- Tests: `tests/test_signup_customization.py` (fields + caps, blank form, malicious flag payloads).
+
+**What to watch**
+- `tests/test_onboarding.py::test_onboarding_fully_complete` fails identically on master (pre-existing).
