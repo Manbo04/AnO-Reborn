@@ -1,85 +1,70 @@
-{% extends "layout.html" %}
-{% block seo_title %}Login · Affairs and Order{% endblock %}
-{% block seo_description %}Log in to Affairs and Order with email or Discord. Continue your nation, manage provinces, trade on the market, and join coalitions.{% endblock %}
-{% block seo_canonical %}https://affairsandorder.org/login{% endblock %}
-{% block title %}Login{% endblock %}
-{% block body %}
-{% if recaptcha_site_key %}
-<script src="https://www.google.com/recaptcha/api.js" async defer></script>
-{% endif %}
-<img alt="Army soldiers" class="background" id="background" src="{{ url_for('static', filename='images/4.jpg') }}?v=2" />
+{# Login (cinematic). Standalone: does not extend layout.html. Shared styles in static/landing/auth.css.
+   The landing page's slide-in login drawer posts to the same /login endpoint; failed attempts render here. #}
+{% set page_title = "Login · Affairs and Order" %}
+{% set page_description = "Log in to Affairs and Order with email or Discord. Continue your nation, manage provinces, trade on the market, and join coalitions." %}
+{% set page_canonical = "https://affairsandorder.org/login" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+{% include 'landing/_head.html' %}
+{% if recaptcha_site_key %}<script src="https://www.google.com/recaptcha/api.js" async defer></script>{% endif %}
+<link rel="stylesheet" href="{{ url_for('static', filename='landing/auth.css') }}?v=1">
+</head>
+<body>
+<div class="backdrop"><div class="bimg on" style="background-image:url({{ url_for('static', filename='landing/img/war.jpg') }})"></div></div>
+<canvas id="fx"></canvas>
+<div class="scan"></div>
 
-<div class="templatediv noboxshadowtopper loginsignupdiv">
+<header>
+  <a class="brand" href="/"><img src="{{ url_for('static', filename='landing/img/logo.png') }}" alt="Affairs and Order"><span>AFFAIRS &amp; ORDER</span></a>
+  <a class="toplink" href="/signup">No nation yet? <b>Enlist ▸</b></a>
+</header>
 
-    <div class="templatedivtopper noboxshadowtopper">
-        <h1 class="templatedivtitle">
-            <span class="material-icons-outlined iconlarge">login</span>Login
-        </h1>
+<div class="login-wrap">
+  <section class="console login-card">
+    <div class="pane">
+      <h1 class="display scr" data-text="Welcome back, commander">Welcome back, commander</h1>
+      <p class="hint">Your nation kept running while you were away. Sign in to see what changed.</p>
+
+      {% if verification_message %}<div class="notice" role="status">{{ verification_message }}</div>{% endif %}
+      {% if discord_message %}<div class="notice bad" role="alert">{{ discord_message }}</div>{% endif %}
+      {% with messages = get_flashed_messages() %}{% if messages %}<div class="notice bad" role="alert">{% for m in messages %}{{ m }}{% if not loop.last %}<br>{% endif %}{% endfor %}</div>{% endif %}{% endwith %}
+
+      <div class="quick">
+        <a class="qbtn discord" href="/discord"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.3 4.4A19.6 19.6 0 0 0 15.4 3l-.6 1.3a18 18 0 0 0-5.6 0L8.6 3a19.6 19.6 0 0 0-4.9 1.5C.6 9.1-.3 13.6.1 18a19.8 19.8 0 0 0 6 3l1.3-2.1c-.7-.3-1.4-.6-2-1l.5-.4a14 14 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1L18 21a19.7 19.7 0 0 0 6-3c.5-5.1-.8-9.6-3.7-13.6ZM8 15.3c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Z"/></svg>Discord</a>
+        {% if google_auth_enabled %}<a class="qbtn" href="/login/google?intent=login"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.6 3.8-5.5 3.8-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.2 14.6 2.2 12 2.2 6.6 2.2 2.2 6.6 2.2 12s4.4 9.8 9.8 9.8c5.7 0 9.4-4 9.4-9.6 0-.6-.1-1.1-.2-1.6H12Z"/></svg>Google</a>{% endif %}
+      </div>
+      <div class="or">OR SIGN IN WITH YOUR NATION</div>
+
+      <form action="/login" id="login-form" method="POST">
+        {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+        <div class="field"><input id="username" name="username" type="text" placeholder=" " autocomplete="username" required><label for="username">Nation name or email</label><span class="bar"></span></div>
+        <div class="field"><input id="password" name="password" type="password" placeholder=" " autocomplete="current-password" required><label for="password">Password</label><button type="button" class="eye" id="eye">SHOW</button><span class="bar"></span></div>
+        <div class="login-row"><label><input type="checkbox" name="rememberme" checked> Remember me</label><a href="/forgot_password">Forgot password?</a></div>
+        {% if recaptcha_site_key %}<div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}" data-theme="dark"></div>{% endif %}
+        <button type="submit" class="btn primary" style="width:100%">Resume command ▸</button>
+        <span class="err" id="lerr" aria-live="polite"></span>
+      </form>
     </div>
-
-    <div class="templatedivcontent">
-        {% if verification_message %}
-        <div class="verification-success">{{ verification_message }}</div>
-        {% endif %}
-        {% if discord_message %}
-        <div class="templatecontentheadercenter login-error-msg">{{ discord_message }}</div>
-        {% endif %}
-
-        <div class="auth-columns">
-            <div class="auth-panel">
-                <form action="/discord" method="GET">
-                    <h2 class="templatecontentheadercenter">Discord Login</h2>
-                    <button type="submit" class="templatedivbutton discordbutton templatecenteredbutton w-full">
-                        <span class="material-icons-outlined">login</span>Discord
-                    </button>
-                </form>
-                {% if google_auth_enabled %}
-                <form action="/login/google" method="GET" style="margin-top: 15px;">
-                    <input type="hidden" name="intent" value="login" />
-                    <h2 class="templatecontentheadercenter">Google Login</h2>
-                    <button type="submit" class="templatedivbutton templatecenteredbutton w-full" style="background-color: #db4437; color: white;">
-                        <span class="material-icons-outlined">login</span>Google
-                    </button>
-                </form>
-                {% endif %}
-            </div>
-
-            <div class="auth-panel">
-                <form action="/login" id="login-form" class="loginsignupform" method="POST">
-                    <h2 class="templatecontentheadercenter">Default Login</h2>
-                    {% if csrf_token is defined %}
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    {% endif %}
-
-                    <input class="loginsignupinput w-full" name="username" placeholder="Nation Name or Email" type="text" autocomplete="username" required />
-                    <input class="loginsignupinput w-full" name="password" placeholder="Password" type="password" autocomplete="current-password" required />
-
-                    <div class="auth-row-split">
-                        <a class="forgotpasscode loginsignupforgot" href="/forgot_password">Forgot password</a>
-                        <label class="templatecheckmarklabel fit">Remember Me
-                            <input type="checkbox" name="rememberme">
-                            <span class="templatecheckmark center"></span>
-                        </label>
-                    </div>
-
-                    <button type="submit" class="templatedivbutton templatecenteredbutton w-full">
-                        <span class="material-icons-outlined">login</span>Login
-                    </button>
-
-                    <p class="templatecontentheadercenter login-signup-link">
-                        <a href="/signup" class="templatelink">Don't have an account? Get Started</a>
-                    </p>
-                </form>
-
-                {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                <div class="templatecontentheadercenter login-error-msg">
-                    {% for m in messages %}{{ m }}{% endfor %}
-                </div>
-                {% endif %}
-                {% endwith %}
-            </div>
-        </div>
-    </div>
+    <div class="login-foot">New here?<a href="/signup">Found a nation ▸</a></div>
+  </section>
 </div>
-{% endblock %}
+
+{% include 'partials/cookie_consent.html' %}
+<script>
+{% raw %}
+(function(){
+  const $=s=>document.querySelector(s);
+  const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches,DPR=Math.min(devicePixelRatio||1,2);
+  const G='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%&*<>/';
+  const h=$('.scr');if(h&&!reduce){const text=h.dataset.text,t0=performance.now();(function f(t){const k=Math.min((t-t0)/800,1),n=Math.floor(text.length*k);let o=text.slice(0,n);for(let i=n;i<text.length;i++)o+=text[i]===' '?' ':G[Math.random()*G.length|0];h.textContent=o;if(k<1)requestAnimationFrame(f)})(t0)}
+  $('#eye').addEventListener('click',()=>{const p=$('#password'),show=p.type==='password';p.type=show?'text':'password';$('#eye').textContent=show?'HIDE':'SHOW'});
+  $('#login-form').addEventListener('submit',e=>{if(!$('#username').value.trim()||!$('#password').value){e.preventDefault();$('#lerr').textContent='Enter your nation name or email, and your password.'}});
+  const fx=$('#fx'),g=fx.getContext('2d');function sz(){fx.width=innerWidth*DPR;fx.height=innerHeight*DPR}sz();addEventListener('resize',sz);
+  const P=Array.from({length:innerWidth<760?40:90},()=>({x:Math.random(),y:Math.random(),v:Math.random()*.0012+.0004,r:Math.random()*1.6+.4,hot:Math.random()<.35,d:Math.random()*6}));
+  (function loop(){if(!reduce){g.clearRect(0,0,fx.width,fx.height);for(const p of P){p.y-=p.v;p.d+=.01;if(p.y<-.02){p.y=1.02;p.x=Math.random()}g.beginPath();g.arc((p.x+Math.sin(p.d)*.01)*fx.width,p.y*fx.height,p.r*DPR,0,7);g.fillStyle=p.hot?'rgba(255,150,70,.6)':'rgba(150,215,255,.45)';g.fill()}}requestAnimationFrame(loop)})();
+})();
+{% endraw %}
+</script>
+</body>
+</html>

@@ -1,386 +1,217 @@
-{% extends "layout.html" %}
-{% block seo_title %}Sign up · Affairs and Order{% endblock %}
-{% block seo_description %}Create a free Affairs and Order account and start your nation. Browser MMO nation simulator — build provinces, trade, and compete with other players.{% endblock %}
-{% block seo_canonical %}https://affairsandorder.org/signup{% endblock %}
-{% block title %} Sign up {% endblock %} {% block head %}
-<script src="https://www.google.com/recaptcha/api.js" async defer></script>
-<style>
-.loginsignupdiv .signup-biome-copy p,
-.loginsignupdiv .signup-biome-copy .signup-biome-title,
-.loginsignupdiv .signup-biome-copy ul.medium,
-.loginsignupdiv .signup-biome-resources .slidelist {
-    color: #0f172a !important;
-    font-weight: 500 !important;
-}
-.theme-dark .loginsignupdiv .signup-biome-copy p,
-.theme-dark .loginsignupdiv .signup-biome-copy .signup-biome-title,
-.theme-dark .loginsignupdiv .signup-biome-copy ul.medium,
-.theme-dark .loginsignupdiv .signup-biome-resources .slidelist {
-    color: #e8edf5 !important;
-}
-.ano-terms-agree {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    margin: 12px 0;
-    font-size: 0.85rem;
-    line-height: 1.4;
-    color: var(--colorOne);
-}
-.ano-terms-agree input {
-    margin-top: 3px;
-    flex-shrink: 0;
-}
-.ano-terms-agree a {
-    color: var(--accent);
-}
-</style>
-{% endblock %} {% block body%}
-<!-- START------------------------------------------------------------------------->
-<script>
-    //Code for image slider in signup page
+{# Signup (cinematic, 3-step). Standalone: does not extend layout.html. Shared styles in static/landing/auth.css.
+   Serves all three flows via `way`: normal (/register/email), discord (/discord_signup), google (/google_signup).
+   Field names must stay in sync with signup.py / app_core/auth: username, email, password, confirmation,
+   continent (1-7, same order as BIOMES below), heard_from, terms_agree, referral_code. #}
+{% set page_title = "Sign up · Affairs and Order" %}
+{% set page_description = "Create a free Affairs and Order account and start your nation. Browser MMO nation simulator — build provinces, trade, and compete with other players." %}
+{% set page_canonical = "https://affairsandorder.org/signup" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+{% include 'landing/_head.html' %}
+{% if recaptcha_site_key %}<script src="https://www.google.com/recaptcha/api.js" async defer></script>{% endif %}
+<link rel="stylesheet" href="{{ url_for('static', filename='landing/auth.css') }}?v=1">
+</head>
+<body>
 
-    var slideIndex = 1;
+<div class="backdrop" id="backdrop"></div>
+<canvas id="fx"></canvas>
+<div class="scan"></div>
+<div class="flashwipe" id="wipe"></div>
 
-    function plusSlides(n) {
-        showSlides(slideIndex += n);
-        document.getElementById("imagesliderresult").value = slideIndex;
-        console.log(document.getElementById("imagesliderresult").value);
-    }
+<header>
+  <a class="brand" href="/"><img src="{{ url_for('static', filename='landing/img/logo.png') }}" alt="Affairs and Order"><span>AFFAIRS &amp; ORDER</span></a>
+  <a class="toplink" href="/login">Have a nation? <b>Log in ▸</b></a>
+</header>
 
-    function showSlides(n) {
-        var i;
-        var slides = document.getElementsByClassName("slideparent");
-        if (n > slides.length) {
-            slideIndex = 1
-        }
-        if (n < 1) {
-            slideIndex = slides.length
-        }
-        for (i = 0; i < slides.length; i++) {
-            slides[i].style.display = "none";
-        }
-        slides[slideIndex - 1].style.display = "block";
-    }
-</script>
-<img alt="Aircraft carrier" class="background" id="background" src="{{ url_for('static', filename='images/2.jpg') }}?v=2" />
-<div class="templatediv noboxshadowtopper loginsignupdiv">
+<main>
+  <aside class="dossier" aria-live="polite">
+    <div class="stamp" id="stamp">UNCLAIMED</div>
+    <div class="flagbox">FLAG<br>SET AFTER<br>FOUNDING</div>
+    <div class="lbl">Nation dossier</div>
+    <div class="dname empty" id="dname">Your Nation</div>
+    <div class="dmeta"><span>Territory · <b id="dbiome">Tundra</b></span><span>Leader · <b>You</b></span><span>Status · <b id="dstatus">Awaiting orders</b></span></div>
+    <div class="dres" id="dres"></div>
+  </aside>
 
-    <div class="templatedivtopper noboxshadowtopper">
-        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
-            add_circle_outline
-            </span>Sign up</h1>
-    </div>
+  <section class="console">
+    <nav class="steps" aria-label="Enlistment steps">
+      <button type="button" class="on" data-go="0"><span>Step 01</span><b>Identity</b></button>
+      <button type="button" data-go="1" disabled><span>Step 02</span><b>Territory</b></button>
+      <button type="button" data-go="2" disabled><span>Step 03</span><b>Orders</b></button>
+    </nav>
+    {% if way == "discord" %}<form class="panes" id="form" action="/discord_signup" method="POST" novalidate>
+    {% elif way == "google" %}<form class="panes" id="form" action="/google_signup" method="POST" novalidate>
+    {% else %}<form class="panes" id="form" action="/register/email" method="POST" novalidate>{% endif %}
+      {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+      {% if referral_invite %}<input type="hidden" name="referral_code" value="{{ referral_invite }}">
+      {% elif session.get('referral_code') %}<input type="hidden" name="referral_code" value="{{ session.get('referral_code') }}">{% endif %}
+      <input type="hidden" name="continent" id="continent" value="1">
 
-    <div class="templatedivcontent">
-        {% if referral_invite %}
-        <p class="referral-invite-banner" role="status">
-            You were invited to Affairs and Order — sign up for a bonus of +5M gold and +15k lumber.
-        </p>
+      <!-- STEP 1 -->
+      <div class="pane on" data-pane="0">
+        <h1 class="display scr" data-text="Claim your nation">Claim your nation</h1>
+        <p class="hint">Pick a name the world will remember. You can design your flag, capital and currency once you're in.</p>
+        {% with messages = get_flashed_messages() %}{% if messages %}<div class="notice bad" role="alert">{% for m in messages %}{{ m }}{% if not loop.last %}<br>{% endif %}{% endfor %}</div>{% endif %}{% endwith %}
+        {% if referral_invite %}<div class="notice gold" role="status">You were invited to Affairs and Order — sign up for a bonus of +5M gold and +15k lumber.</div>{% endif %}
+{% if way != "discord" and way != "google" %}
+        <div class="quick">
+          <a class="qbtn discord" href="/discord"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.3 4.4A19.6 19.6 0 0 0 15.4 3l-.6 1.3a18 18 0 0 0-5.6 0L8.6 3a19.6 19.6 0 0 0-4.9 1.5C.6 9.1-.3 13.6.1 18a19.8 19.8 0 0 0 6 3l1.3-2.1c-.7-.3-1.4-.6-2-1l.5-.4a14 14 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1L18 21a19.7 19.7 0 0 0 6-3c.5-5.1-.8-9.6-3.7-13.6ZM8 15.3c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Z"/></svg>Discord</a>
+          {% if google_auth_enabled %}<a class="qbtn" href="/login/google?intent=login"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.6 3.8-5.5 3.8-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.2 14.6 2.2 12 2.2 6.6 2.2 2.2 6.6 2.2 12s4.4 9.8 9.8 9.8c5.7 0 9.4-4 9.4-9.6 0-.6-.1-1.1-.2-1.6H12Z"/></svg>Google</a>{% endif %}
+        </div>
+        <div class="or">OR ENLIST WITH EMAIL</div>
+        {% else %}
+        <div class="notice">{% if way == "discord" %}Discord connected.{% else %}Google connected.{% endif %} Name your nation to finish enlisting.</div>
         {% endif %}
-        <div class="auth-columns">
-            {% if way != "discord" and way != "google" %}
-            <div class="auth-panel">
-                <form action="/discord" method="GET">
-                    <h2 class="templatecontentheadercenter">Discord Sign Up</h2>
-                    <button type="submit" class="templatedivbutton discordbutton templatecenteredbutton w-full">
-                        <span class="material-icons-outlined">add_circle_outline</span>Discord Sign Up
-                    </button>
-                </form>
-                {% if google_auth_enabled %}
-                <form action="/login/google" method="GET" style="margin-top: 15px;">
-                    <input type="hidden" name="intent" value="login" />
-                    <h2 class="templatecontentheadercenter">Google Sign Up</h2>
-                    <button type="submit" class="templatedivbutton templatecenteredbutton w-full" style="background-color: #db4437; color: white;">
-                        <span class="material-icons-outlined">add_circle_outline</span>Google Sign Up
-                    </button>
-                </form>
-                {% endif %}
-            </div>
-            {% endif %}
+        <div class="field" id="f-name"><input id="username" name="username" type="text" placeholder=" " maxlength="20" autocomplete="off" required><label for="username">Nation name</label><span class="count" id="ncount">0/20</span><span class="bar"></span><span class="err" id="e-name"></span></div>
+{% if way != "discord" and way != "google" %}
+        <div class="field" id="f-email"><input id="email" name="email" type="email" placeholder=" " autocomplete="email" required><label for="email">Email</label><span class="bar"></span><span class="err" id="e-email"></span></div>
+        <div class="field" id="f-pass"><input id="password" name="password" type="password" placeholder=" " autocomplete="new-password" required><label for="password">Password</label><button type="button" class="eye" data-eye="password">SHOW</button><span class="bar"></span></div>
+        <div class="strength" id="strength" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <div class="slabel" id="slabel">Strength · —</div>
+        <div class="field" id="f-conf"><input id="confirmation" name="confirmation" type="password" placeholder=" " autocomplete="new-password" required><label for="confirmation">Confirm password</label><span class="bar"></span><span class="err" id="e-conf"></span></div>
+        {% endif %}
+        <div class="row"><span></span><button type="button" class="btn primary" data-next="1">Choose territory ▸</button></div>
+      </div>
 
-            <div class="auth-panel auth-panel-wide">
-                <h2 class="templatecontentheadercenter">Default Sign Up</h2>
-                {% if way != "discord" and way != "google" %}
-                <form id="signup-form" class="loginsignupform" action="/register/email" method="POST">
-                {% elif way == "discord" %}
-                <form id="signup-form" class="loginsignupform" action="/discord_signup" method="POST">
-                {% elif way == "google" %}
-                <form id="signup-form" class="loginsignupform" action="/google_signup" method="POST">
-                {% endif %}
-                    {% if csrf_token is defined %}
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    {% endif %}
-                    {% if referral_invite %}
-                    <input type="hidden" name="referral_code" value="{{ referral_invite }}" />
-                    {% elif session.get('referral_code') %}
-                    <input type="hidden" name="referral_code" value="{{ session.get('referral_code') }}" />
-                    {% endif %}
-                    <input class="loginsignupinput w-full" autocomplete="off" name="username" type="text" placeholder="Country Name" required/>
-                    {% if way != "discord" and way != "google" %}
-                    <input class="loginsignupinput w-full" autocomplete="off" name="email" type="email" placeholder="Email" required />
-                    <input class="loginsignupinput w-full" autocomplete="off" type="password" name="password" placeholder="Password" required/>
-                    <input class="loginsignupinput w-full" autocomplete="off" type="password" name="confirmation" placeholder="Confirm Password" required/>
-                    {% endif %}
+      <!-- STEP 2 -->
+      <div class="pane" data-pane="1">
+        <h2 class="display scr" data-text="Choose your land">Choose your land</h2>
+        <p class="hint">Your biome decides what your provinces can produce. Every biome grows rations; the rest is up to the land.</p>
+        <div class="biomes" id="biomes" role="radiogroup" aria-label="Biome"></div>
+        <div class="binfo" id="binfo"></div>
+        <div class="row"><button type="button" class="linkbtn" data-next="0">◂ Back</button><button type="button" class="btn primary" data-next="2">Final orders ▸</button></div>
+      </div>
 
-        <h2 class="templatecontentheaderleft">Choose a Biome</h2>
+      <!-- STEP 3 -->
+      <div class="pane" data-pane="2">
+        <h2 class="display scr" data-text="Final orders">Final orders</h2>
+        <p class="hint">One last check, commander. Then the world finds out you exist.</p>
+        <div class="field"><select id="heard" name="heard_from" aria-label="How did you hear about Affairs and Order? (optional)">
+          <option value="">How did you hear about us? (optional)</option><option value="google">Google search</option><option value="discord">Discord</option><option value="reddit">Reddit</option><option value="youtube">YouTube</option><option value="friend">A friend invited me</option><option value="other_game">Another game or forum</option><option value="other">Other</option>
+        </select><span class="sel-arrow">▾</span></div>
+        <label class="check"><input type="checkbox" id="terms" name="terms_agree" value="1"><span class="box"></span><span>I'm at least 13 years old and agree to the <a href="/terms" target="_blank" rel="noreferrer">Terms of Service</a> and <a href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</a>.</span></label>
+        <span class="err" id="e-terms"></span>
+        {% if recaptcha_site_key %}<div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}" data-theme="dark"></div>{% endif %}
+        <div class="row" style="margin-top:14px"><button type="button" class="linkbtn" data-next="1">◂ Back</button><span></span></div>
+        <button type="button" class="btn primary hold" id="hold"><span class="fill" id="holdFill"></span><span class="txt">Found nation</span></button>
+        <div class="holdhint">Press and hold to found · Enter on keyboard</div>
+      </div>
+    </form>
+  </section>
+</main>
 
-        <div class="slidecontainer">
-            <div class="slide1 slideparent">
-                <div class="slidechild slidetop">
-
-                    <img alt="Tundra biome" class="slideimage" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('biomes', 'tundra') ) }}?v=2">
-
-                    <div class="arrowparent arrowleft" onclick="plusSlides(-1)">
-                        <span class="arrowchild">&#10094;</span>
-                    </div>
-                    <div class="arrowparent arrowright" onclick="plusSlides(1)">
-                        <span class="arrowchild">&#10095;</span>
-
-                    </div>
-                </div>
-                <div class="slidechild slidebottom signup-biome-copy">
-
-                    <h2 class="templatecontentheadercenter signup-biome-title">Tundra</h2>
-
-                    <p class="templatecontentpleft landingpagecontent">
-                        Tundra is a cold, nearly lifeless plane. While rich in valuable natural resources, it lacks necessary resources like lumber.
-                    </p>
-
-                    <ul class="medium">Available Resources</ul>
-
-                    <div class="listcontainer signup-biome-resources">
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'iron') ) }}?v=2" class="resource resourcesmall" />Iron</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'copper') ) }}?v=2" class="resource resourcesmall" />Copper</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'uranium') ) }}?v=2" class="resource resourcesmall" />Uranium</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lead') ) }}?v=2" class="resource resourcesmall" />Lead</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'silver') ) }}?v=2" class="resource resourcesmall" />Silver</p>
-                    </div>
-                </div>
-            </div>
-            <div class="slideparent">
-                <div class="slidechild slidetop">
-
-                    <img alt="Savanna biome" class="slideimage" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('biomes', 'savanna') ) }}?v=2">
-
-                    <div class="arrowparent arrowleft" onclick="plusSlides(-1)">
-                        <span class="arrowchild">&#10094;</span>
-                    </div>
-                    <div class="arrowparent arrowright" onclick="plusSlides(1)">
-                        <span class="arrowchild">&#10095;</span>
-
-                    </div>
-                </div>
-                <div class="slidechild slidebottom signup-biome-copy">
-
-                    <h2 class="templatecontentheadercenter signup-biome-title">Savanna</h2>
-
-                    <p class="templatecontentpleft landingpagecontent">
-                        Savannas consist of miles of open grassland with the occasional tree. It has lots of space for farming, with rich mineral deposits below.
-                    </p>
-                    <ul class="medium">Available Resources</ul>
-
-                    <div class="listcontainer signup-biome-resources">
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'bauxite') ) }}?v=2" class="resource resourcesmall" />Bauxite</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'coal') ) }}?v=2" class="resource resourcesmall" />Coal</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'copper') ) }}?v=2" class="resource resourcesmall" />Copper</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lead') ) }}?v=2" class="resource resourcesmall" />Lead</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'diamonds') ) }}?v=2" class="resource resourcesmall" />Diamonds</p>
-                    </div>
-                </div>
-            </div>
-            <div class="slideparent">
-                <div class="slidechild slidetop">
-
-                    <img alt="Desert biome" class="slideimage" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('biomes', 'desert') ) }}?v=2">
-
-                    <div class="arrowparent arrowleft" onclick="plusSlides(-1)">
-                        <span class="arrowchild">&#10094;</span>
-                    </div>
-                    <div class="arrowparent arrowright" onclick="plusSlides(1)">
-                        <span class="arrowchild">&#10095;</span>
-
-                    </div>
-                </div>
-                <div class="slidechild slidebottom signup-biome-copy">
-
-                    <h2 class="templatecontentheadercenter signup-biome-title">Desert</h2>
-
-                    <p class="templatecontentpleft landingpagecontent">
-                        Deserts are barren and hostile. Farming is possible, but only at rivers and oases. This is compensated for by rare resources ripe for the taking.
-                    </p>
-                    <ul class="medium">Available Resources</ul>
-
-                    <div class="listcontainer signup-biome-resources">
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'oil') ) }}?v=2" class="resource resourcesmall" />Oil</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'iron') ) }}?v=2" class="resource resourcesmall" />Iron</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'uranium') ) }}?v=2" class="resource resourcesmall" />Uranium</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'bauxite') ) }}?v=2" class="resource resourcesmall" />Bauxite</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'diamonds') ) }}?v=2" class="resource resourcesmall" />Diamonds</p>
-                    </div>
-                </div>
-            </div>
-            <div class="slideparent">
-                <div class="slidechild slidetop">
-
-                    <img alt="Jungle biome" class="slideimage" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('biomes', 'jungle') ) }}?v=2">
-
-                    <div class="arrowparent arrowleft" onclick="plusSlides(-1)">
-                        <span class="arrowchild">&#10094;</span>
-                    </div>
-                    <div class="arrowparent arrowright" onclick="plusSlides(1)">
-                        <span class="arrowchild">&#10095;</span>
-
-                    </div>
-                </div>
-                <div class="slidechild slidebottom signup-biome-copy">
-
-                    <h2 class="templatecontentheadercenter signup-biome-title">Jungle</h2>
-
-                    <p class="templatecontentpleft landingpagecontent">
-                        Jungles are dense forest, with deadly animals and often warm climates. This is not an ideal place to settle. Nonetheless, people still do so, as jungles are rich with wood and oil.
-                    </p>
-                    <ul class="medium">Available Resources</ul>
-
-                    <div class="listcontainer signup-biome-resources">
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lumber') ) }}?v=2" class="resource resourcesmall" />Lumber</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'oil') ) }}?v=2" class="resource resourcesmall" />Oil</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'coal') ) }}?v=2" class="resource resourcesmall" />Coal</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'copper') ) }}?v=2" class="resource resourcesmall" />Copper</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'bullion') ) }}?v=2" class="resource resourcesmall" />Bullion</p>
-                    </div>
-                </div>
-            </div>
-            <div class="slideparent">
-                <div class="slidechild slidetop">
-
-                    <img alt="Boreal Forest biome" class="slideimage" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('biomes', 'boreal forest') ) }}?v=2">
-
-                    <div class="arrowparent arrowleft" onclick="plusSlides(-1)">
-                        <span class="arrowchild">&#10094;</span>
-                    </div>
-                    <div class="arrowparent arrowright" onclick="plusSlides(1)">
-                        <span class="arrowchild">&#10095;</span>
-
-                    </div>
-                </div>
-                <div class="slidechild slidebottom signup-biome-copy">
-
-                    <h2 class="templatecontentheadercenter signup-biome-title">Boreal Forest</h2>
-
-                    <p class="templatecontentpleft landingpagecontent">
-                        Boreal Forests are densely packed forests that can get quite cold in the winter. They're a fine place to find valuable minerals to extract.
-                    </p>
-                    <ul class="medium">Available Resources</ul>
-
-                    <div class="listcontainer signup-biome-resources">
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lumber') ) }}?v=2" class="resource resourcesmall" />Lumber</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'coal') ) }}?v=2" class="resource resourcesmall" />Coal</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lead') ) }}?v=2" class="resource resourcesmall" />Lead</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'iron') ) }}?v=2" class="resource resourcesmall" />Iron</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'bullion') ) }}?v=2" class="resource resourcesmall" />Bullion</p>
-                    </div>
-                </div>
-            </div>
-            <div class="slideparent">
-                <div class="slidechild slidetop">
-
-                    <img alt="Grassland biome" class="slideimage" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('biomes', 'grassland') ) }}?v=2">
-
-                    <div class="arrowparent arrowleft" onclick="plusSlides(-1)">
-                        <span class="arrowchild">&#10094;</span>
-                    </div>
-                    <div class="arrowparent arrowright" onclick="plusSlides(1)">
-                        <span class="arrowchild">&#10095;</span>
-
-                    </div>
-                </div>
-                <div class="slidechild slidebottom signup-biome-copy">
-
-                    <h2 class="templatecontentheadercenter signup-biome-title">Grassland</h2>
-
-                    <p class="templatecontentpleft landingpagecontent">
-                        Grasslands are full of many unique plants, and they're a perfect place for farming. They also contain iron, copper, oil, and other useful minerals.
-                    </p>
-                    <ul class="medium">Available Resources</ul>
-
-                    <div class="listcontainer signup-biome-resources">
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'iron') ) }}?v=2" class="resource resourcesmall" />Iron</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'copper') ) }}?v=2" class="resource resourcesmall" />Copper</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'oil') ) }}?v=2" class="resource resourcesmall" />Oil</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'bauxite') ) }}?v=2" class="resource resourcesmall" />Bauxite</p>
-                    </div>
-                </div>
-            </div>
-            <div class="slideparent">
-                <div class="slidechild slidetop">
-
-                    <img alt="Mountain Range biome" class="slideimage" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('biomes', 'mountain range') ) }}?v=2">
-
-                    <div class="arrowparent arrowleft" onclick="plusSlides(-1)">
-                        <span class="arrowchild">&#10094;</span>
-                    </div>
-                    <div class="arrowparent arrowright" onclick="plusSlides(1)">
-                        <span class="arrowchild">&#10095;</span>
-
-                    </div>
-                </div>
-                <div class="slidechild slidebottom signup-biome-copy">
-
-                    <h2 class="templatecontentheadercenter signup-biome-title">Mountain Range</h2>
-
-                    <p class="templatecontentpleft landingpagecontent">
-                        Mountain Ranges are terribly cold with lots of rain. They aren't pretty to settle, but they provide marketworthy minerals to sell.
-                    </p>
-                    <ul class="medium">Available Resources</ul>
-
-                    <div class="listcontainer signup-biome-resources">
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'rations') ) }}?v=2" class="resource resourcesmall" />Rations</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'lumber') ) }}?v=2" class="resource resourcesmall" />Lumber</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'coal') ) }}?v=2" class="resource resourcesmall" />Coal</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'bauxite') ) }}?v=2" class="resource resourcesmall" />Bauxite</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'oil') ) }}?v=2" class="resource resourcesmall" />Oil</p>
-                        <p class="slidelist"><img alt="Resource icon" loading="lazy" src="{{ url_for( 'static', filename=game_asset_path('resources', 'silver') ) }}?v=2" class="resource resourcesmall" />Silver</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!--output for what biome user selects (goes from 1-7)-->
-        <input class="hidden" id="imagesliderresult" name="continent" value="1" />
-
-        <select class="loginsignupinput w-full" name="heard_from" aria-label="How did you hear about Affairs and Order? (optional)">
-            <option value="">How did you hear about us? (optional)</option>
-            <option value="google">Google search</option>
-            <option value="discord">Discord</option>
-            <option value="reddit">Reddit</option>
-            <option value="youtube">YouTube</option>
-            <option value="friend">A friend invited me</option>
-            <option value="other_game">Another game or forum</option>
-            <option value="other">Other</option>
-        </select>
-
-        <label class="ano-terms-agree">
-            <input type="checkbox" name="terms_agree" value="1" required />
-            I'm at least 13 years old and agree to the <a href="/terms" target="_blank" rel="noreferrer">Terms of Service</a> and <a href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</a>.
-        </label>
-
-        <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
-
-        <div class="form-actions">
-            <button type="submit" class="templatedivbutton templatecenteredbutton w-full">
-                <span class="material-icons-outlined">add_circle_outline</span>Sign Up
-            </button>
-        </div>
-                </form>
-            </div>
-        </div>
-    </div>
+<div id="found" role="dialog" aria-modal="true" aria-labelledby="foundName">
+  <canvas id="fw"></canvas>
+  <div class="in">
+    <div class="k">FOUNDING NATION · <span id="fBiome"></span></div>
+    <h2 id="foundName"></h2>
+    <p>Surveying your first provinces. Your people await your first order.</p>
+  </div>
 </div>
-{% endblock %}
+
+{% include 'partials/cookie_consent.html' %}
+<script>window.ANO_ASSETS={{ url_for('static', filename='landing/')|tojson }};</script>
+<script>
+{% raw %}const A=window.ANO_ASSETS,HAS_PW=!!document.getElementById('password');
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches,DPR=Math.min(devicePixelRatio||1,2);
+const G='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%&*<>/';
+function scramble(el,text,dur=600){const t0=performance.now();el._s=t0;(function f(t){if(el._s!==t0)return;const k=Math.min((t-t0)/dur,1),n=Math.floor(text.length*k);let o=text.slice(0,n);for(let i=n;i<text.length;i++)o+=text[i]===' '?' ':G[Math.random()*G.length|0];el.textContent=o;if(k<1)requestAnimationFrame(f)})(t0)}
+
+/* biomes (order = backend continent ids 1–7) */
+const BIOMES=[
+ ['Tundra','tundra','Tundra is a cold, nearly lifeless plane. While rich in valuable natural resources, it lacks necessary resources like lumber.',['Rations','Iron','Copper','Uranium','Lead','Silver']],
+ ['Savanna','savanna','Savannas consist of miles of open grassland with the occasional tree. It has lots of space for farming, with rich mineral deposits below.',['Rations','Bauxite','Coal','Copper','Lead','Diamonds']],
+ ['Desert','desert','Deserts are barren and hostile. Farming is possible, but only at rivers and oases. This is compensated for by rare resources ripe for the taking.',['Rations','Oil','Iron','Uranium','Bauxite','Diamonds']],
+ ['Jungle','jungle','Jungles are dense forest, with deadly animals and often warm climates. People still settle here, because jungles are rich with wood and oil.',['Rations','Lumber','Oil','Coal','Copper','Bullion']],
+ ['Boreal Forest','borealforest',"Boreal forests are densely packed and get quite cold in the winter. They're a fine place to find valuable minerals to extract.",['Rations','Lumber','Coal','Lead','Iron','Bullion']],
+ ['Grassland','grassland',"Grasslands are full of unique plants and a perfect place for farming. They also hold iron, copper, oil and other useful minerals.",['Rations','Iron','Copper','Oil','Bauxite']],
+ ['Mountain Range','mountainrange',"Mountain ranges are cold with lots of rain. Not pretty to settle, but they hold marketworthy minerals to sell.",['Rations','Lumber','Coal','Bauxite','Oil','Silver']]
+];
+const bd=$('#backdrop');
+BIOMES.forEach(([n,f],i)=>{const d=document.createElement('div');d.className='bimg';d.style.backgroundImage=`url(${A}img/biomes/${f}.jpg)`;bd.appendChild(d);
+  const b=document.createElement('button');b.type='button';b.className='biome';b.setAttribute('role','radio');b.setAttribute('aria-checked','false');b.dataset.i=i;
+  b.innerHTML=`<img src="${A}img/biomes/${f}.jpg" alt="" loading="lazy"><small>ZONE ${String(i+1).padStart(2,'0')}</small><span>${n}</span>`;b.onclick=()=>pickBiome(i,true);$('#biomes').appendChild(b)});
+let biome=0;
+function pickBiome(i,user){biome=i;$('#continent').value=i+1;
+  $$('.bimg').forEach((d,j)=>d.classList.toggle('on',j===i));
+  $$('.biome').forEach((b,j)=>{b.setAttribute('aria-checked',j===i);b.tabIndex=j===i?0:-1});
+  const [n,,desc,res]=BIOMES[i];
+  $('#binfo').innerHTML=`<h3></h3><p>${desc}</p><div class="chips">${res.map((r,k)=>`<span class="chip" style="animation-delay:${k*.05}s">${r}</span>`).join('')}</div>`;scramble($('#binfo h3'),n,450);
+  $('#dbiome').textContent=n;$('#dres').innerHTML=res.map((r,k)=>`<span class="chip" style="animation-delay:${k*.05}s">${r}</span>`).join('');
+  if(user){$('#wipe').classList.remove('go');void $('#wipe').offsetWidth;$('#wipe').classList.add('go')}}
+$('#biomes').addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();const n=(biome+(e.key==='ArrowRight'?1:-1)+7)%7;pickBiome(n,true);$$('.biome')[n].focus()}});
+pickBiome(0,false);
+
+/* live dossier */
+const nm=$('#username');
+nm.addEventListener('input',()=>{const v=nm.value.trim();$('#ncount').textContent=nm.value.length+'/20';const d=$('#dname');d.classList.toggle('empty',!v);d.textContent=v||'Your Nation';
+  $('#stamp').textContent=v?'PENDING':'UNCLAIMED';clearErr('name')});
+/* password strength */
+const pw=$('#password');
+if(pw)pw.addEventListener('input',()=>{const v=pw.value;let s=0;if(v.length>=8)s++;if(/[A-Z]/.test(v)&&/[a-z]/.test(v))s++;if(/\d/.test(v))s++;if(/[^A-Za-z0-9]/.test(v)||v.length>=14)s++;if(!v)s=0;
+  $('#strength').className='strength s'+s;$('#slabel').textContent='Strength · '+(['—','Weak','Fair','Strong','Fortified'][s]);clearErr('conf')});
+$$('[data-eye]').forEach(b=>b.onclick=()=>{const i=$('#'+b.dataset.eye);const show=i.type==='password';i.type=show?'text':'password';$('#confirmation').type=i.type;b.textContent=show?'HIDE':'SHOW'});
+['email','confirmation'].forEach(id=>{const el=$('#'+id);if(el)el.addEventListener('input',()=>clearErr(id==='email'?'email':'conf'))});
+
+/* validation */
+const F={name:'#f-name',email:'#f-email',conf:'#f-conf'};
+function setErr(k,msg){$('#e-'+k).textContent=msg;if(F[k])$(F[k]).classList.add('bad')}
+function clearErr(k){$('#e-'+k).textContent='';if(F[k])$(F[k]).classList.remove('bad')}
+function valid1(){let ok=true;const v=nm.value.trim();
+  if(v.length<3){setErr('name','Use at least 3 characters for your nation name.');ok=false}
+  if(!HAS_PW)return ok;
+  if(!/^\S+@\S+\.\S+$/.test($('#email').value)){setErr('email','Enter an email address like name@example.com.');ok=false}
+  if(pw.value.length<8){setErr('conf','Use a password of at least 8 characters.');ok=false}
+  else if(pw.value!==$('#confirmation').value){setErr('conf',"The two passwords don't match.");ok=false}
+  return ok}
+
+/* steps */
+let step=0,maxStep=0;
+function goStep(n){if(n>step&&step===0&&!valid1())return;
+  const back=n<step;step=n;maxStep=Math.max(maxStep,n);
+  $$('.pane').forEach(p=>{const on=+p.dataset.pane===n;p.classList.toggle('on',on);p.classList.toggle('back',on&&back)});
+  $$('.steps button').forEach((b,i)=>{b.classList.toggle('on',i===n);b.classList.toggle('done',i<n);b.disabled=i>maxStep});
+  const h=$(`.pane[data-pane="${n}"] .scr`);scramble(h,h.dataset.text);
+  if(n===1)setTimeout(()=>$$('.biome')[biome].scrollIntoView({behavior:reduce?'auto':'smooth',inline:'center',block:'nearest'}),50);
+  $('.console').scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});
+}
+$$('[data-next]').forEach(b=>b.onclick=()=>goStep(+b.dataset.next));
+$$('.steps button').forEach(b=>b.onclick=()=>goStep(+b.dataset.go));
+let submitting=false;
+$('#form').addEventListener('submit',e=>{if(!submitting){e.preventDefault();if(step<2)goStep(step+1)}});
+
+/* hold to found */
+const hold=$('#hold'),fill=$('#holdFill');let ht=null,h0=0;
+function captchaOk(){if(window.grecaptcha&&document.querySelector('.g-recaptcha')){try{if(!grecaptcha.getResponse()){$('#e-terms').textContent='Complete the "I\'m not a robot" check first.';return false}}catch(e){}}return true}
+function startHold(e){if(e)e.preventDefault();if(!$('#terms').checked){$('#e-terms').textContent='Tick the box to accept the Terms of Service first.';return}if(!captchaOk())return;
+  $('#e-terms').textContent='';h0=performance.now();(function f(t){const k=Math.min((performance.now()-h0)/1100,1);fill.style.width=k*100+'%';if(navigator.vibrate&&k>.3&&k<.32)navigator.vibrate(15);if(k>=1){ht=null;found();return}ht=requestAnimationFrame(f)})()}
+function stopHold(){if(ht){cancelAnimationFrame(ht);ht=null;fill.style.transition='width .3s';fill.style.width='0';setTimeout(()=>fill.style.transition='',300)}}
+hold.addEventListener('pointerdown',startHold);['pointerup','pointerleave','pointercancel'].forEach(ev=>hold.addEventListener(ev,stopHold));
+hold.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if($('#terms').checked)found();else startHold()}});
+$('#terms').addEventListener('change',()=>$('#e-terms').textContent='');
+
+function found(){if(submitting||!$('#terms').checked||!captchaOk())return;
+  const name=nm.value.trim()||'Your Nation';$('#foundName').textContent=name;$('#fBiome').textContent=BIOMES[biome][0].toUpperCase();
+  $('#stamp').textContent='FOUNDED';$('#stamp').classList.add('ok');$('#dstatus').textContent='Founded';
+  $('#found').classList.add('on');fireworks();
+  submitting=true;setTimeout(()=>$('#form').submit(),reduce?0:1700);
+}
+/* founding burst: radial light rays + sparks */
+function fireworks(){const c=$('#fw'),g=c.getContext('2d');c.width=innerWidth*DPR;c.height=innerHeight*DPR;const W=c.width,H=c.height;
+  const sp=Array.from({length:240},()=>{const a=Math.random()*6.283,v=(Math.random()*9+3)*DPR;return{x:W/2,y:H/2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,l:1,c:Math.random()<.5?'95,212,255':'255,209,102'}});
+  let t=0;(function f(){t++;g.fillStyle='rgba(0,0,0,.22)';g.fillRect(0,0,W,H);
+    if(t>40){g.save();g.translate(W/2,H/2);g.rotate(t*.003);for(let i=0;i<14;i++){g.rotate(Math.PI*2/14);const gr=g.createLinearGradient(0,0,Math.max(W,H),0);gr.addColorStop(0,'rgba(95,212,255,.10)');gr.addColorStop(1,'rgba(95,212,255,0)');g.fillStyle=gr;g.beginPath();g.moveTo(0,0);g.lineTo(Math.max(W,H),-40*DPR);g.lineTo(Math.max(W,H),40*DPR);g.fill()}g.restore()}
+    if(t>55)for(const p of sp){p.x+=p.vx;p.y+=p.vy;p.vx*=.97;p.vy=p.vy*.97+.06*DPR;p.l*=.985;g.fillStyle=`rgba(${p.c},${p.l})`;g.fillRect(p.x,p.y,2.4*DPR,2.4*DPR)}
+    if(t<600)requestAnimationFrame(f)})()}
+
+/* ambient embers */
+const fx=$('#fx'),g=fx.getContext('2d');function sz(){fx.width=innerWidth*DPR;fx.height=innerHeight*DPR}sz();addEventListener('resize',sz);
+const P=Array.from({length:innerWidth<760?40:90},()=>({x:Math.random(),y:Math.random(),v:Math.random()*.0012+.0004,r:Math.random()*1.6+.4,hot:Math.random()<.35,d:Math.random()*6}));
+(function loop(){if(!reduce){g.clearRect(0,0,fx.width,fx.height);for(const p of P){p.y-=p.v;p.d+=.01;if(p.y<-.02){p.y=1.02;p.x=Math.random()}g.beginPath();g.arc((p.x+Math.sin(p.d)*.01)*fx.width,p.y*fx.height,p.r*DPR,0,7);g.fillStyle=p.hot?'rgba(255,150,70,.6)':'rgba(150,215,255,.45)';g.fill()}}requestAnimationFrame(loop)})();
+scramble($('.pane.on .scr'),$('.pane.on .scr').dataset.text,900);
+{% endraw %}
+</script>
+</body>
+</html>

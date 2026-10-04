@@ -834,3 +834,16 @@ DATABASE_PUBLIC_URL=... python3 scripts/apply_all_pending_migrations.py
 - `templates/market_v2.html` is now always rendered for `/market` (the `market` THEME_V2 flag is no longer consulted there).
 
 **Next steps:** none required; possible follow-up is fixing the minifier and auditing existing CSS for the `x :pseudo` pattern.
+
+## 2026-10-04 — Cinematic landing, login and signup pages
+
+**What was done**
+- `templates/index.html` (logged-out `/`), `templates/login.html`, `templates/signup.html` replaced with standalone cinematic pages (no longer extend `layout.html`). Shared head in `templates/landing/_head.html` (SEO/OG, structured data, cookie consent + GA/AdSense consent config, self-hosted fonts). Assets in `static/landing/` (resized imagery, 7 biome images, self-hosted Oswald/Inter/JetBrains Mono, `land.json` world topology for the three.js globe, `auth.css`).
+- Landing: loader with real image-preload progress (skippable, 0.9s for returning visitors), hero reel, pinned 3-chapter story, three.js globe, slide-in login drawer posting to `/login` (csrf + reCAPTCHA when `RECAPTCHA_SITE_KEY` set — `app_core/main/routes.py` now passes it).
+- Signup: 3 steps (identity / territory / orders) for all three flows via `way` (normal → `/register/email`, discord → `/discord_signup`, google → `/google_signup`). Field names unchanged: username, email, password, confirmation, continent (1-7 same order as before), heard_from, terms_agree, referral_code, csrf_token. Hold-to-found button submits the form.
+- Login: restyled; keeps verification_message / discord_message / flashes, Google only when `google_auth_enabled`.
+
+**What to watch**
+- The landing ticker and globe event feed are illustrative (fictional nation names), not live game data — candidate to wire to real wars/market events.
+- Pre-existing failing tests unchanged (test_login_page_flow x2, test_referrals x2 — fail identically on master without a DB).
+- three.js r128 + topojson loaded from cdnjs (already in CSP script-src).

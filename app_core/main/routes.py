@@ -15,7 +15,13 @@ def index():
     if session.get("user_id"):
         return make_response(render_template("hub.html", **_hub_context()))
 
-    resp = make_response(render_template("index.html"))
+    # The landing page's slide-in login drawer posts to /login, which verifies
+    # reCAPTCHA when RECAPTCHA_SECRET_KEY is set -- render the widget here too.
+    resp = make_response(
+        render_template(
+            "index.html", recaptcha_site_key=os.getenv("RECAPTCHA_SITE_KEY", "")
+        )
+    )
     return resp
 
 
