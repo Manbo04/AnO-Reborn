@@ -158,3 +158,54 @@ def test_css_bundle_contains_all_rules():
     assert ".war-role-badge--atk" in css
     assert ".war-role-badge--def" in css
     assert ".resourcediv" in css
+
+
+SPECTATOR_CTX = dict(
+    attacker="10",
+    attacker_name="Gondor",
+    defender="20",
+    defender_name="Mordor",
+    cId_type="spectator",
+    war_id=77,
+    war_type="Raze",
+    agressor_message="",
+    attacker_info={"morale": 90, "supplies": 1500},
+    defender_info={"morale": 35, "supplies": 400},
+)
+
+
+@pytest.mark.parametrize("template", ["war_v2.html", "war.html"])
+def test_war_spectator_is_read_only(app, template):
+    with app.test_request_context("/war/77"):
+        html = render_template(template, **SPECTATOR_CTX)
+
+    assert "Gondor" in html and "Mordor" in html
+    assert "90 / 100 Morale" in html or "90 / 100 Morale" in html.replace("\n", "")
+    assert "spectator" in html
+    assert "/warchoose/77" not in html
+    assert "/spyResult" not in html
+    assert "/send_peace_offer" not in html
+
+
+def test_wars_v2_lists_world_wars(app):
+    with app.test_request_context("/wars"):
+        html = render_template(
+            "wars_v2.html",
+            units={},
+            warsCount=0,
+            war_info={},
+            yourCountry="Rohan",
+            current_defense=[],
+            joinable_wars=[],
+            world_wars=[
+                {
+                    "id": 5,
+                    "att": {"id": 1, "name": "Gondor", "morale": 80},
+                    "def": {"id": 2, "name": "Mordor", "morale": 20},
+                }
+            ],
+        )
+
+    assert 'id="world-wars"' in html
+    assert 'href="/war/5"' in html
+    assert "Gondor" in html and "Mordor" in html
