@@ -143,6 +143,50 @@
         </div>
         {% endfor %}
 
+        <h2 class="templatecontentheaderleft" id="world-wars"><span class="material-icons-outlined">public</span> Wars Around the World</h2>
+        {% if world_wars %}
+        <div class="world-wars-list">
+            {% for w in world_wars %}
+            <a class="game-glass game-panel world-war-row" href="/war/{{ w.id }}">
+                <span class="world-war-side">
+                    <img alt="" class="world-war-flag" src="/flag/country/{{ w.att.id }}" loading="lazy" />
+                    <span class="world-war-name">{{ w.att.name }}</span>
+                    <span class="world-war-morale">{{ w.att.morale }}%</span>
+                </span>
+                <span class="world-war-vs">attacking</span>
+                <span class="world-war-side world-war-side--def">
+                    <img alt="" class="world-war-flag" src="/flag/country/{{ w.def.id }}" loading="lazy" />
+                    <span class="world-war-name">{{ w.def.name }}</span>
+                    <span class="world-war-morale">{{ w.def.morale }}%</span>
+                </span>
+                <span class="material-icons-outlined world-war-go" aria-hidden="true">visibility</span>
+            </a>
+            {% endfor %}
+        </div>
+        <style>
+            .world-wars-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+            .world-war-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; text-decoration: none; color: inherit; min-height: 44px; }
+            .world-war-row:hover { filter: brightness(1.08); }
+            .world-war-side { display: flex; align-items: center; gap: 8px; flex: 1 1 0; min-width: 0; }
+            .world-war-side--def { justify-content: flex-end; flex-direction: row-reverse; }
+            .world-war-flag { width: 32px; height: 22px; object-fit: cover; border-radius: 3px; flex: none; }
+            .world-war-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .world-war-morale { font-size: 0.8rem; opacity: 0.75; flex: none; }
+            .world-war-vs { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7; flex: none; }
+            .world-war-go { flex: none; opacity: 0.7; }
+            @media (max-width: 520px) {
+                .world-war-row { flex-wrap: wrap; }
+                .world-war-vs { order: 3; width: 100%; text-align: center; }
+                .world-war-side, .world-war-side--def { flex: 1 1 100%; }
+                .world-war-side--def { order: 4; flex-direction: row; justify-content: flex-start; }
+                .world-war-go { display: none; }
+            }
+        </style>
+        {% else %}
+        <p class="templatecontentpleft">No other wars are being fought right now.</p>
+        {% endif %}
+
+
         {#- Glass box: the grey explainer text was hard to read on its own over the
             page background (ieb, 2026-09-27). -#}
         <div class="game-glass game-panel wars-readable-panel wars-mechanics-panel">

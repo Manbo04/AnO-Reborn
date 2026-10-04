@@ -407,22 +407,39 @@ def war_with_id(war_id):
         defender_info = {"morale": defender_morale, "supplies": defender_supplies}
         attacker_info = {"morale": attacker_morale, "supplies": attacker_supplies}
 
-        if attacker == cId:
-            enemy_id = defender
-        else:
-            enemy_id = attacker
-        if cId == attacker:
-            session["enemy_id"] = defender
-        else:
-            session["enemy_id"] = attacker
         if cId == defender:
             cId_type = "defender"
         elif cId == attacker:
             cId_type = "attacker"
         else:
             cId_type = "spectator"
+
+        attacker_flag = get_flagname(attacker)
+        defender_flag = get_flagname(defender)
+        template = "war_v2.html" if is_theme_v2_enabled("wars") else "war.html"
+
+        # Anyone can watch a war; only the two sides get the attack, spy and
+        # peace controls. Spectators must not touch session["enemy_id"], which
+        # the attack flow trusts.
         if cId_type == "spectator":
-            return error(400, "You can't view this war")
+            return render_template(
+                template,
+                attacker_flag=attacker_flag,
+                defender_flag=defender_flag,
+                defender_info=defender_info,
+                defender=defender,
+                attacker_info=attacker_info,
+                attacker=attacker,
+                war_id=war_id,
+                attacker_name=attacker_name,
+                defender_name=defender_name,
+                war_type=war_type,
+                agressor_message=agressor_message,
+                cId_type=cId_type,
+            )
+
+        enemy_id = defender if cId == attacker else attacker
+        session["enemy_id"] = enemy_id
         db.execute(
             "SELECT COALESCE(um.quantity, 0) FROM unit_dictionary ud "
             "LEFT JOIN user_military um ON um.unit_id = ud.unit_id AND um.user_id = %s "
@@ -438,9 +455,6 @@ def war_with_id(war_id):
             successChance = 100
         else:
             successChance = spyCount * spyPrep / eSpyCount / eDefcon
-        attacker_flag = get_flagname(attacker)
-        defender_flag = get_flagname(defender)
-        template = "war_v2.html" if is_theme_v2_enabled("wars") else "war.html"
         return render_template(
             template,
             attacker_flag=attacker_flag,
@@ -1536,6 +1550,35 @@ def wars():
             except Exception:
                 rollback_db_cursor(db)
                 joinable_wars = []
+
+            # Every other ongoing war, so players can spectate (Silent, 2026-10-04).
+            world_wars = []
+            try:
+                db.execute(
+                    """
+                    SELECT w.id, w.attacker, ua.username, w.attacker_morale,
+                           w.defender, ud.username, w.defender_morale
+                    FROM wars w
+                    JOIN users ua ON ua.id = w.attacker
+                    JOIN users ud ON ud.id = w.defender
+                    WHERE w.peace_date IS NULL
+                      AND w.attacker != %s AND w.defender != %s
+                    ORDER BY w.id DESC
+                    LIMIT 100
+                    """,
+                    (cId, cId),
+                )
+                world_wars = [
+                    {
+                        "id": r[0],
+                        "att": {"id": r[1], "name": r[2], "morale": r[3]},
+                        "def": {"id": r[4], "name": r[5], "morale": r[6]},
+                    }
+                    for r in db.fetchall()
+                ]
+            except Exception:
+                rollback_db_cursor(db)
+                world_wars = []
         template = "wars_v2.html" if is_theme_v2_enabled("wars") else "wars.html"
         return render_template(
             template,
@@ -1545,6 +1588,7 @@ def wars():
             yourCountry=yourCountry,
             current_defense=current_defense,
             joinable_wars=joinable_wars,
+            world_wars=world_wars,
         )
 
 

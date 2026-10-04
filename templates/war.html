@@ -10,7 +10,7 @@
     <div class="templatedivcontent">
 
         <!--AGGRESSOR-->
-        {% if cId_type == "attacker" %}
+        {% if cId_type in ("attacker", "spectator") %}
         <div class="templatedivflex2 menuflex warflexparentcolors">
             <div class="templatedivflex2left">
 
@@ -101,6 +101,9 @@
         </div>
 
         {% endif %}
+        {% if cId_type == "spectator" %}
+        <p class="templatecontentheadercenter">You are watching this war as a spectator.</p>
+        {% else %}
         <div class="templatedivflex2 divflex2center">
             <!--
             <div class="templatedivflex2left">
@@ -223,6 +226,7 @@
 
         </form>
 
+        {% endif %}
     </div>
 </div>
 {% endblock %}

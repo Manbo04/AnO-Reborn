@@ -59,6 +59,17 @@
             </div>
         </div>
 
+        {% if cId_type == "spectator" %}
+        <div class="game-glass game-panel war-spectator-note" style="margin-bottom: 24px; padding: 16px 20px; display: flex; align-items: center; gap: 10px;">
+            <span class="material-icons-outlined">visibility</span>
+            <span>You're watching this war as a spectator. Only {{ attacker_name }} and {{ defender_name }} can act in it.</span>
+        </div>
+        <div class="war-action-wrap">
+            <a class="game-btn game-btn-lg" href="/wars#world-wars">
+                <span class="material-icons-outlined">arrow_back</span>All ongoing wars
+            </a>
+        </div>
+        {% else %}
         <!-- ACTION BUTTON -->
         <div class="war-action-wrap">
             <a class="game-btn game-btn-primary game-btn-lg" href="/warchoose/{{ war_id }}">
@@ -184,6 +195,8 @@
                 </div>
             </form>
         </div>
+
+        {% endif %}
 
     </div>
 </div>
