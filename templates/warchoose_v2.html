@@ -1,117 +1,181 @@
-{% extends "layout.html"%} {% block title %} Attack Choose {% endblock %}{% block body_class %} page-war game-page-v2{% endblock %} {% block body %}
+{% extends "layout.html"%} {% block title %} Attack Choose {% endblock %}{% block body_class %} page-war page-war-choose game-page-v2{% endblock %} {% block body %}
 {% from 'macros/game_ui.html' import game_hero %}
 
 <div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/war.jpg') }}');"></div>
 <div class="game-page-overlay"></div>
 
+<style>
+/* Built on game-glass + theme tokens. Replaces the old 350x350 white
+   .unitcard tiles, which read as empty boxes on the war background. */
+.page-war-choose .wc-panel { padding: 20px; margin-bottom: 18px; }
+.page-war-choose .wc-panel h2 { margin: 0 0 4px; }
+.wc-lead { margin: 0 0 16px; color: var(--text-secondary); font-size: 0.95em; line-height: 1.5; }
+.wc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+}
+.wc-card {
+    position: relative;
+    display: flex; flex-direction: column; gap: 12px;
+    padding: 16px;
+    border-radius: var(--game-radius-md);
+    background: var(--game-glass-bg-strong);
+    border: 2px solid var(--game-glass-border);
+    cursor: pointer; user-select: none;
+    transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+/* global `label {display:block !important; width:fit-content; margin:auto;
+   text-align:center}` in style.css would shrink and center these cards */
+.page-war-choose label.wc-card {
+    display: flex !important;
+    width: auto; margin: 0;
+    text-align: left; font-size: inherit; color: inherit;
+}
+.wc-card:hover { border-color: color-mix(in srgb, var(--accent) 55%, transparent); transform: translateY(-2px); }
+.wc-card:has(input:checked) {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.wc-card:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wc-card input { position: absolute; opacity: 0; pointer-events: none; }
+.wc-card-head { display: flex; align-items: center; gap: 12px; }
+.wc-icon {
+    flex: 0 0 48px; height: 48px; border-radius: 12px;
+    display: grid; place-items: center;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    color: var(--accent);
+}
+.wc-icon .material-icons-outlined { font-size: 28px; }
+.wc-thumb { flex: 0 0 56px; width: 56px !important; height: 56px !important; max-width: 56px; border-radius: 12px; object-fit: cover; }
+.wc-title { font-weight: 700; font-size: 1.1em; line-height: 1.2; }
+.wc-sub { font-size: 0.85em; color: var(--text-secondary); }
+.wc-check {
+    margin-left: auto; font-size: 26px;
+    color: var(--accent); opacity: 0; transform: scale(.6);
+    transition: opacity .2s ease, transform .2s ease;
+}
+.wc-card:has(input:checked) .wc-check { opacity: 1; transform: scale(1); }
+.wc-units { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.wc-units li {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 10px; border-radius: 8px;
+    background: color-mix(in srgb, var(--text-secondary) 8%, transparent);
+    font-size: 0.92em;
+}
+.wc-units li b { font-variant-numeric: tabular-nums; }
+.wc-units li.is-zero b { color: var(--text-secondary); font-weight: 500; }
+.wc-card.is-empty { opacity: .6; }
+.wc-empty-note { font-size: 0.82em; color: var(--danger); }
+.wc-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+.wc-status { margin: 0; font-weight: 600; color: var(--text-secondary); }
+.wc-actions form { margin: 0; }
+.wc-actions .game-btn > * { pointer-events: none; } /* submit_* uses e.target.parentElement */
+@media (max-width: 600px) {
+    .page-war-choose .wc-panel { padding: 14px; }
+    .wc-actions { flex-direction: column; align-items: stretch; }
+    .wc-actions .game-btn { width: 100%; justify-content: center; }
+}
+</style>
+
+{% macro domain_card(key, title, icon, rows) %}
+    {% set total = rows | sum(attribute=1) %}
+    <label for="domain-{{ key }}" class="wc-card domaincard{% if total == 0 %} is-empty{% endif %}">
+        <input type="radio" id="domain-{{ key }}" name="domain_radio" class="domainradio" value="{{ key }}">
+        <div class="wc-card-head">
+            <span class="wc-icon"><span class="material-icons-outlined">{{ icon }}</span></span>
+            <div>
+                <div class="wc-title">{{ title }}</div>
+                <div class="wc-sub">{{ total | commas }} units ready</div>
+            </div>
+            <span class="material-icons-outlined wc-check">check_circle</span>
+        </div>
+        <ul class="wc-units">
+            {% for name, n in rows %}
+            <li{% if n == 0 %} class="is-zero"{% endif %}><span>{{ name }}</span><b>{{ n | commas }}</b></li>
+            {% endfor %}
+        </ul>
+        {% if total == 0 %}<div class="wc-empty-note">You have no units for this attack.</div>{% endif %}
+    </label>
+{% endmacro %}
+
 <div class="templatediv">
 
-    {{ game_hero('Attack', badge_icon='gavel') }}
+    {{ game_hero('Launch an Attack', badge_text='War', badge_icon='gavel', subtitle='Pick how you strike: a conventional attack in one domain, or a single special weapon.') }}
 
     <div class="templatedivcontent">
 
-        <h2 class="templatecontentheaderleft">Choose Your Attack Type</h2>
-        <p class="templatecontentpleft landingpagecontent">
-            Choose whether this is a ground invasion, a naval attack, or an air war. Only units that belong to that domain can take part on either side — a destroyer can't defend against tanks it will never see.
-        </p>
+        <div class="game-glass game-panel wc-panel">
+            <h2 class="templatecontentheaderleft">Attack type</h2>
+            <p class="wc-lead">Only units from the chosen domain fight, on both sides. A destroyer can't defend against tanks it will never see.</p>
 
-        <div class="templatedivflex2 menuflex unitcardparent game-unit-card-grid">
-            <label for="domain-ground" class="templatedivflex2left unitcard domaincard">
+            <div class="wc-grid">
+                {{ domain_card('ground', 'Ground Invasion', 'landscape', [('Soldiers', units['soldiers']), ('Tanks', units['tanks']), ('Artillery', units['artillery'])]) }}
+                {{ domain_card('naval', 'Naval Attack', 'directions_boat', [('Destroyers', units['destroyers']), ('Cruisers', units['cruisers']), ('Submarines', units['submarines'])]) }}
+                {{ domain_card('air', 'Air War', 'flight', [('Fighter Jets', units['fighters']), ('Bombers', units['bombers']), ('Attack Helicopters', units['apaches'])]) }}
+            </div>
 
-                <ul class="bold medium">Ground Invasion</ul>
-                <span class="material-icons-outlined domainicon">landscape</span>
-                <ul class="domainunitlist">Soldiers ({{ units["soldiers"] }}) &middot; Tanks ({{ units["tanks"] }}) &middot; Artillery ({{ units["artillery"] }})</ul>
-
-                <input type="radio" id="domain-ground" name="domain_radio" class="domainradio hidden" value="ground">
-                <span class="material-icons-outlined unitcardcheck">
-                    check_circle
-                </span>
-
-            </label>
-            <label for="domain-naval" class="templatedivflex2left unitcard domaincard">
-
-                <ul class="bold medium">Naval Attack</ul>
-                <span class="material-icons-outlined domainicon">directions_boat</span>
-                <ul class="domainunitlist">Destroyers ({{ units["destroyers"] }}) &middot; Cruisers ({{ units["cruisers"] }}) &middot; Submarines ({{ units["submarines"] }})</ul>
-
-                <input type="radio" id="domain-naval" name="domain_radio" class="domainradio hidden" value="naval">
-                <span class="material-icons-outlined unitcardcheck">
-                    check_circle
-                </span>
-
-            </label>
-            <label for="domain-air" class="templatedivflex2left unitcard domaincard">
-
-                <ul class="bold medium">Air War</ul>
-                <span class="material-icons-outlined domainicon">flight</span>
-                <ul class="domainunitlist">Fighter Jets ({{ units["fighters"] }}) &middot; Bombers ({{ units["bombers"] }}) &middot; Attack Helicopters ({{ units["apaches"] }})</ul>
-
-                <input type="radio" id="domain-air" name="domain_radio" class="domainradio hidden" value="air">
-                <span class="material-icons-outlined unitcardcheck">
-                    check_circle
-                </span>
-
-            </label>
+            <div class="wc-actions">
+                <p id="chosenAmountChecked" class="wc-status">No attack type selected</p>
+                <form id="domain_next_button" action="/warchoose/{{ war_id }}" method="post">
+                    <input type="hidden" name="domain">
+                    <button class="game-btn game-btn-primary game-btn-lg" onclick="submit_domain(event)">
+                        <span>Attack</span><span class="material-icons-outlined">arrow_forward</span>
+                    </button>
+                </form>
+            </div>
         </div>
 
-        <h2 id="chosenAmountChecked" class="templatecontentheadercenter">No attack type selected</h2>
+        <div class="game-glass game-panel wc-panel">
+            <h2 class="templatecontentheaderleft">Or a special strike</h2>
+            <p class="wc-lead">Fire one special weapon instead. Ballistic missiles and nukes target one enemy unit and also damage a random province.</p>
+
+            <div class="wc-grid">
+                <label for="10" class="wc-card{% if not units['icbms'] %} is-empty{% endif %}">
+                    <input type="checkbox" id="10" class="warcheckbox2" value="icbms">
+                    <div class="wc-card-head">
+                        <img alt="" class="wc-thumb" loading="lazy" src="{{ url_for('static', filename=game_asset_path('units', 'icbms')) }}?v=2" />
+                        <div>
+                            <div class="wc-title">Ballistic Missiles</div>
+                            <div class="wc-sub">{{ units['icbms'] | commas }} in stock</div>
+                        </div>
+                        <span class="material-icons-outlined wc-check">check_circle</span>
+                    </div>
+                </label>
+                <label for="11" class="wc-card{% if not units['nukes'] %} is-empty{% endif %}">
+                    <input type="checkbox" id="11" class="warcheckbox2" value="nukes">
+                    <div class="wc-card-head">
+                        <img alt="" class="wc-thumb" loading="lazy" src="{{ url_for('static', filename=game_asset_path('units', 'nukes')) }}?v=2" />
+                        <div>
+                            <div class="wc-title">Nukes</div>
+                            <div class="wc-sub">{{ units['nukes'] | commas }} in stock</div>
+                        </div>
+                        <span class="material-icons-outlined wc-check">check_circle</span>
+                    </div>
+                </label>
+            </div>
+
+            <div class="wc-actions">
+                <p id="chosenAmountChecked2" class="wc-status">0 / 1 Unit</p>
+                <form id="next_button" action="/warchoose/{{ war_id }}" method="post">
+                    <input type="hidden" name="special_unit">
+                    <button class="game-btn game-btn-primary game-btn-lg" onclick="submit_special(event)">
+                        <span>Launch</span><span class="material-icons-outlined">arrow_forward</span>
+                    </button>
+                </form>
+            </div>
+        </div>
 
         <script>
             document.addEventListener("DOMContentLoaded", function() {
                 document.querySelectorAll("input.domainradio").forEach(function(cb) {
                     cb.addEventListener("change", function() {
                         var label = this.closest(".domaincard");
-                        var name = label ? label.querySelector(".bold.medium").textContent : "Attack type";
+                        var name = label ? label.querySelector(".wc-title").textContent : "Attack type";
                         var el = document.getElementById("chosenAmountChecked");
                         if (el) el.textContent = name + " selected";
                     });
                 });
-            });
-        </script>
-
-        <form id="domain_next_button" action="/warchoose/{{ war_id }}" method="post">
-            <input type="hidden" name="domain">
-            <button class="templatedivbutton templatecenteredbutton" onclick="submit_domain(event)">
-                        <span class="material-icons-outlined">arrow_forward</span>Next
-            </button>
-        </form>
-
-        <h2 class="templatecontentheaderleft">Or Choose 1 Special Unit</h2>
-        <p class="templatecontentpleft landingpagecontent">
-            Choose a special unit to bombard your enemy with. Ballistic Missiles and Nukes can be selected to target one enemy unit, and will damage random province in the process.
-        </p>
-
-        <div class="templatedivflex2 menuflex unitcardparent game-unit-card-grid">
-            <label for="10" class="templatedivflex2left unitcard">
-
-                <ul class="bold medium">Ballistic Missiles</ul>
-                <ul>{{ units["icbms"] }}</ul>
-                <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename=game_asset_path('units', 'icbms')) }}?v=2" />
-
-                <input type="checkbox" id="10" class="warcheckbox2 hidden" value="icbms">
-                <span class="material-icons-outlined unitcardcheck">
-                    check_circle
-                </span>
-
-            </label>
-            <label for="11" class="templatedivflex2left unitcard">
-
-                <ul class="bold medium">Nukes</ul>
-                <ul>{{ units["nukes"] }}</ul>
-                <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename=game_asset_path('units', 'nukes')) }}?v=2" />
-
-                <input type="checkbox" id="11" class="warcheckbox2 hidden" value="nukes">
-                <span class="material-icons-outlined unitcardcheck">
-                    check_circle
-                </span>
-
-            </label>
-        </div>
-
-        <h2 id="chosenAmountChecked2" class="templatecontentheadercenter">0 / 1 Unit</h2>
-
-        <script>
-            document.addEventListener("DOMContentLoaded", function() {
                 document.querySelectorAll("input.warcheckbox2").forEach(function(cb) {
                     cb.addEventListener("change", function() {
                         var checkNum = Array.from(document.querySelectorAll(".warcheckbox2")).filter(function(c) { return c.checked; }).length;
@@ -125,15 +189,6 @@
                 });
             });
         </script>
-
-
-        <form id="next_button" action="/warchoose/{{ war_id }}" method="post">
-            <input type="hidden" name="special_unit">
-
-            <button class="templatedivbutton templatecenteredbutton" onclick="submit_special(event)">
-              <span class="material-icons-outlined">arrow_forward</span>Next
-            </button>
-        </form>
     </div>
 </div>
 {% endblock %}
