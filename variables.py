@@ -52,12 +52,14 @@ POP_GROWTH_DIMINISHING_FLOOR = 0.05
 # "people the buildings can serve" with "rations in stock" (different units),
 # so e.g. 1 food bank (250k people) "fed" a 191M nation. From this moment on
 # only covered people count as fed, and past comfort every distribution
-# building serves sqrt(comfort / population) of its normal amount. Delayed
-# 48h after announcing so under-covered nations can build first.
+# building serves sqrt(comfort / population) of its normal amount.
+# ON HOLD (2026-10-05): was set for 2026-10-06 16:00 UTC, but it changes the
+# game for ~45 nations, so it goes to the weekly community vote first. If it
+# passes, set a real date here (with at least 48h notice).
 import datetime as _dt_rebalance
 
 DISTRIBUTION_FIX_START = _dt_rebalance.datetime(
-    2026, 10, 6, 16, 0, 0, tzinfo=_dt_rebalance.timezone.utc
+    2099, 1, 1, 0, 0, 0, tzinfo=_dt_rebalance.timezone.utc
 )
 
 DEFAULT_PRODUCTIVITY_PRODUCTION_MULTIPLIER = 0.009  # 9%
