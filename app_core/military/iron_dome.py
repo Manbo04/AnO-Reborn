@@ -16,6 +16,7 @@ from .repositories import (
 MAX_DOMES_PER_PROVINCE = 10
 DOME_GOLD_COST = 250_000
 DOME_RESOURCE_COSTS = {"components": 6000, "steel": 20000, "aluminium": 8000}
+DOME_UPKEEP_GASOLINE = 20  # per dome per military-maintenance tick (hourly)
 SELL_REFUND = 0.5  # fraction of gold refunded on dismantle
 
 

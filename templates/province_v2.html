@@ -77,7 +77,7 @@
         <div class="game-glass game-panel" id="ironDome" style="margin-bottom: 18px;">
             <div class="game-row" style="gap: 8px; margin-bottom: 8px;"><span class="material-icons-outlined">shield</span><strong style="font-size: 14px;">Iron Dome — {{ iron_dome.count }} / {{ iron_dome.max }}</strong></div>
             <p style="font-size: 13px; margin: 0 0 10px;">Defends this province only. Shoots down incoming drones, cruise missiles and nukes (nukes: up to 50%). No attack value.{% if iron_dome.star_wars %} <b>Star Wars Project: +25% interception.</b>{% else %} Research the <a href="/upgrades">Star Wars Project</a> for +25% interception.{% endif %}</p>
-            <p style="font-size: 12px; margin: 0 0 10px; opacity: .8;">Cost each: {{ "{:,}".format(iron_dome.gold) }} gold{% for r, a in iron_dome.resources.items() %}, {{ "{:,}".format(a) }} {{ r }}{% endfor %}. Dismantling refunds half the gold.</p>
+            <p style="font-size: 12px; margin: 0 0 10px; opacity: .8;">Cost each: {{ "{:,}".format(iron_dome.gold) }} gold{% for r, a in iron_dome.resources.items() %}, {{ "{:,}".format(a) }} {{ r }}{% endfor %}. Upkeep: 20 gasoline per dome per hour. Dismantling refunds half the gold.</p>
             <form method="POST" action="/province/{{ province['id'] }}/iron_dome" class="game-row" style="flex-wrap: wrap; gap: 8px;">
                 <input type="number" name="amount" min="1" max="{{ iron_dome.max }}" value="1" class="game-select" style="width: 90px;">
                 <button type="submit" name="way" value="buy" class="game-btn game-btn-primary game-btn-sm"{% if iron_dome.count >= iron_dome.max %} disabled{% endif %}><span class="material-icons-outlined">add</span> Build</button>

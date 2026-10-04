@@ -306,7 +306,7 @@ def resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=False):
     elif spy_type == "assassinate_spies":
         object_list = ["spies"]
     elif spy_type == "units":
-        object_list = variables.UNITS
+        object_list = variables.UNITS + ["iron_domes"]
     else:
         object_list = variables.RESOURCES
 
@@ -412,6 +412,13 @@ def resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=False):
     else:
         if uncovered_objects:
             revealed_map = get_revealed_values(db, eId, uncovered_objects, spy_type)
+            if "iron_domes" in uncovered_objects:
+                db.execute(
+                    "SELECT COALESCE(SUM(d.quantity), 0) FROM province_iron_domes d "
+                    "JOIN provinces p ON p.id = d.province_id WHERE p.userid = %s",
+                    (eId,),
+                )
+                revealed_map["iron_domes"] = int(db.fetchone()[0])
             update_revealed_spyinfo(db, operation_id, uncovered_objects, revealed_map)
             spy_entry = revealed_map
         else:

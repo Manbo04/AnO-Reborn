@@ -632,6 +632,43 @@ class Military(Nation):
             destruction_rate = random.uniform(0.3, 0.5)
             final_destruction = destruction_rate * min_destruction
 
+            # Iron Dome (migration 0104): ICBMs/nukes fired in a war attack
+            # land on one random province; that province's domes get a shot.
+            dome_province = None
+            dome_intercepted = 0
+            fired = int(attacker.selected_units.get(special_unit) or 0)
+            if special_unit in ("icbms", "nukes") and fired > 0:
+                from app_core.military.iron_dome import roll_intercepts
+
+                with get_db_connection() as connection:
+                    db = connection.cursor()
+                    db.execute(
+                        "SELECT id FROM provinces WHERE userId=%s ORDER BY random() LIMIT 1",
+                        (defender.user_id,),
+                    )
+                    row = db.fetchone()
+                    if row:
+                        dome_province = row[0]
+                        dome_intercepted = roll_intercepts(
+                            db, defender.user_id, fired, special_unit,
+                            province_id=dome_province,
+                        )
+                        if dome_intercepted:
+                            label = "ICBM(s)" if special_unit == "icbms" else "nuke(s)"
+                            db.execute(
+                                "INSERT INTO news (destination_id, message) VALUES (%s, %s), (%s, %s)",
+                                (
+                                    defender.user_id,
+                                    f"🛡️ IRON DOME: your Iron Domes shot down {dome_intercepted} of {fired} incoming {label}.",
+                                    attacker.user_id,
+                                    f"🛡️ Iron Dome shot down {dome_intercepted} of your {fired} {label}.",
+                                ),
+                            )
+                            connection.commit()
+                surviving = (fired - dome_intercepted) / fired
+                final_destruction *= surviving
+                attack_effects = (attack_effects[0] * surviving,) + tuple(attack_effects[1:])
+
 
             before_casulaties = list(dict(defender.selected_units).values())[0]
             defender.casualties(target, final_destruction)
@@ -670,7 +707,13 @@ class Military(Nation):
 
             # NOTE: put this on the warResult route and use it for both the special and regular attack
             # TODO: NEED PROPER ERROR HANDLING FOR THIS INFRA DAMAGE ex. when user doesn't have province the can't damage it (it throws error)
-            if len(province_id_fetch) > 0:
+            if dome_province is not None:
+                random_province = dome_province
+                public_works = Nation.get_public_works(random_province)
+                infra_damage_effects = Military.infrastructure_damage(
+                    attack_effects[0], public_works, random_province
+                )
+            elif len(province_id_fetch) > 0:
                 random_province = province_id_fetch[
                     random.randint(0, len(province_id_fetch) - 1)
                 ][0]

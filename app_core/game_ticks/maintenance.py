@@ -8,6 +8,12 @@ from attack_scripts import Economy
 import math
 from celery.schedules import crontab
 import variables
+
+
+def _dome_upkeep_gasoline():
+    from app_core.military.iron_dome import DOME_UPKEEP_GASOLINE
+
+    return DOME_UPKEEP_GASOLINE
 import redis
 
 logger = logging.getLogger(__name__)
@@ -577,18 +583,31 @@ def global_tick():
                 )
                 dbdict.execute(
                     """
-                    SELECT
-                        um.user_id,
-                        ud.maintenance_cost_resource_id AS resource_id,
-                        SUM((um.quantity::numeric * ud.maintenance_cost_amount))::bigint
-                            AS required_amount
-                    FROM user_military um
-                    JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
-                    WHERE um.quantity > 0
-                      AND ud.maintenance_cost_resource_id IS NOT NULL
-                      AND ud.maintenance_cost_amount > 0
-                    GROUP BY um.user_id, ud.maintenance_cost_resource_id
-                    """
+                    SELECT user_id, resource_id, SUM(amount)::bigint AS required_amount
+                    FROM (
+                        SELECT
+                            um.user_id,
+                            ud.maintenance_cost_resource_id AS resource_id,
+                            um.quantity::numeric * ud.maintenance_cost_amount AS amount
+                        FROM user_military um
+                        JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
+                        WHERE um.quantity > 0
+                          AND ud.maintenance_cost_resource_id IS NOT NULL
+                          AND ud.maintenance_cost_amount > 0
+                        UNION ALL
+                        -- Iron Dome upkeep (migration 0104): gasoline per dome.
+                        SELECT
+                            p.userid,
+                            (SELECT resource_id FROM resource_dictionary WHERE name = 'gasoline'),
+                            d.quantity::numeric * %s
+                        FROM province_iron_domes d
+                        JOIN provinces p ON p.id = d.province_id
+                        WHERE d.quantity > 0
+                    ) costs
+                    WHERE resource_id IS NOT NULL
+                    GROUP BY user_id, resource_id
+                    """,
+                    (_dome_upkeep_gasoline(),),
                 )
                 cost_rows = dbdict.fetchall()
 

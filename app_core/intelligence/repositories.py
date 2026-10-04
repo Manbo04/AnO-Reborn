@@ -151,7 +151,7 @@ def update_revealed_spyinfo(db, operation_id, uncovered_objects, revealed_map):
     input, but the whitelist check stays fused with the SQL construction
     right here (rather than split into a separate "validate" step) so the
     two can never drift apart and reopen an injection path."""
-    safe_columns = set(variables.RESOURCES + variables.UNITS)
+    safe_columns = set(variables.RESOURCES + variables.UNITS + ["iron_domes"])
     set_clauses = []
     set_values = []
     for obj in uncovered_objects:

@@ -65,6 +65,12 @@
                             <td>{{ data["destroyers"] }} Destroyers</td>
                             <td>{{ data["nukes"] }} Nukes</td>
                         </tr>
+                        <tr>
+                            <td>{{ data["sam_batteries"] }} SAM Batteries</td>
+                            <td>{{ data.get("iron_domes") if data.get("iron_domes") is not none else "?" }} Iron Domes</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
                     </table>
                 </div>
                 <p style="margin: 10px 0 0;">{{ game_button("View " ~ data["username"] ~ "'s nation", href="/country/id=" ~ data["spyee"], variant='secondary', extra_class='') }}</p>
