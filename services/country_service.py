@@ -450,6 +450,9 @@ class CountryService:
             nuke_count = 0
             icbm_count = 0
             attacker_bombers = 0
+            attacker_drones = 0
+            attacker_cruise_missiles = 0
+            at_war_with_target = False
         
             uId = session.get("user_id")
         
@@ -458,7 +461,7 @@ class CountryService:
                     db.execute(
                         "SELECT ud.name, COALESCE(SUM(um.quantity), 0) FROM user_military um "
                         "JOIN unit_dictionary ud ON um.unit_id = ud.unit_id "
-                        "WHERE um.user_id=%s AND ud.name IN ('spies', 'nukes', 'icbms', 'bombers') GROUP BY ud.name",
+                        "WHERE um.user_id=%s AND ud.name IN ('spies', 'nukes', 'icbms', 'bombers', 'kamikaze_drones', 'cruise_missiles') GROUP BY ud.name",
                         (uId,),
                     )
                     military_rows = db.fetchall()
@@ -471,8 +474,25 @@ class CountryService:
                             icbm_count = qty
                         elif unit_name == 'bombers':
                             attacker_bombers = qty
+                        elif unit_name == 'kamikaze_drones':
+                            attacker_drones = qty
+                        elif unit_name == 'cruise_missiles':
+                            attacker_cruise_missiles = qty
                 except Exception:
                     rollback_db_cursor(db)
+
+                # Drone/cruise missile strikes (wars/routes.py) require an
+                # active war with this nation; only offer the launch forms then.
+                if (attacker_drones > 0 or attacker_cruise_missiles > 0) and str(uId) != str(cId):
+                    try:
+                        db.execute(
+                            "SELECT 1 FROM wars WHERE ((attacker=%s AND defender=%s) "
+                            "OR (attacker=%s AND defender=%s)) AND peace_date IS NULL LIMIT 1",
+                            (uId, cId, cId, uId),
+                        )
+                        at_war_with_target = db.fetchone() is not None
+                    except Exception:
+                        rollback_db_cursor(db)
 
             # News page - only for own country
             news = []
@@ -769,6 +789,9 @@ class CountryService:
             "icbm_count": icbm_count,
             "active_treaties": active_treaties,
             "attacker_bombers": attacker_bombers,
+            "attacker_drones": attacker_drones,
+            "attacker_cruise_missiles": attacker_cruise_missiles,
+            "at_war_with_target": at_war_with_target,
             "target_silos": target_silos,
             "target_has_nuclear_facility": target_has_nuclear_facility,
             "colFlag": colFlag,

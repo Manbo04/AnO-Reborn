@@ -3077,6 +3077,67 @@
             </div>
         </form>
         {% endif %}
+        {% if at_war_with_target and attacker_drones > 0 %}
+        <form action="/drone_strike" method="POST">
+            <input type="hidden" name="target_id" value="{{ cId }}">
+            <h2 class="templatecontentheaderleft " style="color: #ffaa00;">Kamikaze Drone Strike</h2>
+            <div class="infodiv">
+                <div class="templatedivflex2 menuflex">
+                    <div class="templatedivflex2left">
+                        <label for="drone_strike_target">Target</label>
+                        <select class="templateselect" id="drone_strike_target" name="strike_target">
+                            <option value="silo" class="templateoption">Missile Silos</option>
+                            <option value="steel_mills" class="templateoption">Steel Mills</option>
+                            <option value="component_factories" class="templateoption">Component Factories</option>
+                            <option value="aluminium_refineries" class="templateoption">Aluminium Refineries</option>
+                            <option value="oil_refineries" class="templateoption">Oil Refineries</option>
+                        </select>
+                    </div>
+                    <div class="templatedivflex2left">
+                        <label for="drones_count">Drones (Max: {{ attacker_drones }})</label>
+                        <input class="loginsignupinput" type="number" id="drones_count" name="drones_count" min="1" max="{{ attacker_drones }}" required placeholder="e.g. 20" />
+                    </div>
+                    <div class="templatedivflex2left" style="display: flex; align-items: flex-end;">
+                        <button type="submit" class="templatedivbutton templatecenteredbutton" style="background-color: #ffaa00; color: #333;">
+                            <span class="material-icons-outlined">flight_takeoff</span> LAUNCH
+                        </button>
+                    </div>
+                </div>
+                <p style="font-size: 0.9em; margin-top: 10px; color: #888;">Drones are one-way and burn 150 gasoline each. Enemy fighters, apaches and SAM batteries can shoot some down, so launch them in swarms. Results show up in your news.</p>
+            </div>
+        </form>
+        {% endif %}
+
+        {% if at_war_with_target and attacker_cruise_missiles > 0 %}
+        <form action="/cruise_missile_strike" method="POST">
+            <input type="hidden" name="target_id" value="{{ cId }}">
+            <h2 class="templatecontentheaderleft " style="color: #ff7a00;">Cruise Missile Strike</h2>
+            <div class="infodiv">
+                <div class="templatedivflex2 menuflex">
+                    <div class="templatedivflex2left">
+                        <label for="missile_strike_target">Target</label>
+                        <select class="templateselect" id="missile_strike_target" name="strike_target">
+                            <option value="silo" class="templateoption">Missile Silos</option>
+                            <option value="steel_mills" class="templateoption">Steel Mills</option>
+                            <option value="component_factories" class="templateoption">Component Factories</option>
+                            <option value="aluminium_refineries" class="templateoption">Aluminium Refineries</option>
+                            <option value="oil_refineries" class="templateoption">Oil Refineries</option>
+                        </select>
+                    </div>
+                    <div class="templatedivflex2left">
+                        <label for="missiles_count">Missiles (Max: {{ attacker_cruise_missiles }})</label>
+                        <input class="loginsignupinput" type="number" id="missiles_count" name="missiles_count" min="1" max="{{ attacker_cruise_missiles }}" required placeholder="e.g. 3" />
+                    </div>
+                    <div class="templatedivflex2left" style="display: flex; align-items: flex-end;">
+                        <button type="submit" class="templatedivbutton templatecenteredbutton" style="background-color: #ff7a00; color: white;">
+                            <span class="material-icons-outlined">rocket_launch</span> LAUNCH
+                        </button>
+                    </div>
+                </div>
+                <p style="font-size: 0.9em; margin-top: 10px; color: #888;">Cruise missiles burn 2000 gasoline each and always hit, nothing can intercept them. Results show up in your news.</p>
+            </div>
+        </form>
+        {% endif %}
 
         <form action="/spyResult" method="POST">
             <input type="hidden" name="country" value="{{ cId }}">
