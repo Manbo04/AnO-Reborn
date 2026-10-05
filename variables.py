@@ -47,6 +47,15 @@ LAND_POP_SOFTNESS = 2083
 POP_GROWTH_RATE = 0.004
 POP_GROWTH_SEED_RATE = 0.00005
 POP_GROWTH_DIMINISHING_FLOOR = 0.05
+# Catch-up boost (2026-10-06) so new players don't lag behind: the
+# rate-on-current-population part of growth is multiplied by
+#   1 + BOOST * (1 - population / comfort) * (1 - population / CATCHUP_POP)
+# -- up to 3x for a small, mostly-empty nation, fading to 1x at comfort OR at
+# CATCHUP_POP people. The size fade matters: big city-heavy nations (e.g.
+# Armed Farmers, 190M of ~790M comfort) would otherwise get ~2.5x and undo
+# the 2026-10-04 province-spam fix. Based on size/room, not account age.
+POP_GROWTH_CATCHUP_BOOST = 2.0
+POP_GROWTH_CATCHUP_POP = 50_000_000
 
 # Fix for distribution buildings never limiting anything: the tick compared
 # "people the buildings can serve" with "rations in stock" (different units),
