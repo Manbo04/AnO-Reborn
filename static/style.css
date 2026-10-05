@@ -15148,6 +15148,439 @@ body.page-auto-orders .ao-how-body li { margin-bottom: 4px; }
 body.page-market .mb-wrap p.mb-more { text-align: center; }
 
 
+/* --- static/css/currency-exchange.css --- */
+/* ==========================================================================
+   Currency Exchange (templates/currency_market.html) — order book in the
+   same style as the Global Market (market-book.css; the page also carries
+   body.page-market so the mb-* rows, chips and Max buttons are shared).
+   Rows/chips are tinted by the viewer's relation to the currency:
+   own (gold) / held (green) / none (blue) / capped by bond default (red).
+   ========================================================================== */
+
+body.page-currency-market .tag-own { --mb-tag: var(--mb-gold); }
+body.page-currency-market .tag-none { --mb-tag: var(--mb-exchange); }
+body.page-currency-market .tag-capped { --mb-tag: var(--mb-unavailable); }
+
+body.page-currency-market .cm-faint,
+body.page-currency-market .cm-sub {
+    color: var(--game-text-faint, var(--text-secondary));
+}
+
+body.page-currency-market .cm-sub {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 400;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.page-currency-market .cm-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+body.page-currency-market .cm-capped { color: var(--mb-unavailable); font-weight: 700; }
+
+/* --- Stats strip extras ---------------------------------------------------- */
+@media (min-width: 620px) {
+    body.page-currency-market .cm-stats { grid-template-columns: repeat(auto-fit, minmax(96px, auto)); }
+}
+
+body.page-currency-market .cm-chg {
+    margin-left: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--game-text-faint, var(--text-secondary));
+}
+
+body.page-currency-market .cm-chg.is-up { color: var(--mb-held); }
+body.page-currency-market .cm-chg.is-down { color: var(--mb-unavailable); }
+
+body.page-currency-market .cm-spark {
+    display: block;
+    width: 72px;
+    height: 20px;
+    overflow: visible;
+}
+
+body.page-currency-market .cm-spark.is-big { width: 96px; height: 24px; }
+
+body.page-currency-market .cm-spark polyline {
+    fill: none;
+    stroke: var(--mb-tag, var(--accent));
+    stroke-width: 1.6;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+}
+
+/* --- Wallet: one row of coloured coins, each opens that currency's book --- */
+body.page-currency-market .cm-wallet {
+    display: flex;
+    gap: 6px;
+    padding: 8px 10px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+body.page-currency-market .cm-coin {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    max-width: 220px;
+    padding: 5px 12px 5px 8px;
+    border-radius: 10px;
+    border: 1px solid color-mix(in srgb, var(--mb-tag) 45%, transparent);
+    border-left: 3px solid var(--mb-tag);
+    background: color-mix(in srgb, var(--mb-tag) 12%, var(--game-glass-bg-strong));
+    color: var(--colorOne);
+    text-decoration: none;
+    line-height: 1.15;
+}
+
+body.page-currency-market .cm-coin:hover,
+body.page-currency-market .cm-coin.is-active {
+    background: color-mix(in srgb, var(--mb-tag) 26%, var(--game-glass-bg-strong));
+}
+
+body.page-currency-market .cm-coin .material-icons-outlined { color: var(--mb-tag); font-size: 1.25rem; }
+body.page-currency-market .cm-coin > span:last-child { display: flex; flex-direction: column; min-width: 0; }
+
+body.page-currency-market .cm-coin small {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--game-text-faint, var(--text-secondary));
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.page-currency-market .cm-coin b { font-variant-numeric: tabular-nums; }
+
+/* --- Board + post form: stacked on phones, side by side on wide screens -- */
+body.page-currency-market .cm-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+}
+
+@media (min-width: 1000px) {
+    body.page-currency-market .cm-split { grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr); }
+}
+
+body.page-currency-market .cm-board,
+body.page-currency-market .cm-post,
+body.page-currency-market .cm-mine { padding: 0; overflow: hidden; }
+
+body.page-currency-market .cm-board-scroll {
+    max-height: 360px;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+body.page-currency-market .cm-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.86rem;
+}
+
+body.page-currency-market .cm-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 6px 8px;
+    text-align: left;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--game-text-faint, var(--text-secondary));
+    background: var(--game-glass-bg-strong, rgba(20, 24, 32, 0.92));
+    border-bottom: 1px solid var(--game-glass-border);
+}
+
+body.page-currency-market .cm-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--game-glass-border);
+    vertical-align: middle;
+}
+
+body.page-currency-market .cm-table tbody tr {
+    background: color-mix(in srgb, var(--mb-tag) 8%, transparent);
+}
+
+body.page-currency-market .cm-table tbody tr td:first-child { border-left: 3px solid var(--mb-tag); max-width: 180px; }
+body.page-currency-market .cm-table tbody tr:hover,
+body.page-currency-market .cm-table tbody tr.is-active { background: color-mix(in srgb, var(--mb-tag) 20%, transparent); }
+
+body.page-currency-market .cm-cur-name {
+    display: block;
+    font-weight: 700;
+    color: var(--accent);
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* the whole row is clickable through the name link */
+body.page-currency-market .cm-table tbody tr { position: relative; }
+body.page-currency-market .cm-cur-name::after { content: ""; position: absolute; inset: 0; }
+
+body.page-currency-market .cm-ask { color: var(--mb-held); font-weight: 700; }
+body.page-currency-market .cm-bid { color: var(--mb-unavailable); font-weight: 700; }
+
+@media (max-width: 560px) {
+    body.page-currency-market .cm-hide-sm { display: none; }
+    body.page-currency-market .cm-table { font-size: 0.8rem; }
+    body.page-currency-market .cm-table td,
+    body.page-currency-market .cm-table th { padding: 5px 6px; }
+}
+
+/* --- Post form ------------------------------------------------------------ */
+body.page-currency-market .cm-post-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 12px 12px;
+    margin: 0;
+}
+
+body.page-currency-market .cm-seg {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border: 1px solid var(--game-glass-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+body.page-currency-market .cm-seg label { margin: 0; cursor: pointer; }
+body.page-currency-market .cm-seg input { position: absolute; opacity: 0; pointer-events: none; }
+
+body.page-currency-market .cm-seg label > span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 40px;
+    padding: 0 10px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--game-text-faint, var(--text-secondary));
+}
+
+body.page-currency-market .cm-seg input:checked + .cm-seg-buy { background: var(--mb-held); color: #fff; }
+body.page-currency-market .cm-seg input:checked + .cm-seg-sell { background: var(--mb-unavailable); color: #fff; }
+body.page-currency-market .cm-seg input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: -4px; }
+
+body.page-currency-market .cm-post-form .mb-field .game-select,
+body.page-currency-market .cm-post-form .game-purchase-input {
+    width: 100%;
+    min-width: 0;
+    min-height: 40px;
+    font-size: 16px;
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+body.page-currency-market .cm-post-nums {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+body.page-currency-market .cm-input-row { display: flex; gap: 6px; align-items: center; }
+body.page-currency-market .cm-input-row .game-purchase-input { flex: 1 1 auto; }
+
+body.page-currency-market .cm-quick { display: flex; flex-wrap: wrap; gap: 6px; }
+
+body.page-currency-market .cm-quick-btn {
+    display: inline-flex;
+    gap: 4px;
+    align-items: baseline;
+    min-height: 32px;
+    padding: 4px 10px;
+    border: 1px solid var(--game-glass-border);
+    border-radius: 999px;
+    background: var(--game-glass-bg-strong);
+    color: var(--colorOne);
+    font-size: 0.78rem;
+    cursor: pointer;
+}
+
+body.page-currency-market .cm-quick-btn b { color: var(--accent); font-variant-numeric: tabular-nums; }
+body.page-currency-market .cm-quick-btn:hover:not(:disabled) { border-color: var(--accent); }
+body.page-currency-market .cm-quick-btn:disabled { opacity: 0.45; cursor: default; }
+
+body.page-currency-market .cm-preview {
+    margin: 0;
+    padding: 8px 12px;
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    font-size: 0.86rem;
+    line-height: 1.4;
+}
+
+body.page-currency-market .cm-preview.is-ok { border-left-color: var(--mb-held); background: color-mix(in srgb, var(--mb-held) 12%, transparent); }
+body.page-currency-market .cm-preview.is-bad { border-left-color: var(--mb-unavailable); background: color-mix(in srgb, var(--mb-unavailable) 14%, transparent); }
+
+body.page-currency-market .cm-post-form.is-sell #cm-post-submit { background: var(--mb-unavailable); border-color: var(--mb-unavailable); }
+
+/* --- Book row extras ---------------------------------------------------- */
+body.page-currency-market .cm-cur {
+    font-size: 0.75rem;
+    color: var(--game-text-faint, var(--text-secondary));
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.page-currency-market .cm-cur:hover { color: var(--accent); }
+
+body.page-currency-market .cm-chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+
+body.page-currency-market .cm-mint {
+    font-size: 0.66rem;
+    font-weight: 700;
+    color: var(--game-text-faint, var(--text-secondary));
+}
+
+body.page-currency-market .cm-mint.is-under { color: var(--mb-held); }
+body.page-currency-market .cm-mint.is-over { color: var(--mb-gold); }
+
+body.page-currency-market .cm-live {
+    flex: 1 0 100%;
+    font-size: 0.75rem;
+    color: var(--game-text-faint, var(--text-secondary));
+    font-variant-numeric: tabular-nums;
+}
+
+body.page-currency-market .cm-live:empty { display: none; }
+body.page-currency-market .cm-live.is-short { color: var(--mb-unavailable); font-weight: 700; }
+body.page-currency-market .mb-trade.cm-trade { flex-wrap: wrap; }
+
+body.page-currency-market .cm-blocked {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--mb-unavailable);
+}
+
+body.page-currency-market .mb-row.is-blocked { opacity: 0.75; }
+
+/* Wide rows: controls stay on one line; the live total hangs under them. */
+@container (min-width: 480px) {
+    body.page-currency-market .mb-trade.cm-trade { flex-wrap: nowrap; position: relative; }
+    body.page-currency-market .cm-live {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        white-space: nowrap;
+        font-size: 0.7rem;
+    }
+    body.page-currency-market .cm-blocked { grid-column: auto; max-width: 150px; font-size: 0.72rem; line-height: 1.25; }
+}
+
+/* --- Your offers ---------------------------------------------------------- */
+body.page-currency-market .cm-mine-row {
+    --mb-tag: var(--mb-held);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 12px;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--game-glass-border);
+    border-left: 3px solid var(--mb-tag);
+    background: color-mix(in srgb, var(--mb-tag) 8%, transparent);
+    font-size: 0.88rem;
+}
+
+body.page-currency-market .cm-mine-row.is-sell { --mb-tag: var(--mb-unavailable); }
+body.page-currency-market .cm-mine-row:last-child { border-bottom: 0; }
+
+body.page-currency-market .cm-side-badge {
+    padding: 0 6px;
+    border-radius: 4px;
+    font-size: 0.66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: color-mix(in srgb, var(--mb-tag) 75%, var(--colorOne));
+    background: color-mix(in srgb, var(--mb-tag) 18%, transparent);
+}
+
+body.page-currency-market .cm-mine-what a { color: var(--accent); text-decoration: none; }
+body.page-currency-market .cm-cancel { margin: 0 0 0 auto; }
+
+/* game-experience.css (max-width: 768px) stretches every form, input and
+   button on page-market to full width; the exchange's own controls opt out
+   the same way the order book does. */
+@media (max-width: 768px) {
+    body.page-currency-market .cm-post-form { width: auto; }
+    body.page-currency-market .cm-seg input { width: 18px; min-width: 0; min-height: 0; }
+    body.page-currency-market .cm-quick-btn,
+    body.page-currency-market .cm-input-row button,
+    body.page-currency-market .cm-cancel button,
+    body.page-currency-market .cm-trade button {
+        width: auto;
+        margin-top: 0;
+    }
+    body.page-currency-market .cm-quick-btn { min-height: 36px; min-width: 0; }
+    body.page-currency-market form.cm-cancel { width: auto; flex-direction: row; }
+    body.page-currency-market #cm-post-submit { margin-top: 0; }
+}
+
+@media (min-width: 769px) and (pointer: fine) {
+    body.page-currency-market .cm-post-form .mb-field .game-select,
+    body.page-currency-market .cm-post-form .game-purchase-input { min-height: 34px; font-size: 14px; }
+    body.page-currency-market .cm-seg label > span { min-height: 34px; }
+}
+
+body.page-currency-market .mb-wrap .cm-table th,
+body.page-currency-market .mb-wrap .cm-table td { text-align: left; }
+
+/* Legacy input/button/paragraph rules add margins and tall line-heights
+   inside the exchange's own panels; reset them. */
+body.page-currency-market .mb-side-head p { line-height: 1.3; }
+body.page-currency-market .cm-quick-btn,
+body.page-currency-market .cm-post-form input,
+body.page-currency-market .cm-post-form select,
+body.page-currency-market .cm-post-form button { margin: 0; }
+body.page-currency-market .cm-post-form .mb-field .game-select { max-width: none; }
+
+body.page-currency-market .cm-how { padding: 0; }
+body.page-currency-market .cm-how summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--accent);
+    list-style: none;
+}
+body.page-currency-market .cm-how summary::-webkit-details-marker { display: none; }
+body.page-currency-market .cm-how .mb-note { margin-top: 6px; }
+
+@media (max-width: 560px) {
+    body.page-currency-market .cm-table td:first-child { max-width: 128px; }
+    body.page-currency-market .cm-table .cm-chg { display: block; margin-left: 0; }
+}
+
+/* Keep input + Max + Buy on one line at every width (market-book's phone
+   rule gives the input wrapper flex-basis:auto at 100%, pushing Buy down). */
+body.page-currency-market .mb-trade.cm-trade .market-input-wrap { flex: 1 1 0; min-width: 0; }
+body.page-currency-market .cm-blocked { line-height: 1.3; }
+
+@container (min-width: 480px) {
+    body.page-currency-market .mb-trade.cm-trade .market-input-wrap { flex: 0 0 auto; }
+    body.page-currency-market .mb-trade.cm-trade .market-purchase-input { width: 88px; }
+}
+
+
 /* --- static/css/game-military.css --- */
 /*
  * Military page (templates/military_v2.html). Bundled into static/style.css
@@ -16130,56 +16563,6 @@ body.page-statistics .templatecontentheaderleft {
     body.page-statistics .stat-grid {
         grid-template-columns: repeat(4, 1fr);
         gap: 8px 10px;
-    }
-}
-
-/* --- Currency Market --- */
-body.page-currency-market .game-panel {
-    margin-bottom: 10px !important; /* overrides inline margin-bottom: 18px */
-    padding: 12px 14px;
-}
-body.page-currency-market .stat-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 6px 8px;
-    margin: 6px 0;
-    width: 100%;
-}
-body.page-currency-market .stat-card {
-    padding: 8px 10px;
-    margin: 0 !important; /* overrides legacy .templatedivflex2left auto margins */
-    min-width: 0;
-}
-body.page-currency-market .cm-grid {
-    gap: 8px;
-}
-body.page-currency-market .cm-card {
-    padding: 10px 12px;
-}
-body.page-currency-market .cm-row {
-    gap: 6px;
-}
-body.page-currency-market .cm-row input,
-body.page-currency-market .cm-row select {
-    min-height: 40px;
-}
-body.page-currency-market .cm-row .game-btn {
-    min-height: 40px;
-}
-@media (min-width: 900px) {
-    body.page-currency-market .templatedivcontent {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        align-items: start;
-    }
-    body.page-currency-market .templatedivcontent > div:first-child,
-    body.page-currency-market .templatedivcontent > div:nth-child(4),
-    body.page-currency-market .templatedivcontent > div:nth-child(5) {
-        grid-column: 1 / -1;
-    }
-    body.page-currency-market .stat-grid {
-        grid-template-columns: repeat(2, 1fr);
     }
 }
 

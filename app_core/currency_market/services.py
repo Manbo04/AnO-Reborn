@@ -210,47 +210,167 @@ def accept_offer(db, user_id, offer_id, amount_raw):
     return True, f"Trade done: {units:,} units for {gold:,} gold.", "success"
 
 
-def get_page_data(db, user_id, issuer_filter=None):
+PER_SIDE_CHOICES = (25, 50, 100)
+
+
+def _tag(issuer_id, user_id, held, cap):
+    """How the viewer relates to a currency; drives the row colour + chip.
+    own: they issued it (and can redeem it for gold), held: they hold some,
+    none: they hold none, capped: issuer is in bond default."""
+    if cap is not None:
+        return "capped"
+    if issuer_id == user_id:
+        return "own"
+    if held > 0:
+        return "held"
+    return "none"
+
+
+TAG_TEXT = {
+    "own": ("Yours", "Your own currency: you can redeem it for gold at the Central Bank"),
+    "held": ("Held", "You hold some of this currency"),
+    "none": ("New", "You don't hold any of this currency yet"),
+    "capped": ("Default", "The issuer is in bond default, so this currency's price is capped"),
+}
+
+
+def _spark(history, width=96, height=24):
+    """SVG polyline points for the recent prices, oldest -> newest."""
+    prices = [float(h[0]) for h in reversed(history)]
+    if len(prices) < 2:
+        return None
+    lo, hi = min(prices), max(prices)
+    span = (hi - lo) or 1.0
+    step = width / (len(prices) - 1)
+    return " ".join(
+        f"{i * step:.1f},{height - 2 - (p - lo) / span * (height - 4):.1f}"
+        for i, p in enumerate(prices)
+    )
+
+
+def get_page_data(db, user_id, issuer_filter=None, per_side=25):
     from app_core.currency.repositories import (
         currency_label,
     )
     from app_core.currency.services import get_currency_status
 
-    offers = repo.list_offers(db, issuer_filter)
-    history = repo.get_price_summary(db)
+    if per_side not in PER_SIDE_CHOICES:
+        per_side = PER_SIDE_CHOICES[0]
+
+    offers = repo.list_offers(db, None, limit=1000)
+    history = repo.get_price_summary(db, limit_per_issuer=20)
     known = repo.list_known_currencies(db, user_id)
-    owed = repo.get_default_owed_many(db, [k[0] for k in known])
+    owed = repo.get_default_owed_many(db, [k[0] for k in known] + [o["issuer_id"] for o in offers])
     status = get_currency_status(db, user_id)
-    held = {h["issuer_id"]: h["amount"] for h in status["foreign_holdings"]}
-    held[user_id] = status["currency_balance"]
+    held = {h["issuer_id"]: Decimal(str(h["amount"])) for h in status["foreign_holdings"]}
+    held[user_id] = Decimal(str(status["currency_balance"] or 0))
+    gold = Decimal(int(status["gold"] or 0))
+    rate = Decimal(str(status["rate"]))
+
+    caps = {}
+    for iid in {k[0] for k in known} | {o["issuer_id"] for o in offers}:
+        caps[iid] = cap_for_owed(owed.get(iid, 0))
+
+    # Best prices per currency, from everyone's offers but the viewer's.
+    best_ask, best_bid, ask_count, bid_count = {}, {}, {}, {}
+    for o in offers:
+        if o["user_id"] == user_id:
+            continue
+        iid, price = o["issuer_id"], Decimal(o["price_gold"])
+        if o["type"] == "sell":
+            ask_count[iid] = ask_count.get(iid, 0) + 1
+            if iid not in best_ask or price < best_ask[iid]:
+                best_ask[iid] = price
+        else:
+            bid_count[iid] = bid_count.get(iid, 0) + 1
+            if iid not in best_bid or price > best_bid[iid]:
+                best_bid[iid] = price
 
     currencies = []
-    caps = {}
     for issuer_id, username, currency_name in known:
         trades = history.get(issuer_id, [])
-        cap = cap_for_owed(owed.get(issuer_id, 0))
-        caps[issuer_id] = cap
+        cap = caps.get(issuer_id)
+        h = held.get(issuer_id, Decimal(0))
+        last = Decimal(trades[0][0]) if trades else None
+        prev = Decimal(trades[1][0]) if len(trades) > 1 else None
+        change = None
+        if last is not None and prev:
+            change = float((last - prev) / prev * 100)
+        tag = _tag(issuer_id, user_id, h, cap)
         currencies.append({
             "issuer_id": issuer_id,
             "issuer_name": username,
             "label": currency_label(currency_name, username),
-            "last_price": trades[0][0] if trades else None,
+            "last_price": last,
+            "change": change,
             "history": trades,
+            "spark": _spark(trades),
             "cap": cap,
-            "held": held.get(issuer_id, 0),
+            "held": h,
             "own": issuer_id == user_id,
+            "best_ask": best_ask.get(issuer_id),
+            "best_bid": best_bid.get(issuer_id),
+            "asks": ask_count.get(issuer_id, 0),
+            "bids": bid_count.get(issuer_id, 0),
+            "tag": tag,
+            "tag_short": TAG_TEXT[tag][0],
+            "tag_label": TAG_TEXT[tag][1],
         })
+    # Busiest currencies first: open offers, then recent trading, then name.
+    currencies.sort(key=lambda c: (-(c["asks"] + c["bids"]), -len(c["history"]), c["label"].lower()))
+
+    asks, bids = [], []
     for o in offers:
         o["label"] = currency_label(o["currency_name"], o["issuer_name"])
-        cap = caps.get(o["issuer_id"])
-        o["cap_blocked"] = cap is not None and o["price_gold"] > cap
+        if o["user_id"] == user_id:
+            continue
+        if issuer_filter and o["issuer_id"] != issuer_filter:
+            continue
+        iid = o["issuer_id"]
+        price = Decimal(o["price_gold"])
+        amount = Decimal(o["amount"])
+        cap = caps.get(iid)
+        h = held.get(iid, Decimal(0))
+        o["cap_blocked"] = cap is not None and price > cap
+        o["tag"] = _tag(iid, user_id, h, cap)
+        o["tag_short"], o["tag_label"] = TAG_TEXT[o["tag"]]
+        o["total_gold"] = gold_for(amount, price)
+        o["vs_mint"] = float((price - rate) / rate * 100) if rate else None
+        if o["type"] == "sell":
+            affordable = (gold / price).quantize(CENT, rounding=ROUND_DOWN) if price > 0 else Decimal(0)
+            o["max_take"] = min(amount, affordable)
+            asks.append(o)
+        else:
+            o["max_take"] = min(amount, h)
+            bids.append(o)
+    asks.sort(key=lambda o: (Decimal(o["price_gold"]), o["offer_id"]))
+    bids.sort(key=lambda o: (-Decimal(o["price_gold"]), o["offer_id"]))
+
+    selected = None
+    if issuer_filter:
+        selected = next((c for c in currencies if c["issuer_id"] == issuer_filter), None)
+    spread = None
+    if selected and selected["best_ask"] is not None and selected["best_bid"] is not None:
+        spread = selected["best_ask"] - selected["best_bid"]
+
     my_offers = repo.list_user_offers(db, user_id)
     for o in my_offers:
         o["label"] = currency_label(o["currency_name"], o["issuer_name"])
+        o["total_gold"] = gold_for(o["amount"], o["price_gold"])
+        cap = caps.get(o["issuer_id"])
+        o["cap_blocked"] = cap is not None and Decimal(o["price_gold"]) > cap
+
     return {
-        "offers": [o for o in offers if o["user_id"] != user_id],
+        "asks": asks[:per_side],
+        "bids": bids[:per_side],
+        "asks_total": len(asks),
+        "bids_total": len(bids),
+        "per_side": per_side,
+        "per_side_choices": PER_SIDE_CHOICES,
         "my_offers": my_offers,
         "currencies": currencies,
+        "selected": selected,
+        "spread": spread,
         "currency_status": status,
         "issuer_filter": issuer_filter,
     }

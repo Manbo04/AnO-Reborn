@@ -1,157 +1,360 @@
-{% extends "layout.html" %} {% block title %} Currency Market {% endblock %}{% block body_class %} page-currency-market game-page-v2{% endblock %} {% block body %}
+{% extends "layout.html" %} {% block title %} Currency Exchange {% endblock %}{% block body_class %} page-market page-currency-market game-page-v2{% endblock %} {% block body %}
 {% from 'macros/game_ui.html' import game_hero %}
 
-<style>
-    .page-currency-market .cm-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
-    @media (min-width: 700px) { .page-currency-market .cm-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); } }
-    .page-currency-market .cm-card { padding: 14px; }
-    .page-currency-market .cm-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-    .page-currency-market .cm-row input, .page-currency-market .cm-row select { flex: 1 1 120px; min-width: 0; min-height: 44px; }
-    .page-currency-market .cm-row .game-btn { min-height: 44px; }
-    .page-currency-market .cm-hist { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; font-size: 13px; }
-    .page-currency-market .cm-hist span { padding: 2px 8px; border-radius: var(--game-radius-sm, 8px); background: var(--foregroundTwo); border: 1px solid var(--border); }
-    .page-currency-market .cm-muted { color: var(--text-secondary); font-size: 13px; }
-</style>
+{% macro gp(p) %}{{ '{:,.2f}'.format(p) }}{% endmacro %}
+{% macro qs(issuer=None) %}/currency_market?{% if issuer %}currency={{ issuer }}&amp;{% endif %}per_side={{ per_side }}{% endmacro %}
+
+{% macro book_row(o, side) %}
+<div class="mb-row tag-{{ o.tag }}{% if o.cap_blocked %} is-blocked{% endif %}" title="{{ o.tag_label }}">
+    <div class="mb-nation">
+        <a href="/country/id={{ o.user_id }}" title="{{ o.username }}">{{ o.username }}</a>
+        {% if not issuer_filter %}<a class="cm-cur" href="{{ qs(o.issuer_id) }}" title="Show only {{ o.label }}">{{ o.label }}</a>{% endif %}
+    </div>
+    <div class="mb-amount"><span class="mb-cell-label">Units</span>{{ o.amount | fmt }}<span class="cm-sub">{{ o.total_gold | fmt }} gold total</span></div>
+    <div class="mb-price">
+        <span class="mb-cell-label">Gold / unit</span>
+        <span class="mb-gold">{{ gp(o.price_gold) }}<small> gold</small></span>
+        <span class="cm-chips"><span class="mb-tag">{{ o.tag_short }}</span>{% if o.vs_mint is not none %}<span class="cm-mint {{ 'is-under' if o.vs_mint < 0 else 'is-over' if o.vs_mint > 0 else '' }}" title="Compared with the {{ currency_status.rate }} gold it costs the issuer to mint one unit">{{ '%+.0f' | format(o.vs_mint) }}% vs mint</span>{% endif %}</span>
+    </div>
+    {% if o.cap_blocked %}
+    <p class="cm-blocked" title="Priced above this currency's default cap, so it can't be filled until the owner reprices it.">Above the default cap — can't be filled until repriced</p>
+    {% else %}
+    <form action="/currency_market/accept/{{ o.offer_id }}" method="POST" class="mb-trade cm-trade market-purchase-form" data-price="{{ o.price_gold }}" data-side="{{ side }}">
+        <input type="hidden" name="back_issuer" value="{{ issuer_filter or '' }}">
+        <span class="market-input-wrap">
+            <input class="game-purchase-input market-purchase-input cm-units" autocomplete="off" inputmode="decimal" name="amount" type="text" placeholder="Units" aria-label="Units to {{ 'buy' if side == 'ask' else 'sell' }}" required/>
+        </span>
+        <button type="button" class="market-max-btn cm-max" data-max="{{ o.max_take }}"{% if o.max_take <= 0 %} disabled title="{{ 'Not enough gold' if side == 'ask' else 'You hold none of this currency' }}"{% endif %} aria-label="Fill in the most you can {{ 'buy' if side == 'ask' else 'sell' }}">Max</button>
+        <button type="submit" class="game-btn game-btn-primary game-btn-sm">{{ 'Buy' if side == 'ask' else 'Sell' }}</button>
+        <span class="cm-live" aria-live="polite"></span>
+    </form>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% set clabel = selected.label if selected else 'currencies' %}
 
 <div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/market.jpg') }}');"></div>
 <div class="game-page-overlay"></div>
 
 <div class="templatediv">
 
-    {% call game_hero('Currency Market', badge_icon='currency_exchange', subtitle='Buy and sell other nations\' currencies for gold.') %}
-        <a class="game-btn game-btn-secondary" href="/country/id={{ cId }}"><span class="material-icons-outlined">account_balance</span> Central Bank</a>
+    {% call game_hero('Currency Exchange', badge_icon='currency_exchange', subtitle='Buy other nations\' currencies from the cheapest sellers on the left, sell to the highest bidders on the right.') %}
+    <div class="game-row mb-hero-actions">
+        <a class="game-btn game-btn-secondary game-btn-sm" href="/market"><span class="material-icons-outlined">storefront</span>Global Market</a>
+        <a class="game-btn game-btn-secondary game-btn-sm" href="/country/id={{ cId }}"><span class="material-icons-outlined">account_balance</span>Central Bank</a>
+        <a class="game-btn game-btn-secondary game-btn-sm" href="/currency_unions"><span class="material-icons-outlined">handshake</span>Currency Unions</a>
+        <a class="game-btn game-btn-primary game-btn-sm" href="#cm-post"><span class="material-icons-outlined">add</span>Post Offer</a>
+    </div>
     {% endcall %}
 
-    <div class="templatedivcontent">
+    <div class="templatedivcontent mb-wrap">
 
-        <div class="game-glass game-panel" style="margin-bottom: 18px;">
-            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">help_outline</span> How it works</h2>
-            <ul class="templatecontentpleft" style="margin: 6px 0 0 18px; line-height: 1.6; text-align: left;">
-                <li>Every nation can mint its own currency at the Central Bank ({{ currency_status.rate }} gold = 1). <strong>Only the nation that issued a currency can turn it back into gold</strong> at that rate. Everyone else can trade it here or spend it on resource offers priced in it.</li>
-                <li>Posting an offer locks what you're offering right away: gold for a buy offer, the currency for a sell offer. Cancelling gives back whatever is left.</li>
-                <li>If a nation is behind on a defaulted bond, its currency can't trade above a price cap (4 gold per unit or lower, depending on how much it owes) until that debt is paid off.</li>
-            </ul>
-        </div>
-
-        <div class="game-glass game-panel" style="margin-bottom: 18px;">
-            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">account_balance_wallet</span> Your wallet</h2>
-            <div class="stat-grid">
-                <div class="templatedivflex2left stat-card">
-                    <strong class="stat-label"><span class="material-icons-outlined">payments</span>Gold</strong>
-                    <span class="stat-value">${{ currency_status.gold | fmt }}</span>
-                </div>
-                <div class="templatedivflex2left stat-card">
-                    <strong class="stat-label"><span class="material-icons-outlined">savings</span>Your own currency</strong>
-                    <span class="stat-value">{{ currency_status.currency_balance | fmt }}</span>
-                </div>
-                {% for h in currency_status.foreign_holdings %}
-                <div class="templatedivflex2left stat-card">
-                    <strong class="stat-label"><span class="material-icons-outlined">language</span>{{ h.currency_name }}</strong>
-                    <span class="stat-value">{{ h.amount | fmt }}</span>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <div class="game-glass game-panel" style="margin-bottom: 18px;">
-            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">add</span> Post an offer</h2>
-            {% if currencies %}
-            <form action="/currency_market/offer" method="POST">
-                <input type="hidden" name="back_issuer" value="{{ issuer_filter or '' }}">
-                <div class="cm-row">
-                    <select name="issuer_id" class="game-select" required aria-label="Currency">
+        <section class="game-glass mb-toolbar" aria-label="Choose a currency">
+            <form action="/currency_market" method="GET" class="mb-pick">
+                <label class="mb-field">
+                    <span>Currency</span>
+                    <select name="currency" class="game-select" onchange="this.form.submit()">
+                        <option value="" {% if not issuer_filter %}selected{% endif %}>All currencies</option>
                         {% for c in currencies %}
-                        <option value="{{ c.issuer_id }}" {% if issuer_filter == c.issuer_id %}selected{% endif %}>{{ c.label }} ({{ c.issuer_name }}){% if c.held %} · you hold {{ c.held | fmt }}{% endif %}{% if c.cap is not none %} · cap {{ c.cap }}{% endif %}</option>
+                        <option value="{{ c.issuer_id }}" {% if issuer_filter == c.issuer_id %}selected{% endif %}>{{ c.label }}{% if c.asks or c.bids %} · {{ c.asks + c.bids }} open{% endif %}</option>
                         {% endfor %}
                     </select>
-                </div>
-                <div class="cm-row" style="margin-top: 8px;">
-                    <input class="loginsignupinput" name="amount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Units" required>
-                    <input class="loginsignupinput" name="price" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Gold per unit" required>
-                </div>
-                <div class="cm-row" style="margin-top: 8px;">
-                    <button type="submit" name="type" value="buy" class="game-btn game-btn-primary"><span class="material-icons-outlined">shopping_cart</span>Buy offer</button>
-                    <button type="submit" name="type" value="sell" class="game-btn game-btn-secondary"><span class="material-icons-outlined">sell</span>Sell offer</button>
-                </div>
+                </label>
+                <label class="mb-field">
+                    <span>Show</span>
+                    <select name="per_side" class="game-select" onchange="this.form.submit()">
+                        {% for n in per_side_choices %}
+                        <option value="{{ n }}" {% if per_side == n %}selected{% endif %}>{{ n }} per side</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <noscript><button type="submit" class="game-btn game-btn-primary game-btn-sm">Show</button></noscript>
             </form>
-            {% else %}
-            <p class="cm-muted">No currencies exist yet. Mint some of your own at the Central Bank to get started.</p>
+            {% if selected %}
+            <dl class="mb-stats cm-stats">
+                <div><dt>Cheapest seller</dt><dd>{{ (gp(selected.best_ask) ~ ' gold') if selected.best_ask is not none else '—' }}</dd></div>
+                <div><dt>Highest buyer</dt><dd>{{ (gp(selected.best_bid) ~ ' gold') if selected.best_bid is not none else '—' }}</dd></div>
+                <div title="Cheapest seller minus highest buyer. The smaller the gap, the easier it is to trade.">
+                    <dt>Gap</dt>
+                    <dd>{% if spread is not none %}{% if spread <= 0 %}<span class="mb-cross">Prices overlap</span>{% else %}{{ gp(spread) }} gold{% endif %}{% else %}—{% endif %}</dd>
+                </div>
+                <div><dt>Last trade</dt><dd>{% if selected.last_price is not none %}{{ gp(selected.last_price) }} gold{% if selected.change is not none %} <span class="cm-chg {{ 'is-up' if selected.change > 0 else 'is-down' if selected.change < 0 else '' }}">{{ '%+.1f' | format(selected.change) }}%</span>{% endif %}{% else %}—{% endif %}</dd></div>
+                <div><dt>You hold</dt><dd>{{ selected.held | fmt }}</dd></div>
+                {% if selected.cap is not none %}<div><dt>Default cap</dt><dd class="cm-capped">{{ gp(selected.cap) }} gold</dd></div>{% endif %}
+                {% if selected.spark %}<div class="cm-spark-cell" title="Last {{ selected.history | length }} trades"><dt>Trend</dt><dd><svg class="cm-spark is-big" viewBox="0 0 96 24" preserveAspectRatio="none" aria-hidden="true"><polyline points="{{ selected.spark }}"/></svg></dd></div>{% endif %}
+            </dl>
             {% endif %}
+        </section>
+
+        <section class="game-glass cm-wallet" aria-label="Your wallet">
+            <a class="cm-coin tag-gold" href="/country/id={{ cId }}" title="Gold">
+                <span class="material-icons-outlined" aria-hidden="true">payments</span>
+                <span><small>Gold</small><b>${{ currency_status.gold | fmt }}</b></span>
+            </a>
+            <a class="cm-coin tag-own{% if issuer_filter == cId %} is-active{% endif %}" href="{{ qs(cId) }}" title="Your own currency — redeem it for gold at the Central Bank ({{ currency_status.rate }} gold each)">
+                <span class="material-icons-outlined" aria-hidden="true">savings</span>
+                <span><small>Your currency</small><b>{{ currency_status.currency_balance | fmt }}</b></span>
+            </a>
+            {% for h in currency_status.foreign_holdings %}
+            <a class="cm-coin tag-held{% if issuer_filter == h.issuer_id %} is-active{% endif %}" href="{{ qs(h.issuer_id) }}" title="Show the {{ h.currency_name }} book">
+                <span class="material-icons-outlined" aria-hidden="true">language</span>
+                <span><small>{{ h.currency_name }}</small><b>{{ h.amount | fmt }}</b></span>
+            </a>
+            {% endfor %}
+        </section>
+
+        <section class="game-glass mb-key" aria-label="How to read the exchange">
+            <div class="mb-legend" aria-label="Colour key">
+                <span class="mb-chip tag-own">Your own currency</span>
+                <span class="mb-chip tag-held">Currency you hold</span>
+                <span class="mb-chip tag-none">Currency you don't hold yet</span>
+                <span class="mb-chip tag-capped">Issuer in bond default (price capped)</span>
+            </div>
+            <details class="cm-how">
+                <summary><span class="material-icons-outlined mb-inline-icon" aria-hidden="true">help_outline</span>How the exchange works</summary>
+                <p class="mb-note">
+                Every price is in gold per unit, with no fee. Minting costs the issuer {{ currency_status.rate }} gold per unit, and <strong>only the issuer can turn it back into gold</strong>; everyone else trades it here or spends it on resource offers priced in it. Posting an offer locks what you offer (gold for a buy, the currency for a sell) until it's filled or cancelled. A nation behind on a defaulted bond can't have its currency trade above a cap (4 gold or lower) until the debt is paid.
+            </p>
+            </details>
+        </section>
+
+        <div class="cm-split">
+            {% if currencies %}
+            <section class="game-glass cm-board" aria-labelledby="cm-board-h">
+                <header class="mb-side-head">
+                    <h2 id="cm-board-h"><span class="material-icons-outlined" aria-hidden="true">show_chart</span>Currency board</h2>
+                    <p>{{ currencies | length }} currencies · busiest first · tap one to open its book</p>
+                </header>
+                <div class="cm-board-scroll">
+                <table class="cm-table">
+                    <thead><tr><th>Currency</th><th>Last</th><th class="cm-hide-sm">Trend</th><th>Best ask</th><th>Best bid</th><th class="cm-hide-sm">Open</th><th>You hold</th></tr></thead>
+                    <tbody>
+                    {% for c in currencies %}
+                    <tr class="tag-{{ c.tag }}{% if issuer_filter == c.issuer_id %} is-active{% endif %}" title="{{ c.tag_label }}">
+                        <td><a href="{{ qs(c.issuer_id) }}" class="cm-cur-name">{{ c.label }}</a><span class="cm-sub">{{ c.issuer_name }}{% if c.cap is not none %} · cap {{ gp(c.cap) }}{% endif %}</span></td>
+                        <td class="cm-num">{% if c.last_price is not none %}{{ gp(c.last_price) }}{% if c.change is not none %}<span class="cm-chg {{ 'is-up' if c.change > 0 else 'is-down' if c.change < 0 else '' }}">{{ '%+.1f' | format(c.change) }}%</span>{% endif %}{% else %}<span class="cm-faint">—</span>{% endif %}</td>
+                        <td class="cm-hide-sm">{% if c.spark %}<svg class="cm-spark" viewBox="0 0 96 24" preserveAspectRatio="none" aria-hidden="true"><polyline points="{{ c.spark }}"/></svg>{% else %}<span class="cm-faint">—</span>{% endif %}</td>
+                        <td class="cm-num cm-ask">{{ gp(c.best_ask) if c.best_ask is not none else '—' }}</td>
+                        <td class="cm-num cm-bid">{{ gp(c.best_bid) if c.best_bid is not none else '—' }}</td>
+                        <td class="cm-num cm-hide-sm">{{ c.asks }} / {{ c.bids }}</td>
+                        <td class="cm-num">{{ c.held | fmt if c.held else '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+            </section>
+            {% endif %}
+
+            <section class="game-glass cm-post" id="cm-post" aria-labelledby="cm-post-h">
+                <header class="mb-side-head">
+                    <h2 id="cm-post-h"><span class="material-icons-outlined" aria-hidden="true">add_circle</span>Post an offer</h2>
+                    <p>Lists it in the book for others to fill</p>
+                </header>
+                {% if currencies %}
+                <form action="/currency_market/offer" method="POST" class="cm-post-form" id="cm-post-form">
+                    <input type="hidden" name="back_issuer" value="{{ issuer_filter or '' }}">
+                    <div class="cm-seg" role="radiogroup" aria-label="Offer type">
+                        <label><input type="radio" name="type" value="buy" checked><span class="cm-seg-buy"><span class="material-icons-outlined" aria-hidden="true">shopping_cart</span>I want to buy</span></label>
+                        <label><input type="radio" name="type" value="sell"><span class="cm-seg-sell"><span class="material-icons-outlined" aria-hidden="true">sell</span>I want to sell</span></label>
+                    </div>
+                    <label class="mb-field">
+                        <span>Currency</span>
+                        <select name="issuer_id" class="game-select" required id="cm-post-cur">
+                            {% for c in currencies %}
+                            <option value="{{ c.issuer_id }}" data-held="{{ c.held }}" data-cap="{{ c.cap if c.cap is not none else '' }}" data-ask="{{ c.best_ask if c.best_ask is not none else '' }}" data-bid="{{ c.best_bid if c.best_bid is not none else '' }}" data-last="{{ c.last_price if c.last_price is not none else '' }}" {% if issuer_filter == c.issuer_id %}selected{% endif %}>{{ c.label }}{% if c.held %} · you hold {{ c.held | fmt }}{% endif %}{% if c.cap is not none %} · cap {{ gp(c.cap) }}{% endif %}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <div class="cm-post-nums">
+                        <label class="mb-field">
+                            <span>Units</span>
+                            <span class="cm-input-row">
+                                <input class="game-purchase-input" name="amount" id="cm-post-units" type="text" inputmode="decimal" placeholder="0" autocomplete="off" required>
+                                <button type="button" class="market-max-btn" id="cm-post-max" aria-label="Fill in the most you can offer">Max</button>
+                            </span>
+                        </label>
+                        <label class="mb-field">
+                            <span>Gold per unit</span>
+                            <input class="game-purchase-input" name="price" id="cm-post-price" type="text" inputmode="decimal" placeholder="0.00" autocomplete="off" required>
+                        </label>
+                    </div>
+                    <div class="cm-quick" aria-label="Quick prices">
+                        <button type="button" class="cm-quick-btn" data-src="ask">Cheapest ask <b></b></button>
+                        <button type="button" class="cm-quick-btn" data-src="bid">Highest bid <b></b></button>
+                        <button type="button" class="cm-quick-btn" data-src="last">Last trade <b></b></button>
+                        <button type="button" class="cm-quick-btn" data-src="mint" data-value="{{ currency_status.rate }}">Mint value <b>{{ currency_status.rate }}</b></button>
+                    </div>
+                    <p class="cm-preview" id="cm-post-preview" aria-live="polite">Enter units and a price to see what this offer locks up.</p>
+                    <button type="submit" class="game-btn game-btn-primary" id="cm-post-submit"><span class="material-icons-outlined" aria-hidden="true">check</span><span>Post buy offer</span></button>
+                </form>
+                {% else %}
+                <p class="mb-empty">No currencies exist yet. Mint some of your own at the <a href="/country/id={{ cId }}">Central Bank</a> to get started.</p>
+                {% endif %}
+            </section>
         </div>
 
-        {% set traded = currencies | selectattr('last_price') | list %}
-        {% if traded %}
-        <div class="game-glass game-panel" style="margin-bottom: 18px;">
-            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">show_chart</span> Recent prices</h2>
-            <div class="cm-grid">
-                {% for c in traded %}
-                <div class="cm-card" style="border: 1px solid var(--border); border-radius: var(--game-radius-md, 12px);">
-                    <div class="game-spread">
-                        <a href="/currency_market?currency={{ c.issuer_id }}" style="color: var(--accent); font-weight: 700; text-decoration: none;">{{ c.label }}</a>
-                        {% if c.cap is not none %}<span class="game-badge game-badge-warn">Capped at {{ c.cap }}</span>{% endif %}
-                    </div>
-                    <div style="margin-top: 4px;">Last: <strong>{{ c.last_price }} gold</strong></div>
-                    <div class="cm-hist" aria-label="Recent trade prices, newest first">
-                        {% for price, amount, at in c.history %}<span title="{{ amount | fmt }} units, {{ at.strftime('%b %d %H:%M') }}">{{ price }}</span>{% endfor %}
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
+        <div class="mb-book">
+            <section class="game-glass mb-side mb-asks" aria-labelledby="mb-asks-h">
+                <header class="mb-side-head">
+                    <h2 id="mb-asks-h"><span class="material-icons-outlined" aria-hidden="true">shopping_cart</span>Buy {{ clabel }}</h2>
+                    <p>Nations selling · cheapest first · {{ asks|length }} of {{ asks_total }}</p>
+                </header>
+                {% if asks %}
+                <div class="mb-cols" aria-hidden="true"><span>Seller</span><span>Units</span><span>Gold / unit</span><span>Buy</span></div>
+                {% for o in asks %}{{ book_row(o, 'ask') }}{% endfor %}
+                {% else %}
+                <p class="mb-empty">No one is selling {{ clabel }} right now. <a href="#cm-post">Post a buy offer</a> and sellers will come to you.</p>
+                {% endif %}
+            </section>
+
+            <section class="game-glass mb-side mb-bids" aria-labelledby="mb-bids-h">
+                <header class="mb-side-head">
+                    <h2 id="mb-bids-h"><span class="material-icons-outlined" aria-hidden="true">sell</span>Sell {{ clabel }}</h2>
+                    <p>Nations buying · best price first · {{ bids|length }} of {{ bids_total }}</p>
+                </header>
+                {% if bids %}
+                <div class="mb-cols" aria-hidden="true"><span>Buyer</span><span>Units</span><span>Gold / unit</span><span>Sell</span></div>
+                {% for o in bids %}{{ book_row(o, 'bid') }}{% endfor %}
+                {% else %}
+                <p class="mb-empty">No one is buying {{ clabel }} right now. <a href="#cm-post">Post a sell offer</a> and buyers will come to you.</p>
+                {% endif %}
+            </section>
         </div>
+
+        {% if (asks_total > per_side or bids_total > per_side) and per_side < 100 %}
+        <p class="mb-more"><a href="/currency_market?{% if issuer_filter %}currency={{ issuer_filter }}&amp;{% endif %}per_side=100" class="game-btn game-btn-ghost game-btn-sm">Show up to 100 per side</a></p>
         {% endif %}
 
-        <div class="game-glass game-panel" style="margin-bottom: 18px;">
-            <div class="game-spread">
-                <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">storefront</span> Open offers</h2>
-                {% if issuer_filter %}<a class="game-btn game-btn-ghost game-btn-sm" href="/currency_market">Show all</a>{% endif %}
-            </div>
-            {% if offers %}
-            <div class="cm-grid">
-                {% for o in offers %}
-                <div class="cm-card" style="border: 1px solid var(--border); border-radius: var(--game-radius-md, 12px);">
-                    <div class="game-spread">
-                        <a href="/country/id={{ o.user_id }}" style="color: var(--accent); font-weight: 700; text-decoration: none;">{{ o.username }}</a>
-                        <span class="game-badge {{ 'game-badge-good' if o.type == 'sell' else 'game-badge-warn' }}">{{ 'Selling' if o.type == 'sell' else 'Buying' }}</span>
-                    </div>
-                    <div style="margin-top: 6px;"><strong>{{ o.amount | fmt }}</strong> {{ o.label }}</div>
-                    <div class="cm-muted">{{ o.price_gold }} gold each</div>
-                    {% if o.cap_blocked %}
-                    <p class="cm-muted" style="margin: 8px 0 0;">Priced above this currency's default cap, so it can't be filled until it's repriced.</p>
-                    {% else %}
-                    <form action="/currency_market/accept/{{ o.offer_id }}" method="POST" class="cm-row" style="margin-top: 10px;">
-                        <input type="hidden" name="back_issuer" value="{{ issuer_filter or '' }}">
-                        <input class="loginsignupinput" name="amount" type="number" min="0.01" step="0.01" max="{{ o.amount }}" inputmode="decimal" placeholder="Units (max {{ o.amount }})" required>
-                        <button type="submit" class="game-btn game-btn-secondary">{{ 'Buy' if o.type == 'sell' else 'Sell' }}</button>
-                    </form>
-                    {% endif %}
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <p class="cm-muted">No open offers{% if issuer_filter %} for this currency{% endif %} right now.</p>
-            {% endif %}
-        </div>
-
         {% if my_offers %}
-        <div class="game-glass game-panel" style="margin-bottom: 18px;">
-            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">list</span> Your offers</h2>
-            <div class="cm-grid">
-                {% for o in my_offers %}
-                <div class="cm-card" style="border: 1px solid var(--border); border-radius: var(--game-radius-md, 12px);">
-                    <div class="game-spread">
-                        <strong>{{ 'Buying' if o.type == 'buy' else 'Selling' }} {{ o.amount | fmt }} {{ o.label }}</strong>
-                    </div>
-                    <div class="cm-muted">{{ o.price_gold }} gold each{% if o.type == 'buy' %} · {{ o.gold_escrow | fmt }} gold locked{% endif %}</div>
-                    <form action="/currency_market/cancel/{{ o.offer_id }}" method="POST" style="margin-top: 8px;" onsubmit="return confirm('Cancel this offer? What is left will be refunded.')">
-                        <input type="hidden" name="back_issuer" value="{{ issuer_filter or '' }}">
-                        <button type="submit" class="game-btn game-btn-ghost game-btn-sm"><span class="material-icons-outlined">close</span>Cancel</button>
-                    </form>
-                </div>
-                {% endfor %}
+        <section class="game-glass cm-mine" aria-labelledby="cm-mine-h">
+            <header class="mb-side-head">
+                <h2 id="cm-mine-h"><span class="material-icons-outlined" aria-hidden="true">list_alt</span>Your offers</h2>
+                <p>{{ my_offers | length }} open · cancelling refunds what's left</p>
+            </header>
+            {% for o in my_offers %}
+            <div class="cm-mine-row {{ 'is-buy' if o.type == 'buy' else 'is-sell' }}">
+                <span class="cm-side-badge">{{ 'Buying' if o.type == 'buy' else 'Selling' }}</span>
+                <span class="cm-mine-what"><b>{{ o.amount | fmt }}</b> <a href="{{ qs(o.issuer_id) }}">{{ o.label }}</a></span>
+                <span class="cm-num">{{ gp(o.price_gold) }} gold each</span>
+                <span class="cm-faint">{% if o.type == 'buy' %}{{ o.gold_escrow | fmt }} gold locked{% else %}{{ o.total_gold | fmt }} gold if filled{% endif %}</span>
+                {% if o.cap_blocked %}<span class="cm-capped">Above default cap — reprice it</span>{% endif %}
+                <form action="/currency_market/cancel/{{ o.offer_id }}" method="POST" class="cm-cancel" onsubmit="return confirm('Cancel this offer? What is left will be refunded.')">
+                    <input type="hidden" name="back_issuer" value="{{ issuer_filter or '' }}">
+                    <button type="submit" class="game-btn game-btn-ghost game-btn-sm"><span class="material-icons-outlined" aria-hidden="true">close</span>Cancel</button>
+                </form>
             </div>
-        </div>
+            {% endfor %}
+        </section>
         {% endif %}
 
     </div>
 </div>
+
+<script>
+(function () {
+    'use strict';
+    var GOLD = {{ currency_status.gold | int }};
+    function num(v) { var n = parseFloat(String(v || '').replace(/,/g, '')); return isFinite(n) && n > 0 ? n : 0; }
+    function fmt(n) { return Math.floor(n).toLocaleString(); }
+    function fmt2(n) { return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+    // Order-book rows: Max fills the input; the live line shows the gold that changes hands.
+    document.querySelectorAll('.cm-trade').forEach(function (form) {
+        var input = form.querySelector('.cm-units');
+        var live = form.querySelector('.cm-live');
+        var price = parseFloat(form.dataset.price);
+        var ask = form.dataset.side === 'ask';
+        function update() {
+            var u = num(input.value);
+            if (!u) { live.textContent = ''; return; }
+            var g = Math.floor(u * price + 1e-9);
+            live.textContent = (ask ? 'You pay ' : 'You get ') + fmt(g) + ' gold';
+            live.classList.toggle('is-short', ask && g > GOLD);
+        }
+        input.addEventListener('input', update);
+        form.querySelector('.cm-max').addEventListener('click', function () {
+            input.value = this.dataset.max; update(); input.focus();
+        });
+    });
+
+    // Post-offer form: buy/sell toggle, quick prices, Max and a live preview.
+    var form = document.getElementById('cm-post-form');
+    if (!form) return;
+    var cur = document.getElementById('cm-post-cur');
+    var units = document.getElementById('cm-post-units');
+    var price = document.getElementById('cm-post-price');
+    var preview = document.getElementById('cm-post-preview');
+    var submitLabel = document.querySelector('#cm-post-submit span:last-child');
+    function type() { return form.querySelector('input[name="type"]:checked').value; }
+    function opt() { return cur.options[cur.selectedIndex]; }
+    function name() { return opt().text.split(' · ')[0]; }
+
+    function refreshQuick() {
+        var o = opt();
+        form.querySelectorAll('.cm-quick-btn').forEach(function (b) {
+            if (b.dataset.src === 'mint') return;
+            var v = o.dataset[b.dataset.src];
+            b.dataset.value = v || '';
+            b.disabled = !v;
+            b.querySelector('b').textContent = v ? fmt2(parseFloat(v)) : '—';
+        });
+    }
+
+    function update() {
+        var t = type(), o = opt();
+        submitLabel.textContent = t === 'buy' ? 'Post buy offer' : 'Post sell offer';
+        form.classList.toggle('is-sell', t === 'sell');
+        var u = num(units.value), p = num(price.value);
+        var held = parseFloat(o.dataset.held) || 0;
+        var cap = o.dataset.cap ? parseFloat(o.dataset.cap) : null;
+        var msgs = [], bad = false;
+        if (!u || !p) {
+            preview.textContent = t === 'buy'
+                ? 'Enter units and a price. Buying locks the gold up front.'
+                : 'Enter units and a price. Selling locks the currency up front (you hold ' + held.toLocaleString() + ').';
+            preview.className = 'cm-preview';
+            return;
+        }
+        var g = Math.floor(u * p + 1e-9);
+        if (t === 'buy') {
+            msgs.push('Locks <b>' + fmt(g) + ' gold</b> to buy ' + u.toLocaleString() + ' ' + name() + ' at ' + fmt2(p) + ' each.');
+            if (g > GOLD) { msgs.push('You only have ' + fmt(GOLD) + ' gold.'); bad = true; }
+            var ask = parseFloat(o.dataset.ask);
+            if (ask && p >= ask) msgs.push('Someone already sells at ' + fmt2(ask) + ' — buying from the book is instant.');
+        } else {
+            msgs.push('Locks <b>' + u.toLocaleString() + ' ' + name() + '</b>; you receive up to <b>' + fmt(g) + ' gold</b>.');
+            if (u > held) { msgs.push('You only hold ' + held.toLocaleString() + '.'); bad = true; }
+            var bid = parseFloat(o.dataset.bid);
+            if (bid && p <= bid) msgs.push('Someone already buys at ' + fmt2(bid) + ' — selling to the book is instant.');
+        }
+        if (cap !== null && p > cap) { msgs.push('Issuer is in default: price can\'t be above ' + fmt2(cap) + '.'); bad = true; }
+        if (g < 1) { msgs.push('Worth less than 1 gold.'); bad = true; }
+        preview.innerHTML = msgs.join(' ');
+        preview.className = 'cm-preview' + (bad ? ' is-bad' : ' is-ok');
+    }
+
+    form.querySelectorAll('input[name="type"]').forEach(function (r) { r.addEventListener('change', update); });
+    cur.addEventListener('change', function () { refreshQuick(); update(); });
+    units.addEventListener('input', update);
+    price.addEventListener('input', update);
+    form.querySelectorAll('.cm-quick-btn').forEach(function (b) {
+        b.addEventListener('click', function () { if (b.dataset.value) { price.value = b.dataset.value; update(); } });
+    });
+    document.getElementById('cm-post-max').addEventListener('click', function () {
+        var o = opt();
+        if (type() === 'sell') {
+            units.value = Math.floor((parseFloat(o.dataset.held) || 0) * 100) / 100;
+        } else {
+            var p = num(price.value);
+            if (!p) { price.focus(); preview.textContent = 'Set a price first, then Max works out how many you can afford.'; return; }
+            units.value = Math.floor(GOLD / p * 100) / 100;
+        }
+        update();
+    });
+    refreshQuick();
+    update();
+})();
+</script>
 {% endblock %}

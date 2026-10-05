@@ -22,8 +22,10 @@ def currency_market():
     user_id = session["user_id"]
     issuer = request.args.get("currency", "")
     issuer_filter = int(issuer) if issuer.isdigit() else None
+    per_side = request.args.get("per_side", "")
+    per_side = int(per_side) if per_side.isdigit() else services.PER_SIDE_CHOICES[0]
     with get_request_cursor() as db:
-        data = services.get_page_data(db, user_id, issuer_filter)
+        data = services.get_page_data(db, user_id, issuer_filter, per_side)
     return render_template("currency_market.html", cId=user_id, **data)
 
 

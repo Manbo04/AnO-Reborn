@@ -460,56 +460,6 @@ body.page-statistics .templatecontentheaderleft {
     }
 }
 
-/* --- Currency Market --- */
-body.page-currency-market .game-panel {
-    margin-bottom: 10px !important; /* overrides inline margin-bottom: 18px */
-    padding: 12px 14px;
-}
-body.page-currency-market .stat-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 6px 8px;
-    margin: 6px 0;
-    width: 100%;
-}
-body.page-currency-market .stat-card {
-    padding: 8px 10px;
-    margin: 0 !important; /* overrides legacy .templatedivflex2left auto margins */
-    min-width: 0;
-}
-body.page-currency-market .cm-grid {
-    gap: 8px;
-}
-body.page-currency-market .cm-card {
-    padding: 10px 12px;
-}
-body.page-currency-market .cm-row {
-    gap: 6px;
-}
-body.page-currency-market .cm-row input,
-body.page-currency-market .cm-row select {
-    min-height: 40px;
-}
-body.page-currency-market .cm-row .game-btn {
-    min-height: 40px;
-}
-@media (min-width: 900px) {
-    body.page-currency-market .templatedivcontent {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        align-items: start;
-    }
-    body.page-currency-market .templatedivcontent > div:first-child,
-    body.page-currency-market .templatedivcontent > div:nth-child(4),
-    body.page-currency-market .templatedivcontent > div:nth-child(5) {
-        grid-column: 1 / -1;
-    }
-    body.page-currency-market .stat-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
 /* --- Bonds --- */
 body.page-bonds .game-panel {
     margin-bottom: 10px !important; /* overrides inline margin-bottom: 18px */
