@@ -1,8 +1,8 @@
 {
  "status": "fixed",
- "reply": "thanks, i couldn't find a definite cause from the code but made the assembly page load even if one of its sections errors, so you should at least see the poll and the rest. should be live within the hour. if it still 500s after that, tell me and i'll dig deeper",
- "nonce": "1986db41b89e4018982fc4befd0286ae",
- "updated_at": "2026-10-05T16:21:18Z",
- "branch": "claude/robot-2026-10-05-assembly-upkeep",
- "summary": "assembly 500: hardened route with savepoints, root cause unconfirmed (no DB access)"
+ "reply": "found the real cause this time: the page broke whenever there was a closed proposal in the history, because one vote count (abstain) wasn't being loaded for those. fixed, should be live within the hour. sorry for the wait",
+ "nonce": "e53acae80e574a4f927bbe7ecbfe64e1",
+ "updated_at": "2026-10-05T22:20:17Z",
+ "branch": "claude/robot-20261005-assembly-abstain",
+ "summary": "assembly 500: closed proposals query lacked votes_abstain, template choked"
 }
