@@ -1,0 +1,52 @@
+{
+  "author_id": "204961091892019200",
+  "created_at": "2026-09-30T12:54:04Z",
+  "kind": "ticket",
+  "last_message_id": "1554902945131274346",
+  "last_player_message_at": "2026-09-30T12:55:05Z",
+  "messages": [
+    {
+      "at": "2026-09-30T12:54:04Z",
+      "attachments": [],
+      "author": "Ticket Tool",
+      "author_id": "557628352828014614",
+      "bot": true,
+      "id": "1554838746803736730",
+      "staff": false,
+      "text": "<@204961091892019200> Welcome"
+    },
+    {
+      "at": "2026-09-30T12:55:05Z",
+      "attachments": [],
+      "author": "ieb",
+      "author_id": "204961091892019200",
+      "bot": false,
+      "id": "1554839003222507591",
+      "staff": false,
+      "text": "after pushing it off I decided to try and get the custom nation page https://discord.com/channels/708006319658893385/1448838647766847489/1546514633672626226\nI'm still working out what exactly, but I just keep forgetting to open a ticket in the first place O.o"
+    },
+    {
+      "at": "2026-09-30T17:08:53Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1554902872787787939",
+      "staff": true,
+      "text": "Great, take your time!"
+    },
+    {
+      "at": "2026-09-30T17:09:10Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1554902945131274346",
+      "staff": true,
+      "text": "I will probably make it on Saturday though as I am swamped"
+    }
+  ],
+  "thread_id": "1554838744463573073",
+  "title": "ticket-0035",
+  "url": "https://discord.com/channels/708006319658893385/1554838744463573073"
+}

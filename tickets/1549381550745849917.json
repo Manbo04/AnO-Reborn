@@ -1,0 +1,132 @@
+{
+  "author_id": "753014878394122301",
+  "created_at": "2026-09-15T11:29:07Z",
+  "kind": "ticket",
+  "last_message_id": "1549396711078895702",
+  "last_player_message_at": "2026-09-15T12:03:12Z",
+  "messages": [
+    {
+      "at": "2026-09-15T11:29:08Z",
+      "attachments": [],
+      "author": "Ticket Tool",
+      "author_id": "557628352828014614",
+      "bot": true,
+      "id": "1549381552356589660",
+      "staff": false,
+      "text": "<@753014878394122301> Welcome"
+    },
+    {
+      "at": "2026-09-15T11:36:05Z",
+      "attachments": [],
+      "author": "Mango",
+      "author_id": "753014878394122301",
+      "bot": false,
+      "id": "1549383304648728690",
+      "staff": false,
+      "text": ":3"
+    },
+    {
+      "at": "2026-09-15T11:37:07Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1549383563802185739",
+      "staff": true,
+      "text": "hello!"
+    },
+    {
+      "at": "2026-09-15T11:37:29Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1549383653795045397",
+      "staff": true,
+      "text": "here for the nation makeover I assume?"
+    },
+    {
+      "at": "2026-09-15T11:46:22Z",
+      "attachments": [],
+      "author": "Mango",
+      "author_id": "753014878394122301",
+      "bot": false,
+      "id": "1549385890990661663",
+      "staff": false,
+      "text": "Hiya, Indeed"
+    },
+    {
+      "at": "2026-09-15T11:47:20Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1549386135157874762",
+      "staff": true,
+      "text": "Nice"
+    },
+    {
+      "at": "2026-09-15T11:47:25Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1549386152803573771",
+      "staff": true,
+      "text": "Well I need 2 things"
+    },
+    {
+      "at": "2026-09-15T11:47:29Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1549386172155953163",
+      "staff": true,
+      "text": "Your nation link"
+    },
+    {
+      "at": "2026-09-15T11:47:47Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1549386245728247913",
+      "staff": true,
+      "text": "And a very very very detailed as much detail as possible description of what you want"
+    },
+    {
+      "at": "2026-09-15T11:49:08Z",
+      "attachments": [],
+      "author": "Mango",
+      "author_id": "753014878394122301",
+      "bot": false,
+      "id": "1549386588176388147",
+      "staff": false,
+      "text": "Got it,"
+    },
+    {
+      "at": "2026-09-15T12:03:12Z",
+      "attachments": [],
+      "author": "Mango",
+      "author_id": "753014878394122301",
+      "bot": false,
+      "id": "1549390126084399164",
+      "staff": false,
+      "text": "https://affairsandorder.org/country/id=5\nMy nation link,\n\nStill deciding on what I want 😅\n\nProbably something to do with bunnies... And or slimes..."
+    },
+    {
+      "at": "2026-09-15T12:29:22Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1549396711078895702",
+      "staff": true,
+      "text": "Take your time"
+    }
+  ],
+  "thread_id": "1549381550745849917",
+  "title": "ticket-0031",
+  "url": "https://discord.com/channels/708006319658893385/1549381550745849917"
+}

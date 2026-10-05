@@ -1,0 +1,32 @@
+{
+  "author_id": "218250058368417792",
+  "created_at": "2026-10-05T06:23:09Z",
+  "kind": "bug",
+  "last_message_id": "1556552456484159593",
+  "last_player_message_at": "2026-10-05T06:23:44Z",
+  "messages": [
+    {
+      "at": "2026-10-05T06:23:09Z",
+      "attachments": [],
+      "author": "luciuskonst",
+      "author_id": "218250058368417792",
+      "bot": false,
+      "id": "1556552307364077588",
+      "staff": false,
+      "text": "I'm not getting a reset link or anything. The page just reloads"
+    },
+    {
+      "at": "2026-10-05T06:23:44Z",
+      "attachments": [],
+      "author": "luciuskonst",
+      "author_id": "218250058368417792",
+      "bot": false,
+      "id": "1556552456484159593",
+      "staff": false,
+      "text": "While I have your attention, how do I change my password?"
+    }
+  ],
+  "thread_id": "1556552307364077588",
+  "title": "Reset password button doesn't work",
+  "url": "https://discord.com/channels/708006319658893385/1556552307364077588"
+}

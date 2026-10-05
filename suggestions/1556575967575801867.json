@@ -1,0 +1,55 @@
+{
+  "author_id": "1180720719060029500",
+  "created_at": "2026-10-05T07:57:10Z",
+  "kind": "suggestion",
+  "last_message_id": "1556577934725353523",
+  "last_player_message_at": "2026-10-05T08:04:59Z",
+  "messages": [
+    {
+      "at": "2026-10-05T07:57:10Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1556575967575801867/1556575968108482622/image.png?backend=b2&ex=6ac4a9d6&is=6ac35856&hm=9996f7ff1f744deb6bdd37da1b48355e317587bfa285c58be87dd2f5f4db0282&"
+      ],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1556575967575801867",
+      "staff": false,
+      "text": "I'd like to modify Chel's suggestion of 10K people per new province. \n\n* **Instead of a fixed 10k per province, a new province by default will have 0 people. ** 1m or 10k people cannot come from thin air. ||I would have suggested the addition of a random X<1500 aborigines/natives but that will make this too complex.||\n\n* During province creation, we can decide how much population will be transferred from old provinces to the new one. The more the better, naturally.\n\n* Combined with recent growth rework, this will curb province spammers as well as put additional emphasis into planning, effectively discouraging province-vomiters (the equivalent of PS builds in DnS)"
+    },
+    {
+      "at": "2026-10-05T08:03:11Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1556577480016666665",
+      "staff": false,
+      "text": "does thumbs up mean dede agrees or dede just saw"
+    },
+    {
+      "at": "2026-10-05T08:04:40Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1556577855134105641",
+      "staff": true,
+      "text": "saw"
+    },
+    {
+      "at": "2026-10-05T08:04:59Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1556577934725353523",
+      "staff": false,
+      "text": "👁️ \n\n\"dede is watching\""
+    }
+  ],
+  "status": "new",
+  "thread_id": "1556575967575801867",
+  "title": "New provinces should take population from old ones",
+  "url": "https://discord.com/channels/708006319658893385/1556575967575801867"
+}
