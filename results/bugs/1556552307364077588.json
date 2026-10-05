@@ -1,0 +1,8 @@
+{
+ "status": "needs_info",
+ "reply": "the reset page always shows the same \"if an account exists, a link was sent\" message so it doesn't tell you if it actually found you. two things: did you sign up with discord or with an email? discord accounts have no email on file so the email reset never sends anything, use the \"reset via discord\" button on the same page instead (it dms you the link). if you did sign up with email, check spam and make sure it's the exact email on the account. to change your password while logged in: account page, then the \"reset password\" button next to password",
+ "nonce": "b14f5c73b51446eeabbd0602e86f7468",
+ "updated_at": "2026-10-05T08:18:54Z",
+ "branch": null,
+ "summary": "Password reset page just reloads; likely Discord-only account with no email. Asked how they signed up, pointed to Discord reset + account page."
+}
