@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-05T00:14:50Z",
   "delivered_nonce": "3974a10cbd67",
   "kind": "bug",
-  "last_message_id": "1556363213162020954",
-  "last_player_message_at": "2026-10-04T17:51:45Z",
+  "last_message_id": "1556524921029533707",
+  "last_player_message_at": "2026-10-05T04:34:20Z",
   "messages": [
     {
       "at": "2026-10-04T17:51:45Z",
@@ -15,6 +15,24 @@
       "bot": false,
       "id": "1556363213162020954",
       "text": "But cruise missiles works"
+    },
+    {
+      "at": "2026-10-05T00:14:50Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1556459618534952981",
+      "text": "<@1166065212537970722> drone sites make 1 drone per site per hour, up to 10 per site, and each drone uses 400 components + 800 aluminium from your stockpile of resources, so it stops if you run out of either or hit the cap. how many drone sites do you have, what's your drone stockpile now, and do you have enough components and aluminium?"
+    },
+    {
+      "at": "2026-10-05T04:34:20Z",
+      "attachments": [],
+      "author": "𝕿𝖍𝖊_𝖐𝖆𝖎𝖘𝖊𝖗",
+      "author_id": "1166065212537970722",
+      "bot": false,
+      "id": "1556524921029533707",
+      "text": "It restarted, probably it was just a visual glitch"
     }
   ],
   "thread_id": "1556363213162020954",

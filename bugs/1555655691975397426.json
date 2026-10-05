@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-05T00:14:49Z",
   "delivered_nonce": "f322ac69afae",
   "kind": "bug",
-  "last_message_id": "1556031793403134034",
-  "last_player_message_at": "2026-10-03T19:54:49Z",
+  "last_message_id": "1556462871867560159",
+  "last_player_message_at": "2026-10-05T00:27:46Z",
   "messages": [
     {
       "at": "2026-10-02T19:00:19Z",
@@ -26,6 +26,24 @@
       "bot": false,
       "id": "1556031793403134034",
       "text": "Update: now I should be losing 2 happiness per tick due to unemployment penalty. My happiness still hadn't changed tho"
+    },
+    {
+      "at": "2026-10-05T00:14:49Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1556459611664416860",
+      "text": "<@1043204044774183032> hey, i looked at how happiness works: every hour your buildings add happiness, then unemployment takes off 10 if too many workers are jobless (it can look like less in the tooltip), and policies add/remove after that. if the building bonus is about the same as that penalty it just sits flat, which could be why it's stuck at 3%. can you tell me roughly what the tooltip lists for your province (the + and - numbers) and what your unemployment % is on the country page?"
+    },
+    {
+      "at": "2026-10-05T00:27:46Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1556462871867560159",
+      "text": "Fortunately/ unfortunately my happiness has started to adjust to the expected behavior and I cannot replicate this"
     }
   ],
   "thread_id": "1555655691975397426",

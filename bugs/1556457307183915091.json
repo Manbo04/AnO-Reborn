@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-05T00:14:51Z",
   "delivered_nonce": "76a0d44abc07",
   "kind": "bug",
-  "last_message_id": "1556457307183915091",
-  "last_player_message_at": null,
+  "last_message_id": "1556475096405774408",
+  "last_player_message_at": "2026-10-05T01:16:20Z",
   "messages": [
     {
       "at": "2026-10-05T00:05:39Z",
@@ -15,6 +15,24 @@
       "bot": true,
       "id": "1556457307183915091",
       "text": "Reported by <@465912833352138768> in the War Rework thread: winning bombing/air attacks don't seem to lower the enemy's morale at all, only ground attacks do."
+    },
+    {
+      "at": "2026-10-05T00:14:51Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1556459622783651881",
+      "text": "<@465912833352138768> normal air battles (fighters/bombers/apaches from the attack screen) do lower the loser's morale the same way ground ones do. the separate bomber airstrike, drone strike and cruise missile strike destroy buildings or kill people but don't touch morale, that's how they were built. if you want those to cost morale too, post it in #suggestions and it goes on the next ballot. if a normal air attack really showed no morale drop, tell me which attack and i'll look again"
+    },
+    {
+      "at": "2026-10-05T01:16:20Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1556475096405774408",
+      "text": "I'll make a suggestion for them"
     }
   ],
   "thread_id": "1556457307183915091",

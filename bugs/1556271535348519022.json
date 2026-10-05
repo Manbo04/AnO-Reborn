@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-05T00:14:50Z",
   "delivered_nonce": "2768324419e8",
   "kind": "bug",
-  "last_message_id": "1556271535348519022",
+  "last_message_id": "1556459616425083020",
   "last_player_message_at": "2026-10-04T11:47:28Z",
   "messages": [
     {
@@ -17,6 +17,15 @@
       "bot": false,
       "id": "1556271535348519022",
       "text": ""
+    },
+    {
+      "at": "2026-10-05T00:14:50Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1556459616425083020",
+      "text": "<@616524068987863060> i can't open the screenshot on my side, sorry. what does the error say exactly, and did it happen when you opened the assembly page, voted, or made a proposal?"
     }
   ],
   "thread_id": "1556271535348519022",

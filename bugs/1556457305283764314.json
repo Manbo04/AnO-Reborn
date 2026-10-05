@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-05T00:14:51Z",
   "delivered_nonce": "8460b231c05e",
   "kind": "bug",
-  "last_message_id": "1556457305283764314",
+  "last_message_id": "1556459621542137917",
   "last_player_message_at": null,
   "messages": [
     {
@@ -15,6 +15,15 @@
       "bot": true,
       "id": "1556457305283764314",
       "text": "Reported by <@465912833352138768> in the Personal bank accounts suggestion: deposits go in, but the personal balance always shows zeros, so you can't see or withdraw what you put in."
+    },
+    {
+      "at": "2026-10-05T00:14:51Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1556459621542137917",
+      "text": "<@465912833352138768> found it, the query that loads the personal balances was asking for a column that doesn't exist, so it silently failed and showed zeros for everyone. fixed, your deposits should show up in the personal balance and be withdrawable once it deploys, should be live within the hour"
     }
   ],
   "thread_id": "1556457305283764314",

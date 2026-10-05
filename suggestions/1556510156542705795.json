@@ -1,0 +1,49 @@
+{
+  "author_id": "465912833352138768",
+  "created_at": "2026-10-05T03:35:39Z",
+  "kind": "suggestion",
+  "last_message_id": "1556534657531510835",
+  "last_player_message_at": "2026-10-05T05:13:01Z",
+  "messages": [
+    {
+      "at": "2026-10-05T03:35:39Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1556510156542705795",
+      "text": "Currently special weapons like drones, missiles, nukes do not decrease the moral of the nation on the receiving end and do not use supply from the attacker. This means you can endlessly lob these at attacks that are more deadly then normal attacks. Additionally as it would now use supply it should also grant some moral loss to the one receiving it as a balancing act and also because getting nuked is sucky and people probably don't like it."
+    },
+    {
+      "at": "2026-10-05T03:37:28Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1556510611251400825",
+      "text": "Successful attacks of course"
+    },
+    {
+      "at": "2026-10-05T05:12:48Z",
+      "attachments": [],
+      "author": "𝕿𝖍𝖊_𝖐𝖆𝖎𝖘𝖊𝖗",
+      "author_id": "1166065212537970722",
+      "bot": false,
+      "id": "1556534602460438559",
+      "text": "Drones and cruise missiles deal a chip damage"
+    },
+    {
+      "at": "2026-10-05T05:13:01Z",
+      "attachments": [],
+      "author": "𝕿𝖍𝖊_𝖐𝖆𝖎𝖘𝖊𝖗",
+      "author_id": "1166065212537970722",
+      "bot": false,
+      "id": "1556534657531510835",
+      "text": "And you need supplies for nukes and icbm's"
+    }
+  ],
+  "status": "new",
+  "thread_id": "1556510156542705795",
+  "title": "Make Drones, Missiles, Nukes Lower Moral And Use Supply",
+  "url": "https://discord.com/channels/708006319658893385/1556510156542705795"
+}
