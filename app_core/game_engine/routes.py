@@ -1,3 +1,4 @@
+import logging
 from flask import Blueprint, render_template, request, redirect, session, flash
 from helpers import login_required, empty_state, is_theme_v2_enabled, get_influence
 from database import get_request_cursor
@@ -61,17 +62,31 @@ def assembly():
         user_vote = row['vote_option'] if row else None
 
         # --- Assembly Data ---
+        # Each block runs inside a savepoint: if one query fails (e.g. a missing
+        # assembly_* table/column) the page still loads with that section empty
+        # instead of returning a 500 for the whole Assembly screen.
+        def _safe_fetch(label, sql, params=None):
+            db.execute("SAVEPOINT assembly_section")
+            try:
+                db.execute(sql, params)
+                rows = db.fetchall()
+                db.execute("RELEASE SAVEPOINT assembly_section")
+                return rows
+            except Exception:
+                logging.exception("assembly page: %s query failed", label)
+                db.execute("ROLLBACK TO SAVEPOINT assembly_section")
+                return []
+
         # Fetch active sanctions/effects
-        db.execute('''
+        active_sanctions = _safe_fetch("sanctions", '''
             SELECT ae.*, u.username as target_name
             FROM assembly_effects ae
             LEFT JOIN users u ON ae.target_nation_id = u.id
             WHERE ae.active = TRUE AND (ae.expires_at IS NULL OR ae.expires_at > NOW())
         ''')
-        active_sanctions = db.fetchall()
 
         # Fetch open proposals
-        db.execute('''
+        open_proposals = _safe_fetch("open proposals", '''
             SELECT ap.*,
                    COALESCE(SUM(CASE WHEN av.vote = 'for' THEN av.weight ELSE 0 END), 0) as votes_for,
                    COALESCE(SUM(CASE WHEN av.vote = 'against' THEN av.weight ELSE 0 END), 0) as votes_against,
@@ -86,10 +101,9 @@ def assembly():
             GROUP BY ap.id, pu.username, tu.username
             ORDER BY ap.created_at DESC
         ''', (user_id,))
-        open_proposals = db.fetchall()
 
         # Fetch closed proposals
-        db.execute('''
+        closed_proposals = _safe_fetch("closed proposals", '''
             SELECT ap.*,
                    COALESCE(SUM(CASE WHEN av.vote = 'for' THEN av.weight ELSE 0 END), 0) as votes_for,
                    COALESCE(SUM(CASE WHEN av.vote = 'against' THEN av.weight ELSE 0 END), 0) as votes_against,
@@ -101,7 +115,6 @@ def assembly():
             GROUP BY ap.id, tu.username
             ORDER BY ap.closes_at DESC LIMIT 20
         ''')
-        closed_proposals = db.fetchall()
 
     return render_template("assembly.html", results=results, user_vote=user_vote,
                            active_sanctions=active_sanctions, open_proposals=open_proposals, closed_proposals=closed_proposals)
