@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-05T08:20:40Z",
   "delivered_nonce": "b14f5c73b51446eeabbd0602e86f7468",
   "kind": "bug",
-  "last_message_id": "1556552456484159593",
+  "last_message_id": "1556581878792978457",
   "last_player_message_at": "2026-10-05T06:23:44Z",
   "messages": [
     {
@@ -26,6 +26,16 @@
       "id": "1556552456484159593",
       "staff": false,
       "text": "While I have your attention, how do I change my password?"
+    },
+    {
+      "at": "2026-10-05T08:20:39Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1556581878792978457",
+      "staff": false,
+      "text": "<@218250058368417792> the reset page always shows the same \"if an account exists, a link was sent\" message so it doesn't tell you if it actually found you. two things: did you sign up with discord or with an email? discord accounts have no email on file so the email reset never sends anything, use the \"reset via discord\" button on the same page instead (it dms you the link). if you did sign up with email, check spam and make sure it's the exact email on the account. to change your password while logged in: account page, then the \"reset password\" button next to password"
     }
   ],
   "thread_id": "1556552307364077588",

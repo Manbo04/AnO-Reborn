@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-05T08:05:10Z",
   "delivered_nonce": "6419eadd3c5e4ed7977bfe349a34b68c",
   "kind": "bug",
-  "last_message_id": "1556524921029533707",
+  "last_message_id": "1556577980166307891",
   "last_player_message_at": "2026-10-05T04:34:20Z",
   "messages": [
     {
@@ -33,6 +33,16 @@
       "bot": false,
       "id": "1556524921029533707",
       "text": "It restarted, probably it was just a visual glitch"
+    },
+    {
+      "at": "2026-10-05T08:05:10Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1556577980166307891",
+      "staff": false,
+      "text": "<@1166065212537970722> ok good, glad it's producing again. if the stockpile freezes again with enough components and aluminium, let me know"
     }
   ],
   "thread_id": "1556363213162020954",

@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-05T00:14:50Z",
   "delivered_nonce": "2768324419e8",
   "kind": "bug",
-  "last_message_id": "1556459616425083020",
-  "last_player_message_at": "2026-10-04T11:47:28Z",
+  "last_message_id": "1556589267189370903",
+  "last_player_message_at": "2026-10-05T08:50:01Z",
   "messages": [
     {
       "at": "2026-10-04T11:47:28Z",
@@ -26,6 +26,36 @@
       "bot": true,
       "id": "1556459616425083020",
       "text": "<@616524068987863060> i can't open the screenshot on my side, sorry. what does the error say exactly, and did it happen when you opened the assembly page, voted, or made a proposal?"
+    },
+    {
+      "at": "2026-10-05T08:10:43Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1556579378408853526",
+      "staff": false,
+      "text": "500\n\nAn unexpected error occurred. Please try again."
+    },
+    {
+      "at": "2026-10-05T08:10:58Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1556579439939428495",
+      "staff": false,
+      "text": "it happens when i open the assembly page, cant even see the resolutions or proposals"
+    },
+    {
+      "at": "2026-10-05T08:50:01Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1556589267189370903",
+      "staff": true,
+      "text": "I get the same error"
     }
   ],
   "thread_id": "1556271535348519022",

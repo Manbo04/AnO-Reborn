@@ -1,0 +1,22 @@
+{
+  "author_id": "249007223454433292",
+  "created_at": "2026-10-05T14:05:28Z",
+  "kind": "bug",
+  "last_message_id": "1556668651871010966",
+  "last_player_message_at": "2026-10-05T14:05:28Z",
+  "messages": [
+    {
+      "at": "2026-10-05T14:05:28Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1556668651871010966",
+      "staff": false,
+      "text": "Seems erroneous - my building upkeep (hourly - because it doesn't show up in daily?) * 24 hours is about 40% less than what the Building Upkeep is showing."
+    }
+  ],
+  "thread_id": "1556668651871010966",
+  "title": "Building Upkeep in Revenue History",
+  "url": "https://discord.com/channels/708006319658893385/1556668651871010966"
+}

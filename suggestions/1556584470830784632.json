@@ -1,0 +1,73 @@
+{
+  "author_id": "204961091892019200",
+  "created_at": "2026-10-05T08:30:57Z",
+  "kind": "suggestion",
+  "last_message_id": "1556592950627008543",
+  "last_player_message_at": "2026-10-05T09:04:39Z",
+  "messages": [
+    {
+      "at": "2026-10-05T08:30:57Z",
+      "attachments": [],
+      "author": "ieb",
+      "author_id": "204961091892019200",
+      "bot": false,
+      "id": "1556584470830784632",
+      "staff": false,
+      "text": "The last update has done a major overhaul on how pop grows. Where before every city had it's own growth & limits. The new system groups all cities and land togheter, and bases pop growth off of current pop. I feel like it would be fair to add a vote for this new system too.\n\nI do have to say I am not exactly happy with either of the systems, as the old one left the ability for very rapid growth and the new one has more or less put a hard cap in place on how much you can practically grow."
+    },
+    {
+      "at": "2026-10-05T09:00:58Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1556592023140569099",
+      "staff": false,
+      "text": "honestly ye it doesnt make 100% sense. a province will sometimes be developed in a way that it's more attractive to live in and start a family etc. \n\nthan the others\n\nthat'd make its growth faster"
+    },
+    {
+      "at": "2026-10-05T09:01:45Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1556592218796466208",
+      "staff": false,
+      "text": "fast growth means the people there are very satisfied"
+    },
+    {
+      "at": "2026-10-05T09:02:41Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1556592453706842146",
+      "staff": false,
+      "text": "there should be :\nindividual provincial \"caps\"\npenalties for going beyond the \"caps\"\ngrowth based on population, ration availability, a few building modifiers, happiness and policies (which we have yet to suggest)"
+    },
+    {
+      "at": "2026-10-05T09:03:00Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1556592534388604959",
+      "staff": false,
+      "text": "system should be designed in a way that excessively fast growth is discouraged\n\nafter all, children dont work"
+    },
+    {
+      "at": "2026-10-05T09:04:39Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1556592950627008543",
+      "staff": false,
+      "text": "im either making sense or spouting bullshit rn"
+    }
+  ],
+  "status": "new",
+  "thread_id": "1556584470830784632",
+  "title": "Changes to population growth",
+  "url": "https://discord.com/channels/708006319658893385/1556584470830784632"
+}
