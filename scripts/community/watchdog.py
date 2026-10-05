@@ -78,8 +78,10 @@ def check_deploy(info):
     live commit should match the last successful deploy job's commit once that
     job has had DEPLOY_GRACE_MIN to roll out."""
     live = (info.get("git_commit") or info.get("boot_marker") or "")[:12]
-    runs = gh_json(f"repos/{REPO}/actions/workflows/railway-redeploy-stack.yml/runs?branch=master&status=success&per_page=1")
-    run = (runs.get("workflow_runs") or [None])[0]
+    runs = gh_json(f"repos/{REPO}/actions/workflows/railway-redeploy-stack.yml/runs?branch=master&per_page=30")
+    ok_runs = [r for r in runs.get("workflow_runs", []) if r.get("conclusion") == "success"]
+    # Don't trust the API's ordering (it has returned a weeks-old run first).
+    run = max(ok_runs, key=lambda r: r["created_at"]) if ok_runs else None
     if not run or not live or live == "unknown":
         return True, "ok"
     expected = run["head_sha"]
@@ -92,8 +94,8 @@ def check_deploy(info):
 
 
 def check_pipeline():
-    runs = gh_json(f"repos/{REPO}/actions/workflows/railway-redeploy-stack.yml/runs?branch=master&per_page=1")
-    run = (runs.get("workflow_runs") or [None])[0]
+    runs = gh_json(f"repos/{REPO}/actions/workflows/railway-redeploy-stack.yml/runs?branch=master&per_page=30")
+    run = max(runs.get("workflow_runs", []), key=lambda r: r["created_at"], default=None)
     if run and run.get("status") == "completed" and run.get("conclusion") not in ("success", "skipped"):
         return False, f"last deploy job {run['conclusion']}: {run['html_url']}"
     return True, "ok"
