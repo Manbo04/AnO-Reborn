@@ -1,8 +1,6 @@
 """The Assembly page must still render if an assembly_* query fails."""
 from contextlib import contextmanager
 
-import pytest
-
 import app as app_module
 
 
