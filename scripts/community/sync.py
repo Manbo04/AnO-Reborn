@@ -41,6 +41,13 @@ ANNOUNCEMENTS = "1448838647766847489"
 STAFF_CHAT = "710713943190011905"
 HUMAN_ROLE = "1448838392816210061"
 VOTE_CHANNEL_NAME = "🗳️┃weekly-vote"
+MODERATOR_ROLE = "1448838347718922351"
+ADMIN_ROLE = "1448838345433022666"
+# Owner, Admin, Developer, Moderator: their messages are marked staff=true so
+# the robot can tell a real staff approval from a player claiming one.
+STAFF_ROLES = {"1448838344334381156", ADMIN_ROLE, "1448838346523541648", MODERATOR_ROLE}
+TICKET_RE = re.compile(r"^ticket-\d+$")
+FOLDERS = {"bug": "bugs", "suggestion": "suggestions", "ticket": "tickets"}
 
 MIN_VOTES = 3
 BALLOT_WEEKDAY = 4  # Friday
@@ -168,7 +175,8 @@ def send(channel_id, content, poll=None, ping_users=(), ping_roles=()):
 class Queue:
     def __init__(self, root):
         self.root = root
-        for d in ("bugs", "suggestions", "results/bugs", "results/suggestions", "ballots"):
+        for d in ("bugs", "suggestions", "tickets", "results/bugs", "results/suggestions",
+                  "results/tickets", "ballots"):
             os.makedirs(os.path.join(root, d), exist_ok=True)
 
     def path(self, *parts):
@@ -193,8 +201,22 @@ class Queue:
                 yield name[:-5], self.load(folder, name)
 
 
+_STAFF_CACHE = {}
+
+
+def is_staff(user_id):
+    if user_id not in _STAFF_CACHE:
+        try:
+            member = api("GET", f"/guilds/{GUILD}/members/{user_id}")
+            _STAFF_CACHE[user_id] = bool(STAFF_ROLES & set(member.get("roles", [])))
+        except RuntimeError:
+            _STAFF_CACHE[user_id] = False  # left the server
+    return _STAFF_CACHE[user_id]
+
+
 def slim(m):
     return {
+        "staff": (not m["author"].get("bot")) and is_staff(m["author"]["id"]),
         "id": m["id"],
         "at": m["timestamp"][:19] + "Z",
         "author": m["author"].get("global_name") or m["author"]["username"],
@@ -256,23 +278,74 @@ def sync_threads(q, state, kind, forum_id):
 
 
 def deliver_results(q, kind):
-    """Post the routine's replies (results/<kind>/<id>.json) into the threads."""
-    folder = "bugs" if kind == "bug" else "suggestions"
+    """Post the routine's replies (results/<folder>/<id>.json) into the threads.
+    A ticket result with status needs_staff also pings the Moderator/Admin roles."""
+    folder = FOLDERS[kind]
     posted = 0
     for tid, res in q.all(f"results/{folder}"):
         rec = q.load(folder, tid + ".json")
-        if not rec or not res.get("reply") or not res.get("nonce"):
+        if not rec or rec.get("closed") or not res.get("reply") or not res.get("nonce"):
             continue
         if rec.get("delivered_nonce") == res["nonce"]:
             continue
         author = rec.get("author_id")
         text = (f"<@{author}> " if author else "") + res["reply"].strip()
-        send(tid, text, ping_users=[author] if author else [])
+        roles = []
+        if kind == "ticket" and res.get("status") == "needs_staff":
+            roles = [MODERATOR_ROLE, ADMIN_ROLE]
+            text += f"\n<@&{MODERATOR_ROLE}> <@&{ADMIN_ROLE}> this one needs a staff member."
+        send(tid, text, ping_users=[author] if author else [], ping_roles=roles)
         rec["delivered_nonce"] = res["nonce"]
         rec["delivered_at"] = iso(now())
         q.save(rec, folder, tid + ".json")
         posted += 1
     return posted
+
+
+def sync_tickets(q, state):
+    """Mirror open Ticket Tool channels (ticket-NNNN) into tickets/."""
+    bot_id = state["bot_id"]
+    open_ids = set()
+    changed = 0
+    for ch in api("GET", f"/guilds/{GUILD}/channels"):
+        if ch.get("type") != 0 or not TICKET_RE.match(ch.get("name", "")):
+            continue
+        cid = ch["id"]
+        open_ids.add(cid)
+        rec = q.load("tickets", cid + ".json") or {
+            "thread_id": cid, "kind": "ticket", "title": ch["name"],
+            "author_id": None, "created_at": iso(snowflake_time(cid)),
+            "url": f"https://discord.com/channels/{GUILD}/{cid}",
+            "messages": [], "last_message_id": "0", "last_player_message_at": None,
+        }
+        new = messages_after(cid, rec["last_message_id"])
+        if not new and rec["messages"]:
+            continue
+        for m in new:
+            s_ = slim(m)
+            if s_["author_id"] == bot_id:
+                s_["bot"] = True
+            # Ticket Tool opens with "<@user> Welcome": that user owns the ticket.
+            if rec["author_id"] is None and s_["bot"]:
+                mm = re.search(r"<@!?(\d+)>", s_["text"])
+                if mm:
+                    rec["author_id"] = mm.group(1)
+            if rec["author_id"] is None and not s_["bot"] and not s_["staff"]:
+                rec["author_id"] = s_["author_id"]
+            rec["messages"].append(s_)
+            if not s_["bot"] and not s_["staff"]:
+                rec["last_player_message_at"] = s_["at"]
+        if new:
+            rec["last_message_id"] = new[-1]["id"]
+        if len(rec["messages"]) > MAX_STORED_MESSAGES:
+            rec["messages"] = rec["messages"][:5] + rec["messages"][-(MAX_STORED_MESSAGES - 5):]
+        q.save(rec, "tickets", cid + ".json")
+        changed += 1
+    for tid, rec in q.all("tickets"):
+        if tid not in open_ids and not rec.get("closed"):
+            rec["closed"] = True
+            q.save(rec, "tickets", tid + ".json")
+    return changed
 
 
 # ---------------------------------------------------------------- ballots
@@ -526,8 +599,9 @@ def main():
 
     n_bugs = sync_threads(q, state, "bug", BUG_FORUM)
     n_sugg = sync_threads(q, state, "suggestion", SUGGESTION_FORUM)
-    n_rep = deliver_results(q, "bug") + deliver_results(q, "suggestion")
-    print(f"synced bugs={n_bugs} suggestions={n_sugg} replies_posted={n_rep}")
+    n_tick = sync_tickets(q, state)
+    n_rep = sum(deliver_results(q, k) for k in ("bug", "suggestion", "ticket"))
+    print(f"synced bugs={n_bugs} suggestions={n_sugg} tickets={n_tick} replies_posted={n_rep}")
 
     nxt = parse(state.get("next_ballot_at") or iso(next_ballot_time(now())))
     state["next_ballot_at"] = iso(nxt)

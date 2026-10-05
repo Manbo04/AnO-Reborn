@@ -1,0 +1,49 @@
+name: Health watchdog
+
+# Hourly outside-in check of the live game (site up, ticks running, latest
+# deploy actually live, deploy job green). Restarts Railway services when it
+# safely can, posts to #staff-chat on changes, pings Dede only if a restart
+# didn't fix it. See scripts/community/watchdog.py.
+on:
+  schedule:
+    - cron: "37 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: health-watchdog
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: community-queue
+          path: community-queue
+      - name: Check production
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/community/watchdog.py --queue community-queue
+      - name: Save state
+        if: always()
+        working-directory: community-queue
+        run: |
+          git config user.name "ano-community-bot"
+          git config user.email "community-bot@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -q -m "watchdog $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3 4 5; do
+            git pull -q --rebase origin community-queue && git push -q origin HEAD:community-queue && exit 0
+            sleep 5
+          done
+          exit 1
