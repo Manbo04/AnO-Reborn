@@ -158,6 +158,7 @@ def calc_nation_growth(nation_population, comfort, rations_ratio, frozen=False):
     """People added to a whole nation this tick (before starvation).
     Based on the population the nation actually has, so war deaths slow it
     down; slows to POP_GROWTH_DIMINISHING_FLOOR past comfort (no hard cap).
+    Small nations well below comfort grow up to 3x (POP_GROWTH_CATCHUP_*).
     A nation that recently lost a battle / was nuked is frozen (0)."""
     if frozen:
         return 0
@@ -165,8 +166,13 @@ def calc_nation_growth(nation_population, comfort, rations_ratio, frozen=False):
     pop = max(0, int(nation_population or 0))
     pop_ratio = pop / comfort if comfort > 0 else 1
     diminishing = max(variables.POP_GROWTH_DIMINISHING_FLOOR, 1 - pop_ratio**2)
+    catchup = 1 + (
+        variables.POP_GROWTH_CATCHUP_BOOST
+        * max(0.0, 1 - pop_ratio)
+        * max(0.0, 1 - pop / variables.POP_GROWTH_CATCHUP_POP)
+    )
     raw = (
-        variables.POP_GROWTH_RATE * pop
+        variables.POP_GROWTH_RATE * catchup * pop
         + variables.POP_GROWTH_SEED_RATE * comfort
     )
     return int(round((rations_ratio**2) * diminishing * raw))

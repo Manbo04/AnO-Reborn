@@ -108,3 +108,21 @@ def test_province_price_steeper_after_20():
     assert province_price_for_count(20) == int(8_000_000 * (1 + 0.16 * 20))
     assert province_price_for_count(40) > 250_000_000
     assert province_price_for_count(79) > 10_000_000_000
+
+
+def test_catchup_boost_helps_small_nations_not_whales():
+    comfort = 153_000_000
+    rate = pop.variables.POP_GROWTH_RATE
+    seed = pop.variables.POP_GROWTH_SEED_RATE
+    small = pop.calc_nation_growth(11_000_000, comfort, 1.0)
+    # ~2.4x on the rate term: 11M people at 7% of comfort
+    assert small > 2.2 * rate * 11_000_000
+    # big city-heavy nation far below comfort: no boost past CATCHUP_POP
+    af_comfort = 790_000_000
+    af = pop.calc_nation_growth(190_000_000, af_comfort, 1.0)
+    dim = 1 - (190_000_000 / af_comfort) ** 2
+    assert af == int(round(dim * (rate * 190_000_000 + seed * af_comfort)))
+    # over comfort: no boost, same as before
+    over = pop.calc_nation_growth(400_000_000, comfort, 1.0)
+    floor = pop.variables.POP_GROWTH_DIMINISHING_FLOOR
+    assert over == int(round(floor * (rate * 400_000_000 + seed * comfort)))
