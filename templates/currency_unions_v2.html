@@ -1,155 +1,189 @@
-{% extends "layout.html" %} {% block title %} Currency Unions {% endblock %}{% block body_class %} page-currency-unions game-page-v2{% endblock %} {% block body %}
+{% extends "layout.html" %} {% block title %} Currency Unions {% endblock %}{% block body_class %} page-market page-econ page-currency-unions-v3 game-page-v2{% endblock %} {% block body %}
 {% from 'macros/game_ui.html' import game_hero %}
+
+{% set u = status.mine %}
+{% set ns = namespace(active=0, nations=0, biggest=0) %}
+{% for un in status.unions %}{% if un.active %}{% set ns.active = ns.active + 1 %}{% endif %}{% set ns.nations = ns.nations + un.members %}{% if un.members > ns.biggest %}{% set ns.biggest = un.members %}{% endif %}{% endfor %}
 
 <div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/coalition.jpg') }}');"></div>
 <div class="game-page-overlay"></div>
 
 <div class="templatediv">
 
-    {{ game_hero('Currency Unions', badge_icon='currency_exchange', subtitle='Band together with other nations for cheaper trade and looser bond limits. A union needs at least ' ~ status.min_members ~ ' members before its benefits switch on.') }}
+    {% call game_hero('Currency Unions', badge_icon='currency_exchange', subtitle='Band together with other nations for cheaper trade and looser bond limits. A union needs ' ~ status.min_members ~ ' members before its benefits switch on.') %}
+    <div class="game-row mb-hero-actions">
+        <a class="game-btn game-btn-secondary game-btn-sm" href="/market"><span class="material-icons-outlined">storefront</span>Global Market</a>
+        <a class="game-btn game-btn-secondary game-btn-sm" href="/currency_market"><span class="material-icons-outlined">currency_exchange</span>Currency Exchange</a>
+        <a class="game-btn game-btn-secondary game-btn-sm" href="/bonds"><span class="material-icons-outlined">request_quote</span>Bonds</a>
+        {% if not u %}<a class="game-btn game-btn-primary game-btn-sm" href="#ec-found"><span class="material-icons-outlined">add</span>Found a union</a>{% endif %}
+    </div>
+    {% endcall %}
 
-    <div class="templatedivcontent">
+    <div class="templatedivcontent ec-wrap">
 
-        <div class="game-glass game-panel" style="margin-bottom: 18px;">
-            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">help_outline</span> What a union gives you</h2>
-            <ul class="templatecontentpleft" style="margin: 6px 0 0 18px; line-height: 1.6; text-align: left;">
-                <li><strong>Cheaper trade:</strong> trades between members pay a {{ status.union_fee }}% transport fee instead of {{ status.fee }}%.</li>
-                <li><strong>Looser bond limits:</strong> members can have {{ status.bond_bonus_percent }}% more bond principal outstanding.</li>
-                <li><strong>Shared identity:</strong> the union's name and currency name are shown on every member's nation page, and the union's combined and average stats are shown below. Each member still mints and redeems its own national currency.</li>
-            </ul>
-            <p class="templatecontentpleft" style="margin-top: 10px; opacity: .8; font-size: .9em; text-align: left;">You can be in one union at a time. The founder approves new members and can remove them. If the founder leaves, the longest-standing member takes over; if the last member leaves, the union is dissolved.</p>
-        </div>
+        <section class="game-glass ec-strip" aria-label="Union benefits and overview">
+            <dl class="ec-stats">
+                <div class="tone-good" title="Trades between members of the same union"><dt>Trade fee in union</dt><dd>{{ status.union_fee }}% <small>vs {{ status.fee }}%</small></dd></div>
+                <div class="tone-good"><dt>Bond limit bonus</dt><dd>+{{ status.bond_bonus_percent }}%</dd></div>
+                <div class="tone-info"><dt>Members to activate</dt><dd>{{ status.min_members }}</dd></div>
+                <div class="tone-muted"><dt>Unions</dt><dd>{{ status.unions | length }} <small>{{ ns.active }} active</small></dd></div>
+                <div class="tone-muted"><dt>Nations in unions</dt><dd>{{ ns.nations }}</dd></div>
+                <div class="{{ ('tone-good' if u.active else 'tone-warn') if u else 'tone-muted' }}"><dt>Your union</dt><dd>{{ u.name if u else 'None' }}</dd></div>
+            </dl>
+        </section>
 
-        {% if status.mine %}
-        {% set u = status.mine %}
-        <div class="game-glass game-panel" style="margin-bottom: 18px;">
-            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">account_balance</span> {{ u.name }}</h2>
-            <p class="templatecontentpleft" style="margin-top: 0;">Currency: <strong>{{ u.currency_name }}</strong>
-                {% if u.active %}<span class="game-badge game-badge-good" style="margin-left: 6px;">Benefits active</span>
-                {% else %}<span class="game-badge game-badge-warn" style="margin-left: 6px;">Needs {{ status.min_members - u.member_count }} more member{{ '' if status.min_members - u.member_count == 1 else 's' }}</span>{% endif %}
-            </p>
-            <div class="stat-grid">
-                <div class="templatedivflex2left stat-card">
-                    <strong class="stat-label"><span class="material-icons-outlined">groups</span>Members</strong>
-                    <span class="stat-value">{{ u.member_count }}</span>
+        {% if u %}
+        {% set need = status.min_members - u.member_count %}
+        <div class="ec-split is-wide-left">
+            <section class="game-glass ec-panel" aria-labelledby="ec-mine-h">
+                <header class="mb-side-head">
+                    <h2 id="ec-mine-h"><span class="material-icons-outlined {{ 'ec-good' if u.active else 'ec-warn' }}" aria-hidden="true">account_balance</span>{{ u.name }}</h2>
+                    <p>Currency: <b>{{ u.currency_name }}</b> · <span class="ec-tag {{ 'tone-good' if u.active else 'tone-warn' }}">{{ 'Benefits active' if u.active else 'Needs ' ~ need ~ ' more member' ~ ('' if need == 1 else 's') }}</span></p>
+                </header>
+                <div class="ec-body" style="padding-bottom: 6px;">
+                    <div class="ec-bar is-big {{ 'tone-good' if u.active else 'tone-warn' }}" style="--p: {{ [u.member_count / status.min_members * 100, 100] | min }}%;" aria-hidden="true"><i></i></div>
+                    <div class="ec-legend"><span>{{ u.member_count }} member{{ '' if u.member_count == 1 else 's' }}</span><span>{{ status.min_members }} needed for benefits</span></div>
+                    <dl class="ec-stats" style="margin-top: 8px;">
+                        <div class="tone-info"><dt>Total population</dt><dd>{{ u.total_population | fmt }}</dd></div>
+                        <div class="tone-info"><dt>Avg. population</dt><dd>{{ u.avg_population | fmt }}</dd></div>
+                        <div class="tone-info"><dt>Avg. provinces</dt><dd>{{ u.avg_provinces }}</dd></div>
+                    </dl>
                 </div>
-                <div class="templatedivflex2left stat-card">
-                    <strong class="stat-label"><span class="material-icons-outlined">people</span>Total Population</strong>
-                    <span class="stat-value">{{ u.total_population | fmt }}</span>
-                </div>
-                <div class="templatedivflex2left stat-card">
-                    <strong class="stat-label"><span class="material-icons-outlined">person</span>Average Population</strong>
-                    <span class="stat-value">{{ u.avg_population | fmt }}</span>
-                </div>
-                <div class="templatedivflex2left stat-card">
-                    <strong class="stat-label"><span class="material-icons-outlined">map</span>Average Provinces</strong>
-                    <span class="stat-value">{{ u.avg_provinces }}</span>
-                </div>
-            </div>
-
-            <div class="templateoutertablediv" style="margin-top: 14px;">
-            <table class="templatetable templatetable2">
-                <tr>
-                    <th>Nation</th>
-                    <th>Population</th>
-                    <th>Provinces</th>
-                    <th></th>
-                </tr>
+                <p class="ec-group">Members <span class="ec-count">{{ u.members | length }}</span></p>
+                {% set top = u.members | map(attribute='population') | max if u.members else 0 %}
                 {% for m in u.members %}
-                <tr>
-                    <td><a href="/country/id={{ m.id }}">{{ m.username }}</a>{% if m.id == u.founder_id %} <span class="game-faint">(founder)</span>{% endif %}</td>
-                    <td>{{ m.population | fmt }}</td>
-                    <td>{{ m.provinces }}</td>
-                    <td>
+                <div class="ec-row {{ 'tone-gold' if m.id == u.founder_id else 'tone-info' }}">
+                    <div class="ec-main"><a href="/country/id={{ m.id }}">{{ m.username }}</a><span class="ec-sub">{{ 'Founder' if m.id == u.founder_id else 'Member' }}</span></div>
+                    <div class="ec-cell"><span class="ec-k">Population</span><span class="ec-v">{{ m.population | fmt }}</span><span class="ec-bar" style="--p: {{ (m.population / top * 100) if top else 0 }}%;"><i></i></span></div>
+                    <div class="ec-cell"><span class="ec-k">Provinces</span><span class="ec-v">{{ m.provinces }}</span></div>
+                    <div class="ec-act">
                         {% if u.is_founder and m.id != u.founder_id %}
-                        <form action="/currency_unions/{{ u.id }}/kick/{{ m.id }}" method="post" style="display:inline;" onsubmit="return confirm('Remove {{ m.username }} from the union?')">
-                            <button type="submit" class="game-btn game-btn-secondary">Remove</button>
+                        <form action="/currency_unions/{{ u.id }}/kick/{{ m.id }}" method="post" onsubmit="return confirm('Remove {{ m.username | e }} from the union?')">
+                            <button type="submit" class="game-btn game-btn-ghost game-btn-sm"><span class="material-icons-outlined">person_remove</span>Remove</button>
                         </form>
                         {% endif %}
-                    </td>
-                </tr>
+                    </div>
+                </div>
                 {% endfor %}
-            </table>
-            </div>
+            </section>
 
-            {% if u.is_founder %}
-            <h3 class="templatecontentheaderleft" style="margin-top: 18px;">Applications</h3>
-            {% if u.applications %}
-            <div class="templateoutertablediv">
-            <table class="templatetable templatetable2">
+            <section class="game-glass ec-panel" aria-labelledby="ec-apps-h">
+                <header class="mb-side-head">
+                    <h2 id="ec-apps-h"><span class="material-icons-outlined" aria-hidden="true">how_to_reg</span>{{ 'Applications' if u.is_founder else 'Membership' }}</h2>
+                    <p>{{ 'You approve who joins' if u.is_founder else 'The founder approves new members' }}</p>
+                </header>
+                {% if u.is_founder %}
                 {% for a in u.applications %}
-                <tr>
-                    <td><a href="/country/id={{ a.id }}">{{ a.username }}</a></td>
-                    <td style="white-space: nowrap;">
-                        <form action="/currency_unions/{{ u.id }}/applications/{{ a.id }}/approve" method="post" style="display:inline;">
-                            <button type="submit" class="game-btn game-btn-primary">Approve</button>
+                <div class="ec-row tone-warn">
+                    <div class="ec-main"><a href="/country/id={{ a.id }}">{{ a.username }}</a><span class="ec-sub">wants to join</span></div>
+                    <div class="ec-act">
+                        <form action="/currency_unions/{{ u.id }}/applications/{{ a.id }}/approve" method="post">
+                            <button type="submit" class="game-btn game-btn-primary game-btn-sm"><span class="material-icons-outlined">check</span>Approve</button>
                         </form>
-                        <form action="/currency_unions/{{ u.id }}/applications/{{ a.id }}/decline" method="post" style="display:inline;">
-                            <button type="submit" class="game-btn game-btn-secondary">Decline</button>
+                        <form action="/currency_unions/{{ u.id }}/applications/{{ a.id }}/decline" method="post">
+                            <button type="submit" class="game-btn game-btn-ghost game-btn-sm"><span class="material-icons-outlined">close</span>Decline</button>
                         </form>
-                    </td>
-                </tr>
+                    </div>
+                </div>
+                {% else %}
+                <p class="ec-empty">No pending applications.</p>
                 {% endfor %}
-            </table>
-            </div>
-            {% else %}
-            <p class="templatecontentpleft game-faint">No pending applications.</p>
-            {% endif %}
-            {% endif %}
-
-            <form action="/currency_unions/leave" method="post" style="margin-top: 16px;" onsubmit="return confirm('Leave the {{ u.name }}?')">
-                <button type="submit" class="game-btn game-btn-secondary">Leave union</button>
-            </form>
-        </div>
-        {% else %}
-        <div class="game-glass game-panel" style="margin-bottom: 18px;">
-            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">add_circle</span> Found a union</h2>
-            <form action="/currency_unions/create" method="post" class="game-row" style="flex-wrap: wrap; margin-top: 10px; gap: 10px;">
-                <input type="text" name="name" placeholder="Union name" maxlength="{{ status.name_max }}" class="loginsignupinput" style="flex: 1; min-width: 180px;" required>
-                <input type="text" name="currency_name" placeholder="Currency name (e.g. Euro)" maxlength="{{ status.currency_max }}" class="loginsignupinput" style="flex: 1; min-width: 160px;" required>
-                <button type="submit" class="game-btn game-btn-primary">Found union</button>
-            </form>
+                {% endif %}
+                <div class="ec-body">
+                    <p class="ec-faint" style="margin: 0 0 8px; font-size: .82rem;">If the founder leaves, the longest-standing member takes over. If the last member leaves, the union is dissolved.</p>
+                    <form action="/currency_unions/leave" method="post" onsubmit="return confirm('Leave the {{ u.name | e }}?')">
+                        <button type="submit" class="game-btn game-btn-ghost game-btn-sm" style="color: var(--danger);"><span class="material-icons-outlined">logout</span>Leave union</button>
+                    </form>
+                </div>
+            </section>
         </div>
         {% endif %}
 
-        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">public</span> All unions</h2>
-        {% if status.unions %}
-        <div class="templateoutertablediv" style="margin-bottom: 18px;">
-        <table class="templatetable templatetable2">
-            <tr>
-                <th>Union</th>
-                <th>Currency</th>
-                <th>Members</th>
-                <th>Avg. population</th>
-                <th></th>
-            </tr>
-            {% for un in status.unions %}
-            <tr>
-                <td>{{ un.name }}<br><small class="game-faint">founded by <a href="/country/id={{ un.founder_id }}">{{ un.founder_name }}</a></small></td>
-                <td>{{ un.currency_name }}</td>
-                <td>{{ un.members }}{% if not un.active %} <small class="game-faint">(inactive)</small>{% endif %}</td>
-                <td>{{ un.avg_population | fmt }}</td>
-                <td>
-                    {% if not status.mine %}
-                    {% if un.id in status.my_applications %}
-                    <form action="/currency_unions/{{ un.id }}/withdraw" method="post" style="display:inline;">
-                        <button type="submit" class="game-btn game-btn-secondary">Withdraw</button>
-                    </form>
-                    {% else %}
-                    <form action="/currency_unions/{{ un.id }}/apply" method="post" style="display:inline;">
-                        <button type="submit" class="game-btn game-btn-primary">Apply</button>
-                    </form>
-                    {% endif %}
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </table>
-        </div>
-        {% else %}
-        <p class="templatecontentpleft game-faint">No currency unions yet. Found the first one.</p>
-        {% endif %}
+        <div class="ec-split {{ 'is-wide-left' if not u else '' }}">
+            <section class="game-glass ec-panel" aria-labelledby="ec-all-h"{% if u %} style="grid-column: 1 / -1;"{% endif %}>
+                <header class="mb-side-head">
+                    <h2 id="ec-all-h"><span class="material-icons-outlined" aria-hidden="true">public</span>All unions</h2>
+                    <p>{{ status.unions | length }} unions · biggest first</p>
+                </header>
+                {% if status.unions %}
+                <div class="ec-scroll">
+                <table class="ec-table">
+                    <thead><tr><th>Union</th><th>Currency</th><th>Members</th><th class="ec-hide-sm">Avg. pop.</th><th></th></tr></thead>
+                    <tbody>
+                    {% for un in status.unions | sort(attribute='members', reverse=true) %}
+                    {% set mine_row = u and u.id == un.id %}
+                    {% set applied = un.id in status.my_applications %}
+                    <tr class="{{ 'tone-gold' if mine_row else ('tone-warn' if applied else ('tone-good' if un.active else 'tone-muted')) }}">
+                        <td><b>{{ un.name }}</b><br><span class="ec-faint" style="font-size: .74rem;">by <a href="/country/id={{ un.founder_id }}" style="color: var(--accent); text-decoration: none;">{{ un.founder_name }}</a></span></td>
+                        <td>{{ un.currency_name }}</td>
+                        <td class="ec-num">{{ un.members }} <span class="ec-tag {{ 'tone-good' if un.active else 'tone-muted' }}">{{ 'active' if un.active else 'inactive' }}</span><span class="ec-bar {{ 'tone-good' if un.active else 'tone-muted' }}" style="--p: {{ [un.members / status.min_members * 100, 100] | min }}%; width: 70px; margin-top: 3px;"><i></i></span></td>
+                        <td class="ec-num ec-hide-sm">{{ un.avg_population | fmt }}</td>
+                        <td style="text-align: right;">
+                            {% if mine_row %}<span class="ec-tag tone-gold">Yours</span>
+                            {% elif not u %}
+                            {% if applied %}
+                            <form action="/currency_unions/{{ un.id }}/withdraw" method="post">
+                                <button type="submit" class="game-btn game-btn-ghost game-btn-sm">Withdraw</button>
+                            </form>
+                            {% else %}
+                            <form action="/currency_unions/{{ un.id }}/apply" method="post">
+                                <button type="submit" class="game-btn game-btn-primary game-btn-sm">Apply</button>
+                            </form>
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+                {% else %}
+                <p class="ec-empty">No currency unions yet. Found the first one.</p>
+                {% endif %}
+            </section>
 
+            {% if not u %}
+            <section class="game-glass ec-panel" id="ec-found" aria-labelledby="ec-found-h">
+                <header class="mb-side-head">
+                    <h2 id="ec-found-h"><span class="material-icons-outlined" aria-hidden="true">add_circle</span>Found a union</h2>
+                    <p>You become its founder · one union at a time</p>
+                </header>
+                <form action="/currency_unions/create" method="post" class="ec-body ec-form" id="ec-found-form">
+                    <label class="ec-field"><span>Union name</span><input class="game-purchase-input" type="text" name="name" id="ec-u-name" maxlength="{{ status.name_max }}" placeholder="e.g. Northern Trade Union" required></label>
+                    <label class="ec-field"><span>Currency name</span><input class="game-purchase-input" type="text" name="currency_name" id="ec-u-cur" maxlength="{{ status.currency_max }}" placeholder="e.g. Euro" required></label>
+                    <p class="ec-preview" id="ec-u-preview" aria-live="polite">Members' nation pages will show the union and its currency.</p>
+                    <button type="submit" class="game-btn game-btn-primary is-full"><span class="material-icons-outlined" aria-hidden="true">check</span>Found union</button>
+                </form>
+            </section>
+            {% endif %}
+        </div>
+
+        <details class="game-glass ec-how">
+            <summary><span class="material-icons-outlined" aria-hidden="true">help_outline</span>What a union gives you</summary>
+            <ul>
+                <li><strong>Cheaper trade:</strong> trades between members pay a {{ status.union_fee }}% transport fee instead of {{ status.fee }}%.</li>
+                <li><strong>Looser bond limits:</strong> members can have {{ status.bond_bonus_percent }}% more bond principal outstanding.</li>
+                <li><strong>Shared identity:</strong> the union's name and currency name are shown on every member's nation page. Each member still mints and redeems its own national currency.</li>
+            </ul>
+            <p>Benefits switch on once a union has {{ status.min_members }} members. You can be in one union at a time. The founder approves new members and can remove them.</p>
+        </details>
     </div>
 </div>
+
+<script>
+(function () {
+    'use strict';
+    var n = document.getElementById('ec-u-name'), c = document.getElementById('ec-u-cur'), pv = document.getElementById('ec-u-preview');
+    if (!n) return;
+    function esc(t) { return t.replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
+    function update() {
+        var a = n.value.trim(), b = c.value.trim();
+        if (!a && !b) { pv.textContent = "Members' nation pages will show the union and its currency."; pv.className = 'ec-preview'; return; }
+        pv.innerHTML = 'Shown on member pages as <b>' + esc(a || '…') + '</b> · currency <b>' + esc(b || '…') + '</b>. Benefits start at {{ status.min_members }} members.';
+        pv.className = 'ec-preview' + (a && b ? ' is-ok' : '');
+    }
+    n.addEventListener('input', update);
+    c.addEventListener('input', update);
+})();
+</script>
 {% endblock %}

@@ -15,7 +15,9 @@ from .repositories import (
     get_listed_bonds,
     get_bonds_as_issuer,
     get_bonds_as_lender,
+    get_gold,
 )
+from app_core.currency_market.repositories import get_default_owed_many
 
 # Bond row column indexes (get_bond()) -- named here so callers don't have
 # to remember magic indexes into the tuple.
@@ -52,12 +54,35 @@ def default_cooldown_remaining(db, user_id):
     return remaining.total_seconds() / 3600 if remaining.total_seconds() > 0 else 0.0
 
 
+def _term_progress(rows, funded_idx, matures_idx):
+    """{bond id: % of the term elapsed} for funded bonds (term-progress bars)."""
+    from datetime import datetime, timezone
+
+    now = datetime.now(timezone.utc)
+    out = {}
+    for r in rows:
+        funded, matures = r[funded_idx], r[matures_idx]
+        if not funded or not matures:
+            continue
+        if funded.tzinfo is None:
+            funded = funded.replace(tzinfo=timezone.utc)
+        if matures.tzinfo is None:
+            matures = matures.replace(tzinfo=timezone.utc)
+        span = (matures - funded).total_seconds()
+        if span > 0:
+            out[r[0]] = max(0.0, min(100.0, (now - funded).total_seconds() / span * 100))
+    return out
+
+
 def get_market_status(db, user_id):
     """Template-friendly dict of this player's issuance limits/state, plus
     the open market listing and their own bonds (issued + invested)."""
     cap = compute_bond_cap(db, user_id)
     outstanding = get_outstanding_bond_principal(db, user_id)
     cooldown_hours = default_cooldown_remaining(db, user_id)
+    listed = get_listed_bonds(db)
+    issued = get_bonds_as_issuer(db, user_id)
+    invested = get_bonds_as_lender(db, user_id)
     return {
         "cap": cap,
         "outstanding": outstanding,
@@ -68,9 +93,14 @@ def get_market_status(db, user_id):
         "max_rate": variables.BOND_MAX_INTEREST_RATE,
         "min_term": variables.BOND_MIN_TERM_DAYS,
         "max_term": variables.BOND_MAX_TERM_DAYS,
-        "listed_bonds": get_listed_bonds(db),
-        "my_issued_bonds": get_bonds_as_issuer(db, user_id),
-        "my_invested_bonds": get_bonds_as_lender(db, user_id),
+        "listed_bonds": listed,
+        "my_issued_bonds": issued,
+        "my_invested_bonds": invested,
+        "progress": {**_term_progress(issued, 11, 12), **_term_progress(invested, 9, 10)},
+        "gold": get_gold(db, user_id),
+        # Issuers still owing on a defaulted bond: their listings are
+        # flagged red on the page so investors can see the risk.
+        "defaulted_owed": get_default_owed_many(db, [b[1] for b in listed]),
     }
 
 

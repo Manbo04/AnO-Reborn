@@ -1,0 +1,581 @@
+/* ==========================================================================
+   Economy tabs: Trade Agreements, Loans, Bonds, Currency Unions
+   (Dede 2026-10-06: "do it for all economy tabs" after the Currency Exchange
+   rebuild). Same language as market-book.css / currency-exchange.css: a
+   stats strip, compact glass panels with mb-side-head headers, rows tinted
+   and left-bordered by state, live previews on every form, explanations
+   folded into <details>. Pages carry body.page-market page-econ so the
+   shared mb-* pieces (side heads, chips, Max buttons) apply as well.
+   Tone colours: good (green), warn (orange), bad (red), info (blue),
+   gold, muted.
+   ========================================================================== */
+
+body.page-econ {
+    --ec-good: var(--success, #2d9f6f);
+    --ec-warn: var(--warning, #e0913a);
+    --ec-bad: var(--danger, #d35649);
+    --ec-info: var(--accent, #00a7e1);
+    --ec-gold: var(--gold, #d4a843);
+    --ec-muted: var(--game-text-faint, #8a93a3);
+    --ec-tone: var(--ec-info);
+}
+
+body.page-econ .tone-good { --ec-tone: var(--ec-good); }
+body.page-econ .tone-warn { --ec-tone: var(--ec-warn); }
+body.page-econ .tone-bad { --ec-tone: var(--ec-bad); }
+body.page-econ .tone-info { --ec-tone: var(--ec-info); }
+body.page-econ .tone-gold { --ec-tone: var(--ec-gold); }
+body.page-econ .tone-muted { --ec-tone: var(--ec-muted); }
+
+body.page-econ .ec-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+body.page-econ .ec-wrap,
+body.page-econ .ec-wrap p,
+body.page-econ .ec-wrap li,
+body.page-econ .ec-wrap label,
+body.page-econ .ec-wrap legend,
+body.page-econ .ec-wrap th,
+body.page-econ .ec-wrap td { text-align: left; }
+
+body.page-econ .ec-faint { color: var(--ec-muted); }
+body.page-econ .ec-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+body.page-econ .ec-good { color: var(--ec-good); }
+body.page-econ .ec-bad { color: var(--ec-bad); }
+body.page-econ .ec-warn { color: var(--ec-warn); }
+
+/* --- Stats strip ----------------------------------------------------------- */
+body.page-econ .ec-strip { padding: 10px 12px; }
+
+body.page-econ .ec-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin: 0;
+}
+
+@media (min-width: 620px) {
+    body.page-econ .ec-stats { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+}
+
+body.page-econ .ec-stats > div {
+    min-width: 0;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border-left: 3px solid var(--ec-tone);
+    background: color-mix(in srgb, var(--ec-tone) 10%, var(--game-glass-bg-strong, transparent));
+}
+
+body.page-econ .ec-stats dt {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--ec-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.page-econ .ec-stats dd {
+    margin: 0;
+    font-weight: 700;
+    font-size: 1.02rem;
+    font-variant-numeric: tabular-nums;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.page-econ .ec-stats dd small {
+    font-weight: 400;
+    font-size: 0.72rem;
+    color: var(--ec-muted);
+}
+
+/* --- Layout -------------------------------------------------------------- */
+body.page-econ .ec-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+}
+
+@media (min-width: 1000px) {
+    body.page-econ .ec-split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    body.page-econ .ec-split.is-wide-left { grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr); }
+    body.page-econ .ec-split.is-wide-right { grid-template-columns: minmax(300px, 1fr) minmax(0, 1.5fr); }
+}
+
+body.page-econ .ec-panel { padding: 0; overflow: hidden; }
+body.page-econ .ec-panel .mb-side-head p { line-height: 1.3; }
+body.page-econ .ec-body { padding: 10px 12px 12px; }
+
+body.page-econ .ec-head-action { margin-left: auto; }
+
+/* --- Rows ------------------------------------------------------------------ */
+body.page-econ .ec-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 14px;
+    padding: 7px 12px;
+    border-bottom: 1px solid var(--game-glass-border);
+    border-left: 3px solid var(--ec-tone);
+    background: color-mix(in srgb, var(--ec-tone) 8%, transparent);
+    font-size: 0.88rem;
+    line-height: 1.3;
+}
+
+body.page-econ .ec-row:last-child { border-bottom: 0; }
+
+body.page-econ .ec-main {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 150px;
+    min-width: 0;
+}
+
+body.page-econ .ec-main > a,
+body.page-econ .ec-main > b {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+}
+
+body.page-econ .ec-main > a { color: var(--accent); text-decoration: none; }
+
+body.page-econ .ec-sub {
+    font-size: 0.74rem;
+    color: var(--ec-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.page-econ .ec-cell {
+    display: flex;
+    flex-direction: column;
+    min-width: 64px;
+    font-variant-numeric: tabular-nums;
+}
+
+body.page-econ .ec-k {
+    font-size: 0.64rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--ec-muted);
+    white-space: nowrap;
+}
+
+body.page-econ .ec-v { font-weight: 700; white-space: nowrap; }
+
+body.page-econ .ec-act {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+}
+
+body.page-econ .ec-act form { margin: 0; display: flex; gap: 6px; align-items: center; }
+body.page-econ .ec-act .game-btn { min-height: 34px; }
+
+body.page-econ .ec-row-note {
+    flex: 1 0 100%;
+    margin: 0;
+    font-size: 0.76rem;
+    color: var(--ec-muted);
+}
+
+body.page-econ .ec-tag {
+    display: inline-block;
+    align-self: flex-start;
+    padding: 0 6px;
+    border-radius: 4px;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: color-mix(in srgb, var(--ec-tone) 75%, var(--colorOne));
+    background: color-mix(in srgb, var(--ec-tone) 18%, transparent);
+}
+
+body.page-econ .ec-group {
+    margin: 0;
+    padding: 6px 12px 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--ec-muted);
+    border-bottom: 1px solid var(--game-glass-border);
+}
+
+body.page-econ .ec-count {
+    display: inline-block;
+    min-width: 18px;
+    margin-left: 4px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--game-glass-bg-strong);
+    color: var(--colorOne);
+    text-align: center;
+}
+
+body.page-econ .ec-empty {
+    margin: 0;
+    padding: 12px;
+    font-size: 0.88rem;
+    color: var(--ec-muted);
+}
+
+/* --- Progress bars ----------------------------------------------------- */
+body.page-econ .ec-bar {
+    position: relative;
+    height: 8px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--colorOne) 12%, transparent);
+    overflow: hidden;
+}
+
+body.page-econ .ec-bar > i {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--p, 0%);
+    border-radius: inherit;
+    background: var(--ec-tone);
+}
+
+body.page-econ .ec-bar > b {
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    left: var(--m, 70%);
+    width: 2px;
+    background: var(--colorOne);
+    opacity: 0.7;
+}
+
+body.page-econ .ec-bar.is-big { height: 12px; }
+body.page-econ .ec-cell .ec-bar { width: 90px; margin-top: 3px; }
+
+body.page-econ .ec-legend {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin-top: 4px;
+    font-size: 0.74rem;
+    color: var(--ec-muted);
+}
+
+/* --- Forms --------------------------------------------------------------- */
+body.page-econ .ec-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+}
+
+body.page-econ .ec-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+body.page-econ .ec-grid.is-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+@media (max-width: 480px) {
+    body.page-econ .ec-grid.is-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    body.page-econ .ec-grid.is-3 > :last-child { grid-column: 1 / -1; }
+}
+
+body.page-econ .ec-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    color: var(--ec-muted);
+}
+
+body.page-econ .ec-field input,
+body.page-econ .ec-field select {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    min-height: 40px;
+    margin: 0;
+    font-size: 16px;
+    text-transform: none;
+    letter-spacing: normal;
+    box-sizing: border-box;
+}
+
+body.page-econ .ec-field .ec-opt { font-weight: 400; text-transform: none; }
+
+body.page-econ .ec-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 0.88rem;
+    cursor: pointer;
+}
+
+body.page-econ .ec-check input { width: 18px; height: 18px; min-width: 0; min-height: 0; margin: 0; flex: 0 0 auto; }
+
+body.page-econ .ec-quick { display: flex; flex-wrap: wrap; gap: 6px; }
+
+body.page-econ .ec-quick-btn {
+    display: inline-flex;
+    gap: 4px;
+    align-items: baseline;
+    min-height: 32px;
+    margin: 0;
+    padding: 4px 10px;
+    border: 1px solid var(--game-glass-border);
+    border-radius: 999px;
+    background: var(--game-glass-bg-strong);
+    color: var(--colorOne);
+    font-size: 0.78rem;
+    cursor: pointer;
+}
+
+body.page-econ .ec-quick-btn b { color: var(--accent); font-variant-numeric: tabular-nums; }
+body.page-econ .ec-quick-btn:hover:not(:disabled) { border-color: var(--accent); }
+body.page-econ .ec-quick-btn:disabled { opacity: 0.45; cursor: default; }
+
+body.page-econ .ec-preview {
+    margin: 0;
+    padding: 8px 12px;
+    border-left: 3px solid var(--ec-info);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--ec-info) 10%, transparent);
+    font-size: 0.86rem;
+    line-height: 1.45;
+}
+
+body.page-econ .ec-preview.is-ok { border-left-color: var(--ec-good); background: color-mix(in srgb, var(--ec-good) 12%, transparent); }
+body.page-econ .ec-preview.is-warn { border-left-color: var(--ec-warn); background: color-mix(in srgb, var(--ec-warn) 13%, transparent); }
+body.page-econ .ec-preview.is-bad { border-left-color: var(--ec-bad); background: color-mix(in srgb, var(--ec-bad) 14%, transparent); }
+
+body.page-econ .ec-kv {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 3px 12px;
+    margin: 0;
+    font-size: 0.86rem;
+}
+
+body.page-econ .ec-kv dt { color: var(--ec-muted); }
+body.page-econ .ec-kv dd { margin: 0; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+body.page-econ .ec-alert {
+    margin: 0;
+    padding: 8px 12px;
+    border-left: 3px solid var(--ec-tone);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--ec-tone) 12%, transparent);
+    font-size: 0.86rem;
+}
+
+/* --- Tables (boards) -------------------------------------------------------- */
+body.page-econ .ec-scroll { max-height: 420px; overflow: auto; -webkit-overflow-scrolling: touch; }
+
+body.page-econ .ec-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+
+body.page-econ .ec-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 6px 8px;
+    font-size: 0.66rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--ec-muted);
+    background: var(--game-glass-bg-strong, rgba(20, 24, 32, 0.92));
+    border-bottom: 1px solid var(--game-glass-border);
+    white-space: nowrap;
+}
+
+body.page-econ .ec-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--game-glass-border);
+    vertical-align: middle;
+}
+
+body.page-econ .ec-table tbody tr { background: color-mix(in srgb, var(--ec-tone) 8%, transparent); }
+body.page-econ .ec-table tbody tr td:first-child { border-left: 3px solid var(--ec-tone); }
+body.page-econ .ec-table tbody tr:hover { background: color-mix(in srgb, var(--ec-tone) 16%, transparent); }
+body.page-econ .ec-table form { margin: 0; display: inline-flex; gap: 6px; }
+body.page-econ .ec-table .game-btn { min-height: 32px; }
+
+@media (max-width: 560px) {
+    body.page-econ .ec-hide-sm { display: none; }
+    body.page-econ .ec-table { font-size: 0.8rem; }
+    body.page-econ .ec-table td,
+    body.page-econ .ec-table th { padding: 5px 6px; }
+}
+
+/* --- How it works / legend -------------------------------------------- */
+body.page-econ .ec-how {
+    padding: 8px 14px;
+}
+
+body.page-econ .ec-how summary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+    cursor: pointer;
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: var(--accent);
+    list-style: none;
+}
+
+body.page-econ .ec-how summary::-webkit-details-marker { display: none; }
+
+body.page-econ .ec-how ol,
+body.page-econ .ec-how ul { margin: 6px 0 4px; padding-left: 20px; font-size: 0.86rem; line-height: 1.5; }
+
+body.page-econ .ec-how li { margin-bottom: 3px; }
+body.page-econ .ec-how p { margin: 6px 0 0; font-size: 0.84rem; line-height: 1.45; opacity: 0.9; }
+
+body.page-econ .ec-legend-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+body.page-econ .ec-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 10px 2px 8px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--ec-tone) 45%, transparent);
+    background: color-mix(in srgb, var(--ec-tone) 14%, var(--game-glass-bg-strong));
+    font-size: 0.78rem;
+    line-height: 1.3;
+}
+
+body.page-econ .ec-chip::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--ec-tone);
+}
+
+/* Resource chip (icon + amount) used by trade agreements. */
+body.page-econ .ec-res {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px 2px 4px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--ec-tone) 40%, transparent);
+    background: color-mix(in srgb, var(--ec-tone) 12%, transparent);
+    font-size: 0.82rem;
+    white-space: nowrap;
+}
+
+body.page-econ .ec-res img { width: 18px; height: 18px; object-fit: contain; }
+body.page-econ .ec-res b { font-variant-numeric: tabular-nums; }
+body.page-econ .ec-swap { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+body.page-econ .ec-swap .material-icons-outlined { font-size: 1rem; color: var(--ec-muted); }
+
+/* game-experience.css (max-width: 768px) stacks every form and stretches
+   every input/button on page-market to full width; these pages opt out
+   the same way the order book does. */
+@media (max-width: 768px) {
+    body.page-econ .ec-act form,
+    body.page-econ .ec-table form { flex-direction: row; width: auto; }
+    body.page-econ .ec-act button,
+    body.page-econ .ec-table button,
+    body.page-econ .ec-quick-btn,
+    body.page-econ .ec-head-action,
+    body.page-econ .ec-form button { width: auto; margin-top: 0; }
+    body.page-econ .ec-form .game-btn-primary.is-full { width: 100%; }
+    body.page-econ .ec-quick-btn { min-height: 36px; min-width: 0; }
+    body.page-econ .ec-check input { width: 18px; min-height: 0; min-width: 0; }
+}
+
+@media (min-width: 769px) and (pointer: fine) {
+    body.page-econ .ec-field input,
+    body.page-econ .ec-field select { min-height: 34px; font-size: 14px; }
+}
+
+/* Side-by-side panels end on the same line (neat edges, like the market). */
+@media (min-width: 1000px) {
+    body.page-econ .ec-split { align-items: stretch; }
+}
+
+/* Labels readable on dark glass. */
+body.page-econ .ec-field > span,
+body.page-econ .ec-stats dt,
+body.page-econ .ec-k,
+body.page-econ .ec-table th,
+body.page-econ .ec-group { color: color-mix(in srgb, var(--colorOne) 62%, transparent); }
+
+/* Stats strip: tiles grow to fill each row, so a wrapped last row never
+   leaves one orphan tile hanging on the left. */
+body.page-econ .ec-stats { display: flex; flex-wrap: wrap; }
+body.page-econ .ec-stats > div { flex: 1 1 120px; }
+
+/* The global `label` rule (style.css) makes labels width:fit-content and
+   centred; form fields here fill their column. */
+body.page-econ .ec-field,
+body.page-econ .ec-check { width: auto; max-width: none; align-self: stretch; margin: 0; }
+body.page-econ .ec-field .game-purchase-input,
+body.page-econ .ec-field .game-select { width: 100%; }
+
+/* Stats strip: an even grid of tiles (no stretched orphans). */
+body.page-econ .ec-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+body.page-econ .ec-stats > div { flex: none; }
+@media (min-width: 620px) {
+    body.page-econ .ec-stats { grid-template-columns: repeat(auto-fit, minmax(105px, 1fr)); }
+}
+
+/* Rows stay on one line (actions included) once the panel has room. */
+body.page-econ .ec-panel { container-type: inline-size; }
+@container (min-width: 460px) {
+    body.page-econ .ec-row { flex-wrap: nowrap; gap: 4px 10px; }
+    body.page-econ .ec-row:has(.ec-row-note) { flex-wrap: wrap; }
+    body.page-econ .ec-main { flex: 1 1 0; }
+    body.page-econ .ec-cell { min-width: 0; flex: 0 0 auto; }
+    body.page-econ .ec-act { flex: 0 0 auto; flex-wrap: nowrap; }
+}
+
+body.page-econ .ec-sort { min-height: 30px; padding: 2px 8px; font-size: 0.8rem; width: auto; margin: 0; }
+@container (min-width: 460px) {
+    /* fixed-width value columns so rows line up like a table */
+    body.page-econ .ec-cell { width: 68px; }
+    body.page-econ .ec-act { min-width: 84px; justify-content: flex-end; }
+}
+@container (min-width: 460px) {
+    body.page-econ .ec-cell:has(.ec-bar) { width: 96px; }
+}
+
+/* Quick buttons in an even grid (no orphan on a second line). */
+body.page-econ .ec-quick { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); }
+body.page-econ .ec-quick-btn { justify-content: space-between; }
+@container (min-width: 460px) {
+    body.page-econ .ec-cell.is-wide { width: 110px; }
+}
+body.page-econ .ec-quick { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+body.page-econ .ec-quick.is-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+/* game-experience.css (<=768px) sets page-market forms to width:100% and
+   tables to display:block; with padding that pushed forms past the panel
+   edge and collapsed the tables. */
+body.page-econ .ec-form { box-sizing: border-box; width: 100%; }
+body.page-econ table.ec-table { display: table; width: 100%; overflow: visible; }

@@ -1,99 +1,235 @@
-{% extends "layout.html" %} {% block title %} Loans {% endblock %}{% block body_class %} page-loans game-page-v2{% endblock %} {% block body %}
+{% extends "layout.html" %} {% block title %} Loans {% endblock %}{% block body_class %} page-market page-econ page-loans-v3 game-page-v2{% endblock %} {% block body %}
 {% from 'macros/game_ui.html' import game_hero %}
+
+{#- Every number comes from app_core/loans/services.py; the calculator asks
+    /loans/quote, which runs the same loan_quote() take_loan uses (Kurai
+    09-14). Capacity indicator while a loan is active: ieb. -#}
+{% set credit = status.credit %}
+{% set credit_tone = 'tone-good' if credit.points > 0 else ('tone-bad' if credit.points < 0 else 'tone-muted') %}
+{% set thr_pct = (credit_rules.threshold * 100) | round(1) %}
+{% set used_pct = status.cap_used_pct if status.has_active_loan else 0 %}
 
 <div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/coalition.jpg') }}');"></div>
 <div class="game-page-overlay"></div>
 
 <div class="templatediv">
 
-    {{ game_hero('National Loans', badge_icon='account_balance_wallet', subtitle='Borrow against your own population-scaled capacity. A one-time fee is added when you borrow — no ongoing interest, but borrowing over 70% of your capacity costs more, and there\'s a cooldown before your next loan.') }}
+    {% call game_hero('National Loans', badge_icon='account_balance_wallet', subtitle='Borrow against your population-scaled capacity for a one-time fee. No ongoing interest; borrowing over ' ~ (credit_rules.threshold * 100) | int ~ '% of your capacity costs more.') %}
+    <div class="game-row mb-hero-actions">
+        <a class="game-btn game-btn-secondary game-btn-sm" href="/bonds"><span class="material-icons-outlined">request_quote</span>Bonds</a>
+        <a class="game-btn game-btn-secondary game-btn-sm" href="/market"><span class="material-icons-outlined">storefront</span>Global Market</a>
+        <a class="game-btn game-btn-primary game-btn-sm" href="#ec-loan-form"><span class="material-icons-outlined">{{ 'payments' if status.has_active_loan else 'add' }}</span>{{ 'Repay' if status.has_active_loan else 'Borrow' }}</a>
+    </div>
+    {% endcall %}
 
-    <div class="templatedivcontent">
+    <div class="templatedivcontent ec-wrap">
 
-        {% if status.has_active_loan %}
-        <div class="game-glass game-panel" style="margin-bottom: 18px;">
-            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">account_balance</span> Active Loan</h2>
-            <div class="stat-grid">
-                <div class="templatedivflex2left stat-card">
-                    <strong class="stat-label"><span class="material-icons-outlined">savings</span>Principal</strong>
-                    <span class="stat-value">${{ status.principal | fmt }}</span>
-                </div>
-                <div class="templatedivflex2left stat-card">
-                    <strong class="stat-label"><span class="material-icons-outlined">account_balance_wallet</span>Outstanding Balance</strong>
-                    <span class="stat-value">${{ status.balance | fmt }}</span>
-                </div>
-                <div class="templatedivflex2left stat-card">
-                    <strong class="stat-label"><span class="material-icons-outlined">percent</span>One-Time Fee Charged</strong>
-                    <span class="stat-value">${{ status.fee_charged | fmt }}</span>
-                </div>
-            </div>
-            <p class="templatecontentpleft" style="margin-top: 14px;">The fee was added to your balance when you borrowed — no ongoing interest. You can repay in parts at any time, but a loan still open after 7 days counts as late and one open past 21 days is in default, both of which lower your credit (see How credit works).</p>
+        <section class="game-glass ec-strip" aria-label="Your loan position">
+            <dl class="ec-stats">
+                <div class="{{ credit_tone }}" title="{{ credit.label }} credit"><dt>Credit score</dt><dd>{{ credit.score }} <small>{{ credit.label }}</small></dd></div>
+                <div class="tone-info"><dt>Capacity</dt><dd>${{ status.cap | fmt }}</dd></div>
+                <div class="tone-muted"><dt>Base cap</dt><dd>${{ credit.base_cap | fmt }}</dd></div>
+                <div class="tone-warn" title="Borrow above this and the fee is {{ (credit_rules.high_fee * 100) | int }}% instead of {{ (credit_rules.base_fee * 100) | int }}%"><dt>{{ (credit_rules.threshold * 100) | int }}% line</dt><dd>${{ status.threshold_value | fmt }}</dd></div>
+                {% if status.has_active_loan %}
+                <div class="{{ 'tone-bad' if credit.counts.in_default else 'tone-warn' }}"><dt>Still owed</dt><dd>${{ status.balance | fmt }}</dd></div>
+                <div class="{{ 'tone-bad' if credit.counts.in_default or credit.counts.overdue else 'tone-info' }}"><dt>Due (UTC)</dt><dd>{{ status.due_at.strftime('%b %d %H:%M') if status.due_at else '—' }}</dd></div>
+                {% else %}
+                <div class="tone-good"><dt>Fee</dt><dd>{{ (credit_rules.base_fee * 100) | int }}% <small>/ {{ (credit_rules.high_fee * 100) | int }}%</small></dd></div>
+                <div class="{{ 'tone-warn' if status.cooldown_hours_remaining > 0 else 'tone-good' }}"><dt>Cooldown</dt><dd>{{ (status.cooldown_hours_remaining | round(1) ~ 'h') if status.cooldown_hours_remaining > 0 else 'Ready' }}</dd></div>
+                {% endif %}
+                <div class="tone-gold"><dt>Treasury</dt><dd>${{ gold | fmt }}</dd></div>
+            </dl>
+        </section>
 
-            <form action="/loans/repay" method="post" class="game-row" style="flex-wrap: wrap; margin-top: 10px;">
-                <input type="number" name="amount" placeholder="Repayment amount" class="loginsignupinput" style="flex: 1; min-width: 200px;" min="1" step="1" required>
-                <button type="submit" class="game-btn game-btn-primary">Repay</button>
-            </form>
-        </div>
-        {% else %}
-        <div class="game-glass game-panel" style="margin-bottom: 18px;">
-            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">add_circle</span> Take a Loan</h2>
-            <p class="templatecontentpleft">Your borrowing capacity scales with your population.</p>
-            <div class="stat-grid">
-                <div class="templatedivflex2left stat-card">
-                    <strong class="stat-label"><span class="material-icons-outlined">trending_up</span>Borrowing Capacity</strong>
-                    <span class="stat-value">${{ status.cap | fmt }}</span>
-                </div>
-                <div class="templatedivflex2left stat-card">
-                    <strong class="stat-label"><span class="material-icons-outlined">percent</span>Origination Fee</strong>
-                    <span class="stat-value">{{ (status.origination_fee * 100) | round(0) }}%</span>
-                </div>
-                <div class="templatedivflex2left stat-card">
-                    <strong class="stat-label"><span class="material-icons-outlined">warning</span>Fee Above {{ (status.high_utilization_threshold * 100) | round(0) }}% of Cap</strong>
-                    <span class="stat-value">{{ (status.high_utilization_fee * 100) | round(0) }}%</span>
-                </div>
-            </div>
-            {% if status.cooldown_hours_remaining > 0 %}
-            <p class="templatecontentpleft" style="margin-top: 14px; color: #FF9800;">You're on cooldown after your last loan — you can borrow again in {{ status.cooldown_hours_remaining | round(1) }}h.</p>
-            {% else %}
-            <form action="/loans/take" method="post" class="game-row" style="flex-wrap: wrap; margin-top: 14px;">
-                <input type="number" name="amount" placeholder="Loan amount (min ${{ status.min_amount | commas }})" class="loginsignupinput" style="flex: 1; min-width: 220px;" min="{{ status.min_amount }}" max="{{ status.cap }}" step="1" required>
-                <button type="submit" class="game-btn game-btn-primary">Borrow</button>
-            </form>
-            {% endif %}
-        </div>
-        {% endif %}
-
-        {% include "partials/loans_credit_calc.html" %}
-
-        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">history</span> Loan History</h2>
-        <div class="templateoutertablediv">
-        <table class="templatetable templatetable2">
-            <tr>
-                <th>Principal</th>
-                <th>Status</th>
-                <th>Taken</th>
-                <th>Repaid</th>
-            </tr>
-            {% for h in history %}
-            <tr>
-                <td>${{ h[1] | fmt }}</td>
-                <td>
-                    {% if h[4] == 'active' %}
-                    <span style="color: #FF9800; font-weight: bold;">Active</span>
-                    {% else %}
-                    <span style="color: #4CAF50; font-weight: bold;">Repaid</span>
+        <div class="ec-split">
+            <section class="game-glass ec-panel" id="loanCreditBlock" aria-labelledby="ec-credit-h">
+                <header class="mb-side-head">
+                    <h2 id="ec-credit-h"><span class="material-icons-outlined" aria-hidden="true">verified</span>Credit &amp; Capacity</h2>
+                    <p>{% if credit.points > 0 %}+{{ credit.points }}% capacity from good credit{% elif credit.points < 0 %}{{ credit.points }}% capacity from bad credit{% else %}No credit bonus or penalty yet{% endif %}</p>
+                </header>
+                <div class="ec-body">
+                    {% if status.has_active_loan %}
+                    <p class="ec-k" style="margin:0 0 2px;">Current loan vs. capacity</p>
                     {% endif %}
-                </td>
-                <td>{{ h[5].strftime('%Y-%m-%d') }}</td>
-                <td>{{ h[6].strftime('%Y-%m-%d') if h[6] else '—' }}</td>
-            </tr>
-            {% endfor %}
-            {% if not history %}
-            <tr><td colspan="4" style="text-align: center;">No loans taken yet.</td></tr>
-            {% endif %}
-        </table>
+                    <div class="ec-bar is-big {{ 'tone-bad' if used_pct > thr_pct else 'tone-good' }}" style="--p: {{ [used_pct, 100] | min }}%; --m: {{ thr_pct }}%;" aria-hidden="true"><i></i><b></b></div>
+                    <div class="ec-legend">
+                        <span>{% if status.has_active_loan %}Borrowed ${{ status.principal | commas }} ({{ status.cap_used_pct | round(0) | int }}% of cap){% else %}Nothing borrowed{% endif %}</span>
+                        <span>| {{ (credit_rules.threshold * 100) | int }}% line ${{ status.threshold_value | fmt }}</span>
+                        <span>Cap ${{ status.cap | fmt }}</span>
+                    </div>
+                    <dl class="ec-kv" style="margin-top: 10px;">
+                        <dt>Base capacity (population)</dt><dd>${{ credit.base_cap | commas }}</dd>
+                        <dt>Your capacity (after credit)</dt><dd>${{ status.cap | commas }}</dd>
+                        {% if not status.has_active_loan %}
+                        <dt>Fee up to the {{ (credit_rules.threshold * 100) | int }}% line</dt><dd>{{ (credit_rules.base_fee * 100) | int }}%</dd>
+                        <dt>Fee above the line</dt><dd class="ec-warn">{{ (credit_rules.high_fee * 100) | int }}%</dd>
+                        <dt>Credit effect on capacity</dt><dd class="{{ 'ec-good' if credit.points > 0 else ('ec-bad' if credit.points < 0 else '') }}">{{ '+' if credit.points > 0 }}{{ credit.points }}%</dd>
+                        <dt>Repay on time within</dt><dd>{{ credit_rules.term_days }} days</dd>
+                        <dt>Default after</dt><dd class="ec-bad">{{ credit_rules.default_days }} days</dd>
+                        {% endif %}
+                        {% if status.has_active_loan %}
+                        <dt>Principal</dt><dd>${{ status.principal | commas }}</dd>
+                        <dt>One-time fee charged</dt><dd>${{ status.fee_charged | commas }}</dd>
+                        <dt>Still owed</dt><dd>${{ status.balance | commas }}</dd>
+                        <dt>You could borrow after repaying (if repaid now)</dt><dd>up to ${{ status.cap_after_repay | commas }}</dd>
+                        {% if status.default_at %}<dt>Counts as default after (UTC)</dt><dd>{{ status.default_at.strftime('%Y-%m-%d %H:%M') }}</dd>{% endif %}
+                        {% endif %}
+                    </dl>
+                    {% if status.has_active_loan %}
+                    {% if credit.counts.in_default %}<p class="ec-alert tone-bad" style="margin-top:10px;">This loan is in default and is hurting your credit. Repay it to stop the damage.</p>
+                    {% elif credit.counts.overdue %}<p class="ec-alert tone-warn" style="margin-top:10px;">This loan is overdue &mdash; repaying soon limits the credit penalty.</p>{% endif %}
+                    {% endif %}
+                </div>
+            </section>
+
+            <section class="game-glass ec-panel" id="ec-loan-form" aria-labelledby="ec-form-h">
+                {% if status.has_active_loan %}
+                <header class="mb-side-head">
+                    <h2 id="ec-form-h"><span class="material-icons-outlined" aria-hidden="true">payments</span>Repay</h2>
+                    <p>In parts or all at once · one loan at a time · {{ status.cooldown_hours }}h cooldown after</p>
+                </header>
+                <form action="/loans/repay" method="post" class="ec-body ec-form" id="ec-repay">
+                    <label class="ec-field"><span>Amount</span>
+                        <input class="game-purchase-input" type="number" name="amount" id="ec-repay-amount" placeholder="Repayment amount" min="1" step="1" inputmode="numeric" required>
+                    </label>
+                    <div class="ec-quick">
+                        <button type="button" class="ec-quick-btn" data-v="{{ [status.balance, gold] | min | int }}">Max <b>${{ ([status.balance, gold] | min) | fmt }}</b></button>
+                        <button type="button" class="ec-quick-btn" data-v="{{ (status.balance / 2) | int }}">Half <b>${{ (status.balance / 2) | fmt }}</b></button>
+                        <button type="button" class="ec-quick-btn" data-v="{{ (status.balance / 4) | int }}">Quarter <b>${{ (status.balance / 4) | fmt }}</b></button>
+                    </div>
+                    <p class="ec-preview" id="ec-repay-preview" aria-live="polite">You owe ${{ status.balance | commas }} and hold ${{ gold | commas }}.</p>
+                    <button type="submit" class="game-btn game-btn-primary is-full"><span class="material-icons-outlined" aria-hidden="true">check</span>Repay</button>
+                </form>
+                {% else %}
+                <header class="mb-side-head">
+                    <h2 id="ec-form-h"><span class="material-icons-outlined" aria-hidden="true">add_circle</span>Borrow</h2>
+                    <p>Min ${{ status.min_amount | commas }} · repay within {{ credit_rules.term_days }} days to build credit</p>
+                </header>
+                {% if status.cooldown_hours_remaining > 0 %}
+                <p class="ec-alert tone-warn" style="margin: 10px 12px;">You're on cooldown after your last loan &mdash; you can borrow again in {{ status.cooldown_hours_remaining | round(1) }}h.</p>
+                {% endif %}
+                <form action="/loans/take" method="post" class="ec-body ec-form">
+                    <label class="ec-field"><span>Amount</span>
+                        <input class="game-purchase-input" type="number" inputmode="numeric" id="loanCalcAmount" name="amount" min="{{ status.min_amount }}" max="{{ status.cap }}" step="1" placeholder="Amount to borrow" aria-label="Amount to borrow"{% if status.cooldown_hours_remaining > 0 %} disabled{% endif %} required>
+                    </label>
+                    <div class="ec-quick">
+                        <button type="button" class="ec-quick-btn" data-v="{{ (status.cap * 0.25) | int }}">25% <b>${{ (status.cap * 0.25) | fmt }}</b></button>
+                        <button type="button" class="ec-quick-btn" data-v="{{ (status.cap * 0.5) | int }}">50% <b>${{ (status.cap * 0.5) | fmt }}</b></button>
+                        <button type="button" class="ec-quick-btn" data-v="{{ status.threshold_value }}">Up to line <b>${{ status.threshold_value | fmt }}</b></button>
+                        <button type="button" class="ec-quick-btn" data-v="{{ status.cap | int }}">Max <b>${{ status.cap | fmt }}</b></button>
+                    </div>
+                    <dl class="ec-kv" id="loanCalcOut" hidden>
+                        <dt>One-time fee</dt><dd id="loanCalcFee">&mdash;</dd>
+                        <dt>Total to repay</dt><dd id="loanCalcTotal">&mdash;</dd>
+                        <dt>Over the {{ (credit_rules.threshold * 100) | int }}% line?</dt><dd id="loanCalcOver">&mdash;</dd>
+                    </dl>
+                    <p class="ec-preview" id="loanCalcMsg" aria-live="polite">Pick an amount to see the exact fee.</p>
+                    <button type="submit" class="game-btn game-btn-primary is-full"{% if status.cooldown_hours_remaining > 0 %} disabled{% endif %}><span class="material-icons-outlined" aria-hidden="true">check</span>Borrow</button>
+                </form>
+                {% endif %}
+            </section>
         </div>
+
+        <section class="game-glass ec-panel" aria-labelledby="ec-hist-h">
+            <header class="mb-side-head">
+                <h2 id="ec-hist-h"><span class="material-icons-outlined" aria-hidden="true">history</span>Loan history</h2>
+                <p>Last {{ history | length }} · only your last {{ credit_rules.window }} count toward credit</p>
+            </header>
+            {% for h in history %}
+            {% set days = ((h[6] - h[5]).total_seconds() / 86400) if h[6] and h[5] else none %}
+            {% if h[4] == 'active' %}
+                {% set tone, tag = ('tone-bad', 'In default') if credit.counts.in_default else (('tone-warn', 'Overdue') if credit.counts.overdue else ('tone-info', 'Active')) %}
+            {% elif days is not none and days > credit_rules.default_days %}
+                {% set tone, tag = 'tone-bad', 'Repaid after default' %}
+            {% elif days is not none and days > credit_rules.term_days %}
+                {% set tone, tag = 'tone-warn', 'Repaid late' %}
+            {% else %}
+                {% set tone, tag = 'tone-good', 'Repaid on time' %}
+            {% endif %}
+            <div class="ec-row {{ tone }}">
+                <div class="ec-main"><b>${{ h[1] | commas }}</b><span class="ec-sub">taken {{ h[5].strftime('%Y-%m-%d') }}</span></div>
+                <div class="ec-cell is-wide"><span class="ec-k">Status</span><span class="ec-tag">{{ tag }}</span></div>
+                <div class="ec-cell is-wide"><span class="ec-k">Repaid</span><span class="ec-v">{{ h[6].strftime('%Y-%m-%d') if h[6] else '—' }}</span></div>
+                <div class="ec-cell"><span class="ec-k">Took</span><span class="ec-v">{{ ('%.1f' | format(days)) ~ 'd' if days is not none else '—' }}</span></div>
+            </div>
+            {% else %}
+            <p class="ec-empty">No loans taken yet.</p>
+            {% endfor %}
+        </section>
+
+        <details class="game-glass ec-how">
+            <summary><span class="material-icons-outlined" aria-hidden="true">help_outline</span>How credit works</summary>
+            <ul>
+                <li>Repaid within {{ credit_rules.term_days }} days: up to +{{ credit_rules.on_time }}% (full points for loans of at least {{ (credit_rules.full_share * 100) | int }}% of your cap).</li>
+                <li>Repaid late (after {{ credit_rules.term_days }} days): {{ credit_rules.late }}%. A loan still open past {{ credit_rules.term_days }} days counts as overdue.</li>
+                <li>Open past {{ credit_rules.default_days }} days = default: {{ credit_rules.in_default }}% while it stays open, {{ credit_rules.default_repaid }}% once repaid.</li>
+                <li>Only your last {{ credit_rules.window }} loans count, and the total is capped at &plusmn;{{ credit_rules.max }}%.</li>
+            </ul>
+            <p>The fee is added to your balance when you borrow &mdash; there's no ongoing interest. One loan at a time; after repaying in full there's a {{ status.cooldown_hours or 0 }}h cooldown before the next.</p>
+        </details>
     </div>
 </div>
 
+<script>
+(function () {
+    'use strict';
+    var fmt = function (n) { return '$' + Math.round(n).toLocaleString('en-US'); };
+    document.querySelectorAll('.ec-quick-btn').forEach(function (b) {
+        b.addEventListener('click', function () {
+            var input = b.closest('form').querySelector('input[name="amount"]');
+            if (!input || input.disabled) return;
+            input.value = b.dataset.v;
+            input.dispatchEvent(new Event('input'));
+        });
+    });
+
+    // Borrow: live quote from the server (same loan_quote() take_loan uses).
+    var input = document.getElementById('loanCalcAmount');
+    if (input) {
+        var out = document.getElementById('loanCalcOut');
+        var msg = document.getElementById('loanCalcMsg');
+        var timer = null, seq = 0;
+        var render = function (q, mySeq) {
+            if (mySeq !== seq) return;
+            if (q.fee_rate === undefined) { out.hidden = true; msg.textContent = q.error || ''; msg.className = 'ec-preview is-bad'; return; }
+            out.hidden = false;
+            document.getElementById('loanCalcFee').textContent = fmt(q.fee) + ' (' + Math.round(q.fee_rate * 100) + '%)';
+            document.getElementById('loanCalcTotal').textContent = fmt(q.total_repay);
+            var over = document.getElementById('loanCalcOver');
+            over.textContent = q.over_threshold ? 'Yes (line is ' + fmt(q.threshold_value) + ')' : 'No (line is ' + fmt(q.threshold_value) + ')';
+            over.className = q.over_threshold ? 'ec-warn' : 'ec-good';
+            if (q.error) { msg.textContent = q.error; msg.className = 'ec-preview is-bad'; }
+            else if (q.over_threshold) { msg.textContent = 'You get ' + fmt(q.amount) + ' now and repay ' + fmt(q.total_repay) + '. Above the line, so the higher fee applies.'; msg.className = 'ec-preview is-warn'; }
+            else { msg.textContent = 'You get ' + fmt(q.amount) + ' now and repay ' + fmt(q.total_repay) + '.'; msg.className = 'ec-preview is-ok'; }
+        };
+        input.addEventListener('input', function () {
+            clearTimeout(timer);
+            var v = input.value.trim();
+            var mySeq = ++seq;
+            if (!v) { out.hidden = true; msg.textContent = 'Pick an amount to see the exact fee.'; msg.className = 'ec-preview'; return; }
+            timer = setTimeout(function () {
+                fetch('/loans/quote?amount=' + encodeURIComponent(v), { credentials: 'same-origin' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (q) { render(q, mySeq); })
+                    .catch(function () { if (mySeq === seq) { msg.textContent = 'Could not calculate right now.'; } });
+            }, 250);
+        });
+    }
+
+    // Repay: what's left afterwards, and whether the treasury covers it.
+    var rep = document.getElementById('ec-repay-amount');
+    if (rep) {
+        var owed = {{ status.balance | default(0) | float }}, gold = {{ gold | float }};
+        var pv = document.getElementById('ec-repay-preview');
+        rep.addEventListener('input', function () {
+            var v = parseFloat(rep.value) || 0;
+            if (!v) { pv.textContent = 'You owe ' + fmt(owed) + ' and hold ' + fmt(gold) + '.'; pv.className = 'ec-preview'; return; }
+            if (v > gold) { pv.textContent = 'You only hold ' + fmt(gold) + '.'; pv.className = 'ec-preview is-bad'; return; }
+            var left = Math.max(0, owed - v);
+            pv.textContent = left ? 'Leaves ' + fmt(left) + ' still owed.' : 'Pays the loan off in full' + (v > owed ? ' (only ' + fmt(owed) + ' is taken)' : '') + '.';
+            pv.className = 'ec-preview ' + (left ? 'is-warn' : 'is-ok');
+        });
+    }
+})();
+</script>
 {% endblock %}

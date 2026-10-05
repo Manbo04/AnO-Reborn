@@ -4,6 +4,7 @@ from helpers import redirect_back
 from helpers import login_required
 from database import get_request_cursor
 
+from .repositories import get_gold
 from .services import get_loan_status, take_loan, repay_loan, fetch_loan_history, compute_loan_cap, loan_quote, credit_rules
 
 bp = Blueprint("loans", __name__)
@@ -16,12 +17,14 @@ def view_loans():
     with get_request_cursor() as db:
         status = get_loan_status(db, user_id)
         history = fetch_loan_history(db, user_id)
+        gold = get_gold(db, user_id)
 
     # New page, built after the sitewide v2 migration completed (all 15
     # pre-existing pages) -- no classic template exists or is needed, unlike
     # is_theme_v2_enabled()-gated pages that predate the redesign.
     return render_template(
-        "loans_v2.html", status=status, history=history, credit_rules=credit_rules()
+        "loans_v2.html", status=status, history=history, credit_rules=credit_rules(),
+        gold=gold,
     )
 
 

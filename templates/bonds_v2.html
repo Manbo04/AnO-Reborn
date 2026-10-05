@@ -1,163 +1,238 @@
-{% extends "layout.html" %} {% block title %} Bonds Market {% endblock %}{% block body_class %} page-bonds game-page-v2{% endblock %} {% block body %}
+{% extends "layout.html" %} {% block title %} Bonds Market {% endblock %}{% block body_class %} page-market page-econ page-bonds-v3 game-page-v2{% endblock %} {% block body %}
 {% from 'macros/game_ui.html' import game_hero %}
+
+{#- Row shapes (app_core/bonds/repositories.py):
+    listed   0 id, 1 issuer_id, 2 issuer, 3 principal, 4 rate, 5 term, 6 auto_escrow, 7 created_at
+    issued   0 id, 1 lender_id, 2 lender, 3 principal, 4 rate, 5 term, 6 auto_escrow, 7 escrowed,
+             8 status, 9 strikes, 10 garnishment_owed, 11 funded_at, 12 matures_at
+    invested 0 id, 1 issuer_id, 2 issuer, 3 principal, 4 rate, 5 term, 6 escrowed, 7 status,
+             8 garnishment_owed, 9 funded_at, 10 matures_at -#}
+{% set me = session['user_id'] %}
+{% set listed = status.listed_bonds %}
+{% set ns = namespace(income=0, cost=0, invested=0, best=0) %}
+{% for b in status.my_invested_bonds if b[7] == 'active' %}{% set ns.income = ns.income + b[3] * b[4] %}{% set ns.invested = ns.invested + b[3] %}{% endfor %}
+{% for b in status.my_issued_bonds if b[8] == 'active' %}{% set ns.cost = ns.cost + b[3] * b[4] %}{% endfor %}
+{% for b in listed if b[1] != me %}{% if b[4] > ns.best %}{% set ns.best = b[4] %}{% endif %}{% endfor %}
+{% macro pct(r) %}{{ '%.2f' | format(r * 100) }}%{% endmacro %}
+{% macro status_tone(st) %}{{ {'active': 'tone-info', 'listed': 'tone-muted', 'repaid': 'tone-good', 'defaulted': 'tone-bad'}.get(st, 'tone-muted') }}{% endmacro %}
 
 <div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/coalition.jpg') }}');"></div>
 <div class="game-page-overlay"></div>
 
 <div class="templatediv">
 
-    {{ game_hero('Bonds Market', badge_icon='request_quote', subtitle='Borrow directly from other players, or lend to them for daily interest.') }}
+    {% call game_hero('Bonds Market', badge_icon='request_quote', subtitle='Borrow from other players by listing a Bond, or lend to them for daily interest.') %}
+    <div class="game-row mb-hero-actions">
+        <a class="game-btn game-btn-secondary game-btn-sm" href="/loans"><span class="material-icons-outlined">account_balance_wallet</span>Loans</a>
+        <a class="game-btn game-btn-secondary game-btn-sm" href="/currency_unions"><span class="material-icons-outlined">handshake</span>Currency Unions</a>
+        <a class="game-btn game-btn-primary game-btn-sm" href="#ec-issue"><span class="material-icons-outlined">add</span>Issue a Bond</a>
+    </div>
+    {% endcall %}
 
-    <div class="templatedivcontent">
+    <div class="templatedivcontent ec-wrap">
 
-        {# Plain-language walkthrough: players (ieb and others) were confused about
-           who pays what and when from the hero paragraph alone. The hero used to repeat
-           all of this in prose -- ieb flagged the double explanation, so it's only here now. #}
-        <div class="game-glass game-panel" style="margin-bottom: 18px;">
-            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">help_outline</span> How a Bond works</h2>
-            <ol class="templatecontentpleft" style="margin: 6px 0 0 18px; line-height: 1.6;">
+        <section class="game-glass ec-strip" aria-label="Your bond position">
+            <dl class="ec-stats">
+                <div class="tone-info" title="Of ${{ status.cap | commas }} total, ${{ status.outstanding | commas }} already listed or active"><dt>Can still issue</dt><dd>${{ status.available_to_issue | fmt }} <small>of ${{ status.cap | fmt }}</small></dd></div>
+                <div class="tone-muted"><dt>Open listings</dt><dd>{{ listed | length }}</dd></div>
+                <div class="tone-good"><dt>Best rate listed</dt><dd>{{ pct(ns.best) if ns.best else '—' }}<small>/day</small></dd></div>
+                <div class="tone-good"><dt>You lend</dt><dd>${{ ns.invested | fmt }}</dd></div>
+                <div class="tone-good"><dt>Interest in</dt><dd>+${{ ns.income | fmt }}<small>/day</small></dd></div>
+                <div class="tone-bad"><dt>Interest out</dt><dd>−${{ ns.cost | fmt }}<small>/day</small></dd></div>
+                <div class="tone-gold"><dt>Treasury</dt><dd>${{ status.gold | fmt }}</dd></div>
+            </dl>
+        </section>
+
+        <div class="ec-split is-wide-left">
+            <section class="game-glass ec-panel" aria-labelledby="ec-open-h">
+                <header class="mb-side-head">
+                    <h2 id="ec-open-h"><span class="material-icons-outlined ec-good" aria-hidden="true">storefront</span>Open market</h2>
+                    <p>{{ listed | length }} bonds for sale · invest to earn daily interest</p>
+                    <select id="ec-bond-sort" class="game-select ec-head-action ec-sort" aria-label="Sort bonds">
+                        <option value="rate">Sort: best rate</option>
+                        <option value="return">Sort: biggest return</option>
+                        <option value="small">Sort: smallest first</option>
+                        <option value="term">Sort: shortest term</option>
+                        <option value="new">Sort: newest</option>
+                    </select>
+                </header>
+                <div class="ec-legend-chips" style="padding: 8px 12px 6px;">
+                    <span class="ec-chip tone-good">Escrowed (safer)</span>
+                    <span class="ec-chip tone-info">Not escrowed</span>
+                    <span class="ec-chip tone-bad">Issuer behind on a defaulted bond</span>
+                    <span class="ec-chip tone-gold">Your listing</span>
+                </div>
+                <div id="ec-bond-list">
+                {% for b in listed %}
+                {% set owed = status.defaulted_owed.get(b[1], 0) %}
+                {% set tone = 'tone-gold' if b[1] == me else ('tone-bad' if owed else ('tone-good' if b[6] else 'tone-info')) %}
+                {% set interest = b[3] * b[4] * b[5] %}
+                <div class="ec-row {{ tone }}" data-rate="{{ b[4] }}" data-return="{{ interest }}" data-principal="{{ b[3] }}" data-term="{{ b[5] }}" data-new="{{ b[0] }}">
+                    <div class="ec-main"><a href="/country/id={{ b[1] }}">{{ b[2] }}</a><span class="ec-sub">{% if owed %}owes ${{ owed | fmt }} on a defaulted bond{% elif b[6] %}escrows principal daily{% else %}principal paid at maturity{% endif %}</span></div>
+                    <div class="ec-cell"><span class="ec-k">Principal</span><span class="ec-v">${{ b[3] | fmt }}</span></div>
+                    <div class="ec-cell"><span class="ec-k">Rate</span><span class="ec-v ec-good">{{ pct(b[4]) }}<small class="ec-faint">/d</small></span></div>
+                    <div class="ec-cell"><span class="ec-k">Term</span><span class="ec-v">{{ b[5] }}d</span></div>
+                    <div class="ec-cell"><span class="ec-k">You earn</span><span class="ec-v ec-good">+${{ interest | fmt }}</span></div>
+                    <div class="ec-act">
+                        {% if b[1] == me %}
+                        <form action="/bonds/{{ b[0] }}/cancel" method="post">
+                            <button type="submit" class="game-btn game-btn-ghost game-btn-sm"><span class="material-icons-outlined">close</span>Cancel</button>
+                        </form>
+                        {% else %}
+                        <form action="/bonds/{{ b[0] }}/fund" method="post" onsubmit="return confirm('Invest ${{ '{:,.0f}'.format(b[3]) }} in {{ b[2] | e }}\'s bond? You earn ${{ '{:,.0f}'.format(b[3] * b[4]) }} a day for {{ b[5] }} days and get the principal back at maturity. It can\'t be cashed out early.');">
+                            <button type="submit" class="game-btn game-btn-primary game-btn-sm"{% if status.gold < b[3] %} disabled title="You need ${{ '{:,.0f}'.format(b[3]) }} in your treasury"{% endif %}>Invest</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <p class="ec-empty">No Bonds listed right now. <a href="#ec-issue">List one</a> to raise gold from other players.</p>
+                {% endfor %}
+                </div>
+            </section>
+
+            <section class="game-glass ec-panel" id="ec-issue" aria-labelledby="ec-issue-h">
+                <header class="mb-side-head">
+                    <h2 id="ec-issue-h"><span class="material-icons-outlined" aria-hidden="true">add_circle</span>Issue a Bond</h2>
+                    <p>{{ pct(status.min_rate) }}–{{ pct(status.max_rate) }}/day · {{ status.min_term }}–{{ status.max_term }} days · min ${{ status.min_principal | fmt }}</p>
+                </header>
+                {% if status.cooldown_hours_remaining > 0 %}
+                <p class="ec-alert tone-bad" style="margin: 10px 12px;">You defaulted on a Bond recently &mdash; you can issue a new one in {{ status.cooldown_hours_remaining | round(1) }}h.</p>
+                {% else %}
+                <form action="/bonds/create" method="post" class="ec-body ec-form" id="ec-issue-form">
+                    <div class="ec-grid is-3">
+                        <label class="ec-field"><span>Principal</span><input class="game-purchase-input" type="number" name="principal" id="ec-b-principal" min="{{ status.min_principal }}" step="1" inputmode="numeric" placeholder="{{ status.min_principal }}" required></label>
+                        <label class="ec-field"><span>% per day</span><input class="game-purchase-input" type="number" name="daily_interest_rate" id="ec-b-rate" min="{{ status.min_rate * 100 }}" max="{{ status.max_rate * 100 }}" step="0.01" inputmode="decimal" placeholder="1.00" required></label>
+                        <label class="ec-field"><span>Days</span><input class="game-purchase-input" type="number" name="term_days" id="ec-b-term" min="{{ status.min_term }}" max="{{ status.max_term }}" step="1" inputmode="numeric" placeholder="{{ status.min_term }}" required></label>
+                    </div>
+                    <div class="ec-quick is-3">
+                        <button type="button" class="ec-quick-btn" data-f="ec-b-principal" data-v="{{ status.available_to_issue | int }}">Max <b>${{ status.available_to_issue | fmt }}</b></button>
+                        <button type="button" class="ec-quick-btn" data-f="ec-b-principal" data-v="{{ (status.available_to_issue / 2) | int }}">Half <b>${{ (status.available_to_issue / 2) | fmt }}</b></button>
+                        <button type="button" class="ec-quick-btn" data-f="ec-b-rate" data-v="{{ '%.2f' | format((ns.best or 0.01) * 100) }}">{{ 'Match best' if ns.best else 'Rate' }} <b>{{ pct(ns.best or 0.01) }}</b></button>
+                        <button type="button" class="ec-quick-btn" data-f="ec-b-term" data-v="7">Term <b>7d</b></button>
+                        <button type="button" class="ec-quick-btn" data-f="ec-b-term" data-v="14">Term <b>14d</b></button>
+                        <button type="button" class="ec-quick-btn" data-f="ec-b-term" data-v="{{ status.max_term }}">Term <b>{{ status.max_term }}d</b></button>
+                    </div>
+                    <label class="ec-check"><input type="checkbox" name="auto_escrow" id="ec-b-escrow"> Auto-escrow principal daily (safer, so investors prefer it)</label>
+                    <p class="ec-preview" id="ec-b-preview" aria-live="polite">Fill in principal, rate and term to see the full cost.</p>
+                    <button type="submit" class="game-btn game-btn-primary is-full"><span class="material-icons-outlined" aria-hidden="true">check</span>List Bond</button>
+                    <p class="ec-faint" style="margin:0; font-size: .78rem;">Unsold Bonds can be cancelled. Once funded, a Bond can't be recalled before maturity.</p>
+                </form>
+                {% endif %}
+            </section>
+        </div>
+
+        <div class="ec-split">
+            <section class="game-glass ec-panel" aria-labelledby="ec-inv-h">
+                <header class="mb-side-head">
+                    <h2 id="ec-inv-h"><span class="material-icons-outlined ec-good" aria-hidden="true">savings</span>Your investments</h2>
+                    <p>Bonds you funded · interest paid to you daily</p>
+                </header>
+                {% for b in status.my_invested_bonds %}
+                {% set p = status.progress.get(b[0]) %}
+                <div class="ec-row {{ status_tone(b[7]) }}">
+                    <div class="ec-main"><a href="/country/id={{ b[1] }}">{{ b[2] }}</a><span class="ec-sub">{{ pct(b[4]) }}/day · {{ b[5] }}d{% if b[10] %} · matures {{ b[10].strftime('%b %d') }}{% endif %}</span></div>
+                    <div class="ec-cell"><span class="ec-k">Principal</span><span class="ec-v">${{ b[3] | fmt }}</span></div>
+                    <div class="ec-cell"><span class="ec-k">{% if b[7] == 'active' %}+/day{% else %}Escrowed{% endif %}</span><span class="ec-v {{ 'ec-good' if b[7] == 'active' }}">{% if b[7] == 'active' %}+${{ (b[3] * b[4]) | fmt }}{% else %}${{ b[6] | fmt }}{% endif %}</span></div>
+                    <div class="ec-cell"><span class="ec-k">{{ b[7] | title }}</span>{% if p is not none and b[7] == 'active' %}<span class="ec-bar" style="--p: {{ p }}%;" title="{{ p | round(0) | int }}% of the term done"><i></i></span>{% else %}<span class="ec-tag">{{ b[7] }}</span>{% endif %}</div>
+                    {% if b[7] == 'defaulted' and b[8] and b[8] > 0 %}<p class="ec-row-note ec-bad">${{ b[8] | fmt }} still being collected from the issuer for you.</p>{% endif %}
+                </div>
+                {% else %}
+                <p class="ec-empty">You haven't invested in any Bonds.</p>
+                {% endfor %}
+            </section>
+
+            <section class="game-glass ec-panel" aria-labelledby="ec-iss-h">
+                <header class="mb-side-head">
+                    <h2 id="ec-iss-h"><span class="material-icons-outlined ec-bad" aria-hidden="true">account_balance</span>Bonds you've issued</h2>
+                    <p>Your debts · interest is taken from your treasury daily</p>
+                </header>
+                {% for b in status.my_issued_bonds %}
+                {% set p = status.progress.get(b[0]) %}
+                <div class="ec-row {{ status_tone(b[8]) }}">
+                    <div class="ec-main"><b>{% if b[2] %}<a href="/country/id={{ b[1] }}" style="color: var(--accent); text-decoration: none;">{{ b[2] }}</a>{% else %}No investor yet{% endif %}</b><span class="ec-sub">{{ pct(b[4]) }}/day · {{ b[5] }}d{% if b[6] %} · auto-escrow{% endif %}{% if b[12] %} · matures {{ b[12].strftime('%b %d') }}{% endif %}</span></div>
+                    <div class="ec-cell"><span class="ec-k">Principal</span><span class="ec-v">${{ b[3] | fmt }}</span></div>
+                    <div class="ec-cell"><span class="ec-k">{% if b[8] == 'active' %}−/day{% else %}Escrowed{% endif %}</span><span class="ec-v {{ 'ec-bad' if b[8] == 'active' }}">{% if b[8] == 'active' %}−${{ (b[3] * b[4]) | fmt }}{% else %}${{ b[7] | fmt }}{% endif %}</span></div>
+                    <div class="ec-cell"><span class="ec-k">{{ b[8] | title }}{% if b[9] %} · {{ b[9] }} missed{% endif %}</span>{% if p is not none and b[8] == 'active' %}<span class="ec-bar" style="--p: {{ p }}%;" title="{{ p | round(0) | int }}% of the term done"><i></i></span>{% else %}<span class="ec-tag">{{ b[8] }}</span>{% endif %}</div>
+                    {% if b[8] == 'defaulted' and b[10] and b[10] > 0 %}<p class="ec-row-note ec-bad">Defaulted: ${{ b[10] | fmt }} still owed and being collected.</p>{% endif %}
+                </div>
+                {% else %}
+                <p class="ec-empty">You haven't issued any Bonds.</p>
+                {% endfor %}
+            </section>
+        </div>
+
+        {# Plain-language walkthrough (ieb and others were confused about who
+           pays what and when). #}
+        <details class="game-glass ec-how">
+            <summary><span class="material-icons-outlined" aria-hidden="true">help_outline</span>How a Bond works</summary>
+            <ol>
                 <li><strong>You list a Bond</strong> for an amount (the principal), a daily interest rate and a term in days.</li>
                 <li><strong>An investor buys it</strong> and the principal lands in your treasury straight away.</li>
                 <li><strong>Every day of the term you pay interest</strong> on the full principal to the investor &mdash; taken from your treasury automatically.</li>
                 <li><strong>At the end of the term you pay the principal back</strong> in one go (or bit by bit each day if you tick auto-escrow).</li>
             </ol>
-            <p class="templatecontentpleft" style="margin-top: 10px; opacity: .8; font-size: .9em;">Example: a $1,000,000 Bond at 1%/day for 10 days gives you $1,000,000 now, costs you $10,000 every day, and you repay the $1,000,000 on day 10 &mdash; $1,100,000 paid back in total. Buying a Bond is the same deal from the other side.</p>
-            <p class="templatecontentpleft" style="margin-top: 8px; opacity: .8; font-size: .9em;"><strong>Defaults:</strong> missing too many interest payments, or not covering the principal at maturity, defaults the Bond &mdash; the game keeps collecting what you still owe and you can't issue a new Bond for a while.</p>
-        </div>
-
-        <div class="game-glass game-panel" style="margin-bottom: 18px;">
-            <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">add_circle</span> Issue a Bond</h2>
-            <div class="stat-grid">
-                <div class="templatedivflex2left stat-card">
-                    <strong class="stat-label"><span class="material-icons-outlined">trending_up</span>Issuance Capacity</strong>
-                    <span class="stat-value">${{ status.available_to_issue | fmt }} <span style="opacity:.6;font-size:.8em;">of ${{ status.cap | fmt }}</span></span>
-                </div>
-                <div class="templatedivflex2left stat-card">
-                    <strong class="stat-label"><span class="material-icons-outlined">percent</span>Allowed Daily Rate</strong>
-                    <span class="stat-value">{{ (status.min_rate * 100) | round(2) }}% – {{ (status.max_rate * 100) | round(2) }}%</span>
-                </div>
-                <div class="templatedivflex2left stat-card">
-                    <strong class="stat-label"><span class="material-icons-outlined">schedule</span>Allowed Term</strong>
-                    <span class="stat-value">{{ status.min_term }} – {{ status.max_term }} days</span>
-                </div>
-            </div>
-
-            {% if status.cooldown_hours_remaining > 0 %}
-            <p class="templatecontentpleft" style="margin-top: 14px; color: #FF9800;">You defaulted on a Bond recently — you can issue a new one in {{ status.cooldown_hours_remaining | round(1) }}h.</p>
-            {% else %}
-            <form action="/bonds/create" method="post" class="game-row" style="flex-wrap: wrap; margin-top: 14px; gap: 10px;">
-                <input type="number" name="principal" placeholder="Principal (min ${{ status.min_principal | commas }})" class="loginsignupinput" style="flex: 1; min-width: 180px;" min="{{ status.min_principal }}" step="1" required>
-                <input type="number" name="daily_interest_rate" placeholder="Daily interest % (e.g. 1.0)" class="loginsignupinput" style="flex: 1; min-width: 160px;" min="{{ status.min_rate * 100 }}" max="{{ status.max_rate * 100 }}" step="0.01" required>
-                <input type="number" name="term_days" placeholder="Term (days)" class="loginsignupinput" style="flex: 1; min-width: 120px;" min="{{ status.min_term }}" max="{{ status.max_term }}" step="1" required>
-                <label class="templatecontentpleft" style="display:flex; align-items:center; gap:6px; min-width: 220px;">
-                    <input type="checkbox" name="auto_escrow"> Auto-escrow principal daily (safer for investors)
-                </label>
-                <button type="submit" class="game-btn game-btn-primary">List Bond</button>
-            </form>
-            <p class="templatecontentpleft" style="margin-top: 10px; opacity: .75; font-size: .9em;">Terms can only be edited or cancelled while a Bond is unsold. Once an investor funds it, it can't be recalled before maturity.</p>
-            {% endif %}
-        </div>
-
-        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">storefront</span> Open Market</h2>
-        <div class="templateoutertablediv" style="margin-bottom: 18px;">
-        <table class="templatetable templatetable2">
-            <tr>
-                <th>Issuer</th>
-                <th>Principal</th>
-                <th>Daily Rate</th>
-                <th>Term</th>
-                <th>Escrow</th>
-                <th></th>
-            </tr>
-            {% for b in status.listed_bonds %}
-            <tr>
-                <td><a href="/country/id={{ b[1] }}">{{ b[2] }}</a></td>
-                <td>${{ b[3] | fmt }}</td>
-                <td>{{ (b[4] * 100) | round(2) }}%/day</td>
-                <td>{{ b[5] }}d</td>
-                <td>{{ 'Yes' if b[6] else 'No' }}</td>
-                <td>
-                    {% if b[1] == session['user_id'] %}
-                    <form action="/bonds/{{ b[0] }}/cancel" method="post" style="display:inline;">
-                        <button type="submit" class="game-btn game-btn-secondary">Cancel</button>
-                    </form>
-                    {% else %}
-                    <form action="/bonds/{{ b[0] }}/fund" method="post" style="display:inline;">
-                        <button type="submit" class="game-btn game-btn-primary" onclick="return confirm('Fund this bond for ${{ '{:,.0f}'.format(b[3]) }}? It can\'t be cashed out before maturity.');">Invest</button>
-                    </form>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-            {% if not status.listed_bonds %}
-            <tr><td colspan="6" style="text-align: center;">No Bonds currently listed.</td></tr>
-            {% endif %}
-        </table>
-        </div>
-
-        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">account_balance</span> Bonds You've Issued</h2>
-        <div class="templateoutertablediv" style="margin-bottom: 18px;">
-        <table class="templatetable templatetable2">
-            <tr>
-                <th>Investor</th>
-                <th>Principal</th>
-                <th>Escrowed</th>
-                <th>Status</th>
-                <th>Matures</th>
-            </tr>
-            {% for b in status.my_issued_bonds %}
-            <tr>
-                <td>{{ b[2] or '—' }}</td>
-                <td>${{ b[3] | fmt }}</td>
-                <td>${{ b[7] | fmt }}</td>
-                <td>
-                    {% if b[8] == 'active' %}<span style="color:#4CAF50;font-weight:bold;">Active</span>
-                    {% elif b[8] == 'listed' %}<span style="opacity:.7;">Listed</span>
-                    {% elif b[8] == 'repaid' %}<span style="color:#4CAF50;font-weight:bold;">Repaid</span>
-                    {% elif b[8] == 'defaulted' %}<span style="color:#F44336;font-weight:bold;">Defaulted{% if b[10] and b[10] > 0 %} (${{ b[10] | fmt }} still owed){% endif %}</span>
-                    {% else %}{{ b[8] }}
-                    {% endif %}
-                </td>
-                <td>{{ b[12].strftime('%Y-%m-%d') if b[12] else '—' }}</td>
-            </tr>
-            {% endfor %}
-            {% if not status.my_issued_bonds %}
-            <tr><td colspan="5" style="text-align: center;">You haven't issued any Bonds.</td></tr>
-            {% endif %}
-        </table>
-        </div>
-
-        <h2 class="templatecontentheaderleft"><span class="material-icons-outlined">savings</span> Your Investments</h2>
-        <div class="templateoutertablediv">
-        <table class="templatetable templatetable2">
-            <tr>
-                <th>Issuer</th>
-                <th>Principal</th>
-                <th>Escrowed</th>
-                <th>Status</th>
-                <th>Matures</th>
-            </tr>
-            {% for b in status.my_invested_bonds %}
-            <tr>
-                <td><a href="/country/id={{ b[1] }}">{{ b[2] }}</a></td>
-                <td>${{ b[3] | fmt }}</td>
-                <td>${{ b[6] | fmt }}</td>
-                <td>
-                    {% if b[7] == 'active' %}<span style="color:#4CAF50;font-weight:bold;">Active</span>
-                    {% elif b[7] == 'repaid' %}<span style="color:#4CAF50;font-weight:bold;">Repaid</span>
-                    {% elif b[7] == 'defaulted' %}<span style="color:#F44336;font-weight:bold;">Defaulted{% if b[8] and b[8] > 0 %} (${{ b[8] | fmt }} still being collected){% endif %}</span>
-                    {% else %}{{ b[7] }}
-                    {% endif %}
-                </td>
-                <td>{{ b[10].strftime('%Y-%m-%d') if b[10] else '—' }}</td>
-            </tr>
-            {% endfor %}
-            {% if not status.my_invested_bonds %}
-            <tr><td colspan="5" style="text-align: center;">You haven't invested in any Bonds.</td></tr>
-            {% endif %}
-        </table>
-        </div>
+            <p>Example: a $1,000,000 Bond at 1%/day for 10 days gives you $1,000,000 now, costs you $10,000 every day, and you repay the $1,000,000 on day 10 &mdash; $1,100,000 paid back in total. Buying a Bond is the same deal from the other side.</p>
+            <p><strong>Defaults:</strong> missing too many interest payments, or not covering the principal at maturity, defaults the Bond &mdash; the game keeps collecting what you still owe, you can't issue a new Bond for a while, and your national currency's price is capped on the Currency Exchange until it's paid.</p>
+        </details>
     </div>
 </div>
 
+<script>
+(function () {
+    'use strict';
+    var fmt = function (n) { return '$' + Math.round(n).toLocaleString('en-US'); };
+
+    // Sort the open market without a reload.
+    var sort = document.getElementById('ec-bond-sort');
+    var list = document.getElementById('ec-bond-list');
+    if (sort && list) {
+        var keys = {
+            rate: function (r) { return -parseFloat(r.dataset.rate); },
+            'return': function (r) { return -parseFloat(r.dataset['return']); },
+            small: function (r) { return parseFloat(r.dataset.principal); },
+            term: function (r) { return parseFloat(r.dataset.term); },
+            'new': function (r) { return -parseFloat(r.dataset['new']); }
+        };
+        var apply = function () {
+            var k = keys[sort.value];
+            Array.prototype.slice.call(list.querySelectorAll('.ec-row'))
+                .sort(function (a, b) { return k(a) - k(b); })
+                .forEach(function (r) { list.appendChild(r); });
+        };
+        sort.addEventListener('change', apply);
+        apply();
+    }
+
+    // Issue form: quick values + live cost preview.
+    var form = document.getElementById('ec-issue-form');
+    if (!form) return;
+    var P = document.getElementById('ec-b-principal'), R = document.getElementById('ec-b-rate'),
+        T = document.getElementById('ec-b-term'), E = document.getElementById('ec-b-escrow'),
+        pv = document.getElementById('ec-b-preview');
+    var avail = {{ status.available_to_issue | float }}, minP = {{ status.min_principal | float }},
+        minR = {{ status.min_rate * 100 }}, maxR = {{ status.max_rate * 100 }},
+        minT = {{ status.min_term }}, maxT = {{ status.max_term }};
+    form.querySelectorAll('.ec-quick-btn').forEach(function (b) {
+        b.addEventListener('click', function () { document.getElementById(b.dataset.f).value = b.dataset.v; update(); });
+    });
+    function update() {
+        var p = parseFloat(P.value) || 0, r = parseFloat(R.value) || 0, t = parseInt(T.value, 10) || 0;
+        if (!p || !r || !t) { pv.textContent = 'Fill in principal, rate and term to see the full cost.'; pv.className = 'ec-preview'; return; }
+        var errs = [];
+        if (p < minP) errs.push('Principal must be at least ' + fmt(minP) + '.');
+        if (p > avail) errs.push('You can only issue ' + fmt(avail) + ' more right now.');
+        if (r < minR || r > maxR) errs.push('Rate must be ' + minR.toFixed(2) + '–' + maxR.toFixed(2) + '% a day.');
+        if (t < minT || t > maxT) errs.push('Term must be ' + minT + '–' + maxT + ' days.');
+        if (errs.length) { pv.textContent = errs.join(' '); pv.className = 'ec-preview is-bad'; return; }
+        var daily = p * r / 100, interest = daily * t;
+        pv.innerHTML = 'You get <b>' + fmt(p) + '</b> when someone invests, pay <b>' + fmt(daily) + '</b> a day for ' + t + ' days, then repay the principal' +
+            (E.checked ? ' (escrowed bit by bit, ' + fmt(p / t) + ' a day)' : ' on day ' + t) +
+            '. Total paid back: <b>' + fmt(p + interest) + '</b> (' + fmt(interest) + ' interest).';
+        pv.className = 'ec-preview ' + (r > maxR * 0.75 ? 'is-warn' : 'is-ok');
+    }
+    [P, R, T].forEach(function (el) { el.addEventListener('input', update); });
+    E.addEventListener('change', update);
+})();
+</script>
 {% endblock %}

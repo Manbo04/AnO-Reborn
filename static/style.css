@@ -13957,533 +13957,6 @@ body.page-military .templatedivcontent .infodiv {
 
 
 
-/* --- static/css/game-trade.css --- */
-/*
- * Trade Agreements (templates/trade_agreements_v2.html). Bundled into
- * static/style.css by scripts/bundle_game_css.py -- edit this file.
- *
- * Rebuilt 2026-09-28 ("looks very outdated, make it fit better with the
- * rest"): the page used legacy .infodiv/.templatetable chrome, an inline
- * <style> relying on tokens that don't exist (--bg-color, --font-header,
- * --text-muted), hardcoded #e74c3c/#2ecc71 colours, and 5-7 column tables
- * that forced sideways scrolling (the page rendered 413px wide on a 390px
- * phone). Now: glass panels with the same compact titles as Loans/Bonds,
- * game-btn buttons, and each agreement as a card row that fits a phone.
- * Mobile first; desktop enhancements are in the min-width blocks.
- */
-
-body.page-trade-agreements .ta-page {
-    text-align: left;
-    display: flex;
-    flex-direction: column;
-    gap: var(--game-space-md);
-}
-
-/* Same compact label as game_glass_panel()'s title (game-glass.css). */
-.ta-panel-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0 0 14px;
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--colorOne);
-}
-
-.ta-panel-title .material-icons-outlined {
-    font-size: 20px;
-    color: var(--accent);
-}
-
-.ta-panel-title .game-badge {
-    margin-left: 2px;
-}
-
-.ta-top-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--game-space-md);
-}
-
-/* ---------- Form ---------- */
-.ta-form {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-.ta-field {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-width: 0;
-}
-
-/* The global `label` rule (style.css) centres labels with width:fit-content
-   and margin:auto -- form labels here sit left, above their input. */
-.ta-field label {
-    width: auto;
-    margin: 0;
-    text-align: left;
-}
-
-.ta-field label,
-.ta-exchange-side legend {
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--colorOne);
-}
-
-.ta-optional {
-    font-weight: 500;
-    color: var(--game-text-faint, var(--text-secondary));
-    margin-left: 4px;
-}
-
-.ta-hint {
-    font-size: 12px;
-    color: var(--game-text-faint, var(--text-secondary));
-}
-
-/* Inputs/selects: full-width, 44px touch height, override the legacy
-   .loginsignupinput/.templateselect widths and margins. */
-body.page-trade-agreements .ta-form .loginsignupinput,
-body.page-trade-agreements .ta-form .templateselect {
-    width: 100%;
-    min-width: 0;
-    min-height: 44px;
-    margin: 0;
-    padding: 10px 12px;
-    box-sizing: border-box;
-    border-radius: var(--game-radius-sm);
-    font-size: 14px;
-}
-
-.ta-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 12px;
-}
-
-.ta-exchange {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-}
-
-.ta-exchange-side {
-    margin: 0;
-    padding: 10px 12px 12px;
-    border: 1px solid var(--game-glass-border, var(--border));
-    border-radius: var(--game-radius-md);
-    background: var(--game-glass-bg, transparent);
-    min-width: 0;
-}
-
-.ta-exchange-side legend {
-    /* float + full width pulls the legend inside the box instead of
-       sitting on its top border. */
-    float: left;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 0;
-    margin: 0 0 8px;
-}
-
-.ta-exchange-side .ta-pair {
-    clear: both;
-}
-
-.ta-exchange-side legend .material-icons-outlined {
-    font-size: 16px;
-}
-
-.ta-exchange-side--give legend .material-icons-outlined { color: var(--danger); }
-.ta-exchange-side--get legend .material-icons-outlined { color: var(--success); }
-
-/* Amount + resource on one line: the amount gets the room, the select
-   sizes to its longest label. */
-.ta-pair {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-    gap: 8px;
-}
-
-.ta-exchange-arrow {
-    align-self: center;
-    font-size: 20px;
-    color: var(--game-text-faint, var(--text-secondary));
-}
-
-.ta-submit {
-    width: 100%;
-    min-height: 44px;
-    font-size: 14px;
-}
-
-/* ---------- How it works ---------- */
-.ta-steps {
-    margin: 0;
-    padding-left: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    font-size: 13.5px;
-    line-height: 1.5;
-    color: var(--colorOne);
-}
-
-.ta-note {
-    display: flex;
-    gap: 8px;
-    margin: 14px 0 0;
-    padding: 10px 12px;
-    border-radius: var(--game-radius-sm);
-    background: var(--game-glass-bg-strong, var(--foregroundTwo));
-    font-size: 13px;
-    line-height: 1.5;
-    color: var(--colorOne);
-}
-
-.ta-note .material-icons-outlined {
-    font-size: 18px;
-    color: var(--accent);
-    flex-shrink: 0;
-}
-
-/* ---------- Agreement rows ---------- */
-.ta-group-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 18px 0 8px;
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--game-text-faint, var(--text-secondary));
-}
-
-.ta-panel-title + .ta-group-title {
-    margin-top: 0;
-}
-
-.ta-count {
-    min-width: 20px;
-    padding: 1px 7px;
-    border-radius: 999px;
-    background: var(--game-glass-bg-strong, var(--foregroundTwo));
-    color: var(--colorOne);
-    font-size: 11px;
-    text-align: center;
-}
-
-.ta-group-hint {
-    margin: -4px 0 8px;
-    line-height: 1.4;
-    font-size: 12.5px;
-    color: var(--game-text-faint, var(--text-secondary));
-}
-
-.ta-deal-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.ta-deal {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 12px;
-    border: 1px solid var(--game-glass-border, var(--border));
-    border-radius: var(--game-radius-md);
-    background: var(--game-glass-bg-strong, var(--foregroundTwo));
-}
-
-.ta-deal-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    min-width: 0;
-}
-
-.ta-partner {
-    font-weight: 700;
-    font-size: 14.5px;
-    color: var(--accent);
-    text-decoration: none;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.ta-partner:hover {
-    text-decoration: underline;
-}
-
-/* Phones: give and get stacked, each a full-width line (label | chip), so
-   resource names like "Consumer Goods" fit instead of truncating. */
-.ta-deal-swap {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.ta-side {
-    display: grid;
-    grid-template-columns: 56px minmax(0, 1fr);
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-}
-
-.ta-deal-swap .ta-deal-arrow {
-    display: none;
-}
-
-.ta-side-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--game-text-faint, var(--text-secondary));
-}
-
-.ta-deal-arrow {
-    font-size: 18px;
-    color: var(--game-text-faint, var(--text-secondary));
-    padding-bottom: 8px;
-}
-
-.ta-chip {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 0;
-    padding: 6px 8px;
-    border-radius: var(--game-radius-sm);
-    font-size: 13px;
-    color: var(--colorOne);
-    border-left: 3px solid transparent;
-    background: var(--game-glass-bg, transparent);
-}
-
-.ta-chip--give { border-left-color: var(--danger); }
-.ta-chip--get { border-left-color: var(--success); }
-
-.ta-chip img {
-    width: 18px;
-    height: 18px;
-    object-fit: contain;
-    flex-shrink: 0;
-}
-
-.ta-chip-amount {
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-}
-
-.ta-chip-res {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.ta-deal-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 14px;
-    font-size: 12px;
-    color: var(--game-text-faint, var(--text-secondary));
-}
-
-.ta-deal-meta > span {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.ta-deal-meta .material-icons-outlined {
-    font-size: 14px;
-}
-
-.ta-deal-message {
-    margin: 0;
-    font-size: 12.5px;
-    font-style: italic;
-    color: var(--colorOne);
-    overflow-wrap: anywhere;
-}
-
-.ta-deal-actions {
-    display: flex;
-    gap: 8px;
-}
-
-.ta-deal-actions form {
-    flex: 1;
-    margin: 0;
-}
-
-.ta-deal-actions .game-btn {
-    width: 100%;
-    min-height: 40px;
-}
-
-.ta-btn-danger {
-    color: var(--danger);
-    border-color: var(--game-glass-border, var(--border));
-}
-
-.ta-btn-danger:hover {
-    color: var(--danger);
-    background: color-mix(in srgb, var(--danger) 12%, transparent);
-}
-
-.ta-completed summary {
-    cursor: pointer;
-    list-style: none;
-}
-
-.ta-completed summary::-webkit-details-marker {
-    display: none;
-}
-
-.ta-chevron {
-    font-size: 18px;
-    margin-left: auto;
-    transition: transform 0.15s;
-}
-
-.ta-completed[open] .ta-chevron {
-    transform: rotate(180deg);
-}
-
-.ta-empty {
-    text-align: center;
-    padding: 18px 8px 8px;
-    color: var(--game-text-faint, var(--text-secondary));
-    font-size: 13.5px;
-}
-
-.ta-empty .material-icons-outlined {
-    font-size: 36px;
-    color: var(--accent);
-    opacity: 0.8;
-}
-
-.ta-empty p {
-    margin: 4px 0;
-    line-height: 1.4;
-}
-
-.ta-empty strong {
-    color: var(--colorOne);
-}
-
-/* ---------- Tablet / desktop ---------- */
-@media (min-width: 620px) {
-    .ta-exchange {
-        flex-direction: row;
-        align-items: center;
-    }
-
-    .ta-exchange-side {
-        flex: 1;
-    }
-
-    .ta-exchange-arrow {
-        transform: rotate(90deg);
-    }
-
-    .ta-submit {
-        width: auto;
-        align-self: flex-start;
-        padding-left: 22px;
-        padding-right: 22px;
-    }
-
-    .ta-deal-actions {
-        justify-content: flex-end;
-    }
-
-    .ta-deal-actions form {
-        flex: 0 0 auto;
-    }
-
-    .ta-deal-actions .game-btn {
-        width: auto;
-        padding-left: 16px;
-        padding-right: 16px;
-    }
-}
-
-/* One line per agreement from 900px; tablets keep the stacked card, which
-   has room for full resource names. */
-@media (min-width: 900px) {
-    .ta-deal {
-        display: grid;
-        grid-template-columns: minmax(120px, 0.8fr) minmax(0, 2fr) auto;
-        grid-template-areas:
-            "head swap actions"
-            "meta meta meta";
-        align-items: center;
-        column-gap: 16px;
-        row-gap: 6px;
-    }
-
-    .ta-deal-head {
-        grid-area: head;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-        overflow: hidden;
-    }
-
-    .ta-partner {
-        max-width: 100%;
-    }
-
-    .ta-deal-swap {
-        grid-area: swap;
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-        align-items: end;
-        gap: 8px;
-    }
-
-    .ta-side {
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 4px;
-    }
-
-    .ta-deal-swap .ta-deal-arrow {
-        display: block;
-    }
-
-    .ta-deal-meta { grid-area: meta; }
-    .ta-deal-message { grid-column: 1 / -1; }
-    .ta-deal-actions { grid-area: actions; }
-
-    .ta-deal-actions .game-btn { min-height: 36px; }
-}
-
-@media (min-width: 1000px) {
-    .ta-top-grid {
-        grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-        align-items: start;
-    }
-}
-
-
 /* --- static/css/market-book.css --- */
 /* ==========================================================================
    Market order book (templates/market_v2.html) — Market UI Rework,
@@ -15580,6 +15053,625 @@ body.page-currency-market .cm-blocked { line-height: 1.3; }
     body.page-currency-market .mb-trade.cm-trade .market-purchase-input { width: 88px; }
 }
 
+/* --- Neatness pass (Dede 10-06: "see how everything is centered and neat"
+   on the market) ------------------------------------------------------- */
+/* Wallet coins share the full row evenly instead of bunching left. */
+body.page-currency-market .cm-wallet {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    overflow: visible;
+}
+body.page-currency-market .cm-coin { max-width: none; min-width: 0; }
+
+/* Key: chips and the "how it works" toggle on one line. */
+body.page-currency-market .mb-key { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
+body.page-currency-market .mb-key .cm-how { flex: 0 0 auto; }
+body.page-currency-market .mb-key .cm-how[open] { flex: 1 0 100%; }
+
+/* Quick prices: an even 2x2 grid. */
+body.page-currency-market .cm-quick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+body.page-currency-market .cm-quick-btn { justify-content: space-between; }
+
+/* Board and post form end on the same line: the post form sets the row
+   height and the board's table scrolls inside it. */
+@media (min-width: 1000px) {
+    body.page-currency-market .cm-split { align-items: stretch; }
+    body.page-currency-market .cm-board { display: flex; flex-direction: column; }
+    body.page-currency-market .cm-board-scroll { flex: 1 1 auto; height: 0; min-height: 220px; max-height: none; }
+}
+
+/* Field labels were near-invisible on the dark glass (Dede's screenshot). */
+body.page-currency-market .mb-field > span,
+body.page-currency-market .cm-coin small,
+body.page-currency-market .cm-table th { color: color-mix(in srgb, var(--colorOne) 62%, transparent); }
+body.page-currency-market .mb-field { width: auto; max-width: none; }
+body.page-currency-market .cm-post-form { box-sizing: border-box; }
+body.page-currency-market table.cm-table { display: table; width: 100%; overflow: visible; }
+
+
+/* --- static/css/economy-pages.css --- */
+/* ==========================================================================
+   Economy tabs: Trade Agreements, Loans, Bonds, Currency Unions
+   (Dede 2026-10-06: "do it for all economy tabs" after the Currency Exchange
+   rebuild). Same language as market-book.css / currency-exchange.css: a
+   stats strip, compact glass panels with mb-side-head headers, rows tinted
+   and left-bordered by state, live previews on every form, explanations
+   folded into <details>. Pages carry body.page-market page-econ so the
+   shared mb-* pieces (side heads, chips, Max buttons) apply as well.
+   Tone colours: good (green), warn (orange), bad (red), info (blue),
+   gold, muted.
+   ========================================================================== */
+
+body.page-econ {
+    --ec-good: var(--success, #2d9f6f);
+    --ec-warn: var(--warning, #e0913a);
+    --ec-bad: var(--danger, #d35649);
+    --ec-info: var(--accent, #00a7e1);
+    --ec-gold: var(--gold, #d4a843);
+    --ec-muted: var(--game-text-faint, #8a93a3);
+    --ec-tone: var(--ec-info);
+}
+
+body.page-econ .tone-good { --ec-tone: var(--ec-good); }
+body.page-econ .tone-warn { --ec-tone: var(--ec-warn); }
+body.page-econ .tone-bad { --ec-tone: var(--ec-bad); }
+body.page-econ .tone-info { --ec-tone: var(--ec-info); }
+body.page-econ .tone-gold { --ec-tone: var(--ec-gold); }
+body.page-econ .tone-muted { --ec-tone: var(--ec-muted); }
+
+body.page-econ .ec-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+body.page-econ .ec-wrap,
+body.page-econ .ec-wrap p,
+body.page-econ .ec-wrap li,
+body.page-econ .ec-wrap label,
+body.page-econ .ec-wrap legend,
+body.page-econ .ec-wrap th,
+body.page-econ .ec-wrap td { text-align: left; }
+
+body.page-econ .ec-faint { color: var(--ec-muted); }
+body.page-econ .ec-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+body.page-econ .ec-good { color: var(--ec-good); }
+body.page-econ .ec-bad { color: var(--ec-bad); }
+body.page-econ .ec-warn { color: var(--ec-warn); }
+
+/* --- Stats strip ----------------------------------------------------------- */
+body.page-econ .ec-strip { padding: 10px 12px; }
+
+body.page-econ .ec-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin: 0;
+}
+
+@media (min-width: 620px) {
+    body.page-econ .ec-stats { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+}
+
+body.page-econ .ec-stats > div {
+    min-width: 0;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border-left: 3px solid var(--ec-tone);
+    background: color-mix(in srgb, var(--ec-tone) 10%, var(--game-glass-bg-strong, transparent));
+}
+
+body.page-econ .ec-stats dt {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--ec-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.page-econ .ec-stats dd {
+    margin: 0;
+    font-weight: 700;
+    font-size: 1.02rem;
+    font-variant-numeric: tabular-nums;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.page-econ .ec-stats dd small {
+    font-weight: 400;
+    font-size: 0.72rem;
+    color: var(--ec-muted);
+}
+
+/* --- Layout -------------------------------------------------------------- */
+body.page-econ .ec-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+}
+
+@media (min-width: 1000px) {
+    body.page-econ .ec-split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    body.page-econ .ec-split.is-wide-left { grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr); }
+    body.page-econ .ec-split.is-wide-right { grid-template-columns: minmax(300px, 1fr) minmax(0, 1.5fr); }
+}
+
+body.page-econ .ec-panel { padding: 0; overflow: hidden; }
+body.page-econ .ec-panel .mb-side-head p { line-height: 1.3; }
+body.page-econ .ec-body { padding: 10px 12px 12px; }
+
+body.page-econ .ec-head-action { margin-left: auto; }
+
+/* --- Rows ------------------------------------------------------------------ */
+body.page-econ .ec-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 14px;
+    padding: 7px 12px;
+    border-bottom: 1px solid var(--game-glass-border);
+    border-left: 3px solid var(--ec-tone);
+    background: color-mix(in srgb, var(--ec-tone) 8%, transparent);
+    font-size: 0.88rem;
+    line-height: 1.3;
+}
+
+body.page-econ .ec-row:last-child { border-bottom: 0; }
+
+body.page-econ .ec-main {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 150px;
+    min-width: 0;
+}
+
+body.page-econ .ec-main > a,
+body.page-econ .ec-main > b {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+}
+
+body.page-econ .ec-main > a { color: var(--accent); text-decoration: none; }
+
+body.page-econ .ec-sub {
+    font-size: 0.74rem;
+    color: var(--ec-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body.page-econ .ec-cell {
+    display: flex;
+    flex-direction: column;
+    min-width: 64px;
+    font-variant-numeric: tabular-nums;
+}
+
+body.page-econ .ec-k {
+    font-size: 0.64rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--ec-muted);
+    white-space: nowrap;
+}
+
+body.page-econ .ec-v { font-weight: 700; white-space: nowrap; }
+
+body.page-econ .ec-act {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+}
+
+body.page-econ .ec-act form { margin: 0; display: flex; gap: 6px; align-items: center; }
+body.page-econ .ec-act .game-btn { min-height: 34px; }
+
+body.page-econ .ec-row-note {
+    flex: 1 0 100%;
+    margin: 0;
+    font-size: 0.76rem;
+    color: var(--ec-muted);
+}
+
+body.page-econ .ec-tag {
+    display: inline-block;
+    align-self: flex-start;
+    padding: 0 6px;
+    border-radius: 4px;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: color-mix(in srgb, var(--ec-tone) 75%, var(--colorOne));
+    background: color-mix(in srgb, var(--ec-tone) 18%, transparent);
+}
+
+body.page-econ .ec-group {
+    margin: 0;
+    padding: 6px 12px 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--ec-muted);
+    border-bottom: 1px solid var(--game-glass-border);
+}
+
+body.page-econ .ec-count {
+    display: inline-block;
+    min-width: 18px;
+    margin-left: 4px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--game-glass-bg-strong);
+    color: var(--colorOne);
+    text-align: center;
+}
+
+body.page-econ .ec-empty {
+    margin: 0;
+    padding: 12px;
+    font-size: 0.88rem;
+    color: var(--ec-muted);
+}
+
+/* --- Progress bars ----------------------------------------------------- */
+body.page-econ .ec-bar {
+    position: relative;
+    height: 8px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--colorOne) 12%, transparent);
+    overflow: hidden;
+}
+
+body.page-econ .ec-bar > i {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--p, 0%);
+    border-radius: inherit;
+    background: var(--ec-tone);
+}
+
+body.page-econ .ec-bar > b {
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    left: var(--m, 70%);
+    width: 2px;
+    background: var(--colorOne);
+    opacity: 0.7;
+}
+
+body.page-econ .ec-bar.is-big { height: 12px; }
+body.page-econ .ec-cell .ec-bar { width: 90px; margin-top: 3px; }
+
+body.page-econ .ec-legend {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin-top: 4px;
+    font-size: 0.74rem;
+    color: var(--ec-muted);
+}
+
+/* --- Forms --------------------------------------------------------------- */
+body.page-econ .ec-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+}
+
+body.page-econ .ec-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+body.page-econ .ec-grid.is-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+@media (max-width: 480px) {
+    body.page-econ .ec-grid.is-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    body.page-econ .ec-grid.is-3 > :last-child { grid-column: 1 / -1; }
+}
+
+body.page-econ .ec-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    color: var(--ec-muted);
+}
+
+body.page-econ .ec-field input,
+body.page-econ .ec-field select {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    min-height: 40px;
+    margin: 0;
+    font-size: 16px;
+    text-transform: none;
+    letter-spacing: normal;
+    box-sizing: border-box;
+}
+
+body.page-econ .ec-field .ec-opt { font-weight: 400; text-transform: none; }
+
+body.page-econ .ec-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 0.88rem;
+    cursor: pointer;
+}
+
+body.page-econ .ec-check input { width: 18px; height: 18px; min-width: 0; min-height: 0; margin: 0; flex: 0 0 auto; }
+
+body.page-econ .ec-quick { display: flex; flex-wrap: wrap; gap: 6px; }
+
+body.page-econ .ec-quick-btn {
+    display: inline-flex;
+    gap: 4px;
+    align-items: baseline;
+    min-height: 32px;
+    margin: 0;
+    padding: 4px 10px;
+    border: 1px solid var(--game-glass-border);
+    border-radius: 999px;
+    background: var(--game-glass-bg-strong);
+    color: var(--colorOne);
+    font-size: 0.78rem;
+    cursor: pointer;
+}
+
+body.page-econ .ec-quick-btn b { color: var(--accent); font-variant-numeric: tabular-nums; }
+body.page-econ .ec-quick-btn:hover:not(:disabled) { border-color: var(--accent); }
+body.page-econ .ec-quick-btn:disabled { opacity: 0.45; cursor: default; }
+
+body.page-econ .ec-preview {
+    margin: 0;
+    padding: 8px 12px;
+    border-left: 3px solid var(--ec-info);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--ec-info) 10%, transparent);
+    font-size: 0.86rem;
+    line-height: 1.45;
+}
+
+body.page-econ .ec-preview.is-ok { border-left-color: var(--ec-good); background: color-mix(in srgb, var(--ec-good) 12%, transparent); }
+body.page-econ .ec-preview.is-warn { border-left-color: var(--ec-warn); background: color-mix(in srgb, var(--ec-warn) 13%, transparent); }
+body.page-econ .ec-preview.is-bad { border-left-color: var(--ec-bad); background: color-mix(in srgb, var(--ec-bad) 14%, transparent); }
+
+body.page-econ .ec-kv {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 3px 12px;
+    margin: 0;
+    font-size: 0.86rem;
+}
+
+body.page-econ .ec-kv dt { color: var(--ec-muted); }
+body.page-econ .ec-kv dd { margin: 0; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+body.page-econ .ec-alert {
+    margin: 0;
+    padding: 8px 12px;
+    border-left: 3px solid var(--ec-tone);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--ec-tone) 12%, transparent);
+    font-size: 0.86rem;
+}
+
+/* --- Tables (boards) -------------------------------------------------------- */
+body.page-econ .ec-scroll { max-height: 420px; overflow: auto; -webkit-overflow-scrolling: touch; }
+
+body.page-econ .ec-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+
+body.page-econ .ec-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 6px 8px;
+    font-size: 0.66rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--ec-muted);
+    background: var(--game-glass-bg-strong, rgba(20, 24, 32, 0.92));
+    border-bottom: 1px solid var(--game-glass-border);
+    white-space: nowrap;
+}
+
+body.page-econ .ec-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--game-glass-border);
+    vertical-align: middle;
+}
+
+body.page-econ .ec-table tbody tr { background: color-mix(in srgb, var(--ec-tone) 8%, transparent); }
+body.page-econ .ec-table tbody tr td:first-child { border-left: 3px solid var(--ec-tone); }
+body.page-econ .ec-table tbody tr:hover { background: color-mix(in srgb, var(--ec-tone) 16%, transparent); }
+body.page-econ .ec-table form { margin: 0; display: inline-flex; gap: 6px; }
+body.page-econ .ec-table .game-btn { min-height: 32px; }
+
+@media (max-width: 560px) {
+    body.page-econ .ec-hide-sm { display: none; }
+    body.page-econ .ec-table { font-size: 0.8rem; }
+    body.page-econ .ec-table td,
+    body.page-econ .ec-table th { padding: 5px 6px; }
+}
+
+/* --- How it works / legend -------------------------------------------- */
+body.page-econ .ec-how {
+    padding: 8px 14px;
+}
+
+body.page-econ .ec-how summary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+    cursor: pointer;
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: var(--accent);
+    list-style: none;
+}
+
+body.page-econ .ec-how summary::-webkit-details-marker { display: none; }
+
+body.page-econ .ec-how ol,
+body.page-econ .ec-how ul { margin: 6px 0 4px; padding-left: 20px; font-size: 0.86rem; line-height: 1.5; }
+
+body.page-econ .ec-how li { margin-bottom: 3px; }
+body.page-econ .ec-how p { margin: 6px 0 0; font-size: 0.84rem; line-height: 1.45; opacity: 0.9; }
+
+body.page-econ .ec-legend-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+body.page-econ .ec-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 10px 2px 8px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--ec-tone) 45%, transparent);
+    background: color-mix(in srgb, var(--ec-tone) 14%, var(--game-glass-bg-strong));
+    font-size: 0.78rem;
+    line-height: 1.3;
+}
+
+body.page-econ .ec-chip::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--ec-tone);
+}
+
+/* Resource chip (icon + amount) used by trade agreements. */
+body.page-econ .ec-res {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px 2px 4px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--ec-tone) 40%, transparent);
+    background: color-mix(in srgb, var(--ec-tone) 12%, transparent);
+    font-size: 0.82rem;
+    white-space: nowrap;
+}
+
+body.page-econ .ec-res img { width: 18px; height: 18px; object-fit: contain; }
+body.page-econ .ec-res b { font-variant-numeric: tabular-nums; }
+body.page-econ .ec-swap { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+body.page-econ .ec-swap .material-icons-outlined { font-size: 1rem; color: var(--ec-muted); }
+
+/* game-experience.css (max-width: 768px) stacks every form and stretches
+   every input/button on page-market to full width; these pages opt out
+   the same way the order book does. */
+@media (max-width: 768px) {
+    body.page-econ .ec-act form,
+    body.page-econ .ec-table form { flex-direction: row; width: auto; }
+    body.page-econ .ec-act button,
+    body.page-econ .ec-table button,
+    body.page-econ .ec-quick-btn,
+    body.page-econ .ec-head-action,
+    body.page-econ .ec-form button { width: auto; margin-top: 0; }
+    body.page-econ .ec-form .game-btn-primary.is-full { width: 100%; }
+    body.page-econ .ec-quick-btn { min-height: 36px; min-width: 0; }
+    body.page-econ .ec-check input { width: 18px; min-height: 0; min-width: 0; }
+}
+
+@media (min-width: 769px) and (pointer: fine) {
+    body.page-econ .ec-field input,
+    body.page-econ .ec-field select { min-height: 34px; font-size: 14px; }
+}
+
+/* Side-by-side panels end on the same line (neat edges, like the market). */
+@media (min-width: 1000px) {
+    body.page-econ .ec-split { align-items: stretch; }
+}
+
+/* Labels readable on dark glass. */
+body.page-econ .ec-field > span,
+body.page-econ .ec-stats dt,
+body.page-econ .ec-k,
+body.page-econ .ec-table th,
+body.page-econ .ec-group { color: color-mix(in srgb, var(--colorOne) 62%, transparent); }
+
+/* Stats strip: tiles grow to fill each row, so a wrapped last row never
+   leaves one orphan tile hanging on the left. */
+body.page-econ .ec-stats { display: flex; flex-wrap: wrap; }
+body.page-econ .ec-stats > div { flex: 1 1 120px; }
+
+/* The global `label` rule (style.css) makes labels width:fit-content and
+   centred; form fields here fill their column. */
+body.page-econ .ec-field,
+body.page-econ .ec-check { width: auto; max-width: none; align-self: stretch; margin: 0; }
+body.page-econ .ec-field .game-purchase-input,
+body.page-econ .ec-field .game-select { width: 100%; }
+
+/* Stats strip: an even grid of tiles (no stretched orphans). */
+body.page-econ .ec-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+body.page-econ .ec-stats > div { flex: none; }
+@media (min-width: 620px) {
+    body.page-econ .ec-stats { grid-template-columns: repeat(auto-fit, minmax(105px, 1fr)); }
+}
+
+/* Rows stay on one line (actions included) once the panel has room. */
+body.page-econ .ec-panel { container-type: inline-size; }
+@container (min-width: 460px) {
+    body.page-econ .ec-row { flex-wrap: nowrap; gap: 4px 10px; }
+    body.page-econ .ec-row:has(.ec-row-note) { flex-wrap: wrap; }
+    body.page-econ .ec-main { flex: 1 1 0; }
+    body.page-econ .ec-cell { min-width: 0; flex: 0 0 auto; }
+    body.page-econ .ec-act { flex: 0 0 auto; flex-wrap: nowrap; }
+}
+
+body.page-econ .ec-sort { min-height: 30px; padding: 2px 8px; font-size: 0.8rem; width: auto; margin: 0; }
+@container (min-width: 460px) {
+    /* fixed-width value columns so rows line up like a table */
+    body.page-econ .ec-cell { width: 68px; }
+    body.page-econ .ec-act { min-width: 84px; justify-content: flex-end; }
+}
+@container (min-width: 460px) {
+    body.page-econ .ec-cell:has(.ec-bar) { width: 96px; }
+}
+
+/* Quick buttons in an even grid (no orphan on a second line). */
+body.page-econ .ec-quick { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); }
+body.page-econ .ec-quick-btn { justify-content: space-between; }
+@container (min-width: 460px) {
+    body.page-econ .ec-cell.is-wide { width: 110px; }
+}
+body.page-econ .ec-quick { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+body.page-econ .ec-quick.is-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+/* game-experience.css (<=768px) sets page-market forms to width:100% and
+   tables to display:block; with padding that pushed forms past the panel
+   edge and collapsed the tables. */
+body.page-econ .ec-form { box-sizing: border-box; width: 100%; }
+body.page-econ table.ec-table { display: table; width: 100%; overflow: visible; }
+
 
 /* --- static/css/game-military.css --- */
 /*
@@ -16566,77 +16658,6 @@ body.page-statistics .templatecontentheaderleft {
     }
 }
 
-/* --- Bonds --- */
-body.page-bonds .game-panel {
-    margin-bottom: 10px !important; /* overrides inline margin-bottom: 18px */
-    padding: 12px 14px;
-}
-body.page-bonds .templatecontentpleft {
-    width: 100% !important; /* overrides legacy 80% width that caused severe text wrapping */
-    box-sizing: border-box;
-    font-size: 13.5px;
-    line-height: 1.4;
-    margin: 4px 0 6px;
-}
-body.page-bonds ol.templatecontentpleft {
-    padding-left: 18px;
-}
-body.page-bonds p.templatecontentpleft {
-    padding-left: 0;
-}
-body.page-bonds .stat-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 6px 8px;
-    margin: 8px 0;
-    width: 100%;
-}
-body.page-bonds .stat-card {
-    padding: 8px 10px;
-    margin: 0 !important; /* overrides legacy .templatedivflex2left auto margins */
-    min-width: 0;
-}
-body.page-bonds .templatecontentheaderleft {
-    margin: 10px 0 6px;
-    font-size: 1.1rem;
-}
-body.page-bonds .templateoutertablediv {
-    margin-bottom: 10px;
-}
-body.page-bonds .templatetable th,
-body.page-bonds .templatetable td {
-    padding: 6px 8px;
-    font-size: 13px;
-}
-body.page-bonds .game-row {
-    gap: 8px;
-    margin-top: 8px !important;
-}
-body.page-bonds .game-row input,
-body.page-bonds .game-row select {
-    min-height: 40px;
-}
-body.page-bonds .game-btn {
-    min-height: 40px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 6px 14px;
-    box-sizing: border-box;
-}
-@media (min-width: 900px) {
-    body.page-bonds .templatedivcontent {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        align-items: start;
-    }
-    body.page-bonds .templatedivcontent > h2,
-    body.page-bonds .templatedivcontent > .templateoutertablediv {
-        grid-column: 1 / -1;
-    }
-}
-
 /* --- Recruitments --- */
 body.page-recruitments .recruitment-grid {
     gap: 8px;
@@ -16674,129 +16695,6 @@ body.page-recruitments .recruitment-card-actions .game-btn {
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
         gap: 12px;
         margin: 14px 0;
-    }
-}
-
-/* --- Currency Unions --- */
-body.page-currency-unions .game-panel {
-    margin-bottom: 10px !important; /* overrides inline margin-bottom: 18px */
-    padding: 12px 14px;
-}
-body.page-currency-unions .templatecontentpleft {
-    width: 100% !important; /* overrides legacy 80% width */
-    box-sizing: border-box;
-    font-size: 13.5px;
-    line-height: 1.4;
-    margin: 4px 0 6px;
-}
-body.page-currency-unions ul.templatecontentpleft {
-    padding-left: 18px;
-}
-body.page-currency-unions p.templatecontentpleft {
-    padding-left: 0;
-}
-body.page-currency-unions .templatecontentheaderleft {
-    margin: 10px 0 6px;
-    font-size: 1.1rem;
-}
-body.page-currency-unions .templateoutertablediv {
-    margin-bottom: 10px;
-}
-body.page-currency-unions .templatetable th,
-body.page-currency-unions .templatetable td {
-    padding: 6px 8px;
-    font-size: 13px;
-}
-body.page-currency-unions .game-row {
-    gap: 8px;
-}
-body.page-currency-unions .game-row input,
-body.page-currency-unions .game-row select {
-    min-height: 40px;
-}
-body.page-currency-unions .game-btn {
-    min-height: 40px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 6px 14px;
-    box-sizing: border-box;
-}
-@media (min-width: 900px) {
-    body.page-currency-unions .templatedivcontent {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        align-items: start;
-    }
-    body.page-currency-unions .templatedivcontent > h2,
-    body.page-currency-unions .templatedivcontent > .templateoutertablediv {
-        grid-column: 1 / -1;
-    }
-}
-
-/* --- Loans --- */
-body.page-loans .game-panel {
-    margin-bottom: 10px !important; /* overrides inline margin-bottom: 18px */
-    padding: 12px 14px;
-}
-body.page-loans .templatecontentpleft {
-    width: 100% !important; /* overrides legacy 80% width */
-    box-sizing: border-box;
-    font-size: 13.5px;
-    line-height: 1.4;
-    margin: 4px 0 6px;
-}
-body.page-loans .stat-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 6px 8px;
-    margin: 8px 0;
-    width: 100%;
-}
-body.page-loans .stat-card {
-    padding: 8px 10px;
-    margin: 0 !important; /* overrides legacy .templatedivflex2left auto margins */
-    min-width: 0;
-}
-body.page-loans .templatecontentheaderleft {
-    margin: 10px 0 6px;
-    font-size: 1.1rem;
-}
-body.page-loans .templateoutertablediv {
-    margin-bottom: 10px;
-}
-body.page-loans .templatetable th,
-body.page-loans .templatetable td {
-    padding: 6px 8px;
-    font-size: 13px;
-}
-body.page-loans .game-row {
-    gap: 8px;
-    margin-top: 8px !important;
-}
-body.page-loans .game-row input,
-body.page-loans .game-row select {
-    min-height: 40px;
-}
-body.page-loans .game-btn {
-    min-height: 40px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 6px 14px;
-    box-sizing: border-box;
-}
-@media (min-width: 900px) {
-    body.page-loans .templatedivcontent {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        align-items: start;
-    }
-    body.page-loans .templatedivcontent > h2,
-    body.page-loans .templatedivcontent > .templateoutertablediv {
-        grid-column: 1 / -1;
     }
 }
 

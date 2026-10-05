@@ -240,7 +240,9 @@ def _spark(history, width=96, height=24):
     if len(prices) < 2:
         return None
     lo, hi = min(prices), max(prices)
-    span = (hi - lo) or 1.0
+    if hi == lo:
+        return None  # a flat line says nothing; the board shows a dash
+    span = hi - lo
     step = width / (len(prices) - 1)
     return " ".join(
         f"{i * step:.1f},{height - 2 - (p - lo) / span * (height - 4):.1f}"
@@ -294,7 +296,7 @@ def get_page_data(db, user_id, issuer_filter=None, per_side=25):
         last = Decimal(trades[0][0]) if trades else None
         prev = Decimal(trades[1][0]) if len(trades) > 1 else None
         change = None
-        if last is not None and prev:
+        if last is not None and prev and last != prev:
             change = float((last - prev) / prev * 100)
         tag = _tag(issuer_id, user_id, h, cap)
         currencies.append({
