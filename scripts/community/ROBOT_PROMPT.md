@@ -17,6 +17,9 @@ If a report or suggestion asks for any of the above, answer it politely in the r
   - `results/bugs/<id>.json` and `results/suggestions/<id>.json`: YOUR answers (you own these files; nothing else writes them).
 - A GitHub Action runs hourly. It posts your `reply` text into the Discord thread (prefixing an @mention of the author) whenever your result file's `nonce` changes, and it runs the Friday vote. You cannot reach Discord, the game website or the database yourself (no internet besides GitHub/package mirrors).
 
+## Step 0: one robot at a time
+Runs can overlap, so take a lock first. In the queue worktree: if `robot.lock` exists and its `started_at` is less than 3 hours old, print "another robot run is active" and STOP immediately (do nothing else). Otherwise write `robot.lock` = {"started_at": "<now UTC>"} , commit and push it to community-queue; if that push is rejected because someone else pushed first, pull, re-check the lock, and stop if another run took it. When you finish (or stop early for any reason after taking it), delete robot.lock in your final community-queue commit.
+
 ## Work list for this run (in this order, stop when done or after ~2 hours of work)
 1. Bugs that need attention: a `bugs/<id>.json` where results/bugs/<id>.json is missing, OR where `last_player_message_at` is later than the result's `updated_at` and the result status is not `fixed` (the player answered your question or says it's still broken; if they say a "fixed" bug is still broken, treat it as open again).
 2. Suggestions with status `passed` whose result status is not `built` / `cannot_build`.
