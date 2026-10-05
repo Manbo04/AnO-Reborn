@@ -57,6 +57,7 @@ def main():
         )
         conn.commit()
 
+        replayed_any = False
         for i in range(1, MISSED_TICKS + 1):
             key = f"{KEY_PREFIX}{i:02d}"
             # Claim first: ON CONFLICT means already claimed/done -> skip.
@@ -71,6 +72,7 @@ def main():
             if not claimed:
                 print(f"[replay] {key} already done; skipping")
                 continue
+            replayed_any = True
 
             # Stay clear of the scheduled tick (:25) so we never make it skip.
             while 22 <= time.gmtime().tm_min <= 29:
@@ -111,10 +113,14 @@ def main():
                 break
 
         # Don't let our last replay's last_run make the next scheduled tick skip.
-        cur.execute(
-            "UPDATE task_runs SET last_run = NULL "
-            "WHERE task_name = 'generate_province_revenue'"
-        )
+        # Only when we actually replayed: clearing it on a no-op run made the
+        # boot nudge see the tick as never-run and bill an extra upkeep tick
+        # on every celery-worker deploy.
+        if replayed_any:
+            cur.execute(
+                "UPDATE task_runs SET last_run = NULL "
+                "WHERE task_name = 'generate_province_revenue'"
+            )
         cur.execute("SELECT pg_advisory_unlock(%s)", (SCRIPT_LOCK,))
         conn.commit()
     print("[replay] finished")
