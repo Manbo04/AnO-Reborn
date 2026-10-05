@@ -1,5 +1,6 @@
 # Trade Agreements - Private recurring automatic trades between players
 from flask import request, render_template, session, redirect, flash, jsonify
+from helpers import redirect_back
 
 from helpers import login_required, is_theme_v2_enabled
 from database import get_request_cursor, cache_response
@@ -92,10 +93,10 @@ def create_trade_agreement():
 
     if not ok:
         flash(error, "error")
-        return redirect("/trade-agreements")
+        return redirect_back("/trade-agreements")
 
     flash("Trade agreement proposal sent!", "success")
-    return redirect("/trade-agreements")
+    return redirect_back("/trade-agreements")
 
 
 @login_required
@@ -108,7 +109,7 @@ def accept_trade_agreement(agreement_id):
 
     if not ok:
         flash(error, "error")
-        return redirect("/trade-agreements")
+        return redirect_back("/trade-agreements")
 
     # Execute the first trade immediately
     success, msg = execute_trade_agreement(agreement_id)
@@ -118,7 +119,7 @@ def accept_trade_agreement(agreement_id):
     else:
         flash(f"Agreement accepted but first trade failed: {msg}", "warning")
 
-    return redirect("/trade-agreements")
+    return redirect_back("/trade-agreements")
 
 
 @login_required
@@ -131,10 +132,10 @@ def reject_trade_agreement(agreement_id):
 
     if not ok:
         flash(error, "error")
-        return redirect("/trade-agreements")
+        return redirect_back("/trade-agreements")
 
     flash("Agreement rejected", "success")
-    return redirect("/trade-agreements")
+    return redirect_back("/trade-agreements")
 
 
 @login_required
@@ -147,10 +148,10 @@ def cancel_trade_agreement(agreement_id):
 
     if not ok:
         flash(error, "error")
-        return redirect("/trade-agreements")
+        return redirect_back("/trade-agreements")
 
     flash("Agreement cancelled", "success")
-    return redirect("/trade-agreements")
+    return redirect_back("/trade-agreements")
 
 
 @login_required
@@ -163,10 +164,10 @@ def resume_trade_agreement(agreement_id):
 
     if not ok:
         flash(error, "error")
-        return redirect("/trade-agreements")
+        return redirect_back("/trade-agreements")
 
     flash("Agreement resumed", "success")
-    return redirect("/trade-agreements")
+    return redirect_back("/trade-agreements")
 
 
 def register_trade_agreement_routes(app):

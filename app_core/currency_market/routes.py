@@ -1,4 +1,5 @@
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+from helpers import redirect_back
 
 from database import get_request_cursor, invalidate_user_cache
 from helpers import login_required
@@ -12,7 +13,7 @@ def _back():
     issuer = request.form.get("back_issuer", "")
     if issuer.isdigit():
         return redirect(url_for("currency_market.currency_market", currency=issuer))
-    return redirect(url_for("currency_market.currency_market"))
+    return redirect_back(url_for("currency_market.currency_market"))
 
 
 @bp.route("/currency_market")

@@ -1,4 +1,5 @@
 from flask import Blueprint, request, render_template, session, redirect, flash, url_for
+from helpers import redirect_back
 
 from helpers import login_required
 from database import get_request_cursor, invalidate_user_cache
@@ -11,7 +12,7 @@ bp = Blueprint("currency_unions", __name__)
 def _back(result):
     ok, message, category = result
     flash(message, category)
-    return redirect(url_for("currency_unions.view_unions"))
+    return redirect_back(url_for("currency_unions.view_unions"))
 
 
 @bp.route("/currency_unions", methods=["GET"])
@@ -60,7 +61,7 @@ def withdraw_route(union_id):
 def decide_route(union_id, applicant_id, decision):
     if decision not in ("approve", "decline"):
         flash("Unknown action.", "danger")
-        return redirect(url_for("currency_unions.view_unions"))
+        return redirect_back(url_for("currency_unions.view_unions"))
     user_id = session.get("user_id")
     with get_request_cursor() as db:
         result = services.decide_application(

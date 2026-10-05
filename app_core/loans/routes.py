@@ -1,4 +1,5 @@
 from flask import Blueprint, request, render_template, session, redirect, flash, url_for, jsonify
+from helpers import redirect_back
 
 from helpers import login_required
 from database import get_request_cursor
@@ -53,10 +54,10 @@ def take_loan_route():
 
     if not ok:
         flash(error, category)
-        return redirect(url_for("loans.view_loans"))
+        return redirect_back(url_for("loans.view_loans"))
 
     flash("Loan approved — gold has been added to your treasury.", "success")
-    return redirect(url_for("loans.view_loans"))
+    return redirect_back(url_for("loans.view_loans"))
 
 
 @bp.route("/loans/repay", methods=["POST"])
@@ -70,7 +71,7 @@ def repay_loan_route():
 
     if not ok:
         flash(error, category)
-        return redirect(url_for("loans.view_loans"))
+        return redirect_back(url_for("loans.view_loans"))
 
     flash("Repayment applied.", "success")
-    return redirect(url_for("loans.view_loans"))
+    return redirect_back(url_for("loans.view_loans"))

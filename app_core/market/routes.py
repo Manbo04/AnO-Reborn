@@ -1,5 +1,6 @@
 from flask import Blueprint, request, render_template, session, redirect, flash
-from helpers import login_required, error, get_valid_int, record_trade_event, is_theme_v2_enabled
+from urllib.parse import urlencode
+from helpers import login_required, redirect_back, error, get_valid_int, record_trade_event, is_theme_v2_enabled
 import variables
 import logging
 from database import get_request_cursor, invalidate_user_cache, invalidate_view_cache, rollback_db_cursor, cache_response
@@ -229,7 +230,7 @@ def market_preferences():
     except Exception:
         pass
     flash("Market settings saved")
-    return redirect("/market")
+    return redirect_back("/market")
 
 
 @market_bp.route("/buy_offer/<offer_id>", methods=["POST"])
@@ -348,7 +349,7 @@ def buy_market_offer(offer_id):
     except Exception:
         pass
 
-    return redirect("/market")
+    return redirect_back("/market")
 
 @market_bp.route("/sell_offer/<offer_id>", methods=["POST"])
 @login_required
@@ -458,7 +459,7 @@ def sell_market_offer(offer_id):
     except Exception:
         pass
 
-    return redirect("/market")
+    return redirect_back("/market")
 
 @market_bp.route("/marketoffer/", methods=["GET", "POST"])
 @login_required
@@ -611,7 +612,8 @@ def post_offer(offer_type):
 
         flash("You just posted a market offer")
         notify_market_ping(cId, offer_type, resource, amount, price)
-    return redirect("/market")
+    # Land on the book for the resource just listed, so the new offer is in view.
+    return redirect("/market?" + urlencode({"resource": resource}))
 
 @market_bp.route("/my_offers", methods=["GET"])
 @login_required
@@ -644,7 +646,7 @@ def delete_offer_endpoint(offer_id):
         if not cancel_offer_with_refund(db, offer_id, cId):
             return error(400, "Offer not found or already processed")
 
-    return redirect("/my_offers")
+    return redirect_back("/my_offers")
 
 @market_bp.route("/post_trade_offer/<offer_type>/<offeree_id>", methods=["POST"])
 @login_required
@@ -778,7 +780,7 @@ def decline_trade_endpoint(trade_id):
             except Exception:
                 rollback_db_cursor(db)
 
-    return redirect("/my_offers")
+    return redirect_back("/my_offers")
 
 @market_bp.route("/accept_trade/<trade_id>", methods=["POST"])
 @login_required
@@ -957,7 +959,7 @@ def accept_trade(trade_id):
     except Exception:
         pass
 
-    return redirect("/my_offers")
+    return redirect_back("/my_offers")
 
 @market_bp.route("/transfer/<transferee>", methods=["POST"])
 @login_required
@@ -1116,5 +1118,5 @@ def remove_embargo_endpoint(target_id):
 
     redirect_to = request.form.get("redirect_to")
     if redirect_to == "my_offers":
-        return redirect("/my_offers")
+        return redirect_back("/my_offers")
     return redirect(f"/country/id={target_id}")

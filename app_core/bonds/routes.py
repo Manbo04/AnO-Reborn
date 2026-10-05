@@ -1,4 +1,5 @@
 from flask import Blueprint, request, render_template, session, redirect, flash, url_for
+from helpers import redirect_back
 
 from helpers import login_required
 from database import get_request_cursor, invalidate_user_cache
@@ -47,10 +48,10 @@ def create_bond_route():
 
     if not ok:
         flash(error, category)
-        return redirect(url_for("bonds.view_bonds"))
+        return redirect_back(url_for("bonds.view_bonds"))
 
     flash("Bond listed on the market.", "success")
-    return redirect(url_for("bonds.view_bonds"))
+    return redirect_back(url_for("bonds.view_bonds"))
 
 
 @bp.route("/bonds/<int:bond_id>/edit", methods=["POST"])
@@ -73,7 +74,7 @@ def edit_bond_route(bond_id):
         )
 
     flash(error if not ok else "Bond terms updated.", category if not ok else "success")
-    return redirect(url_for("bonds.view_bonds"))
+    return redirect_back(url_for("bonds.view_bonds"))
 
 
 @bp.route("/bonds/<int:bond_id>/cancel", methods=["POST"])
@@ -84,7 +85,7 @@ def cancel_bond_route(bond_id):
         ok, error, category = cancel_bond(db, bond_id, user_id)
 
     flash(error if not ok else "Bond listing cancelled.", category if not ok else "success")
-    return redirect(url_for("bonds.view_bonds"))
+    return redirect_back(url_for("bonds.view_bonds"))
 
 
 @bp.route("/bonds/<int:bond_id>/fund", methods=["POST"])
@@ -100,7 +101,7 @@ def fund_bond_route(bond_id):
 
     if not ok:
         flash(error, category)
-        return redirect(url_for("bonds.view_bonds"))
+        return redirect_back(url_for("bonds.view_bonds"))
 
     try:
         invalidate_user_cache(user_id)
@@ -110,4 +111,4 @@ def fund_bond_route(bond_id):
         pass
 
     flash("Investment placed — principal transferred, daily interest starts accruing to you.", "success")
-    return redirect(url_for("bonds.view_bonds"))
+    return redirect_back(url_for("bonds.view_bonds"))

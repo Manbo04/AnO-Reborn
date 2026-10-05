@@ -1,4 +1,5 @@
 from flask import Blueprint, request, render_template, session, redirect
+from helpers import redirect_back
 from helpers import login_required, error, is_theme_v2_enabled
 from database import get_request_cursor, cache_response, invalidate_user_cache, invalidate_view_cache
 from variables import MILDICT
@@ -77,7 +78,7 @@ def military_sell_buy(way, units):
         except Exception:
             pass
 
-        return redirect("/military")
+        return redirect_back("/military")
 
 @bp.route("/military/activate/<units>", methods=["POST"])
 @login_required
@@ -110,4 +111,4 @@ def military_activate(units):
     except Exception:
         pass
 
-    return redirect("/military")
+    return redirect_back("/military")

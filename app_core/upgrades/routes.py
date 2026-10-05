@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, session, redirect, request
+from helpers import redirect_back
 
 from helpers import login_required, error, is_theme_v2_enabled
 from database import get_request_cursor
@@ -51,7 +52,7 @@ def start_research_action():
 
     invalidate_upgrade_caches(cId)
 
-    return redirect("/upgrades")
+    return redirect_back("/upgrades")
 
 
 @bp.route("/upgrades_sb/<ttype>/<thing>", methods=["POST"])
@@ -78,4 +79,4 @@ def upgrade_sell_buy(ttype, thing):
 
     invalidate_upgrade_caches(cId)
 
-    return redirect("/upgrades")
+    return redirect_back("/upgrades")

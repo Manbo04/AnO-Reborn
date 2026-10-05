@@ -1,5 +1,6 @@
 """/market/auto_orders -- manage automatic buy/sell rules (app_core/market/auto_orders.py)."""
 from flask import Blueprint, flash, redirect, render_template, request, session
+from helpers import redirect_back
 
 import variables
 from database import get_request_cursor, invalidate_view_cache
@@ -32,7 +33,7 @@ def _optional_int(name, minimum):
 
 
 def _back():
-    return redirect("/market/auto_orders")
+    return redirect_back("/market/auto_orders")
 
 
 @auto_orders_bp.route("/market/auto_orders", methods=["GET"])

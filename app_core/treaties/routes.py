@@ -1,6 +1,7 @@
 import re
 
 from flask import Blueprint, request, render_template, session, redirect, flash, url_for
+from helpers import redirect_back
 
 from helpers import login_required, is_theme_v2_enabled
 from database import get_request_cursor
@@ -74,7 +75,7 @@ def accept_treaty(treaty_id):
                 actor_id=sender_id, target_id=recipient_id,
             )
     flash("Treaty accepted!", "success")
-    return redirect(url_for("treaties.view_treaties"))
+    return redirect_back(url_for("treaties.view_treaties"))
 
 
 @bp.route("/treaties/reject/<int:treaty_id>", methods=["POST"])
@@ -84,7 +85,7 @@ def reject_treaty(treaty_id):
     with get_request_cursor() as db:
         set_treaty_rejected(db, treaty_id, user_id)
     flash("Treaty rejected.", "info")
-    return redirect(url_for("treaties.view_treaties"))
+    return redirect_back(url_for("treaties.view_treaties"))
 
 
 @bp.route("/treaties/cancel/<int:treaty_id>", methods=["POST"])
@@ -94,4 +95,4 @@ def cancel_treaty(treaty_id):
     with get_request_cursor() as db:
         set_treaty_cancelled(db, treaty_id, user_id)
     flash("Treaty cancelled.", "info")
-    return redirect(url_for("treaties.view_treaties"))
+    return redirect_back(url_for("treaties.view_treaties"))

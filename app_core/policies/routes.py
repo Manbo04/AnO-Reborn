@@ -1,4 +1,5 @@
 from flask import request, redirect, session
+from helpers import redirect_back
 
 from helpers import login_required
 from database import get_request_cursor
@@ -20,7 +21,7 @@ def policies():
     # committed, not before (see save_user_policies' docstring).
     invalidate_policies_cache(cId)
 
-    return redirect("/my_country")
+    return redirect_back("/my_country")
 
 
 def register_policies_routes(app_instance):

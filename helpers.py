@@ -417,6 +417,30 @@ def error(code, message):
         return f"{code} - {message}", code
 
 
+
+def redirect_back(fallback):
+    """After a form action, send the player back to the page they acted from
+    (with its query string, so filters like the market's resource and page
+    size survive) instead of a fixed landing page. Only same-site paths are
+    followed; anything else, or no Referer, goes to `fallback`."""
+    from urllib.parse import urlsplit
+
+    for target in (request.form.get("next"), request.referrer):
+        if not target:
+            continue
+        parts = urlsplit(target)
+        if parts.netloc and parts.netloc != request.host:
+            continue
+        path = parts.path or ""
+        # "//evil.com" and "/\\evil.com" are protocol-relative external URLs.
+        if not path.startswith("/") or path.startswith("//") or "\\" in path:
+            continue
+        # The action endpoint itself is POST-only; never bounce back to it.
+        if path == request.path:
+            continue
+        return redirect(path + ("?" + parts.query if parts.query else ""))
+    return redirect(fallback)
+
 # ------------------ Metrics / Auditing helpers ------------------
 # Lightweight helpers to persist audit events and task metrics. These are
 # best-effort: failures should never break user flows. If Prometheus client is
