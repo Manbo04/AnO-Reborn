@@ -1,0 +1,8 @@
+{
+ "status": "needs_info",
+ "reply": "drone sites make 1 drone per site per hour, up to 10 per site, and each drone uses 400 components + 800 aluminium from your stockpile of resources, so it stops if you run out of either or hit the cap. how many drone sites do you have, what's your drone stockpile now, and do you have enough components and aluminium?",
+ "nonce": "3974a10cbd67",
+ "updated_at": "2026-10-05T00:12:23Z",
+ "branch": null,
+ "summary": "Drones stockpile not growing: code path looks fine (same tick as cruise missiles); asked for site count/stockpile/resources"
+}

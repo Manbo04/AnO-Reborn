@@ -1,0 +1,8 @@
+{
+ "status": "needs_info",
+ "reply": "hey, i looked at how happiness works: every hour your buildings add happiness, then unemployment takes off 10 if too many workers are jobless (it can look like less in the tooltip), and policies add/remove after that. if the building bonus is about the same as that penalty it just sits flat, which could be why it's stuck at 3%. can you tell me roughly what the tooltip lists for your province (the + and - numbers) and what your unemployment % is on the country page?",
+ "nonce": "f322ac69afae",
+ "updated_at": "2026-10-05T00:12:23Z",
+ "branch": null,
+ "summary": "Happiness stuck at 3%: likely unemployment penalty cancelling building gains; asked player for tooltip numbers + unemployment %"
+}

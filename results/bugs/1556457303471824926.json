@@ -1,0 +1,8 @@
+{
+ "status": "fixed",
+ "reply": "the province page showed the dome resource costs as a raw number (6,000) instead of tonnes like everywhere else, which looked like 6 but it's really 6t per dome. i made it show proper units. i couldn't find anything charging 60t though, the build takes 6t components, 20t steel and 8t aluminium per dome. if you still see 60t taken after building one dome, tell me your before/after component amounts and how many you built. should be live within the hour",
+ "nonce": "1ab9f0b13526",
+ "updated_at": "2026-10-05T00:12:23Z",
+ "branch": "claude/robot-20261005-fixes",
+ "summary": "Iron Dome cost shown in raw kg; now displays tonnes. Could not reproduce a 10x charge in code (asked for before/after numbers if it persists)"
+}

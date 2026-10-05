@@ -1,0 +1,8 @@
+{
+ "status": "fixed",
+ "reply": "found it, the query that loads the personal balances was asking for a column that doesn't exist, so it silently failed and showed zeros for everyone. fixed, your deposits should show up in the personal balance and be withdrawable once it deploys, should be live within the hour",
+ "nonce": "8460b231c05e",
+ "updated_at": "2026-10-05T00:12:23Z",
+ "branch": "claude/robot-20261005-fixes",
+ "summary": "Personal coalition bank balance showed 0: contribution query used nonexistent stats.flag_data; switched to users.flag_data"
+}

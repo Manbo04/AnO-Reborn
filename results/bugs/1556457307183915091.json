@@ -1,0 +1,8 @@
+{
+ "status": "not_a_bug",
+ "reply": "normal air battles (fighters/bombers/apaches from the attack screen) do lower the loser's morale the same way ground ones do. the separate bomber airstrike, drone strike and cruise missile strike destroy buildings or kill people but don't touch morale, that's how they were built. if you want those to cost morale too, post it in #suggestions and it goes on the next ballot. if a normal air attack really showed no morale drop, tell me which attack and i'll look again",
+ "nonce": "76a0d44abc07",
+ "updated_at": "2026-10-05T00:12:23Z",
+ "branch": null,
+ "summary": "Bombing morale: air battles do reduce morale; strategic strikes intentionally don't (feature request -> suggestions)"
+}
