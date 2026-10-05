@@ -12,8 +12,8 @@ NO_FOOD_TAX_MULTIPLIER = (
 DEFAULT_LAND_TAX_MULTIPLIER = 0.02  # Multiplier of tax income per land slot
 # Population growth multipliers - now more realistic
 # Higher happiness increases growth, pollution decreases it
-DEFAULT_HAPPINESS_GROWTH_MULTIPLIER = 0.04  # 4% impact per happiness point
-DEFAULT_POLLUTION_GROWTH_MULTIPLIER = 0.02  # 2% impact per pollution point
+DEFAULT_HAPPINESS_GROWTH_MULTIPLIER = 0.04  # max +/-4% at happiness 100/0 (0.08% per point from 50)
+DEFAULT_POLLUTION_GROWTH_MULTIPLIER = 0.02  # max +/-2% at pollution 0/100 (0.04% per point from 50)
 
 DEFAULT_MAX_POPULATION = 1000000
 CITY_MAX_POPULATION_ADDITION = 750000
