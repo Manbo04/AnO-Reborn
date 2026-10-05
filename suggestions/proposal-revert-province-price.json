@@ -1,0 +1,12 @@
+{
+  "ballot_id": "2026-10-05",
+  "build_notes": "province.py get_province_price. If passed: restore 8M*(1+0.16n) for all n.",
+  "created_at": "2026-10-05T00:04:46Z",
+  "detail": "Added Oct 4 to stop province spam.",
+  "kind": "proposal",
+  "poll_message_id": "1556457115349033022",
+  "status": "voting",
+  "suggestion_id": "proposal-revert-province-price",
+  "title": "Should province prices go back to the old linear price (remove the +8% per province after the 20th)?",
+  "url": null
+}

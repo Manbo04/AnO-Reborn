@@ -1,0 +1,12 @@
+{
+  "ballot_id": "2026-10-05",
+  "build_notes": "If passed: total manpower of all units (incl. fielded) <= 5% of nation population; block recruiting past it and show the cap on the military page. Existing armies above the cap are kept, just can't grow.",
+  "created_at": "2026-10-05T00:04:46Z",
+  "detail": "Chel's suggestion: e.g. 5% of your population can be soldiers in total.",
+  "kind": "proposal",
+  "poll_message_id": "1556457132830752809",
+  "status": "voting",
+  "suggestion_id": "proposal-manpower-cap",
+  "title": "Should army size be capped by population, with troops already in the field counting toward the cap?",
+  "url": null
+}

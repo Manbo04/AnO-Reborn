@@ -1,0 +1,12 @@
+{
+  "ballot_id": "2026-10-05",
+  "build_notes": "wars/aftermath.py writes population_growth_freezes; population.calc_nation_growth(frozen=...). If passed: stop writing freezes (keep the civilian deaths) and update the wars mechanics text.",
+  "created_at": "2026-10-05T00:04:46Z",
+  "detail": "Added Oct 4. Josh, Silent and Chel asked for it to be removed.",
+  "kind": "proposal",
+  "poll_message_id": "1556457110827565087",
+  "status": "voting",
+  "suggestion_id": "proposal-remove-growth-freeze",
+  "title": "Should we remove the 'no population growth' penalty (12h after losing a battle, 24h after being nuked) and only count the people actually killed?",
+  "url": null
+}

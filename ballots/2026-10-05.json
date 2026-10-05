@@ -1,0 +1,95 @@
+{
+  "channel_id": "1556457101025353888",
+  "closes_at": "2026-10-09T16:00:00Z",
+  "header_message_id": "1556457103294595145",
+  "id": "2026-10-05",
+  "items": [
+    {
+      "message_id": "1556457108587946025",
+      "question": "Should distribution buildings really limit how many people get fed? (Right now 1 food bank 'feeds' 190M people. Big nations would need to build more distribution; 48h notice before it starts.)",
+      "suggestion_id": "proposal-distribution-fix"
+    },
+    {
+      "message_id": "1556457110827565087",
+      "question": "Should we remove the 'no population growth' penalty (12h after losing a battle, 24h after being nuked) and only count the people actually killed?",
+      "suggestion_id": "proposal-remove-growth-freeze"
+    },
+    {
+      "message_id": "1556457112840966200",
+      "question": "Should civilian deaths from winning an attack hit only the province that was attacked, instead of a % of the whole nation?",
+      "suggestion_id": "proposal-civilian-deaths-local"
+    },
+    {
+      "message_id": "1556457115349033022",
+      "question": "Should province prices go back to the old linear price (remove the +8% per province after the 20th)?",
+      "suggestion_id": "proposal-revert-province-price"
+    },
+    {
+      "message_id": "1556457117135929456",
+      "question": "Should there be a war range, so you can only declare war on nations near your strength (strength based on population + military, not resources)?",
+      "suggestion_id": "proposal-war-range"
+    },
+    {
+      "message_id": "1556457119098732585",
+      "question": "Should deleting buildings, cities or land stop refunding their cost? (Stops free biome swapping and shrinking yourself to dodge war ranges.)",
+      "suggestion_id": "proposal-no-refunds"
+    },
+    {
+      "message_id": "1556457120873062513",
+      "question": "Should defending stop using up your war supply? (Only attacks would cost supply.)",
+      "suggestion_id": "proposal-defense-no-supply"
+    },
+    {
+      "message_id": "1556457123783770228",
+      "question": "Should a failed attack stop costing the attacker morale? (Lets smaller nations wear down a bigger enemy.)",
+      "suggestion_id": "proposal-failed-attack-morale"
+    },
+    {
+      "message_id": "1556457126325653515",
+      "question": "Should wars end automatically after 7 days, so nobody can be bombed forever?",
+      "suggestion_id": "proposal-wars-expire"
+    },
+    {
+      "message_id": "1556457132830752809",
+      "question": "Should army size be capped by population, with troops already in the field counting toward the cap?",
+      "suggestion_id": "proposal-manpower-cap"
+    },
+    {
+      "message_id": "1556457134546354307",
+      "question": "Should army bases have a limit per province, like other buildings?",
+      "suggestion_id": "proposal-army-base-cap"
+    },
+    {
+      "message_id": "1556457143844999219",
+      "question": "Should new provinces start with about 10,000 people instead of 1 million?",
+      "suggestion_id": "proposal-new-province-pop"
+    },
+    {
+      "message_id": "1556457145644355739",
+      "question": "Should war get separate ground / air / naval action points, plus entrenchment, intel and naval blockades (Diplomacy & Strife-style)?",
+      "suggestion_id": "proposal-branch-points"
+    },
+    {
+      "message_id": "1556457148211404932",
+      "question": "Should drones and cruise missiles be able to hit smaller buildings like mines and lumber mills, not just big factories?",
+      "suggestion_id": "proposal-drones-small-buildings"
+    },
+    {
+      "message_id": "1556457151034302475",
+      "question": "Should coalitions get an Actions tab, including one-click embargo of a whole coalition?",
+      "suggestion_id": "proposal-coalition-actions"
+    },
+    {
+      "message_id": "1556457158252437576",
+      "question": "Should attacking happen from one screen per war (pick units, amounts and target in one place) instead of several pages?",
+      "suggestion_id": "proposal-one-screen-attack"
+    },
+    {
+      "message_id": "1556457160647643217",
+      "question": "Should players be able to show their Discord name on their nation page? (Opt-in, off by default.)",
+      "suggestion_id": "proposal-discord-on-profile"
+    }
+  ],
+  "opened_at": "2026-10-05T00:04:50Z",
+  "tallied": false
+}

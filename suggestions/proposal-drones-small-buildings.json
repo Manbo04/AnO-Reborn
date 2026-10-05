@@ -1,0 +1,12 @@
+{
+  "ballot_id": "2026-10-05",
+  "build_notes": "STRIKE target list for drones/missiles. If passed: allow every building type as a target.",
+  "created_at": "2026-10-05T00:04:46Z",
+  "detail": "Kaiser's suggestion.",
+  "kind": "proposal",
+  "poll_message_id": "1556457148211404932",
+  "status": "voting",
+  "suggestion_id": "proposal-drones-small-buildings",
+  "title": "Should drones and cruise missiles be able to hit smaller buildings like mines and lumber mills, not just big factories?",
+  "url": null
+}

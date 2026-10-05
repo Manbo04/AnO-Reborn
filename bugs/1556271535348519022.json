@@ -1,0 +1,23 @@
+{
+  "author_id": "616524068987863060",
+  "created_at": "2026-10-04T11:47:28Z",
+  "kind": "bug",
+  "last_message_id": "1556271535348519022",
+  "last_player_message_at": "2026-10-04T11:47:28Z",
+  "messages": [
+    {
+      "at": "2026-10-04T11:47:28Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1556271535348519022/1556271535533195274/IMG_4384.png?backend=b2&ex=6ac43710&is=6ac2e590&hm=42238d8b71232869e0d2ff261f01439c4ab66ab298cd085afa04cfb3d962a6d3&"
+      ],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1556271535348519022",
+      "text": ""
+    }
+  ],
+  "thread_id": "1556271535348519022",
+  "title": "Assembly screen gives error",
+  "url": "https://discord.com/channels/708006319658893385/1556271535348519022"
+}

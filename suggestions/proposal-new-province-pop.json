@@ -1,0 +1,12 @@
+{
+  "ballot_id": "2026-10-05",
+  "build_notes": "Province creation default population. If passed: 10,000 for newly created provinces only.",
+  "created_at": "2026-10-05T00:04:46Z",
+  "detail": "Chel's suggestion.",
+  "kind": "proposal",
+  "poll_message_id": "1556457143844999219",
+  "status": "voting",
+  "suggestion_id": "proposal-new-province-pop",
+  "title": "Should new provinces start with about 10,000 people instead of 1 million?",
+  "url": null
+}

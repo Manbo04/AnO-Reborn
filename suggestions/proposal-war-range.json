@@ -1,0 +1,12 @@
+{
+  "ballot_id": "2026-10-05",
+  "build_notes": "If passed: add a nation strength score (population + weighted military value, excluding stockpiled resources/gold) and allow declaring on nations within 0.5x-2x of your score; keep new-player protection. Show the range on the wars page.",
+  "created_at": "2026-10-05T00:04:46Z",
+  "detail": "Players are split: some want a range so big nations can't farm much smaller ones, others want no limits at all. Either way, new players keep 2 weeks of protection.",
+  "kind": "proposal",
+  "poll_message_id": "1556457117135929456",
+  "status": "voting",
+  "suggestion_id": "proposal-war-range",
+  "title": "Should there be a war range, so you can only declare war on nations near your strength (strength based on population + military, not resources)?",
+  "url": null
+}

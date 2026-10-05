@@ -1,0 +1,12 @@
+{
+  "ballot_id": "2026-10-05",
+  "build_notes": "wars/aftermath.py. If passed: apply the death % to the attacked/target province's population (pick the most populous province if no province is targeted).",
+  "created_at": "2026-10-05T00:04:46Z",
+  "detail": "Right now winning attacks kill 0.1-0.3% (ground) or 0.2-0.6% (bombers) of the whole nation.",
+  "kind": "proposal",
+  "poll_message_id": "1556457112840966200",
+  "status": "voting",
+  "suggestion_id": "proposal-civilian-deaths-local",
+  "title": "Should civilian deaths from winning an attack hit only the province that was attacked, instead of a % of the whole nation?",
+  "url": null
+}

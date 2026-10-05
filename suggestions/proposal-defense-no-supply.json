@@ -1,0 +1,12 @@
+{
+  "ballot_id": "2026-10-05",
+  "build_notes": "wars supply deduction for the defender in combat. If passed: defenders never pay supply.",
+  "created_at": "2026-10-05T00:04:46Z",
+  "detail": "Josh's suggestion: being attacked first currently drains your supply and delays your counterattack.",
+  "kind": "proposal",
+  "poll_message_id": "1556457120873062513",
+  "status": "voting",
+  "suggestion_id": "proposal-defense-no-supply",
+  "title": "Should defending stop using up your war supply? (Only attacks would cost supply.)",
+  "url": null
+}

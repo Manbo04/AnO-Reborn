@@ -1,0 +1,12 @@
+{
+  "ballot_id": "2026-10-05",
+  "build_notes": "If passed: find every sell/delete/demolish route for buildings, cities, land and set the refund to 0 (keep a confirm dialog that says nothing is refunded).",
+  "created_at": "2026-10-05T00:04:46Z",
+  "detail": "Players are split: some say free refunds make the beta easier to test, others say they're being abused.",
+  "kind": "proposal",
+  "poll_message_id": "1556457119098732585",
+  "status": "voting",
+  "suggestion_id": "proposal-no-refunds",
+  "title": "Should deleting buildings, cities or land stop refunding their cost? (Stops free biome swapping and shrinking yourself to dodge war ranges.)",
+  "url": null
+}

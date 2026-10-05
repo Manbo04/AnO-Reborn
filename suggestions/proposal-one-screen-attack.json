@@ -1,0 +1,12 @@
+{
+  "ballot_id": "2026-10-05",
+  "build_notes": "If passed: single war page form posting to the existing attack endpoint; keep the old flow working.",
+  "created_at": "2026-10-05T00:04:46Z",
+  "detail": "Silent's suggestion.",
+  "kind": "proposal",
+  "poll_message_id": "1556457158252437576",
+  "status": "voting",
+  "suggestion_id": "proposal-one-screen-attack",
+  "title": "Should attacking happen from one screen per war (pick units, amounts and target in one place) instead of several pages?",
+  "url": null
+}

@@ -1,0 +1,12 @@
+{
+  "ballot_id": "2026-10-05",
+  "build_notes": "If passed: account setting toggle (default off) + show the linked Discord username on the country page when on.",
+  "created_at": "2026-10-05T00:04:46Z",
+  "detail": "Unknown Identity's suggestion, so people know who runs which nation.",
+  "kind": "proposal",
+  "poll_message_id": "1556457160647643217",
+  "status": "voting",
+  "suggestion_id": "proposal-discord-on-profile",
+  "title": "Should players be able to show their Discord name on their nation page? (Opt-in, off by default.)",
+  "url": null
+}

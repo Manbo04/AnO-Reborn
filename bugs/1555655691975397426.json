@@ -1,0 +1,32 @@
+{
+  "author_id": "1043204044774183032",
+  "created_at": "2026-10-02T19:00:19Z",
+  "kind": "bug",
+  "last_message_id": "1556031793403134034",
+  "last_player_message_at": "2026-10-03T19:54:49Z",
+  "messages": [
+    {
+      "at": "2026-10-02T19:00:19Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1555655691975397426/1555655692097028218/Screenshot_2026-10-02_145824.png?backend=b2&ex=6ac3f3c3&is=6ac2a243&hm=5212737f9eafefc7295ec7df476729eb3f79fcbe9ff45047def9690dda24a803&"
+      ],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1555655691975397426",
+      "text": "my happiness has been 3% since last night but i'm too dumb to figure out why. the tooltip says it should be increasing every tick based on my province & mandate"
+    },
+    {
+      "at": "2026-10-03T19:54:49Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1556031793403134034",
+      "text": "Update: now I should be losing 2 happiness per tick due to unemployment penalty. My happiness still hadn't changed tho"
+    }
+  ],
+  "thread_id": "1555655691975397426",
+  "title": "they say it'll make you happy. they lie",
+  "url": "https://discord.com/channels/708006319658893385/1555655691975397426"
+}

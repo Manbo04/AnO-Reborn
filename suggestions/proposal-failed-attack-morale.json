@@ -1,0 +1,12 @@
+{
+  "ballot_id": "2026-10-05",
+  "build_notes": "attack_scripts/combat_helpers morale on loss. If passed: attacker loses no morale when its attack fails; defender morale changes stay.",
+  "created_at": "2026-10-05T00:04:46Z",
+  "detail": "Josh's suggestion.",
+  "kind": "proposal",
+  "poll_message_id": "1556457123783770228",
+  "status": "voting",
+  "suggestion_id": "proposal-failed-attack-morale",
+  "title": "Should a failed attack stop costing the attacker morale? (Lets smaller nations wear down a bigger enemy.)",
+  "url": null
+}

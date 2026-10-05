@@ -1,0 +1,12 @@
+{
+  "ballot_id": "2026-10-05",
+  "build_notes": "variables.DISTRIBUTION_FIX_START is set to 2099 (on hold). If passed: set it to tally time + 48h, and announce the exact time in the results reply.",
+  "created_at": "2026-10-05T00:04:46Z",
+  "detail": "This was set to start Oct 6 and is now on hold until this vote. About 45 nations would need more distribution buildings.",
+  "kind": "proposal",
+  "poll_message_id": "1556457108587946025",
+  "status": "voting",
+  "suggestion_id": "proposal-distribution-fix",
+  "title": "Should distribution buildings really limit how many people get fed? (Right now 1 food bank 'feeds' 190M people. Big nations would need to build more distribution; 48h notice before it starts.)",
+  "url": null
+}

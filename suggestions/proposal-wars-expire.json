@@ -1,0 +1,12 @@
+{
+  "ballot_id": "2026-10-05",
+  "build_notes": "If passed: an hourly tick ends wars older than 7 days as a draw (no loot), with WAR OVER news to both sides.",
+  "created_at": "2026-10-05T00:04:46Z",
+  "detail": "Josh's suggestion: without an end, a nation can be kept unplayable.",
+  "kind": "proposal",
+  "poll_message_id": "1556457126325653515",
+  "status": "voting",
+  "suggestion_id": "proposal-wars-expire",
+  "title": "Should wars end automatically after 7 days, so nobody can be bombed forever?",
+  "url": null
+}

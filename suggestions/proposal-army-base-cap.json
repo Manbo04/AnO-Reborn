@@ -1,0 +1,12 @@
+{
+  "ballot_id": "2026-10-05",
+  "build_notes": "If passed: cap army bases per province by the province's cities (e.g. 1 per 10 cities, min 5); existing extra bases stay but no new ones.",
+  "created_at": "2026-10-05T00:04:46Z",
+  "detail": "Silent's point: right now one province can hold 50,000 army bases.",
+  "kind": "proposal",
+  "poll_message_id": "1556457134546354307",
+  "status": "voting",
+  "suggestion_id": "proposal-army-base-cap",
+  "title": "Should army bases have a limit per province, like other buildings?",
+  "url": null
+}
