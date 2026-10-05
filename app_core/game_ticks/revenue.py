@@ -451,12 +451,15 @@ def generate_province_revenue():  # Runs each hour
                                 building_name, 0
                             )
 
-                        unemployment_rate = 0.0
+                        from app_core.game_ticks.population import (
+                            calc_unemployment_rate,
+                        )
+
+                        unemployment_rate = calc_unemployment_rate(
+                            total_pop_working, jobs_available
+                        )
                         pension_ratio = 0.0
                         if total_pop_working > 0:
-                            unemployment_rate = max(
-                                0.0, 1.0 - (jobs_available / total_pop_working)
-                            )
                             pension_ratio = total_pop_elderly / total_pop_working
 
                         if jobs_needed > 0:

@@ -803,6 +803,19 @@ def calculate_workforce_available(user_id):
 
 
 
+def calc_unemployment_rate(pop_working, workers_on_record):
+    """Share of the working-age population that can't be counted as a worker.
+
+    Working-age people with no education record are still workers (uneducated
+    ones). Education buckets only grow on graduation, so treating unrecorded
+    people as unemployed made most growing nations look >30% jobless and
+    pinned their happiness at 3%/8% (2026-10-05)."""
+    if pop_working <= 0:
+        return 0.0
+    workers = max(workers_on_record, pop_working)
+    return max(0.0, 1.0 - workers / pop_working)
+
+
 def apply_workforce_hiring_and_debuffs(user_id):
     """
     Calculate workforce hiring, efficiency multiplier, and apply debuffs.
@@ -898,9 +911,7 @@ def apply_workforce_hiring_and_debuffs(user_id):
             jobs_available = total_working
 
             # Calculate unemployment rate
-            unemployment_rate = 0.0
-            if total_pop_working > 0:
-                unemployment_rate = max(0.0, 1.0 - (jobs_available / total_pop_working))
+            unemployment_rate = calc_unemployment_rate(total_pop_working, jobs_available)
 
             # Calculate pension ratio
             pension_ratio = 0.0
