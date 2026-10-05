@@ -1,0 +1,23 @@
+{
+  "deploy": {
+    "checked_at": "2026-10-05T08:04:17Z",
+    "msg": "live game still runs e5e4f758, but 8cfdb7c1 was deployed 35009 min ago and never went live",
+    "ok": true,
+    "pending": true
+  },
+  "pipeline": {
+    "checked_at": "2026-10-05T08:04:17Z",
+    "msg": "ok",
+    "ok": true
+  },
+  "site": {
+    "checked_at": "2026-10-05T08:04:17Z",
+    "msg": "ok",
+    "ok": true
+  },
+  "ticks": {
+    "checked_at": "2026-10-05T08:04:17Z",
+    "msg": "ok",
+    "ok": true
+  }
+}
