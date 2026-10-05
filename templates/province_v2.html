@@ -21,10 +21,12 @@
 {% block body %}
 {% from 'macros/game_ui.html' import game_button, game_hero %}
 
-{% if not (FEATURE_PROVINCE_BASE_VIEW and province_base_layout) %}
+{# Always rendered: the district-map base view is opt-in on the client
+   (province-base.js toggles body.province-base-view-active), and CSS hides the
+   photo only while that view is actually showing. Gating this server-side hid
+   the province picture in the default classic view too. #}
 <div class="game-page-bg" style="background-image: url('{% if province.has_image %}{{ province.image_url }}{% else %}{{ url_for('static', filename='images/province.jpg') }}{% endif %}');"></div>
 <div class="game-page-overlay"></div>
-{% endif %}
 
 <div class="templatediv">
 

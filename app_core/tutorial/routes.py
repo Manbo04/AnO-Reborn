@@ -209,7 +209,7 @@ def _tour_response(visited=None):
 
         logging.getLogger(__name__).exception("tour state failed for %s", user_id)
         return jsonify({"ok": False}), 500
-    if state.get("graduated"):
+    if state.get("graduated") or not state.get("eligible", True):
         session.pop("tour_active", None)
     state["active"] = bool(session.get("tour_active"))
     return jsonify(state)

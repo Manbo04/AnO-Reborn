@@ -106,6 +106,28 @@ STEPS: list[dict] = [
 ]
 STEP_INDEX = {s["key"]: i for i, s in enumerate(STEPS)}
 
+# The tour is only for nations founded after it launched. Older nations may have
+# claimed the old quiz chapters (same stats columns) and must never get the
+# tour card or its rewards (Dede, 2026-10-05).
+TOUR_LAUNCH = "2026-10-04"
+
+
+def is_tour_eligible(db, user_id: int) -> bool:
+    """True only for nations founded on/after TOUR_LAUNCH (users.date is ISO
+    YYYY-MM-DD, written by every signup path)."""
+    import datetime
+
+    db.execute("SELECT date FROM users WHERE id = %s", (user_id,))
+    row = db.fetchone()
+    raw = (row["date"] if isinstance(row, dict) else row[0]) if row else None
+    try:
+        founded = (
+            raw if isinstance(raw, datetime.date) else datetime.date.fromisoformat(str(raw).strip()[:10])
+        )
+    except (TypeError, ValueError):
+        return False
+    return founded >= datetime.date.fromisoformat(TOUR_LAUNCH)
+
 
 def _game_facts(db, user_id: int) -> dict:
     """One round-trip-light snapshot of everything the state steps check."""
@@ -170,6 +192,10 @@ def compute_tour(db, user_id: int, *, visited: str | None = None) -> dict:
         _claim_graduation,
     )
     from app_core.tutorial.rewards import GRADUATION_REWARD
+
+    if not is_tour_eligible(db, user_id):
+        return {"ok": True, "eligible": False, "graduated": True, "steps": [], "current": None,
+                "newly_completed": [], "graduation_reward": None}
 
     db.execute(
         "SELECT tutorial_chapters_claimed, tutorial_graduated_at FROM stats WHERE id = %s",
@@ -238,6 +264,7 @@ def compute_tour(db, user_id: int, *, visited: str | None = None) -> dict:
             pass
     return {
         "ok": True,
+        "eligible": True,
         "steps": steps_out,
         "current": current,
         "completed": len([s for s in steps_out if s["done"]]),

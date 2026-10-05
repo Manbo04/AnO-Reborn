@@ -225,8 +225,18 @@ def tutorial():
     # app_core/tutorial/tour.py) instead of the old read-and-quiz course, which
     # stays as a public guide for visitors and search engines.
     if session.get("user_id"):
-        session["tour_active"] = True
-        return redirect("/country?briefing=start")
+        from app_core.tutorial.tour import is_tour_eligible
+
+        try:
+            with get_request_cursor() as db:
+                eligible = is_tour_eligible(db, session["user_id"])
+        except Exception:
+            eligible = False
+        if eligible:
+            session["tour_active"] = True
+            return redirect("/country?briefing=start")
+        # Established nations keep the old written guide.
+        session.pop("tour_active", None)
     # Values mirror static/tutorial.js fallbacks; the quiz answers reference
     # them, so keep the two places in sync if game balance changes.
     tutorial_constants = {

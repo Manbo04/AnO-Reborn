@@ -9,7 +9,8 @@ from app_core.tutorial.tour import STEPS, compute_tour
 class _Cur:
     """Fake cursor answering the exact queries compute_tour() makes."""
 
-    def __init__(self, claimed=None, graduated=None, buildings=None, soldiers=0, capital=11):
+    def __init__(self, claimed=None, graduated=None, buildings=None, soldiers=0, capital=11, founded="2026-10-05"):
+        self.founded = founded
         self.claimed = list(claimed or [])
         self.graduated = graduated
         self.buildings = buildings or {}
@@ -19,7 +20,9 @@ class _Cur:
 
     def execute(self, q, params=None):
         q = " ".join(q.split())
-        if q.startswith("SELECT tutorial_chapters_claimed"):
+        if q.startswith("SELECT date FROM users"):
+            self._rows = [(self.founded,)]
+        elif q.startswith("SELECT tutorial_chapters_claimed"):
             self._rows = [(self.claimed, self.graduated)]
         elif "FROM user_buildings" in q:
             self._rows = list(self.buildings.items())
@@ -91,3 +94,11 @@ def test_rewards_paid_once_and_graduation():
 def test_no_capital_falls_back_to_provinces_list():
     s = compute_tour(_Cur(capital=None), 1)
     assert s["steps"][1]["href"] == "/provinces"
+
+
+def test_established_nations_never_get_the_tour_or_rewards():
+    for founded in ("2026-09-01", "2021-03-14", None, "garbage"):
+        db = _Cur(founded=founded, buildings={"farms": 3}, soldiers=10)
+        s = compute_tour(db, 1, visited="survey")
+        assert s["eligible"] is False and s["current"] is None
+        assert db.claimed == []  # nothing claimed, nothing paid

@@ -872,3 +872,9 @@ DATABASE_PUBLIC_URL=... python3 scripts/apply_all_pending_migrations.py
 **What to watch**
 - Tour only appears for sessions with `tour_active` (new signups / anyone opening /tutorial). Logging in on a new device mid-tour won't show it until /tutorial is opened.
 - Visit steps trust the client (rewards are small and claimable once).
+
+## 2026-10-05 — Tour only for new nations; province page photo restored
+
+- Command Briefing now only runs for nations founded on/after 2026-10-04 (`tour.is_tour_eligible`, users.date). Older nations get no card and no rewards; `/tutorial` shows them the old written guide. Triggered by the tour having started on Dede's own established nation.
+- Province page (v2): the page photo (custom province picture or default province.jpg) was never rendered whenever FEATURE_PROVINCE_BASE_VIEW was on, because the server always builds the district-map payload — so the default classic view had no photo since 08-31. It's now always rendered and hidden via CSS only while `body.province-base-view-active` (district map actually showing).
+- What to watch: an established nation that already saw the tour this session may have been paid some CHAPTER_REWARDS before this fix (Dede's own nation, 2026-10-05 ~02:55 UTC+3).
