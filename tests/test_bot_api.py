@@ -127,3 +127,20 @@ def test_register_and_me_flow(bot_client):
                 (TEST_USER_ID,),
             )
         assert resolve_user_id_by_discord(fake_discord) is None
+
+
+def test_staff_nation_requires_secret(bot_client):
+    resp = bot_client.get("/api/bot/staff/nation?identifier=16")
+    assert resp.status_code == 403
+
+
+def test_staff_nation_returns_full_detail(bot_client):
+    resp = bot_client.get(
+        f"/api/bot/staff/nation?identifier={TEST_USER_ID}", headers=_bot_headers()
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert str(data["id"]) == str(TEST_USER_ID)
+    for key in ("gold", "military", "resources", "provinces"):
+        assert key in data
+    assert "public_view" not in data
