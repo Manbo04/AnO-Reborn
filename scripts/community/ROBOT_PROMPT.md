@@ -42,10 +42,10 @@ Default to `vote`: the community decides, not you. Use `already_exists` only whe
 
 ## Shipping (how code reaches the game)
 - Put all code changes for this run on ONE new branch named `claude/robot-<UTC date>-<short slug>` created from latest origin/master, with clear commit messages (end each with `Co-Authored-By: AnO robot <noreply@anthropic.com>`). Push that branch. A GitHub Action runs the test suite on it and merges it into master automatically if the tests pass (which deploys). If it fails, the Action does not merge; next run, check whether your previous branch merged (`git log origin/master`), and if not, fix it.
-- Only say "fixed"/"built" + "it's live" in replies when the code is on a pushed branch; write "the fix is on its way, should be live within the hour" (the merge+deploy takes up to ~30 minutes after tests pass).
+- Never claim something is already live. In replies say it's fixed/built and "should be live within the hour" (tests + merge + deploy take up to ~30 minutes). If your branch from an earlier run never got merged (not in `git log origin/master`), the tests failed: fix it on a new branch before doing new work.
 - Then commit the result files to `community-queue` (in the worktree: `git add -A && git commit -m "robot results" && git pull --rebase origin community-queue && git push origin HEAD:community-queue`).
 
 ## Reply style (players read these)
-Short, friendly, plain words, like a human dev on Discord: lowercase is fine, no corporate tone, no bullet walls, no internal file names or code, never share other players' data. Don't say you are an AI unless asked. Example: "found it, the drone sites were capped at 0 because of a missing column. fixed, should be live within the hour".
+Short, friendly, plain words, like a human dev on Discord: lowercase is fine, no corporate tone, no bullet walls, no internal file names or code, never share other players' data. Example: "found it, the drone sites were capped at 0 because of a missing column. fixed, should be live within the hour".
 
 When you finish, print a short summary: what you fixed/built/triaged, branch name, anything you skipped and why.
