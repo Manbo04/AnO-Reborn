@@ -1,0 +1,8 @@
+{
+ "status": "fixed",
+ "reply": "you're right, upkeep was being billed several times an hour by extra economy ticks (about 1.66x what it should be over 24h, which matches your ~40% gap). that's fixed now and hourly ticks only run once, so new revenue history entries should match your hourly figure",
+ "nonce": "bfb47b8c1a364848866309411963ed66",
+ "updated_at": "2026-10-05T16:21:18Z",
+ "branch": null,
+ "summary": "building upkeep over-billed ~1.66x: fixed in master (0826f74, aa8e62e)"
+}

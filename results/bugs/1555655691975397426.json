@@ -1,8 +1,8 @@
 {
- "status": "not_a_bug",
- "reply": "no worries, glad it sorted itself out. if it gets stuck again, tell me what the tooltip lists and i'll dig in",
- "nonce": "6c00b5c7826c42529a7e64e6a7cf1eb9",
- "updated_at": "2026-10-05T06:18:59Z",
+ "status": "fixed",
+ "reply": "yep, same bug: workers with no education record were counted as unemployed (-10 happiness every hour). that's fixed and live, your happiness should climb normally now. shout if it sticks again",
+ "nonce": "cf62358d59d64d73ba5160539dda1d09",
+ "updated_at": "2026-10-05T16:21:18Z",
  "branch": null,
- "summary": "happiness stuck self-resolved, reporter cannot reproduce"
+ "summary": "happiness stuck at 3%: already fixed in master (d1e6aea)"
 }
