@@ -100,9 +100,12 @@ def is_task_stale(task_name: str, stale_seconds: int) -> bool:
                 return True
             age_seconds = (now - row[0]).total_seconds()
             return age_seconds > stale_seconds
-    except Exception:
-        # Fail-open so watchdog callers can attempt a recovery run.
-        return True
+    except Exception as exc:
+        # Fail closed: a skipped recovery costs at most one watchdog cycle
+        # (beat still runs the task on schedule), whereas failing open fired
+        # full extra economy ticks on every transient DB error.
+        print(f"is_task_stale({task_name}) check failed, assuming fresh: {exc}")
+        return False
 
 
 
