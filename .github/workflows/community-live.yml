@@ -1,0 +1,40 @@
+name: Community live chat (robot <-> player)
+
+# Lives on the `community-queue` branch (push triggers read the workflow from the
+# pushed branch). When the maintenance robot pushes results/, post its replies right
+# away instead of waiting for the hourly sync, and if it asked a player something,
+# re-read that thread every minute for 5 minutes and push the answer back to the queue
+# (the robot polls for it with scripts/community/wait_reply.py). Pushes made by this
+# job use GITHUB_TOKEN, which never re-triggers workflows, so there is no loop.
+on:
+  push:
+    branches: [community-queue]
+    paths: ["results/**"]
+
+concurrency:
+  group: community-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+      - uses: actions/checkout@v4
+        with:
+          ref: community-queue
+          path: community-queue
+      - name: Post replies + wait for answers
+        working-directory: community-queue
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          git config user.name "ano-community-bot"
+          git config user.email "community-bot@users.noreply.github.com"
+          python3 ../scripts/community/sync.py --live --queue .
