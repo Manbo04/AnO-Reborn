@@ -1,0 +1,21 @@
+{
+  "author_id": "465912833352138768",
+  "created_at": "2026-10-05T00:05:39Z",
+  "kind": "bug",
+  "last_message_id": "1556457305283764314",
+  "last_player_message_at": null,
+  "messages": [
+    {
+      "at": "2026-10-05T00:05:39Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1556457305283764314",
+      "text": "Reported by <@465912833352138768> in the Personal bank accounts suggestion: deposits go in, but the personal balance always shows zeros, so you can't see or withdraw what you put in."
+    }
+  ],
+  "thread_id": "1556457305283764314",
+  "title": "Personal coalition bank balance always shows 0",
+  "url": "https://discord.com/channels/708006319658893385/1556457305283764314"
+}

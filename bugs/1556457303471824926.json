@@ -1,0 +1,21 @@
+{
+  "author_id": "519965006867988490",
+  "created_at": "2026-10-05T00:05:38Z",
+  "kind": "bug",
+  "last_message_id": "1556457303471824926",
+  "last_player_message_at": null,
+  "messages": [
+    {
+      "at": "2026-10-05T00:05:38Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1556457303471824926",
+      "text": "Reported by <@519965006867988490> in staff chat: the Iron Dome info on screen says it costs 6t of components, but building one takes 60t every time."
+    }
+  ],
+  "thread_id": "1556457303471824926",
+  "title": "Iron Dome says 6t components but charges 60t",
+  "url": "https://discord.com/channels/708006319658893385/1556457303471824926"
+}

@@ -1,0 +1,21 @@
+{
+  "author_id": "465912833352138768",
+  "created_at": "2026-10-05T00:05:39Z",
+  "kind": "bug",
+  "last_message_id": "1556457307183915091",
+  "last_player_message_at": null,
+  "messages": [
+    {
+      "at": "2026-10-05T00:05:39Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1556457307183915091",
+      "text": "Reported by <@465912833352138768> in the War Rework thread: winning bombing/air attacks don't seem to lower the enemy's morale at all, only ground attacks do."
+    }
+  ],
+  "thread_id": "1556457307183915091",
+  "title": "Bombing attacks don't lower the defender's morale",
+  "url": "https://discord.com/channels/708006319658893385/1556457307183915091"
+}
