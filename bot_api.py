@@ -179,7 +179,8 @@ def _rows_to_active_wars(user_id: int, rows: List[Any]) -> List[Dict[str, Any]]:
             continue
         attacker_id = row["attacker_id"]
         defender_id = row["defender_id"]
-        if user_id == attacker_id:
+        # ids can arrive as str or int depending on caller/column type.
+        if str(user_id) == str(attacker_id):
             opponent_id = defender_id
             opponent_name = row["defender_name"]
             side = "attacker"
