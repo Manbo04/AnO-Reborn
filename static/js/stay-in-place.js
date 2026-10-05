@@ -26,7 +26,9 @@
     if (!saved || saved.p !== here() || Date.now() - saved.t > MAX_AGE_MS || !saved.y) return;
 
     function restore() {
-        window.scrollTo(0, saved.y);
+        // 'instant': the site sets scroll-behavior: smooth, which would
+        // visibly animate down from the top on every return.
+        window.scrollTo({ top: saved.y, behavior: 'instant' });
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', restore);
