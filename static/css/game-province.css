@@ -609,6 +609,16 @@ body.province-base-view-active .game-page-overlay {
     display: none;
 }
 
+/* With the photo hidden, base view needs its opaque page wrappers back;
+   game-page-v2 (always on for this page) makes them transparent, which left
+   a white page behind the district map. */
+body.game-page-v2.province-base-view-active .templatecontainer {
+    background: var(--background) !important;
+}
+body.game-page-v2.province-base-view-active .templatediv {
+    background: var(--foreground) !important;
+}
+
 .province-photo-header--custom .game-hero {
     background-image:
         linear-gradient(180deg, rgba(8, 10, 16, 0.45) 0%, rgba(8, 10, 16, 0.82) 100%),
