@@ -676,10 +676,9 @@ def coalition(coalition_id):
             try:
                 db.execute(
                     """
-                    SELECT cbc.user_id, u.username, s.flag_data, cbc.resource, cbc.total_deposited, COALESCE(cbc.total_withdrawn, 0)
+                    SELECT cbc.user_id, u.username, u.flag_data, cbc.resource, cbc.total_deposited, COALESCE(cbc.total_withdrawn, 0)
                     FROM col_bank_contributions cbc
                     JOIN users u ON u.id = cbc.user_id
-                    LEFT JOIN stats s ON s.userid = cbc.user_id
                     WHERE cbc.coalition_id = %s
                     ORDER BY u.username, cbc.resource
                     """,
@@ -691,10 +690,9 @@ def coalition(coalition_id):
                 try:
                     db.execute(
                         """
-                        SELECT cbc.user_id, u.username, s.flag_data, cbc.resource, cbc.total_deposited, 0
+                        SELECT cbc.user_id, u.username, NULL::text, cbc.resource, cbc.total_deposited, 0
                         FROM col_bank_contributions cbc
                         JOIN users u ON u.id = cbc.user_id
-                        LEFT JOIN stats s ON s.userid = cbc.user_id
                         WHERE cbc.coalition_id = %s
                         ORDER BY u.username, cbc.resource
                         """,
