@@ -50,3 +50,15 @@ def test_assembly_page_survives_failing_assembly_queries(monkeypatch):
     resp = client.get("/assembly")
     assert resp.status_code == 200
     assert cur.rolled_back_to_savepoint
+
+
+def test_closed_proposals_query_selects_abstain_votes():
+    """The template rounds votes_abstain for closed proposals; a row without it
+    raises in Jinja and 500s the whole page."""
+    import inspect
+
+    import app_core.game_engine.routes as routes
+
+    src = inspect.getsource(routes.assembly)
+    closed = src.split('"closed proposals"')[1]
+    assert "as votes_abstain" in closed.split("ORDER BY")[0]

@@ -107,6 +107,7 @@ def assembly():
             SELECT ap.*,
                    COALESCE(SUM(CASE WHEN av.vote = 'for' THEN av.weight ELSE 0 END), 0) as votes_for,
                    COALESCE(SUM(CASE WHEN av.vote = 'against' THEN av.weight ELSE 0 END), 0) as votes_against,
+                   COALESCE(SUM(CASE WHEN av.vote = 'abstain' THEN av.weight ELSE 0 END), 0) as votes_abstain,
                    tu.username as target_name
             FROM assembly_proposals ap
             LEFT JOIN assembly_votes av ON ap.id = av.proposal_id
