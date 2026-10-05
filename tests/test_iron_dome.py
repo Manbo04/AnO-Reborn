@@ -50,3 +50,13 @@ def test_nukes_harder_than_drones():
     r = random.Random(1)
     assert calculate_iron_dome_interception(10, "nukes", rng=_Fixed(1.0)) < \
         calculate_iron_dome_interception(10, "kamikaze_drones", rng=_Fixed(1.0))
+
+
+def test_province_page_shows_dome_resource_costs_in_weight_units():
+    """Costs are stored in kg; the page must show tonnes like every other
+    weight (a bare '6,000 components' was misread as 6t vs the 60t balance
+    shown elsewhere)."""
+    with open("templates/province_v2.html", "r", encoding="utf-8") as f:
+        src = f.read()
+    assert "{{ a | weight_fmt }} {{ r }}" in src
+    assert '"{:,}".format(a)' not in src

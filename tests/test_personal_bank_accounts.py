@@ -28,3 +28,13 @@ def test_personal_bank_template_elements():
     assert "Personal Balance" in v1_content
     assert "/withdraw_personal_from_bank/" in v1_content
     assert "Withdraw Personal" in v1_content
+
+
+@pytest.mark.no_server
+def test_contribution_queries_do_not_use_missing_stats_flag_column():
+    """stats has no flag_data column (it lives on users); selecting s.flag_data
+    made both contribution queries fail, so every personal balance showed 0."""
+    with open("app_core/coalitions/routes.py", "r", encoding="utf-8") as f:
+        src = f.read()
+    assert "s.flag_data" not in src
+    assert "u.flag_data, cbc.resource" in src
