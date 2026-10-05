@@ -948,6 +948,9 @@ def bot_staff_nation():
   user_id = _resolve_nation_identifier(identifier)
   if user_id is None:
     return jsonify({"error": "Nation not found"}), 404
+  # The resolver returns a string id; war rows carry int ids, so pass an int
+  # or every war is reported from the defender's side.
+  user_id = int(user_id)
   snap = nation_snapshot_for_bot(user_id, full_detail=True)
   if not snap.get("id"):
     return jsonify({"error": "Could not load nation statistics."}), 500
