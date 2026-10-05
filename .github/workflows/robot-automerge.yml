@@ -1,0 +1,40 @@
+name: Robot auto-merge
+
+# The cloud maintenance robot (Claude routine) pushes its bug fixes and
+# community-voted features to `claude/robot-*` branches. When CI passes on
+# such a branch, merge it into master (which deploys). If the merge conflicts
+# or CI fails, nothing happens and the robot picks it up on its next run.
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+concurrency:
+  group: robot-automerge
+  cancel-in-progress: false
+
+jobs:
+  merge:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      startsWith(github.event.workflow_run.head_branch, 'claude/robot-')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+          token: ${{ secrets.ROBOT_GH_TOKEN }}
+      - name: Merge the tested commit into master
+        env:
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          git config user.name "ano-robot"
+          git config user.email "ano-robot@users.noreply.github.com"
+          git fetch origin "$BRANCH"
+          # Only merge the exact commit CI tested (not something pushed later).
+          [ "$(git rev-parse "origin/$BRANCH")" = "$SHA" ] || { echo "branch moved since CI; skipping"; exit 0; }
+          if git merge-base --is-ancestor "$SHA" HEAD; then echo "already merged"; exit 0; fi
+          git merge --no-ff "$SHA" -m "Merge $BRANCH (robot, CI passed)" || { git merge --abort; echo "conflict, robot will rebase"; exit 1; }
+          git push origin HEAD:master
