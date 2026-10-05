@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-05T16:21:36Z",
   "delivered_nonce": "bfb47b8c1a364848866309411963ed66",
   "kind": "bug",
-  "last_message_id": "1556668651871010966",
+  "last_message_id": "1556727857265385613",
   "last_player_message_at": "2026-10-05T14:05:28Z",
   "messages": [
     {
@@ -16,6 +16,26 @@
       "id": "1556668651871010966",
       "staff": false,
       "text": "Seems erroneous - my building upkeep (hourly - because it doesn't show up in daily?) * 24 hours is about 40% less than what the Building Upkeep is showing."
+    },
+    {
+      "at": "2026-10-05T16:21:36Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1556702913936494703",
+      "staff": false,
+      "text": "<@249007223454433292> you're right, upkeep was being billed several times an hour by extra economy ticks (about 1.66x what it should be over 24h, which matches your ~40% gap). that's fixed now and hourly ticks only run once, so new revenue history entries should match your hourly figure"
+    },
+    {
+      "at": "2026-10-05T18:00:43Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1556727857265385613",
+      "staff": false,
+      "text": "<@249007223454433292> good catch, you were right. revenue history was showing what you actually paid, the bug was that upkeep was sometimes getting charged more than once an hour. fixed now, it's back to once per hour so the 24h number should line up with hourly x 24 going forward"
     }
   ],
   "thread_id": "1556668651871010966",

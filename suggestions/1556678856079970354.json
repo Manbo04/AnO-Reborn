@@ -1,0 +1,65 @@
+{
+  "author_id": "218250058368417792",
+  "created_at": "2026-10-05T14:46:00Z",
+  "kind": "suggestion",
+  "last_message_id": "1556720454587261102",
+  "last_player_message_at": "2026-10-05T17:31:18Z",
+  "messages": [
+    {
+      "at": "2026-10-05T14:46:00Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1556678856079970354/1556678856922890320/osaka-azumanga-daioh.png?backend=b2&ex=6ac509a9&is=6ac3b829&hm=908d09f7c132b906720b16152b0b51df3b0e411dd0f0fe4c4122979302ced0f5&"
+      ],
+      "author": "luciuskonst",
+      "author_id": "218250058368417792",
+      "bot": false,
+      "id": "1556678856079970354",
+      "staff": false,
+      "text": "Overall aim: Flesh out the electricity mechanics of the game.\n\n*Note 1: Along the way, I will mark out ‘Bonus’ ideas that enrich the main proposal, but they are more like add-ons and/or half-baked ideas.*\n*Note 2: Each concept is numbered only for ease of discussion. They go into detail, but if you only want the main ideas, just read the bolded parts*\n*Note 3: I used AI to brainstorm, not to write #NoClankers*\n\n**__Layer 1: Electricity is now a tangible resource__**\n\n**1.1 At each hourly tick, Electricity generated − Electricity consumed = change in stored electricity.**\n\n**1.2 Electricity is stored in ~~the balls~~ batteries, which need to be built**. I propose 1 universal ‘battery’ building, but more types of energy storage can be added in future, subject to dev’s preferences.\n\n**1.3 Batteries are NOT necessary to run a basic grid as long as generation >= consumption**, but the excess is ‘wasted’.\n\n**1.4 Bonus: An electricity deficit no longer paralyses buildings.**\n\n**1.5 Instead, buildings which consume electricity, become less effective.** Just like workforce efficiency.\n\n**__Layer 2: Imagine if your child was named ‘Battery’__**\n\n**2.1 Under normal conditions, batteries do not release all their power at once. They have a maximum discharge rate**. For the purposes of domestic power needs, it is fine to let nations draw backup power from their batteries as quickly as needed.\n\n2.2 However, if a nation exports power, it is also unreasonable if their grids can support a theoretically infinite rate of export.\n\n2.3 Therefore I suggest the following **export rate limit: C < Dmax < C+(E/2)**\n\nC = domestic Consumption rate\nDmax = maximum Discharge rate\nE = Excess generation (i.e. Generation minus Consumption)\n\n||2.4 Yes, I know batteries can be flash-drained in real-life, but that just sounds like an exploit waiting to happen. Let’s keep it simple for now.||"
+    },
+    {
+      "at": "2026-10-05T14:49:55Z",
+      "attachments": [],
+      "author": "luciuskonst",
+      "author_id": "218250058368417792",
+      "bot": false,
+      "id": "1556679839996711063",
+      "staff": false,
+      "text": "⠀\n**__Layer 3: Electricity also has a trade cost__**\n\n**3.1 Just like other resources, electricity can be traded between players.**\n\n3.2 As long as a player has sufficient stored power or power output, they will be able to export power.\n\n**3.3 However, unlike other resources, electricity cannot transport itself instantaneously.**\n\n3.4 As with real life, electricity requires capital investments in transmission infrastructure. For our collective sanity, we can avoid inventing a whole new building category by simply abstracting these costs to **a ‘cost’ for trading.** (This dovetails with the newly-implemented ‘trading fee’)\n\n**3.5 There are two ways to implement costs**:\n**3.6 The simple way: C = 100Q^0.5, payable by supplier only**\n**3.7 Bonus: The borderline autistic way: C =  100Q^(0.5) + 500(A + B), payable by both supplier and purchaser**\n\nC = Cost per hourly tick\nQ = Quantity of electricity actually traded\nA, B = The total electricity output of nations A and B at point of contract\n\n3.8 The cost of trading has 2 possible components. First, **100Q^(0.5) varies **according to the amount of electricity traded. A greater quantity traded means rising costs, but at a falling rate (per unit). This models economies of scale from transmitting across the same network. What network? Well, if you insist…\n\n3.9 Second, **500(A + B)** represents a **‘fixed’ cost**. This models the fixed capital costs of building transmission lines, transformers, undersea cables, etc (our ‘network’). In-universe, the larger the domestic grids of both nations, the more costly it will be to establish a unified grid code / standardise operations.\n\n||**3.10 This represents the fact that it is cheaper to upgrade an existing 100MW grid to 200MW, rather than set up a new 100MW grid from zero**, which is (1) realistic, (2) incentivises specialisation, (3) reduces the attractiveness of big producers simply ‘leashing’ many small nations, since each additional network becomes prohibitively expensive.||"
+    },
+    {
+      "at": "2026-10-05T14:51:12Z",
+      "attachments": [],
+      "author": "luciuskonst",
+      "author_id": "218250058368417792",
+      "bot": false,
+      "id": "1556680163003990028",
+      "staff": false,
+      "text": "⠀\n**__Layer 4: Buying and Selling Electricity__**\n\n**4.1 Piggybacking on the ‘Bonds’ mechanic, electricity could use a contract-based system for trade**, where regular instalments are paid out\n\n4.2 Cost formula possibilities have already been discussed in Layer 3, so please engage your state-mandated photographic memory now. You can also scroll up if you have feeble neurons (point and laugh).\n\n**4.3 Bonus *(continued)* The ‘fixed’ component of the cost ||(if we choose to use it)|| does not change after the contract is established**. This prevents price drift whenever my neighbour builds 1000 wind farms, thereby sending me into my 5th bankruptcy.\n\n**4.4 Contract renewal will allow both nations to avoid paying the ‘fixed’ component again**. If their national grids have grown since then, the fixed cost will only go up by the difference, otherwise, it’s business as usual.\n\n4.4 For all this trouble, the supplier can receive money in exchange for power, at whatever price they had agreed to at the start of the contract. **They can also set a price such that the importer effectively covers the supplier’s ‘fixed’ costs. The important part is that players can set whatever price they see fit.**"
+    },
+    {
+      "at": "2026-10-05T15:02:11Z",
+      "attachments": [],
+      "author": "luciuskonst",
+      "author_id": "218250058368417792",
+      "bot": false,
+      "id": "1556682927285342221",
+      "staff": false,
+      "text": "addenum: I take absolutely no responsibility for the numbers proposed in the formulas, they might well be unbalanced, feel free to suggest other figures."
+    },
+    {
+      "at": "2026-10-05T17:31:18Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1556720454587261102",
+      "staff": true,
+      "text": "There's also 'natural batteries' in the form of dams and stuff\n\nAll of this is cool but i believe a bit early"
+    }
+  ],
+  "status": "new",
+  "thread_id": "1556678856079970354",
+  "title": "Electricity concept",
+  "url": "https://discord.com/channels/708006319658893385/1556678856079970354"
+}

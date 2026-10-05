@@ -2,8 +2,8 @@
   "author_id": "204961091892019200",
   "created_at": "2026-10-05T08:30:57Z",
   "kind": "suggestion",
-  "last_message_id": "1556592950627008543",
-  "last_player_message_at": "2026-10-05T09:04:39Z",
+  "last_message_id": "1556786276643115121",
+  "last_player_message_at": "2026-10-05T21:52:52Z",
   "messages": [
     {
       "at": "2026-10-05T08:30:57Z",
@@ -64,6 +64,368 @@
       "id": "1556592950627008543",
       "staff": false,
       "text": "im either making sense or spouting bullshit rn"
+    },
+    {
+      "at": "2026-10-05T14:37:29Z",
+      "attachments": [],
+      "author": "Silent",
+      "author_id": "138867089728339968",
+      "bot": false,
+      "id": "1556676711171489843",
+      "staff": false,
+      "text": "My population is lowkey just not growing anymore lmao"
+    },
+    {
+      "at": "2026-10-05T14:37:40Z",
+      "attachments": [],
+      "author": "Silent",
+      "author_id": "138867089728339968",
+      "bot": false,
+      "id": "1556676755522330758",
+      "staff": false,
+      "text": "Kinda unplayable"
+    },
+    {
+      "at": "2026-10-05T18:58:52Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1556742491758268428",
+      "staff": true,
+      "text": "Ok gonna just remove that update"
+    },
+    {
+      "at": "2026-10-05T20:30:53Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1556584470830784632/1556765645801005096/image.png?backend=b2&ex=6ac55a7d&is=6ac408fd&hm=2362f53ed5b0441d25fb9d9cb99d273a17bfcdad62a97344030cb119840a000d&"
+      ],
+      "author": "Silent",
+      "author_id": "138867089728339968",
+      "bot": false,
+      "id": "1556765646543659093",
+      "staff": false,
+      "text": ""
+    },
+    {
+      "at": "2026-10-05T20:31:04Z",
+      "attachments": [],
+      "author": "Silent",
+      "author_id": "138867089728339968",
+      "bot": false,
+      "id": "1556765692437729411",
+      "staff": false,
+      "text": "Example"
+    },
+    {
+      "at": "2026-10-05T20:31:54Z",
+      "attachments": [],
+      "author": "Silent",
+      "author_id": "138867089728339968",
+      "bot": false,
+      "id": "1556765902186348545",
+      "staff": false,
+      "text": "I did the math and it would take ***325*** days to get to the population soft cap"
+    },
+    {
+      "at": "2026-10-05T20:32:19Z",
+      "attachments": [],
+      "author": "Silent",
+      "author_id": "138867089728339968",
+      "bot": false,
+      "id": "1556766006880374908",
+      "staff": false,
+      "text": "7812 hours"
+    },
+    {
+      "at": "2026-10-05T20:32:29Z",
+      "attachments": [],
+      "author": "Silent",
+      "author_id": "138867089728339968",
+      "bot": false,
+      "id": "1556766050278842470",
+      "staff": false,
+      "text": "Just for the single province"
+    },
+    {
+      "at": "2026-10-05T21:31:56Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1556781010576736317",
+      "staff": true,
+      "text": "hmm here is the problem"
+    },
+    {
+      "at": "2026-10-05T21:32:24Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1556781127942013039",
+      "staff": true,
+      "text": "people inform me of too fast growth and then after update inform me of too slow growth"
+    },
+    {
+      "at": "2026-10-05T21:32:38Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1556781186766999603",
+      "staff": true,
+      "text": "what would be an ideal sweet spot?"
+    },
+    {
+      "at": "2026-10-05T21:33:00Z",
+      "attachments": [],
+      "author": "Silent",
+      "author_id": "138867089728339968",
+      "bot": false,
+      "id": "1556781279054274642",
+      "staff": false,
+      "text": "I have no idea"
+    },
+    {
+      "at": "2026-10-05T21:33:12Z",
+      "attachments": [],
+      "author": "Silent",
+      "author_id": "138867089728339968",
+      "bot": false,
+      "id": "1556781329901813786",
+      "staff": false,
+      "text": "But 325 days is fucked"
+    },
+    {
+      "at": "2026-10-05T21:33:42Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1556781454938218527",
+      "staff": true,
+      "text": "is it though?"
+    },
+    {
+      "at": "2026-10-05T21:33:49Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1556781486366138521",
+      "staff": true,
+      "text": "its like not too bad imo"
+    },
+    {
+      "at": "2026-10-05T21:33:57Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1556781518892830805",
+      "staff": true,
+      "text": "a year to reach full potential"
+    },
+    {
+      "at": "2026-10-05T21:34:00Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1556781532432179211",
+      "staff": true,
+      "text": "ok nvm sounds bad"
+    },
+    {
+      "at": "2026-10-05T21:34:10Z",
+      "attachments": [],
+      "author": "Silent",
+      "author_id": "138867089728339968",
+      "bot": false,
+      "id": "1556781570667454515",
+      "staff": false,
+      "text": "For ONE province"
+    },
+    {
+      "at": "2026-10-05T21:34:14Z",
+      "attachments": [],
+      "author": "Silent",
+      "author_id": "138867089728339968",
+      "bot": false,
+      "id": "1556781589155815508",
+      "staff": false,
+      "text": "That's just one"
+    },
+    {
+      "at": "2026-10-05T21:34:44Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1556781716805517474",
+      "staff": true,
+      "text": "yeah"
+    },
+    {
+      "at": "2026-10-05T21:38:50Z",
+      "attachments": [],
+      "author": "Silent",
+      "author_id": "138867089728339968",
+      "bot": false,
+      "id": "1556782747341819977",
+      "staff": false,
+      "text": "Population is the only thing stopping me from having a decent economy though"
+    },
+    {
+      "at": "2026-10-05T21:39:13Z",
+      "attachments": [],
+      "author": "Silent",
+      "author_id": "138867089728339968",
+      "bot": false,
+      "id": "1556782843173273712",
+      "staff": false,
+      "text": "So I'm just waiting for it to grow to be able to do... anything really"
+    },
+    {
+      "at": "2026-10-05T21:39:53Z",
+      "attachments": [],
+      "author": "Silent",
+      "author_id": "138867089728339968",
+      "bot": false,
+      "id": "1556783013180743723",
+      "staff": false,
+      "text": "I imagine the nations with tons of population grow fast because of that"
+    },
+    {
+      "at": "2026-10-05T21:40:01Z",
+      "attachments": [],
+      "author": "Silent",
+      "author_id": "138867089728339968",
+      "bot": false,
+      "id": "1556783046412468237",
+      "staff": false,
+      "text": "But I got nothin to grow off of rn"
+    },
+    {
+      "at": "2026-10-05T21:40:27Z",
+      "attachments": [],
+      "author": "Silent",
+      "author_id": "138867089728339968",
+      "bot": false,
+      "id": "1556783151781650583",
+      "staff": false,
+      "text": "Maybe introduce an immigration thing where smaller nations can grow population faster?"
+    },
+    {
+      "at": "2026-10-05T21:41:32Z",
+      "attachments": [],
+      "author": "Kurai",
+      "author_id": "1002628734932762755",
+      "bot": false,
+      "id": "1556783426655354953",
+      "staff": true,
+      "text": "Bigger nations has to worry about educating those mfs before they could melt a piece of iron into steel <:pepecry:1521723285304381491>"
+    },
+    {
+      "at": "2026-10-05T21:43:36Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1556783944446246983",
+      "staff": true,
+      "text": "a vote on friday will involve that but for now we gonna have to wait"
+    },
+    {
+      "at": "2026-10-05T21:43:43Z",
+      "attachments": [],
+      "author": "Silent",
+      "author_id": "138867089728339968",
+      "bot": false,
+      "id": "1556783977279389790",
+      "staff": false,
+      "text": "Aight"
+    },
+    {
+      "at": "2026-10-05T21:43:49Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1556784001245520117",
+      "staff": true,
+      "text": "I will see what I can do to make the game move faster for you"
+    },
+    {
+      "at": "2026-10-05T21:43:59Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1556784041779400725",
+      "staff": true,
+      "text": "maybe a tad higher growth for new players"
+    },
+    {
+      "at": "2026-10-05T21:44:04Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1556784063707217931",
+      "staff": true,
+      "text": "something to get them situated"
+    },
+    {
+      "at": "2026-10-05T21:44:38Z",
+      "attachments": [],
+      "author": "Silent",
+      "author_id": "138867089728339968",
+      "bot": false,
+      "id": "1556784207395823748",
+      "staff": false,
+      "text": "How is the growth distributed between provinces?  Because my more important one is the slow one for some reason"
+    },
+    {
+      "at": "2026-10-05T21:51:19Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1556785889907314699",
+      "staff": false,
+      "text": "<@138867089728339968> growth gets split between your provinces by how much room each one has (cities + land), not by how many people already live there. so if your main province has fewer cities/land than the others it gets the smaller cut. build cities there and it'll pull a bigger share\nalso if a nation has no rations at all growth is 0, so food first\nand yeah small nations are too slow right now, working on a catch-up boost so nations way under their comfort grow faster"
+    },
+    {
+      "at": "2026-10-05T21:52:17Z",
+      "attachments": [],
+      "author": "Silent",
+      "author_id": "138867089728339968",
+      "bot": false,
+      "id": "1556786129980887113",
+      "staff": false,
+      "text": "Mmmmm"
+    },
+    {
+      "at": "2026-10-05T21:52:26Z",
+      "attachments": [],
+      "author": "Silent",
+      "author_id": "138867089728339968",
+      "bot": false,
+      "id": "1556786167901593613",
+      "staff": false,
+      "text": "Noted"
+    },
+    {
+      "at": "2026-10-05T21:52:52Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1556786276643115121",
+      "staff": true,
+      "text": "I have a hard time displaying that information everywhere reliably"
     }
   ],
   "status": "new",

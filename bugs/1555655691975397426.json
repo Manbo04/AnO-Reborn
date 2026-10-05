@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-05T16:21:35Z",
   "delivered_nonce": "cf62358d59d64d73ba5160539dda1d09",
   "kind": "bug",
-  "last_message_id": "1556617535959339050",
-  "last_player_message_at": "2026-10-05T08:31:35Z",
+  "last_message_id": "1556780562579071169",
+  "last_player_message_at": "2026-10-05T21:30:09Z",
   "messages": [
     {
       "at": "2026-10-02T19:00:19Z",
@@ -74,6 +74,36 @@
       "id": "1556617535959339050",
       "staff": false,
       "text": "<@1043204044774183032> <@616524068987863060> found it, the game was counting part of your workforce as unemployed when they weren't, so you lost 10 happiness every hour and it kept snapping back to 3%. fixed now, Altoria already went 3 → 11 on this tick and should keep climbing like the tooltip says"
+    },
+    {
+      "at": "2026-10-05T16:21:35Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1556702908614189108",
+      "staff": false,
+      "text": "<@1043204044774183032> yep, same bug: workers with no education record were counted as unemployed (-10 happiness every hour). that's fixed and live, your happiness should climb normally now. shout if it sticks again"
+    },
+    {
+      "at": "2026-10-05T19:52:05Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1556755882891677741",
+      "staff": false,
+      "text": "Oh wow, nice ty"
+    },
+    {
+      "at": "2026-10-05T21:30:09Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1556780562579071169",
+      "staff": true,
+      "text": "Thank you for playing!"
     }
   ],
   "thread_id": "1555655691975397426",

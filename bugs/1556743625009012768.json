@@ -1,0 +1,52 @@
+{
+  "author_id": "465912833352138768",
+  "created_at": "2026-10-05T19:03:23Z",
+  "kind": "bug",
+  "last_message_id": "1556747270299590817",
+  "last_player_message_at": "2026-10-05T19:17:52Z",
+  "messages": [
+    {
+      "at": "2026-10-05T19:03:23Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1556743625009012768",
+      "staff": false,
+      "text": "The 12 hour population growth freeze from losing a battle is still active on my nation despite the war ending over 12 hours ago"
+    },
+    {
+      "at": "2026-10-05T19:16:27Z",
+      "attachments": [],
+      "author": "Kurai",
+      "author_id": "1002628734932762755",
+      "bot": false,
+      "id": "1556746915704610900",
+      "staff": true,
+      "text": "It's not just you, dede froze it for the entire game until he finishes working on the new growth mechanics"
+    },
+    {
+      "at": "2026-10-05T19:17:11Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1556747101604675655",
+      "staff": false,
+      "text": "Oh, I thought those were already out. But regardless it looks like it is working now so he might just be to quick"
+    },
+    {
+      "at": "2026-10-05T19:17:52Z",
+      "attachments": [],
+      "author": "Kurai",
+      "author_id": "1002628734932762755",
+      "bot": false,
+      "id": "1556747270299590817",
+      "staff": true,
+      "text": "Good to know"
+    }
+  ],
+  "thread_id": "1556743625009012768",
+  "title": "12 Hour Population Growth Freeze Isn't Ending",
+  "url": "https://discord.com/channels/708006319658893385/1556743625009012768"
+}

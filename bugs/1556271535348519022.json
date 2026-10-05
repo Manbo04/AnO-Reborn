@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-05T16:21:36Z",
   "delivered_nonce": "1986db41b89e4018982fc4befd0286ae",
   "kind": "bug",
-  "last_message_id": "1556589267189370903",
-  "last_player_message_at": "2026-10-05T08:50:01Z",
+  "last_message_id": "1556726162837999620",
+  "last_player_message_at": "2026-10-05T17:53:59Z",
   "messages": [
     {
       "at": "2026-10-04T11:47:28Z",
@@ -56,6 +56,28 @@
       "id": "1556589267189370903",
       "staff": true,
       "text": "I get the same error"
+    },
+    {
+      "at": "2026-10-05T16:21:36Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1556702911801721013",
+      "staff": false,
+      "text": "<@616524068987863060> thanks, i couldn't find a definite cause from the code but made the assembly page load even if one of its sections errors, so you should at least see the poll and the rest. should be live within the hour. if it still 500s after that, tell me and i'll dig deeper"
+    },
+    {
+      "at": "2026-10-05T17:53:59Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1556271535348519022/1556726162267312198/Screenshot_20261005_115331_Chrome.jpg?backend=b2&ex=6ac535b7&is=6ac3e437&hm=be10895521d566e00915687a6439b589cdbae1b49de601f8f797d3c46a09a41e&"
+      ],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1556726162837999620",
+      "staff": true,
+      "text": "Still happening to me."
     }
   ],
   "thread_id": "1556271535348519022",
