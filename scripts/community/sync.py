@@ -17,8 +17,15 @@ Weekly vote: every Friday 16:00 UTC the open ballot is tallied (Yes > No with
 at least MIN_VOTES votes passes) and a new ballot is opened with every new
 suggestion. One Discord poll per suggestion, in the vote channel.
 
+Live chat: when the routine pushes results/ to the queue, community-live.yml (on the
+queue branch) runs `--live`: replies are posted right away, and every thread the robot
+just asked a question in (status needs_info) is re-read every LIVE_POLL_SECONDS for
+LIVE_POLLS rounds; a player answer is committed + pushed to the queue at once, so the
+routine (polling with wait_reply.py) can keep going in the same run.
+
 Usage:
   python3 scripts/community/sync.py                 # normal hourly run
+  python3 scripts/community/sync.py --live          # post replies now + watch for answers
   python3 scripts/community/sync.py --kickoff FILE  # open the first ballot now
   add --dry-run to print what would be sent without calling Discord writes.
 """
@@ -28,6 +35,7 @@ import datetime as dt
 import json
 import os
 import re
+import subprocess
 import sys
 import time
 import urllib.error
@@ -54,6 +62,8 @@ BALLOT_WEEKDAY = 4  # Friday
 BALLOT_HOUR_UTC = 16
 YES, NO = "Yes, add it", "No, leave it out"
 MAX_STORED_MESSAGES = 60
+LIVE_POLL_SECONDS = 60
+LIVE_POLLS = 5
 
 UTC = dt.timezone.utc
 DRY = False
@@ -277,9 +287,10 @@ def sync_threads(q, state, kind, forum_id):
     return changed
 
 
-def deliver_results(q, kind):
+def deliver_results(q, kind, asked=None):
     """Post the routine's replies (results/<folder>/<id>.json) into the threads.
-    A ticket result with status needs_staff also pings the Moderator/Admin roles."""
+    A ticket result with status needs_staff also pings the Moderator/Admin roles.
+    `asked` (a list) collects (folder, id) of replies that ask the player a question."""
     folder = FOLDERS[kind]
     posted = 0
     for tid, res in q.all(f"results/{folder}"):
@@ -299,7 +310,69 @@ def deliver_results(q, kind):
         rec["delivered_at"] = iso(now())
         q.save(rec, folder, tid + ".json")
         posted += 1
+        if asked is not None and res.get("status") == "needs_info":
+            asked.append((folder, tid))
     return posted
+
+
+def pull_new(q, folder, tid, bot_id):
+    """Append a thread's new Discord messages to its queue record.
+    Returns True if a player (not the bot, not staff in a ticket) wrote."""
+    rec = q.load(folder, tid + ".json")
+    new = messages_after(tid, rec["last_message_id"])
+    if not new:
+        return False
+    player_wrote = False
+    for m in new:
+        s_ = slim(m)
+        if s_["author_id"] == bot_id:
+            s_["bot"] = True
+        rec["messages"].append(s_)
+        if not s_["bot"] and not (folder == "tickets" and s_["staff"]):
+            rec["last_player_message_at"] = s_["at"]
+            player_wrote = True
+    rec["last_message_id"] = new[-1]["id"]
+    if len(rec["messages"]) > MAX_STORED_MESSAGES:
+        rec["messages"] = rec["messages"][:5] + rec["messages"][-(MAX_STORED_MESSAGES - 5):]
+    q.save(rec, folder, tid + ".json")
+    return player_wrote
+
+
+def push_queue(q, msg):
+    """Commit + push the queue checkout (live mode needs answers out within a minute)."""
+    if DRY:
+        print(f"[dry-run] push queue: {msg}")
+        return
+    git = ["git", "-C", q.root]
+    subprocess.run(git + ["add", "-A"], check=True)
+    if subprocess.run(git + ["diff", "--cached", "--quiet"]).returncode == 0:
+        return
+    subprocess.run(git + ["commit", "-q", "-m", msg], check=True)
+    for _ in range(5):
+        if (subprocess.run(git + ["pull", "-q", "--rebase", "origin", "community-queue"]).returncode == 0
+                and subprocess.run(git + ["push", "-q", "origin", "HEAD:community-queue"]).returncode == 0):
+            return
+        time.sleep(5)
+    raise RuntimeError("could not push queue")
+
+
+def live(q, state):
+    """Post pending replies now, then watch the threads we just asked a question in."""
+    asked = []
+    n_rep = sum(deliver_results(q, k, asked) for k in ("bug", "suggestion", "ticket"))
+    print(f"live: replies_posted={n_rep} watching={len(asked)}")
+    push_queue(q, f"live replies {iso(now())}")
+    for _ in range(LIVE_POLLS):
+        if not asked:
+            break
+        time.sleep(LIVE_POLL_SECONDS)
+        answered = [a for a in asked if pull_new(q, a[0], a[1], state["bot_id"])]
+        if answered:
+            print(f"live: player answered in {answered}")
+            push_queue(q, f"live answer {iso(now())}")
+            asked = [a for a in asked if a not in answered]
+    if asked:
+        print(f"live: no answer within {LIVE_POLLS} min from {asked}")
 
 
 def sync_tickets(q, state):
@@ -558,6 +631,7 @@ def main():
     ap.add_argument("--queue", default=os.environ.get("QUEUE_DIR", "community-queue"))
     ap.add_argument("--kickoff", help="JSON file with the first ballot's proposals")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--live", action="store_true", help="post replies now + watch for answers")
     args = ap.parse_args()
     DRY = args.dry_run
     q = Queue(args.queue)
@@ -565,6 +639,9 @@ def main():
     if not state.get("bot_id"):
         state["bot_id"] = api("GET", "/users/@me")["id"]
     state.setdefault("kickoff_at", iso(now()))
+    if args.live:
+        live(q, state)
+        return
 
     if args.kickoff:
         with open(args.kickoff) as f:

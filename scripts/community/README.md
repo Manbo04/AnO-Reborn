@@ -14,6 +14,12 @@ Players decide balance and features; bugs get fixed without Dede in the loop.
   posts results, opens a new ballot (one Discord poll per new suggestion in
   #weekly-vote), and posts a weekly summary to staff chat.
 
+- Live questions: when the robot pushes results/, `community-live.yml` (on the
+  `community-queue` branch) posts its replies straight away. If it asked a player
+  something, that thread is checked every minute for 5 minutes and the answer is pushed
+  back to the queue; the robot waits for it with `wait_reply.py`, then moves on if
+  nobody answered.
+
 - Support tickets (`ticket-NNNN` channels) are mirrored too; the robot answers what it
   can and marks the rest `needs_staff`, which pings Moderators/Admins in the ticket.
 - `.github/workflows/health-watchdog.yml` (`watchdog.py`, hourly :37) checks the live site,
