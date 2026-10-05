@@ -1,7 +1,7 @@
 from flask import Blueprint, request, render_template, session, redirect
 from helpers import redirect_back
 from helpers import login_required, error, is_theme_v2_enabled
-from database import get_request_cursor, cache_response, invalidate_user_cache, invalidate_view_cache
+from database import get_request_cursor, invalidate_user_cache, invalidate_view_cache
 from variables import MILDICT
 from app_core.upgrades.services import get_upgrades
 
@@ -12,7 +12,6 @@ bp = Blueprint("military", __name__)
 
 @bp.route("/military", methods=["GET", "POST"])
 @login_required
-@cache_response(ttl_seconds=30)  # Cache military page
 def military():
     cId = session["user_id"]
 

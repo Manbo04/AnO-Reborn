@@ -3,7 +3,7 @@ from flask import request, render_template, session, redirect, flash, jsonify
 from helpers import redirect_back
 
 from helpers import login_required, is_theme_v2_enabled
-from database import get_request_cursor, cache_response
+from database import get_request_cursor
 
 from .repositories import (
     VALID_TRADE_RESOURCES,
@@ -25,7 +25,6 @@ from .services import (
 
 
 @login_required
-@cache_response(ttl_seconds=30)
 def trade_agreements():
     """View all trade agreements for current user."""
     user_id = session["user_id"]

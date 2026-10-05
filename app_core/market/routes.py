@@ -3,7 +3,7 @@ from urllib.parse import urlencode
 from helpers import login_required, redirect_back, error, get_valid_int, record_trade_event, is_theme_v2_enabled
 import variables
 import logging
-from database import get_request_cursor, invalidate_user_cache, invalidate_view_cache, rollback_db_cursor, cache_response
+from database import get_request_cursor, invalidate_user_cache, invalidate_view_cache, rollback_db_cursor
 
 from .repositories import (
     is_active_resource, get_user_resource_quantity,
@@ -108,7 +108,6 @@ def _hidden_by_preferences(offer, prefs, embargo_partners):
 
 @market_bp.route("/market", methods=["GET"])
 @login_required
-@cache_response(ttl_seconds=30)
 def market():
     """Order book for one resource (Market UI Rework, Helios 2026-10-03):
     offers you can BUY from (cheapest first) beside offers you can SELL to
@@ -617,7 +616,6 @@ def post_offer(offer_type):
 
 @market_bp.route("/my_offers", methods=["GET"])
 @login_required
-@cache_response(ttl_seconds=15)
 def my_offers():
     cId = session["user_id"]
     offers = {}
