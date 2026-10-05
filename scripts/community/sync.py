@@ -27,6 +27,7 @@ import argparse
 import datetime as dt
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
@@ -242,6 +243,11 @@ def sync_threads(q, state, kind, forum_id):
                 rec["last_player_message_at"] = s["at"]
         if new:
             rec["last_message_id"] = new[-1]["id"]
+        if rec.get("author_id") == bot_id and rec["messages"]:
+            # Filed by the bot on a player's behalf: credit the player it names.
+            m = re.search(r"<@!?(\d+)>", rec["messages"][0]["text"])
+            if m:
+                rec["author_id"] = m.group(1)
         if len(rec["messages"]) > MAX_STORED_MESSAGES:
             rec["messages"] = rec["messages"][:5] + rec["messages"][-(MAX_STORED_MESSAGES - 5):]
         q.save(rec, folder, tid + ".json")
