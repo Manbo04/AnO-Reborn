@@ -1,3 +1,7 @@
+> **HISTORICAL (2025-12) — do not trust for current behaviour.** Use
+> `docs/GAME_RULES.md` (rules + invariants) and `docs/SYSTEM_MAP.md`
+> (generated from code) instead.
+
 # Affairs and Order - System Architecture Documentation
 
 ## Overview

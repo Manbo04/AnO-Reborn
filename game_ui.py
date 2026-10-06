@@ -114,8 +114,10 @@ UNIT_LEGACY_IMAGES: dict[str, str] = {
     "tanks": "tank.jpg",
     "artillery": "artillery.jpg",
     "fighter_jets": "fighterjet.jpg",
+    "fighters": "fighterjet.jpg",  # catalog name (variables.UNITS); old key kept
     "bombers": "bomber.jpg",
     "attack_helicopters": "apache.jpg",
+    "apaches": "apache.jpg",  # catalog name (variables.UNITS); old key kept
     "submarines": "submarine.jpg",
     "cruisers": "cruiser.jpg",
     "destroyers": "destroyer.jpg",
