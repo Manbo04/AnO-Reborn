@@ -64,7 +64,7 @@ def test_sql_uses_plain_decimals():
 
 
 pytestmark_db = pytest.mark.skipif(
-    not os.getenv("DATABASE_URL") or os.getenv("DATABASE_PUBLIC_URL"),
+    not os.getenv("DATABASE_URL") or bool(os.getenv("DATABASE_PUBLIC_URL")),
     reason="Needs a LOCAL Postgres in DATABASE_URL (and no DATABASE_PUBLIC_URL)",
 )
 

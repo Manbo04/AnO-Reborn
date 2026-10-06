@@ -37,3 +37,10 @@ production serves). Do not hand-edit `style.min.css`.
 
 - **Automatic Responses via Discord Bot**: You can and should always use the Affairs and Order Discord bot (`discord_bot/`) to respond automatically to players and threads (e.g., bug reports, announcements, status updates). This is the mandatory, default way you should always communicate fixes and responses back to Discord.
 - When reading Discord messages to generate replies or fix bugs, completely ignore messages that just contain an emote or are otherwise non-actionable. Do not generate generic 'Recommendation: Ignore' replies, as this clutters the chat.
+
+## How changes ship (enforced)
+`master` is protected: direct pushes are rejected. Work on a branch, open a PR
+(`gh pr create --fill && gh pr merge --auto --merge`); it merges and deploys only after the
+`prod-shaped` CI job passes (production schema snapshot, strict migrations, SQL-vs-schema
+check, full test suite). New migrations: `migrations/YYYYMMDD_HHMM_short_name.sql`,
+re-runnable. Full rules: see the "How changes ship" section of `CLAUDE.md`.

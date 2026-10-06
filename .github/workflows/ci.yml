@@ -32,6 +32,9 @@ jobs:
       - name: Check auth forms include CSRF token
         run: python3 scripts/check_csrf_forms.py
 
+      - name: Check no runtime schema changes in app code
+        run: python3 scripts/check_no_runtime_ddl.py
+
       - name: Progression health (strict when DB secret present)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_PUBLIC_URL || secrets.DATABASE_URL }}
@@ -74,18 +77,26 @@ jobs:
             tests/test_validate_post_origin.py \
             -q --tb=short
 
-  integration-db:
+  prod-shaped:
+    # The real gate. Builds a database from the PRODUCTION schema snapshot
+    # (db/schema.sql), applies new migrations strictly, checks every SQL query
+    # in the app against it, then runs the WHOLE test suite. Robot auto-merge
+    # and branch protection both depend on this job passing.
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/anodb
+      DATABASE_PUBLIC_URL: postgresql://postgres:postgres@localhost:5432/anodb
       PG_HOST: 127.0.0.1
       PG_PORT: 5432
       PG_USER: postgres
       PG_PASSWORD: postgres
       PG_DATABASE: anodb
+      PGSSLMODE: disable
+      SECRET_KEY: ci-test-secret
     services:
       postgres:
-        image: postgres:15
+        image: postgres:17
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -104,31 +115,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
+          cache: pip
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements.txt pytest-timeout
 
-      - name: Initialize DB schema
-        run: python init_db_railway.py
-
-      - name: Apply schema compatibility
-        run: |
-          python scripts/apply_schema_compat.py
-          for file in migrations/000*.sql migrations/0010*.sql migrations/01*.py migrations/016*.sql; do
-            if [[ $file == *.sql ]]; then
-              psql $DATABASE_URL -f "$file" || true
-            elif [[ $file == *.py ]]; then
-              python "$file" || true
-            fi
-          done
-          python scripts/apply_all_pending_migrations.py
-
-      - name: Run DB-backed coalition and schema tests
-        run: |
-          python -m pytest \
-            tests/test_coalition_membership_guard.py \
-            tests/test_schema_compat_helpers.py \
-            tests/test_my_coalition_empty.py \
-            -q --tb=short
+      - name: Prod-shaped DB checks + full test suite
+        run: bash scripts/ci_full_check.sh

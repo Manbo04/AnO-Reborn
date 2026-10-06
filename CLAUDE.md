@@ -38,8 +38,44 @@ deployed the app repo onto it, replacing postgres:17 and taking the whole game
 down for ~1 hour (recovered by redeploying the old postgres:17 deployment via
 the API; clean shutdown, no data loss). Before ANY `railway up` or `railway
 redeploy`, run `railway status` and confirm the linked service is `web` (or
-`bot`/`celery-worker`) — never `prod-validator`. Deploys normally happen by
-pushing to master, not by `railway up`.
+`bot`/`celery-worker`) — never `prod-validator`. Deploys happen by merging a
+PR into master, not by `railway up`.
+
+---
+
+## 🚦 How changes ship (enforced by GitHub, not optional)
+
+`master` is protected. **Direct pushes are rejected — for every session, the robot, and admins.**
+Everything lands through a pull request, and GitHub only merges it once the CI job
+`prod-shaped` passes on that exact commit. That job:
+
+1. builds a database from the **production schema snapshot** (`db/schema.sql`),
+2. applies any new migrations **strictly** (a failing migration fails CI),
+3. checks **every SQL query in the app** against that schema
+   (`scripts/check_sql_against_schema.py` — catches missing tables/columns, the bug class
+   that killed resource production for 12h on 2026-10-03),
+4. runs the **whole** test suite, not a hand-picked subset.
+
+Workflow:
+```bash
+git switch -c fix/short-name origin/master    # never commit on master
+# ...change + add/adjust tests...
+bash scripts/ci_full_check.sh                 # optional local run (needs a throwaway Postgres in DATABASE_URL)
+git push -u origin HEAD
+gh pr create --fill && gh pr merge --auto --merge   # merges + deploys by itself once CI is green
+```
+
+Rules that keep the gate meaningful:
+- **New migrations are named `YYYYMMDD_HHMM_short_name.sql`** (UTC) and are picked up
+  automatically — never edit `MIGRATION_FILES`, never reuse a number. They must be safe
+  to re-run (`IF NOT EXISTS`, `ON CONFLICT`).
+- **After a migration ships, refresh the snapshot**: `bash scripts/snapshot_prod_schema.sh`,
+  then PR the `db/` changes.
+- **No DDL in request handlers or ticks** — schema changes go in `migrations/` only.
+- `tests/known_failures.txt` and `db/sql_check_baseline.txt` **may only shrink**. Never add a
+  line to get CI green; fix the code or the test instead.
+- Emergency only (site down, CI itself broken): an admin can temporarily disable branch
+  protection in GitHub → Settings → Branches, push the fix, and **re-enable it immediately**.
 
 ---
 
@@ -47,7 +83,7 @@ pushing to master, not by `railway up`.
 
 The AI has access to:
 - **GitHub MCP** - Repository management, PRs, issues, branches
-- **Railway** - Production database via `DATABASE_PUBLIC_URL`
+- **Railway** - Production database. The DB has no working public proxy; query it from inside the `web` container: `railway ssh -s web "psql \"\$DATABASE_URL\" -P pager=off -c '...'"`
 - **ano-game MCP** - Direct game database queries (nations, resources, wars, etc.) — served from `mcp-server/` (Node/TypeScript, `pg` driver)
 - **Context7 MCP** - Up-to-date library documentation (use `use context7` in prompts)
 - **Local terminal** - Full shell access for running scripts, tests, deployments
@@ -105,7 +141,7 @@ The AI has access to:
 - [ ] Tested with real data from production database
 - [ ] No regressions in related functionality
 - [ ] Follows existing code patterns
-- [ ] Committed and pushed (if deployment needed)
+- [ ] Shipped through a PR with the `prod-shaped` CI job green (no direct pushes)
 - [ ] Session summary added to `docs/SESSION_LOG.md` (root cause, fix, commits, what to watch)
 
 ---
@@ -145,8 +181,8 @@ python3 scripts/bundle_game_css.py && python3 scripts/check_game_css_bundle.py
 celery -A tasks worker --loglevel=info
 celery -A tasks beat --loglevel=info
 
-# Deploy
-git push origin master          # Railway auto-deploys `web`, `bot`, `celery-worker`
+# Deploy: merge a PR into master (see "How changes ship"); Railway then auto-deploys
+# `web`, `bot`, `celery-worker`. Direct pushes to master are rejected.
 ```
 
 ---

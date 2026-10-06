@@ -33,7 +33,29 @@ LEGACY_SCHEMA_TEST_MODULES = {
 }
 
 
+def _known_failures():
+    path = os.path.join(os.path.dirname(__file__), "known_failures.txt")
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return {
+                line.strip()
+                for line in fh
+                if line.strip() and not line.lstrip().startswith("#")
+            }
+    except FileNotFoundError:
+        return set()
+
+
 def pytest_collection_modifyitems(config, items):
+    # Quarantine: tests that were already failing when CI started running the
+    # whole suite. Set RUN_KNOWN_FAILURES=1 to run them while fixing them.
+    if os.getenv("RUN_KNOWN_FAILURES") != "1":
+        known = _known_failures()
+        quarantine = pytest.mark.skip(reason="quarantined: see tests/known_failures.txt")
+        for item in items:
+            if item.nodeid in known:
+                item.add_marker(quarantine)
+
     if os.getenv("RUN_LEGACY_SCHEMA_TESTS") == "1":
         return
     skip_legacy = pytest.mark.skip(
@@ -60,6 +82,22 @@ def _run_app():
 @pytest.fixture(scope="session", autouse=True)
 def server(pytestconfig):
     """Start in-process Flask on :5001 for integration tests; offline tests still run if it fails."""
+    # A leftover server from an earlier, interrupted run would answer instead of
+    # ours (stale code + stale state) and make results depend on history.
+    try:
+        requests.get("http://127.0.0.1:5001/", timeout=1)
+        port_busy = True
+    except requests.exceptions.ConnectionError:
+        port_busy = False
+    except requests.exceptions.RequestException:
+        port_busy = True  # something is listening, just slow
+    if port_busy:
+        pytest.exit(
+            "Port 5001 is already serving something (leftover test server?). "
+            "Stop it before running the tests.",
+            returncode=3,
+        )
+
     p = Process(target=_run_app)
     p.daemon = True
     p.start()
