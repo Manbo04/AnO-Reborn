@@ -27,8 +27,8 @@
                 </div>
 
                 <div class="progressbarparent">
-                    <div class="progressbarchildtext">{{ defender_info["supplies"] }} / {{ defender_info["supply_cap"] or 2000 }} Supplies</div>
-                    <div class="progressbarchild progressbargreen" style="width: {{ [(defender_info['supplies'] * 100 / (defender_info['supply_cap'] or 2000)), 100] | min | round(0, 'ceil') }}%">
+                    <div class="progressbarchildtext">{{defender_info["supplies"]}} / 2000 Supplies</div>
+                    <div class="progressbarchild progressbargreen" style="width: {{ (defender_info['supplies']/20) | round(0, 'ceil') }}%">
                     </div>
                 </div>
 
@@ -49,8 +49,8 @@
                 </div>
 
                 <div class="progressbarparent">
-                    <div class="progressbarchildtext">{{ attacker_info["supplies"] }} / {{ attacker_info["supply_cap"] or 2000 }} Supplies</div>
-                    <div class="progressbarchild progressbargreen" style="width: {{ [(attacker_info['supplies'] * 100 / (attacker_info['supply_cap'] or 2000)), 100] | min | round(0, 'ceil') }}%">
+                    <div class="progressbarchildtext">{{attacker_info["supplies"]}} / 2000 Supplies</div>
+                    <div class="progressbarchild progressbargreen" style="width: {{ (attacker_info['supplies']/20) | round(0, 'ceil') }}%">
                     </div>
                 </div>
             </div>
@@ -74,8 +74,8 @@
                 </div>
 
                 <div class="progressbarparent">
-                    <div class="progressbarchildtext">{{ defender_info["supplies"] }} / {{ defender_info["supply_cap"] or 2000 }} Supplies</div>
-                    <div class="progressbarchild progressbargreen" style="width: {{ [(defender_info['supplies'] * 100 / (defender_info['supply_cap'] or 2000)), 100] | min | round(0, 'ceil') }}%">
+                    <div class="progressbarchildtext">{{defender_info["supplies"]}} / 2000 Supplies</div>
+                    <div class="progressbarchild progressbargreen" style="width: {{ (defender_info['supplies']/20) | round(0, 'ceil') }}%">
                     </div>
                 </div>
 
@@ -94,8 +94,8 @@
                 </div>
 
                 <div class="progressbarparent">
-                    <div class="progressbarchildtext">{{ attacker_info["supplies"] }} / {{ attacker_info["supply_cap"] or 2000 }} Supplies</div>
-                    <div class="progressbarchild progressbargreen" style="width: {{ [(attacker_info['supplies'] * 100 / (attacker_info['supply_cap'] or 2000)), 100] | min | round(0, 'ceil') }}%"></div>
+                    <div class="progressbarchildtext">{{attacker_info["supplies"]}} / 2000 Supplies</div>
+                    <div class="progressbarchild progressbargreen" style="width: {{ (attacker_info['supplies']/20) | round(0, 'ceil') }}%"></div>
                 </div>
             </div>
         </div>

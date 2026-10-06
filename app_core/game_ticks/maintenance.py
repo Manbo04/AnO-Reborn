@@ -29,10 +29,8 @@ VERBOSE_REVENUE_LOGS = os.getenv("VERBOSE_REVENUE_LOGS") == "1"
 # have no supplies" — once spent, attacks were permanently blocked for that
 # war). Organized Supply Lines has always been described as "further
 # increasing war supplies production by 15%", implying base regen that was
-# never implemented. Add an hourly refill, capped so a dormant war doesn't
-# stockpile indefinitely. Since 2026-10-04 the cap scales with each side's
-# army (WAR_SUPPLY_CAP is now the minimum) and the refill fills it in ~24h
-# (WAR_SUPPLY_REGEN_PER_HOUR is now the minimum hourly refill).
+# never implemented. Add a modest hourly trickle, capped so a dormant war
+# doesn't stockpile indefinitely.
 WAR_SUPPLY_REGEN_PER_HOUR = int(os.getenv("WAR_SUPPLY_REGEN_PER_HOUR", "20"))
 WAR_SUPPLY_CAP = int(os.getenv("WAR_SUPPLY_CAP", "2000"))
 WAR_SUPPLY_LINES_BONUS = 1.15
@@ -711,7 +709,9 @@ def global_tick():
                     SELECT id, attacker, defender, attacker_supplies, defender_supplies
                     FROM wars
                     WHERE status = 'active'
-                    """
+                      AND (attacker_supplies < %s OR defender_supplies < %s)
+                    """,
+                    (WAR_SUPPLY_CAP, WAR_SUPPLY_CAP),
                 )
                 active_wars = dbdict.fetchall()
                 if active_wars:
@@ -730,36 +730,24 @@ def global_tick():
                     )
                     supply_lines_users = {row["user_id"] for row in dbdict.fetchall()}
 
-                    # Caps scale with each side's army (wars/supply.py), so a
-                    # 200k army isn't stuck behind the same 2000 as a 2k one.
-                    from wars import supply as war_supply
-
-                    caps = {
-                        uid: war_supply.supply_cap(value, WAR_SUPPLY_CAP)
-                        for uid, value in war_supply.get_army_supply_values(
-                            db, combatant_ids
-                        ).items()
-                    }
-
-                    def _refill(pool, uid):
-                        pool = int(pool or 0)
-                        cap = caps.get(uid, WAR_SUPPLY_CAP)
-                        if pool >= cap:
-                            # Army shrank below what's stockpiled: keep it,
-                            # just stop refilling.
-                            return pool
-                        bonus = (
-                            WAR_SUPPLY_LINES_BONUS if uid in supply_lines_users else 1.0
-                        )
-                        rate = war_supply.hourly_regen(
-                            cap, WAR_SUPPLY_REGEN_PER_HOUR, bonus
-                        )
-                        return min(cap, pool + rate)
-
                     supply_updates = []
                     for w in active_wars:
-                        new_attacker = _refill(w["attacker_supplies"], w["attacker"])
-                        new_defender = _refill(w["defender_supplies"], w["defender"])
+                        atk_rate = WAR_SUPPLY_REGEN_PER_HOUR * (
+                            WAR_SUPPLY_LINES_BONUS
+                            if w["attacker"] in supply_lines_users
+                            else 1.0
+                        )
+                        def_rate = WAR_SUPPLY_REGEN_PER_HOUR * (
+                            WAR_SUPPLY_LINES_BONUS
+                            if w["defender"] in supply_lines_users
+                            else 1.0
+                        )
+                        new_attacker = min(
+                            WAR_SUPPLY_CAP, w["attacker_supplies"] + round(atk_rate)
+                        )
+                        new_defender = min(
+                            WAR_SUPPLY_CAP, w["defender_supplies"] + round(def_rate)
+                        )
                         if (
                             new_attacker != w["attacker_supplies"]
                             or new_defender != w["defender_supplies"]
