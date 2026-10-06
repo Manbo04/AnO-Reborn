@@ -66,13 +66,12 @@ def reset_password(username, new_password):
         user_id, db_username = user
 
         # Update password
-        cur.execute(
-            "UPDATE users SET password=(%s) WHERE id=(%s)", (hashed_pw, user_id)
-        )
+        from database import set_user_password
+
+        set_user_password(cur, user_id, hashed_pw.decode("utf-8"))
         conn.commit()
 
         print(f"✓ Password reset successful for user '{username}' (ID: {user_id})")
-        print(f"✓ New password: {new_password}")
 
         cur.close()
         conn.close()

@@ -8,6 +8,7 @@ Usage:
 
 
 import argparse
+import re
 import os
 import sys
 from pathlib import Path
@@ -108,7 +109,66 @@ MIGRATION_FILES = [
     "0101_reimburse_24h_revenue.sql",
     "0102_personal_bank_accounts.sql",
     "0103_personal_bank_balance_from_log.sql",
+    # Shipped 2026-10-04 but never added here; 0104/0106 were applied by hand,
+    # 0105 never ran (spyinfo.iron_domes missing -> spy reports 500).
+    "0104_iron_dome.sql",
+    "0104_market_rework.sql",
+    "0105_spyinfo_iron_domes.sql",
+    "0106_population_growth_freezes.sql",
 ]
+
+# Files that predate tracking (applied long ago or by hand) and must never be
+# re-run automatically. Frozen: do not add to this set.
+PRE_TRACKING_FILES = {
+    "0001_add_province_delete_audit.sql",
+    "0002_EXECUTION_LOG.txt",
+    "0002_normalize_economy_military.sql",
+    "0003_normalize_diplomacy_market.sql",
+    "0004_normalize_infrastructure_tech.sql",
+    "0005_finalize_normalized_cleanup.sql",
+    "0006_add_game_tick_logs.sql",
+    "0007_seed_unit_dictionary.sql",
+    "0008_add_unique_dictionary_names.sql",
+    "0009_add_stats_manpower.sql",
+    "0010_add_stats_default_defense.sql",
+    "0014_rebalance_unit_upkeep_costs.sql",
+    "0037_add_province_coordinates.sql",
+    "0038_game_map.sql",
+    "0046_backfill_legacy_tech_descriptions.sql",
+    "0047_add_chat_and_direct_messages.sql",
+    "010_economy_rebalance.py",
+    "011_sanitize_duplicates.py",
+    "012_add_province_id_to_user_buildings.py",
+    "016_add_coalition_tax_rate.sql",
+}
+
+# NEW migrations: name them YYYYMMDD_HHMM_short_name.sql (UTC). They are picked
+# up automatically, in name order, after MIGRATION_FILES -- no list to edit, and
+# two sessions can no longer grab the same number (0030 x3, 0104 x2 happened).
+NEW_MIGRATION_RE = re.compile(r"^\d{8}_\d{4}_[a-z0-9_]+\.sql$")
+
+
+def discover_new_migrations() -> list:
+    return sorted(
+        f.name
+        for f in (ROOT / "migrations").iterdir()
+        if NEW_MIGRATION_RE.match(f.name)
+    )
+
+
+def check_names() -> list:
+    """Return problems with migration file naming (used by CI)."""
+    problems = []
+    known = set(MIGRATION_FILES) | PRE_TRACKING_FILES
+    for f in sorted((ROOT / "migrations").iterdir()):
+        name = f.name
+        if name.startswith("._") or name in known or NEW_MIGRATION_RE.match(name):
+            continue
+        problems.append(
+            f"migrations/{name}: new migrations must be named "
+            "YYYYMMDD_HHMM_short_name.sql (UTC time, lowercase)"
+        )
+    return problems
 
 
 def _ensure_migration_table(cur) -> None:
@@ -141,7 +201,21 @@ def _mark_applied(cur, name: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="exit non-zero if any migration fails (CI); production boot stays lenient",
+    )
+    parser.add_argument(
+        "--check-names", action="store_true", help="only validate migration file names"
+    )
     args = parser.parse_args()
+
+    if args.check_names:
+        problems = check_names()
+        for p in problems:
+            print("ERROR", p)
+        sys.exit(1 if problems else 0)
 
     import psycopg2
 
@@ -156,7 +230,8 @@ def main() -> None:
     if not args.dry_run:
         _ensure_migration_table(cur)
 
-    for name in MIGRATION_FILES:
+    failed = []
+    for name in MIGRATION_FILES + discover_new_migrations():
         path = ROOT / "migrations" / name
         if not path.exists():
             print(f"SKIP missing {name}")
@@ -172,6 +247,7 @@ def main() -> None:
                 _mark_applied(cur, name)
             except Exception as exc:
                 print(f"  WARN {name}: {exc}")
+                failed.append(name)
                 conn.rollback()
                 try:
                     cur.execute("ROLLBACK")
@@ -186,6 +262,10 @@ def main() -> None:
 
     cur.close()
     conn.close()
+    if failed:
+        print(f"FAILED migrations: {', '.join(failed)}")
+        if args.strict:
+            sys.exit(1)
     print("Done.")
 
 

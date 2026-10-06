@@ -391,9 +391,9 @@ class AdminRepository:
             try:
                 cur.execute(
                     """
-                    SELECT query, calls, total_time, mean_time
+                    SELECT query, calls, total_exec_time AS total_time, mean_exec_time AS mean_time
                     FROM pg_stat_statements
-                    ORDER BY total_time DESC
+                    ORDER BY total_exec_time DESC
                     LIMIT 20;
                     """
                 )
