@@ -38,6 +38,10 @@
       "legacy": "generalstore.jpg",
       "path": "images/game/buildings/general_stores.png"
     },
+    "food_banks": {
+      "legacy": "foodbank.jpg",
+      "path": "images/game/buildings/food_banks.png"
+    },
     "farmers_markets": {
       "legacy": "farmersmarket.jpg",
       "path": "images/game/buildings/farmers_markets.png"

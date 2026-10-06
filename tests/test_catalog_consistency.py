@@ -24,9 +24,8 @@ NON_DOMAIN_UNITS = {"spies", "icbms", "nukes", "sam_batteries"}
 SPECIAL_UNITS = {"aircraft_carriers", "counter_intel_agents", "cruise_missiles", "kamikaze_drones"}
 # Priced purchases that aren't buildings.
 NON_BUILDING_PURCHASES = {"cityCount", "land"}
-# Known gaps -- may only shrink. food_banks shows the generic province photo
-# until it gets real art (new content needs a real HQ image, not a stand-in).
-BUILDINGS_WITHOUT_IMAGE = {"food_banks"}
+# Known gaps -- may only shrink.
+BUILDINGS_WITHOUT_IMAGE: set = set()
 
 
 def _names(table, column="name"):
