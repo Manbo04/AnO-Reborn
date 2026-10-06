@@ -18,7 +18,7 @@ import config  # Parse Railway environment variables  # noqa: E402
 # Toggle noisy per-building revenue logs (default off in production)
 VERBOSE_REVENUE_LOGS = os.getenv("VERBOSE_REVENUE_LOGS") == "1"
 
-from app_core.celery_schedule import CELERY_BEAT_SCHEDULE, TASK_RUN_THRESHOLDS
+from app_core.celery_schedule import CELERY_BEAT_SCHEDULE, TASK_RUN_THRESHOLDS, TASK_PERIODS
 
 # Mapping from normalized building names to produced resource names.
 # Used by the global tick economy engine.
@@ -56,9 +56,64 @@ MAX_INT_32 = 2_147_483_647
 
 
 
-# Centralized helper for last_run threshold check
-def should_skip_task(row, task_name):
+def current_period(task_name, now=None):
+    """Start (UTC) of the calendar period a run of `task_name` belongs to, or
+    None for ticks that are not period-gated."""
     import datetime
+
+    unit = TASK_PERIODS.get(task_name)
+    if unit is None:
+        return None
+    now = now or datetime.datetime.now(datetime.timezone.utc)
+    now = now.astimezone(datetime.timezone.utc)
+    if unit == "hour":
+        return now.replace(minute=0, second=0, microsecond=0)
+    if unit == "day":
+        return now.replace(hour=0, minute=0, second=0, microsecond=0)
+    raise ValueError(f"unknown period unit {unit!r} for {task_name}")
+
+
+def claim_tick_period(db, task_name, now=None) -> bool:
+    """Claim the current period for `task_name`; False if it was already claimed.
+
+    Call it with the cursor that holds the task's advisory lock and its
+    task_runs row (SELECT ... FOR UPDATE). The claim is COMMITTED immediately,
+    before any work: ticks roll back and continue mid-run on per-chunk errors,
+    so a claim left in the work transaction could be undone while later work
+    still commits, letting a retry bill the same hour again. Claim-first means
+    a period's work can never run twice; the trade-off is that a run which
+    crashes before doing anything loses that period (visible to the economy
+    watchdog) instead of retrying -- the safe direction for player money.
+    """
+    period = current_period(task_name, now)
+    if period is None:
+        return True
+    db.execute(
+        "UPDATE task_runs SET last_period = %s "
+        "WHERE task_name = %s AND (last_period IS NULL OR last_period < %s) "
+        "RETURNING task_name",
+        (period, task_name, period),
+    )
+    claimed = db.fetchone() is not None
+    conn = getattr(db, "connection", None)  # always set on psycopg2 cursors
+    if claimed and conn is not None:
+        conn.commit()
+    return claimed
+
+
+def should_skip_task(row, task_name, db=None):
+    """True if this run of `task_name` must not do its work.
+
+    Period-gated ticks (TASK_PERIODS) are decided by claim_tick_period() and
+    need `db`; everything else keeps the minimum-interval check on last_run.
+    """
+    import datetime
+
+    if task_name in TASK_PERIODS and db is not None:
+        if not claim_tick_period(db, task_name):
+            print(f"{task_name}: already ran this {TASK_PERIODS[task_name]}, skipping")
+            return True
+        return False
 
     now = datetime.datetime.now(datetime.timezone.utc)
     threshold = TASK_RUN_THRESHOLDS.get(task_name, 90)

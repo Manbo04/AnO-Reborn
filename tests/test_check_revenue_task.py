@@ -30,10 +30,11 @@ def run_script(threshold_hours: float):
 
 
 def test_check_revenue_initializes_row():
-    # start with no task_runs table at all; script should create it and seed a row
+    # start with no row for the task; the script should seed one. (Never drop
+    # the shared task_runs table: other ticks/tests rely on its full schema.)
     with get_db_connection() as conn:
         cur = conn.cursor()
-        cur.execute("DROP TABLE IF EXISTS task_runs")
+        cur.execute("DELETE FROM task_runs WHERE task_name = %s", ("generate_province_revenue",))
         conn.commit()
 
     result = run_script(threshold_hours=10)

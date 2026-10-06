@@ -165,7 +165,7 @@ def run_natural_disasters():
                 (TASK_NAME,),
             )
             row = db.fetchone()
-            if should_skip_task(row, TASK_NAME):
+            if should_skip_task(row, TASK_NAME, db=db):
                 return
 
             db.execute("SELECT id, LOWER(location) FROM stats WHERE location IS NOT NULL")

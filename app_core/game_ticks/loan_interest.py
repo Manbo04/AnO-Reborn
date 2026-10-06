@@ -58,7 +58,7 @@ def run_loan_interest():
                 (TASK_NAME,),
             )
             row = db.fetchone()
-            if should_skip_task(row, TASK_NAME):
+            if should_skip_task(row, TASK_NAME, db=db):
                 return
 
             db.execute(

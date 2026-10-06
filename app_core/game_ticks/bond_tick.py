@@ -197,7 +197,7 @@ def run_bond_tick():
                 (TASK_NAME,),
             )
             row = db.fetchone()
-            if should_skip_task(row, TASK_NAME):
+            if should_skip_task(row, TASK_NAME, db=db):
                 return
 
             notes = _BondNotes()

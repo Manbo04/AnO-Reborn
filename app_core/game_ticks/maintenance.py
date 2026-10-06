@@ -573,7 +573,7 @@ def global_tick():
                 ("military_maintenance",),
             )
             maint_row = db.fetchone()
-            run_maintenance = not should_skip_task(maint_row, "military_maintenance")
+            run_maintenance = not should_skip_task(maint_row, "military_maintenance", db=db)
 
             cost_rows = []
             if run_maintenance:
@@ -699,7 +699,7 @@ def global_tick():
                 ("war_supply_regen",),
             )
             supply_row = db.fetchone()
-            if not should_skip_task(supply_row, "war_supply_regen"):
+            if not should_skip_task(supply_row, "war_supply_regen", db=db):
                 db.execute(
                     "UPDATE task_runs SET last_run = now() WHERE task_name = %s",
                     ("war_supply_regen",),

@@ -274,7 +274,7 @@ SELECT pg_catalog.setval('public.resource_dictionary_resource_id_seq', 33, true)
 -- Name: tech_dictionary_tech_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.tech_dictionary_tech_id_seq', 29, true);
+SELECT pg_catalog.setval('public.tech_dictionary_tech_id_seq', 30, true);
 
 
 --
@@ -378,5 +378,9 @@ INSERT INTO public.schema_migrations VALUES ('0100_add_news_is_read.sql', '2026-
 INSERT INTO public.schema_migrations VALUES ('0101_reimburse_24h_revenue.sql', '2026-10-03 08:29:43.699989+00');
 INSERT INTO public.schema_migrations VALUES ('0102_personal_bank_accounts.sql', '2026-10-03 09:19:47.775791+00');
 INSERT INTO public.schema_migrations VALUES ('0103_personal_bank_balance_from_log.sql', '2026-10-03 20:44:55.187491+00');
+INSERT INTO public.schema_migrations VALUES ('0104_iron_dome.sql', '2026-10-06 09:48:42.000883+00');
+INSERT INTO public.schema_migrations VALUES ('0104_market_rework.sql', '2026-10-06 09:48:42.020183+00');
+INSERT INTO public.schema_migrations VALUES ('0105_spyinfo_iron_domes.sql', '2026-10-06 09:48:42.037791+00');
+INSERT INTO public.schema_migrations VALUES ('0106_population_growth_freezes.sql', '2026-10-06 09:48:42.054441+00');
 
 SET session_replication_role = DEFAULT;

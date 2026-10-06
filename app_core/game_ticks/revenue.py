@@ -95,7 +95,7 @@ def generate_province_revenue():  # Runs each hour
             ("generate_province_revenue",),
         )
         row = db.fetchone()
-        if should_skip_task(row, "generate_province_revenue"):
+        if should_skip_task(row, "generate_province_revenue", db=db):
             try:
                 release_pg_advisory_lock(conn, 9002)
             except Exception:

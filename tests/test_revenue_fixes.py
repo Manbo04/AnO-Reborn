@@ -1,3 +1,14 @@
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _period_gate_always_open(monkeypatch):
+    """These tests drive tick internals through a fake cursor whose canned
+    rows don't model the period claim (tests/test_tick_periods.py does)."""
+    monkeypatch.setattr(
+        "app_core.game_ticks.common.claim_tick_period", lambda *a, **k: True
+    )
+
 class FakeCursor:
     def __init__(self, fetchone_returns=None, fetchall_return=None):
         self._fetchone_returns = list(fetchone_returns or [])

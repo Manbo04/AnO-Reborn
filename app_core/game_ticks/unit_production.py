@@ -47,7 +47,7 @@ def produce_unit_stockpiles():
                 (TASK_NAME,),
             )
             row = db.fetchone()
-            if should_skip_task(row, TASK_NAME):
+            if should_skip_task(row, TASK_NAME, db=db):
                 return
 
             for building_name, spec in variables.UNIT_STOCKPILE_BUILDINGS.items():
