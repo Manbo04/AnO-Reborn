@@ -1,0 +1,10 @@
+# Known SQL-vs-schema errors that existed when the check was introduced.
+# CI fails on any error NOT listed here. Fix these and delete the lines;
+# never add new entries to make CI pass.
+#
+# The 4 below are legacy `users.password` branches that only run when that column
+# exists (checked at runtime); production has `hash` instead, so they never run.
+app_core/auth/email_auth.py::3873f7c6a807  # app_core/auth/email_auth.py:111 undefined column: ERROR:  column "password" of relation "users" does not exist
+database.py::32375997cc35  # database.py:2079 undefined column: ERROR:  column "password" of relation "users" does not exist
+login.py::47ff9b28caae  # login.py:119 undefined column: ERROR:  column "password" does not exist
+login.py::b4df4de37ac0  # login.py:139 undefined column: ERROR:  column "password" does not exist

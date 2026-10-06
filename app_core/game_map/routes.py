@@ -19,68 +19,6 @@ bp = Blueprint("game_map", __name__)
 _DEFAULT_TOKEN = ""
 
 
-def _ensure_tables():
-    """Create/alter game-map schema. Idempotent — safe to run on every boot."""
-    try:
-        import psycopg2
-        conn = psycopg2.connect(os.environ.get("DATABASE_PUBLIC_URL") or os.environ["DATABASE_URL"])
-        conn.autocommit = True
-        cur = conn.cursor()
-
-        # --- coordinate columns on provinces (migration 0037) ---
-        cur.execute("""
-            ALTER TABLE provinces ADD COLUMN IF NOT EXISTS coordinate_x INTEGER;
-        """)
-        cur.execute("""
-            ALTER TABLE provinces ADD COLUMN IF NOT EXISTS coordinate_y INTEGER;
-        """)
-        cur.execute("""
-            CREATE UNIQUE INDEX IF NOT EXISTS idx_province_coordinates
-            ON provinces(coordinate_x, coordinate_y)
-            WHERE coordinate_x IS NOT NULL AND coordinate_y IS NOT NULL;
-        """)
-
-        # --- unit deployments (migration 0038) ---
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS map_unit_deployments (
-                id SERIAL PRIMARY KEY,
-                province_id INTEGER NOT NULL REFERENCES provinces(id) ON DELETE CASCADE,
-                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                soldiers INTEGER NOT NULL DEFAULT 0 CHECK (soldiers >= 0),
-                deployed_at TIMESTAMPTZ DEFAULT NOW(),
-                updated_at TIMESTAMPTZ DEFAULT NOW(),
-                UNIQUE(province_id, user_id)
-            )
-        """)
-        cur.execute("CREATE INDEX IF NOT EXISTS idx_map_dep_prov ON map_unit_deployments(province_id)")
-        cur.execute("CREATE INDEX IF NOT EXISTS idx_map_dep_user ON map_unit_deployments(user_id)")
-
-        # --- combat log (migration 0038) ---
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS map_combat_log (
-                id SERIAL PRIMARY KEY,
-                attacker_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                defender_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-                province_id INTEGER NOT NULL REFERENCES provinces(id) ON DELETE CASCADE,
-                attacker_soldiers INTEGER NOT NULL DEFAULT 0,
-                defender_soldiers INTEGER NOT NULL DEFAULT 0,
-                result VARCHAR(20) NOT NULL DEFAULT 'attacker_won',
-                occurred_at TIMESTAMPTZ DEFAULT NOW()
-            )
-        """)
-        cur.execute("CREATE INDEX IF NOT EXISTS idx_map_clog_prov ON map_combat_log(province_id)")
-        cur.execute("CREATE INDEX IF NOT EXISTS idx_map_clog_time ON map_combat_log(occurred_at DESC)")
-
-        # --- auto-assign hex coordinates to any province that has none ---
-        _seed_coordinates(cur)
-
-        cur.close()
-        conn.close()
-    except Exception as e:
-        import logging
-        logging.getLogger(__name__).error("game_map _ensure_tables failed: %s", e)
-
-
 def _seed_coordinates(cur):
     """Assign hex grid positions to provinces that don't have them yet."""
     cur.execute("""
@@ -126,10 +64,6 @@ def _seed_coordinates(cur):
             assignments,
         )
 
-
-@bp.record_once
-def _on_register(state):
-    _ensure_tables()
 
 GAME_MAP_TOKEN = os.getenv("GAME_MAP_TOKEN", _DEFAULT_TOKEN)
 

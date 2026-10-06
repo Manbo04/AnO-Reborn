@@ -89,12 +89,6 @@ def get_spy_reports_for_user(db, cId):
     return db.fetchall()
 
 
-def touch_defcon(db, eId):
-    """Reads defcon but never uses the result - preserved exactly as it was
-    in the original spyAmount() handler (a pre-existing no-op query, not
-    something introduced or removed by this migration)."""
-    db.execute("SELECT defcon FROM users WHERE id=%s", (eId,))
-    db.fetchone()
 
 
 def get_last_spy_op_times(db, cId):

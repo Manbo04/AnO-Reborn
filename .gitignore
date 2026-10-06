@@ -57,3 +57,4 @@ monitor.log
 # can mask CSS edits during local verification. Run
 # `python3 scripts/bundle_game_css.py` locally if you need it for dev.
 static/style.min.css
+._*

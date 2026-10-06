@@ -34,6 +34,11 @@ class QueuedCursor:
         return self._results.pop(0) if self._results else []
 
 
+
+class _ZeroCursor(QueuedCursor):
+    def fetchone(self):
+        return (0,)
+
 # ---------------------------------------------------------------------------
 # repositories
 # ---------------------------------------------------------------------------
@@ -388,7 +393,9 @@ def test_resolve_spy_operation_not_intercepted_by_counter_intel(monkeypatch):
     decrease_calls = []
     monkeypatch.setattr(services, "decrease_unit_quantity", lambda db, uid, unit, amt: decrease_calls.append(amt))
     
-    ok, code, msg, entry = services.resolve_spy_operation(QueuedCursor(), 1, 2, 50, "units")
+    # "units" ops may randomly reveal iron_domes, which reads a row straight
+    # from the cursor; always answer 0 so the test does not depend on the dice.
+    ok, code, msg, entry = services.resolve_spy_operation(_ZeroCursor(), 1, 2, 50, "units")
     
     assert ok is True
     # Should not be intercepted

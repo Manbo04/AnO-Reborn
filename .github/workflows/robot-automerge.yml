@@ -2,8 +2,13 @@ name: Robot auto-merge
 
 # The cloud maintenance robot (Claude routine) pushes its bug fixes and
 # community-voted features to `claude/robot-*` branches. When CI passes on
-# such a branch, merge it into master (which deploys). If the merge conflicts
-# or CI fails, nothing happens and the robot picks it up on its next run.
+# such a branch, open a pull request and merge it into master (which deploys).
+#
+# master is protected: nothing lands without the `prod-shaped` CI job
+# (production schema + full test suite) passing on the exact commit. A direct
+# push would be rejected, so this goes through a PR like every other change.
+# If the merge conflicts or CI fails, nothing happens and the robot picks it
+# up on its next run.
 on:
   workflow_run:
     workflows: ["CI"]
@@ -25,16 +30,24 @@ jobs:
           ref: master
           fetch-depth: 0
           token: ${{ secrets.ROBOT_GH_TOKEN }}
-      - name: Merge the tested commit into master
+      - name: Merge the tested commit through a pull request
         env:
+          GH_TOKEN: ${{ secrets.ROBOT_GH_TOKEN }}
           BRANCH: ${{ github.event.workflow_run.head_branch }}
           SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
-          git config user.name "ano-robot"
-          git config user.email "ano-robot@users.noreply.github.com"
           git fetch origin "$BRANCH"
           # Only merge the exact commit CI tested (not something pushed later).
           [ "$(git rev-parse "origin/$BRANCH")" = "$SHA" ] || { echo "branch moved since CI; skipping"; exit 0; }
-          if git merge-base --is-ancestor "$SHA" HEAD; then echo "already merged"; exit 0; fi
-          git merge --no-ff "$SHA" -m "Merge $BRANCH (robot, CI passed)" || { git merge --abort; echo "conflict, robot will rebase"; exit 1; }
-          git push origin HEAD:master
+          if git merge-base --is-ancestor "$SHA" origin/master; then echo "already merged"; exit 0; fi
+
+          PR=$(gh pr list --head "$BRANCH" --base master --state open --json number --jq '.[0].number // empty')
+          if [ -z "$PR" ]; then
+            gh pr create --base master --head "$BRANCH" \
+              --title "Robot: $BRANCH" \
+              --body "Automated change from the maintenance robot. CI (incl. prod-shaped full suite) passed on $SHA."
+            PR=$(gh pr list --head "$BRANCH" --base master --state open --json number --jq '.[0].number')
+          fi
+          gh pr merge "$PR" --merge --match-head-commit "$SHA" \
+            --subject "Merge $BRANCH (robot, CI passed)" \
+            || { echo "merge refused (conflict or checks); robot will rebase"; exit 1; }

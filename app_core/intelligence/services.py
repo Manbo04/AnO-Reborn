@@ -8,7 +8,6 @@ from .repositories import (
     decrease_unit_quantity,
     get_username,
     get_spy_reports_for_user,
-    touch_defcon,
     get_last_spy_op_times,
     get_counter_intel_agents,
     insert_spy_operation,
@@ -191,7 +190,6 @@ def submit_spy_amount(db, cId, eId):
     but never used either value - "Removed spoofing and leaking
     functionality" per the original comment. Preserved exactly, dead reads
     included: this migration doesn't change espionage behavior."""
-    touch_defcon(db, eId)
     enemy_spies = get_unit_quantity(db, eId, "spies")
     if enemy_spies < 1:
         enemy_spies = 1
