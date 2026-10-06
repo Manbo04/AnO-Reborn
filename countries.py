@@ -1317,9 +1317,6 @@ def reset_account():
                 # repeat. Track resets on the users row (survives the stats
                 # wipe below) and only grant the full starter package once.
                 db.execute(
-                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_count INTEGER NOT NULL DEFAULT 0"
-                )
-                db.execute(
                     "UPDATE users SET reset_count = COALESCE(reset_count, 0) + 1 "
                     "WHERE id=%s RETURNING reset_count",
                     (cId,),

@@ -173,12 +173,7 @@ def run_migration_backdoor():
         conn = get_request_connection()
         cur = conn.cursor()
         
-        # 1. Run Migration
-        cur.execute("ALTER TABLE provinces ADD COLUMN IF NOT EXISTS coordinate_x INTEGER;")
-        cur.execute("ALTER TABLE provinces ADD COLUMN IF NOT EXISTS coordinate_y INTEGER;")
-        cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_province_coordinates ON provinces(coordinate_x, coordinate_y) WHERE coordinate_x IS NOT NULL AND coordinate_y IS NOT NULL;")
-        
-        # 2. Run Seeder
+        # Seed coordinates (columns + index come from migration 0037)
         cur.execute("SELECT id, userId FROM provinces WHERE coordinate_x IS NULL OR coordinate_y IS NULL ORDER BY userId, id")
         provinces = cur.fetchall()
 
