@@ -72,12 +72,11 @@ def test_nuclear_strike_proceeds_past_war_check_when_at_war(client, monkeypatch)
         "/nuclear_strike",
         data={"target_id": "1", "weapon_type": "nuke"},
     )
-    # Must NOT be rejected for lack of an active war (403) — it should
-    # instead reach the weapon-ownership check, which our fake cursor
-    # makes fail with a 400. (Apostrophe in the rendered message is
-    # HTML-entity-escaped by Jinja autoescaping, so match without it.)
-    assert resp.status_code == 400
-    assert b"have any" in resp.data
+    # Must NOT be rejected for lack of an active war (403). Since the nuke
+    # rework the war check hands off to the planner page for that war
+    # (weapon checks happen at review/launch).
+    assert resp.status_code == 302
+    assert resp.headers["Location"].endswith("/nuclear_strike/1")
 
 
 def test_strategic_airstrike_rejects_no_active_war(client, monkeypatch):

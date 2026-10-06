@@ -3,6 +3,7 @@ from database import get_db_connection
 import variables
 import tasks
 import uuid
+from tests._db_cleanup import purge_users_where
 
 
 def task_runs_table_exists():
@@ -85,5 +86,5 @@ def test_buy_then_tasks_sequence():
         db.execute("DELETE FROM provinces WHERE id=%s", (pid,))
         db.execute("DELETE FROM stats WHERE id=%s", (uid,))
         db.execute("DELETE FROM resources WHERE id=%s", (uid,))
-        db.execute("DELETE FROM users WHERE id=%s", (uid,))
+        purge_users_where(db, 'id=%s', (uid,))
         conn.commit()

@@ -2,6 +2,7 @@
 import uuid
 
 import pytest
+from tests._db_cleanup import purge_users_where
 
 pytestmark = pytest.mark.no_server
 
@@ -41,4 +42,4 @@ def test_my_coalition_without_membership_shows_friendly_page(client):
     finally:
         with get_db_cursor() as db:
             db.execute("DELETE FROM referral_active_days WHERE referred_user_id=%s", (user_id,))
-            db.execute("DELETE FROM users WHERE id=%s", (user_id,))
+            purge_users_where(db, 'id=%s', (user_id,))

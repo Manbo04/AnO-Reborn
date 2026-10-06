@@ -11,6 +11,7 @@ import uuid
 import pytest
 
 import influence_formula as inf
+from tests._db_cleanup import purge_users_where
 
 
 def test_military_ordering_matches_spec():
@@ -164,5 +165,5 @@ def test_sql_matches_python_and_callers():
                 db.execute("DELETE FROM user_military WHERE user_id = %s", (uid,))
                 db.execute("DELETE FROM provinces WHERE userid = %s", (uid,))
                 db.execute("DELETE FROM stats WHERE id = %s", (uid,))
-                db.execute("DELETE FROM users WHERE id = %s", (uid,))
+                purge_users_where(db, 'id = %s', (uid,))
             conn.commit()

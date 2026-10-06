@@ -15,6 +15,7 @@ from decimal import Decimal
 import pytest
 
 from database import get_db_connection
+from tests._db_cleanup import purge_users_where
 
 pytestmark = [
     pytest.mark.no_server,
@@ -119,7 +120,7 @@ def nations():
             for table, col in (("referral_active_days", "referred_user_id"),):
                 db.execute(f"DELETE FROM {table} WHERE {col} = ANY(%s)", (ids,))
             db.execute("DELETE FROM stats WHERE id = ANY(%s)", (ids,))
-            db.execute("DELETE FROM users WHERE id = ANY(%s)", (ids,))
+            purge_users_where(db, 'id = ANY(%s)', (ids,))
 
 
 def _mint(uid, units):
@@ -472,7 +473,8 @@ def test_pages_render(nations, client, monkeypatch):
             r = client.get(f"/{page}" + ("/" if page == "marketoffer" else ""))
             assert r.status_code == 200, (page, v2)
             if page != "marketoffer":
-                assert b"in Amark" in r.data, (page, v2)
+                # order book shows "<price> Amark each" (2026-10-03 market rework)
+                assert b"Amark" in r.data, (page, v2)
 
 
 def test_country_page_shows_holdings_and_trade_currency_picker(nations, client, monkeypatch):

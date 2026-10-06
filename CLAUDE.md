@@ -72,8 +72,8 @@ Rules that keep the gate meaningful:
 - **After a migration ships, refresh the snapshot**: `bash scripts/snapshot_prod_schema.sh`,
   then PR the `db/` changes.
 - **No DDL in request handlers or ticks** — schema changes go in `migrations/` only.
-- `tests/known_failures.txt` and `db/sql_check_baseline.txt` **may only shrink**. Never add a
-  line to get CI green; fix the code or the test instead.
+- **The whole suite must pass — there is no quarantine list.** Never skip/xfail a test to get
+  CI green; fix the code or the test. `db/sql_check_baseline.txt` may only shrink.
 - Emergency only (site down, CI itself broken): an admin can temporarily disable branch
   protection in GitHub → Settings → Branches, push the fix, and **re-enable it immediately**.
 

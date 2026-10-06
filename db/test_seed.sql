@@ -14,6 +14,15 @@ INSERT INTO stats (id, location) VALUES (1, 'Grassland'), (16, 'Grassland')
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO military (id) VALUES (1), (16) ON CONFLICT (id) DO NOTHING;
 
+-- Account 16 has 2 provinces in production (CLAUDE.md); mirror that.
+INSERT INTO provinces (id, userid, provincename, citycount, land, population, happiness, productivity)
+VALUES (101, 16, 'Tester Capital', 5, 10, 100000, 60, 60),
+       (102, 16, 'Tester Frontier', 2, 5, 50000, 60, 60)
+ON CONFLICT (id) DO NOTHING;
+
 -- Test-created users/provinces start well clear of the fixed ids.
 SELECT setval('public.users_id_seq', 1000, false);
 SELECT setval('public.provinces_id_seq', 1000, false);
+-- app_core/market/routes.py treats direct trades 4 and 5 as pre-escrow legacy
+-- trades (still pending in production). Keep test trades clear of those ids.
+SELECT setval('public.trades_offer_id_seq', 1000, false);

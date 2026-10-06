@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 from init import BASE_URL
 import credentials
+from tests._db_cleanup import purge_users_where
 
 load_dotenv()
 
@@ -28,7 +29,11 @@ def delete_user(username, email, session):
     except Exception:
         pass
 
-    session.post(f"{BASE_URL}/delete_own_account")
+    # Deletion requires the account password (2026-09-23 hardening).
+    session.post(
+        f"{BASE_URL}/delete_own_account",
+        data={"confirm_password": credentials.password},
+    )
 
     try:
         db.execute(
@@ -49,6 +54,7 @@ def register(session):
         "confirmation": credentials.confirmation,
         "key": credentials.key,
         "continent": credentials.continent,
+        "terms_agree": "on",
     }
 
     conn = psycopg2.connect(
@@ -71,7 +77,7 @@ def register(session):
             db.execute("DELETE FROM resources WHERE id=%s", (uid,))
             db.execute("DELETE FROM upgrades WHERE user_id=%s", (uid,))
             db.execute("DELETE FROM policies WHERE user_id=%s", (uid,))
-            db.execute("DELETE FROM users WHERE id=%s", (uid,))
+            purge_users_where(db, 'id=%s', (uid,))
 
     except Exception:
         # If cleaning fails, continue — the test will report failures accordingly

@@ -1,3 +1,4 @@
+from tests._db_cleanup import purge_users_where
 import pytest
 import requests
 import psycopg2
@@ -26,6 +27,7 @@ def users():
             "confirmation": "testpass",
             "key": "key1",
             "continent": "Europe",
+            "terms_agree": "on",
         },
         {
             "username": "waruser2",
@@ -34,6 +36,7 @@ def users():
             "confirmation": "testpass",
             "key": "key2",
             "continent": "Asia",
+            "terms_agree": "on",
         },
     ]
     conn = psycopg2.connect(
@@ -73,7 +76,7 @@ def users():
             "(SELECT id FROM users WHERE username=%s)",
             (user["username"],),
         )
-        db.execute("DELETE FROM users WHERE username=%s", (user["username"],))
+        purge_users_where(db, 'username=%s', (user["username"],))
         db.execute("DELETE FROM keys WHERE key=%s", (user["key"],))
     conn.commit()
 

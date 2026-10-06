@@ -16,11 +16,11 @@ def test_education_tier_chaining(monkeypatch):
     
     assert stats["can_graduate"] == 1000
     assert stats["passed_primary"] == 1000
-    assert stats["passed_hs"] == 500
+    assert stats["passed_hs"] == 900  # one HS = 900 places (mechanics page)
     assert stats["passed_uni"] == 0
     assert stats["edu_college_new"] == 0
-    assert stats["edu_highschool_new"] == 500
-    assert stats["edu_none_new"] == 500
+    assert stats["edu_highschool_new"] == 900
+    assert stats["edu_none_new"] == 100
     
     # 1 primary, 2 HS, 2 Uni
     # Only 500 can pass primary, so even with 1000 HS capacity, only 500 pass HS
@@ -45,11 +45,11 @@ def test_education_grace_period():
     stats_grace = calc_education_graduation(pop_children, [], 0, 1, 1, now=grace_time)
     
     assert stats_grace["passed_primary"] == 1000
-    assert stats_grace["passed_hs"] == 500
-    assert stats_grace["passed_uni"] == 500
-    assert stats_grace["edu_college_new"] == 500
+    assert stats_grace["passed_hs"] == 900
+    assert stats_grace["passed_uni"] == 900
+    assert stats_grace["edu_college_new"] == 900
     assert stats_grace["edu_highschool_new"] == 0
-    assert stats_grace["edu_none_new"] == 500
+    assert stats_grace["edu_none_new"] == 100
     assert stats_grace["true_primary_capacity"] == 0
     
     # After grace period: strict chain

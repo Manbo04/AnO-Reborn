@@ -28,7 +28,7 @@ def test_components_show_in_market_stats(client):
         assert r.status_code == 200
         body = r.data.decode("utf-8")
         # Ensure the Components row is present and the price appears
-        assert "Components:" in body
+        assert "Components" in body  # stat card label (v2 page has no colon)
         assert "123" in body
 
     finally:

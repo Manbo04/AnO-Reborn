@@ -12,6 +12,7 @@ import uuid
 import pytest
 
 from wars import nuclear as nk
+from tests._db_cleanup import purge_users_where
 
 
 # --- pure math --------------------------------------------------------------
@@ -178,7 +179,11 @@ def test_full_launch_flow(client):
             expected = nk.strike_damage(
                 {"population": 10_000_000, "land": 50, "citycount": 20, "happiness": 80}, 1.0
             )
-            assert pop == 10_000_000 - expected["deaths"]
+            # Blast deaths, then radiation fallout kills NUKE_FALLOUT_DEATHS of
+            # the whole target nation (wars/aftermath.py, 2026-10-04 rebalance).
+            from wars import aftermath
+            survivors = 10_000_000 - expected["deaths"]
+            assert pop == survivors - int(survivors * aftermath.NUKE_FALLOUT_DEATHS)
             assert cities == 20 - expected["cities_destroyed"]
             assert happy == 80 - nk.HAPPINESS_HIT
             assert working < 5_000_000
@@ -257,9 +262,75 @@ def test_full_launch_flow(client):
                 db.execute("DELETE FROM provinces WHERE userid=%s", (uid,))
                 db.execute("DELETE FROM referral_active_days WHERE referred_user_id=%s", (uid,))
                 db.execute("DELETE FROM stats WHERE id=%s", (uid,))
-                db.execute("DELETE FROM users WHERE id=%s", (uid,))
+                purge_users_where(db, 'id=%s', (uid,))
             try:
                 db.execute("DELETE FROM world_events WHERE actor_id = ANY(%s)", (ids,))
             except Exception:
                 conn.rollback()
             conn.commit()
+
+
+@needs_db
+def test_two_concurrent_launches_spend_one_nuke_once():
+    """Two launches racing on separate connections with ONE nuke in stock:
+    exactly one fires (advisory lock + "quantity > 0" decrement in
+    execute_strike). Replaces the old /nuclear_strike double-spend test,
+    which targeted the pre-rework one-shot route."""
+    import threading
+    from database import get_db_connection, query_cache
+
+    ids = []
+    try:
+        with get_db_connection() as conn:
+            db = conn.cursor()
+            a, _, _ = _mk_user(db, "ra", 300_000_000)
+            b, _, b_prov = _mk_user(db, "rb", 10_000_000)
+            ids = [a, b]
+            _give_nukes(db, a, 1)
+            db.execute(
+                "INSERT INTO wars (attacker, defender, war_type, agressor_message, start_date, last_visited) "
+                "VALUES (%s, %s, 'Raze', 'test', extract(epoch from now()), extract(epoch from now())) RETURNING id",
+                (a, b),
+            )
+            war_id = db.fetchone()[0]
+            conn.commit()
+        query_cache.invalidate(pattern="influence_")
+
+        barrier = threading.Barrier(2)
+        outcomes = []
+
+        def _launch():
+            with get_db_connection() as conn:
+                db = conn.cursor()
+                barrier.wait(timeout=5)
+                try:
+                    nk.execute_strike(db, a, war_id, b_prov)
+                    conn.commit()
+                    outcomes.append("fired")
+                except nk.StrikeError as exc:
+                    conn.rollback()
+                    outcomes.append(f"refused: {exc}")
+
+        threads = [threading.Thread(target=_launch) for _ in range(2)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=15)
+
+        assert sorted(o == "fired" for o in outcomes) == [False, True], outcomes
+        with get_db_connection() as conn:
+            db = conn.cursor()
+            db.execute(
+                "SELECT um.quantity FROM user_military um JOIN unit_dictionary ud "
+                "ON ud.unit_id = um.unit_id WHERE ud.name = 'nukes' AND um.user_id = %s",
+                (a,),
+            )
+            assert db.fetchone()[0] == 0
+    finally:
+        with get_db_connection() as conn:
+            db = conn.cursor()
+            db.execute("DELETE FROM nuclear_strikes WHERE attacker_id = ANY(%s) OR target_id = ANY(%s)", (ids, ids))
+            db.execute("DELETE FROM wars WHERE attacker = ANY(%s) OR defender = ANY(%s)", (ids, ids))
+            purge_users_where(db, "id = ANY(%s)", (ids,))
+            conn.commit()
+

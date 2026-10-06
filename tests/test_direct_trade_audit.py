@@ -14,6 +14,7 @@ import bcrypt
 import pytest
 
 from database import get_db_connection
+from tests._db_cleanup import purge_users_where
 
 PW = bcrypt.hashpw(b"x-test-pw", bcrypt.gensalt()).decode()
 
@@ -91,7 +92,7 @@ def nations():
         # Requests through the test client log activity rows keyed on users.
         db.execute("DELETE FROM referral_active_days WHERE referred_user_id = ANY(%s)", (list(ids),))
         db.execute("DELETE FROM news WHERE destination_id = ANY(%s)", (list(ids),))
-        db.execute("DELETE FROM users WHERE id = ANY(%s)", (list(ids),))
+        purge_users_where(db, 'id = ANY(%s)', (list(ids),))
         conn.commit()
 
 

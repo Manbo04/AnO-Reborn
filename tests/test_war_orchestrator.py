@@ -1,3 +1,4 @@
+from tests._db_cleanup import purge_users_where
 import time
 import psycopg2
 import os
@@ -139,8 +140,8 @@ def test_persist_fight_results_updates_military_and_morale():
     db.execute("DELETE FROM resources WHERE id=%s", (uid2,))
     db.execute("DELETE FROM stats WHERE id=%s", (uid1,))
     db.execute("DELETE FROM stats WHERE id=%s", (uid2,))
-    db.execute("DELETE FROM users WHERE id=%s", (uid1,))
-    db.execute("DELETE FROM users WHERE id=%s", (uid2,))
+    purge_users_where(db, 'id=%s', (uid1,))
+    purge_users_where(db, 'id=%s', (uid2,))
     conn.commit()
     conn.close()
 
@@ -211,7 +212,7 @@ def test_persist_fight_results_concludes_war_when_morale_reaches_zero():
     db.execute("DELETE FROM resources WHERE id=%s", (uid2,))
     db.execute("DELETE FROM stats WHERE id=%s", (uid1,))
     db.execute("DELETE FROM stats WHERE id=%s", (uid2,))
-    db.execute("DELETE FROM users WHERE id=%s", (uid1,))
-    db.execute("DELETE FROM users WHERE id=%s", (uid2,))
+    purge_users_where(db, 'id=%s', (uid1,))
+    purge_users_where(db, 'id=%s', (uid2,))
     conn.commit()
     conn.close()

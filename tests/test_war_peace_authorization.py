@@ -1,5 +1,6 @@
 """Peace offers must be limited to war participants."""
 
+from tests._session import mark_validated
 import pytest
 
 from helpers import error
@@ -27,7 +28,7 @@ def test_send_peace_offer_rejects_non_participant(client, monkeypatch):
         def execute(self, sql, params=None):
             self.calls += 1
             sql_s = str(sql)
-            if "attacker_id, defender_id" in sql_s:
+            if "FROM wars WHERE id" in sql_s:  # the route's war lookup
                 self._war = (attacker, defender)
 
         def fetchone(self):
@@ -46,6 +47,7 @@ def test_send_peace_offer_rejects_non_participant(client, monkeypatch):
 
     with client.session_transaction() as sess:
         sess["user_id"] = intruder
+        mark_validated(sess)
 
     resp = client.post(
         f"/send_peace_offer/{war_id}/{defender}",

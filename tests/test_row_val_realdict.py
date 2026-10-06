@@ -89,6 +89,8 @@ def test_fetch_nation_distribution_status_with_realdict_cursor():
     cursor = RealDictFakeCursor(
         {
             "rd.name = 'rations'": lambda sql, params: (RealDictRow({"coalesce": 100}), []),
+            # grace-period check: the nation's provinces (land per province)
+            "from provinces": lambda sql, params: (None, [RealDictRow({"land": 30})]),
             "default": lambda sql, params: (
                 None,
                 [RealDictRow({"name": "distribution_centers", "qty": 1})],

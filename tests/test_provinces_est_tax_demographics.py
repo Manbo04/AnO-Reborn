@@ -20,11 +20,11 @@ def _render_card_chunk(provinces, provinces_with_images=None):
     from jinja2 import Environment
 
     html = Path("templates/provinces_v2.html").read_text(encoding="utf-8")
-    m = re.search(
-        r"(\{% for province in provinces %\}.*?)<a href=\"/province/",
-        html,
-        re.DOTALL,
-    )
+    # The page has more than one province loop; take the one that computes
+    # the tax estimate (the last loop opening before "set taxable_population").
+    formula_at = html.index("{% set taxable_population")
+    loop_at = html.rindex("{% for province in provinces %}", 0, formula_at)
+    m = re.match(r"(.*?)<a href=\"/province/", html[loop_at:], re.DOTALL)
     assert m, "Could not locate the province-card for-loop in provinces_v2.html"
     chunk = m.group(1) + "{{ est_daily_tax }}|{{ taxable_population }}{% endfor %}"
 

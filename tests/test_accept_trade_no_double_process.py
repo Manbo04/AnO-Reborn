@@ -43,6 +43,9 @@ import bcrypt
 import pytest
 
 from database import get_db_connection
+from tests._db_cleanup import purge_users
+import variables
+from app_core.market.fees import trade_fee
 
 TEST_PASSWORD = bcrypt.hashpw(b"correct-horse-battery", bcrypt.gensalt()).decode()
 
@@ -101,7 +104,7 @@ def buy_trade():
         db.execute("DELETE FROM trades WHERE offer_id = %s", (trade_id,))
         db.execute("DELETE FROM user_economy WHERE user_id IN (%s, %s)", (offerer_id, offeree_id))
         db.execute("DELETE FROM stats WHERE id IN (%s, %s)", (offerer_id, offeree_id))
-        db.execute("DELETE FROM users WHERE id IN (%s, %s)", (offerer_id, offeree_id))
+        purge_users(db, [offerer_id, offeree_id])
         conn.commit()
 
 
@@ -176,8 +179,13 @@ def test_two_concurrent_accepts_process_trade_only_once(buy_trade):
         )
         offeree_lumber = db.fetchone()[0]
 
-    assert offeree_gold == TRADE_AMOUNT * TRADE_PRICE, (
-        f"offeree gold is {offeree_gold}, expected exactly {TRADE_AMOUNT * TRADE_PRICE} "
+    # The accepting seller pays the transport fee out of the proceeds
+    # (app_core/market/fees.py, no currency union between these two).
+    expected_gold = TRADE_AMOUNT * TRADE_PRICE - trade_fee(
+        TRADE_AMOUNT * TRADE_PRICE, variables.TRADE_FEE_PERCENT
+    )
+    assert offeree_gold == expected_gold, (
+        f"offeree gold is {offeree_gold}, expected exactly {expected_gold} "
         f"(one trade acceptance) -- a higher value means the same trade was "
         f"processed twice"
     )

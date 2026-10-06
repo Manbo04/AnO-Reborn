@@ -21,6 +21,7 @@ context, a barrier forcing overlap) against the real local ano_staging
 database, calling the real claim_tutorial_reward() function directly --
 same style as this session's other race fixes.
 """
+from tests._db_cleanup import purge_users_where
 import threading
 import uuid
 
@@ -58,7 +59,7 @@ def fresh_user():
         db = conn.cursor()
         db.execute("DELETE FROM user_economy WHERE user_id = %s", (user_id,))
         db.execute("DELETE FROM stats WHERE id = %s", (user_id,))
-        db.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        purge_users_where(db, 'id = %s', (user_id,))
         conn.commit()
 
 

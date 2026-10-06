@@ -45,6 +45,7 @@ def create_province():
         "confirmation": password,
         "key": username,
         "continent": "1",
+        "terms_agree": "on",
     }
     signup_resp = register_session.post(
         f"{BASE_URL}/signup", data=reg_data, allow_redirects=True

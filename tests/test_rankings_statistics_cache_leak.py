@@ -19,6 +19,7 @@ import bcrypt
 import pytest
 
 from database import get_db_connection
+from tests._db_cleanup import purge_users
 
 TEST_PASSWORD = bcrypt.hashpw(b"correct-horse-battery", bcrypt.gensalt()).decode()
 
@@ -59,7 +60,7 @@ def two_users():
     with get_db_connection() as conn:
         db = conn.cursor()
         db.execute("DELETE FROM stats WHERE id IN (%s, %s)", (first_id, second_id))
-        db.execute("DELETE FROM users WHERE id IN (%s, %s)", (first_id, second_id))
+        purge_users(db, [first_id, second_id])
         conn.commit()
 
 

@@ -66,7 +66,11 @@ def test_aerodrome_spelling_mismatch_fallback():
         if orig_qty is not None:
             db.execute("UPDATE user_buildings SET quantity = 3 WHERE user_id = %s AND building_id = %s", (TEST_UID, building_id))
         else:
-            db.execute("INSERT INTO user_buildings (user_id, building_id, quantity) VALUES (%s, %s, 3)", (TEST_UID, building_id))
+            db.execute(
+                "INSERT INTO user_buildings (user_id, building_id, province_id, quantity) "
+                "VALUES (%s, %s, (SELECT MIN(id) FROM provinces WHERE userid = %s), 3)",
+                (TEST_UID, building_id, TEST_UID),
+            )
         
         # Fetch counts
         counts = get_building_counts(db, TEST_UID)

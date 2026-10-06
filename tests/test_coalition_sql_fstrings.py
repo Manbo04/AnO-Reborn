@@ -5,9 +5,9 @@ from pathlib import Path
 
 
 def _coalition_function_source() -> str:
-    text = Path(__file__).resolve().parents[1].joinpath("coalitions.py").read_text()
+    text = Path(__file__).resolve().parents[1].joinpath("app_core", "coalitions", "routes.py").read_text()
     match = re.search(r"^def coalition\(.*?(?=^def \w)", text, re.MULTILINE | re.DOTALL)
-    assert match, "coalition() not found in coalitions.py"
+    assert match, "coalition() not found in app_core/coalitions/routes.py"
     return match.group(0)
 
 
@@ -24,5 +24,5 @@ def test_coalition_function_has_no_non_fstring_members_tbl_sql():
 
 
 def test_no_literal_brace_members_tbl_fallback():
-    text = Path(__file__).resolve().parents[1].joinpath("coalitions.py").read_text()
+    text = Path(__file__).resolve().parents[1].joinpath("app_core", "coalitions", "routes.py").read_text()
     assert 'or "{_members_tbl()}"' not in text

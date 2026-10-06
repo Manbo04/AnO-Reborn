@@ -12,6 +12,7 @@ import datetime
 
 from database import get_db_connection
 from attack_scripts.war_orchestrator import resolve_defender_composition
+from tests._db_cleanup import purge_users_where
 
 
 def _make_test_user(db):
@@ -45,15 +46,19 @@ def _set_quantity(db, uid, unit_name, quantity):
 def _cleanup(db, conn, uid):
     db.execute("DELETE FROM user_military WHERE user_id=%s", (uid,))
     db.execute("DELETE FROM stats WHERE id=%s", (uid,))
-    db.execute("DELETE FROM users WHERE id=%s", (uid,))
+    purge_users_where(db, 'id=%s', (uid,))
     conn.commit()
 
 
 def test_resolve_defender_composition_falls_back_to_top3_by_quantity():
-    # Player never configured /defense -> preserve legacy auto-pick behaviour.
+    # Saved composition missing/invalid -> legacy auto-pick (top 3 owned).
+    # NOTE: stats.default_defense is NOT NULL DEFAULT 'soldiers,tanks,artillery',
+    # so a player who never opened /defense still has a VALID saved choice and
+    # never reaches this fallback; the test clears it to exercise the path.
     with get_db_connection() as conn:
         db = conn.cursor()
         uid = _make_test_user(db)
+        db.execute("UPDATE stats SET default_defense = '' WHERE id = %s", (uid,))
         _set_quantity(db, uid, "soldiers", 5)
         _set_quantity(db, uid, "tanks", 500)
         _set_quantity(db, uid, "artillery", 300)

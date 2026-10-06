@@ -10,6 +10,8 @@ from helpers import login_required, error
 import os
 from dotenv import load_dotenv
 import bcrypt
+
+from app_core.auth.passwords import account_has_password, password_matches
 import requests
 from string import ascii_uppercase, ascii_lowercase, digits
 from datetime import datetime
@@ -246,9 +248,15 @@ def account_request_password_reset():
     with get_request_cursor() as db:
         db.execute("SELECT hash, discord_id FROM users WHERE id=%s", (cId,))
         row = db.fetchone()
-        if not row or not row[0] or not bcrypt.checkpw(
-            password_raw.encode("utf-8"), row[0].encode("utf-8")
-        ):
+        if row and row[0] and not account_has_password(row[0]):
+            # Discord/Google-only account: the hash column holds the provider
+            # id, so bcrypt.checkpw used to raise ("Invalid salt") -> 500.
+            flash(
+                "Your account signs in with Discord or Google, so it has no "
+                "password to reset. Keep using that sign-in button."
+            )
+            return redirect("/account")
+        if not row or not row[0] or not password_matches(row[0], password_raw):
             flash("Incorrect password.")
             return redirect("/account")
         discord_id = row[1]
@@ -364,7 +372,7 @@ def change():
         name = request.form.get("name")
 
         password_ok = False
-        if user_auth == "discord":
+        if not account_has_password(row[0]):  # Discord/Google-only account
             password_ok = True
         else:
             password_raw = request.form.get("current_password")
@@ -420,8 +428,7 @@ def generate_discord_link_code():
         if not row or not row[0]:
             return error(500, "Account data is missing.")
 
-        user_auth = row[1] if len(row) > 1 and row[1] else "normal"
-        if user_auth != "discord":
+        if account_has_password(row[0]):  # Discord/Google-only accounts have none
             password_raw = request.form.get("password")
             if not password_raw:
                 flash("You must provide your password to generate a Discord link code.")
@@ -486,8 +493,7 @@ def generate_recovery_key():
         if not row or not row[0]:
             return error(500, "Account data is missing.")
 
-        user_auth = row[1] if len(row) > 1 and row[1] else "normal"
-        if user_auth != "discord":
+        if account_has_password(row[0]):  # Discord/Google-only accounts have none
             password_raw = request.form.get("password")
             if not password_raw:
                 flash("You must provide your password to generate a recovery key.")

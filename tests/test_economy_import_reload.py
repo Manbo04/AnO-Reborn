@@ -1,5 +1,6 @@
 import importlib
 from database import get_db_connection
+from tests._db_cleanup import purge_users_where
 
 
 def test_get_particular_resources_survives_reload():
@@ -36,6 +37,6 @@ def test_get_particular_resources_survives_reload():
             db = conn.cursor()
             db.execute("DELETE FROM resources WHERE id=%s", (uid,))
             db.execute("DELETE FROM stats WHERE id=%s", (uid,))
-            db.execute("DELETE FROM users WHERE id=%s", (uid,))
+            purge_users_where(db, 'id=%s', (uid,))
             db.execute("DELETE FROM military WHERE id=%s", (uid,))
             conn.commit()

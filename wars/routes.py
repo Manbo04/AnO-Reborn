@@ -1825,10 +1825,18 @@ def find_targets():
                 "WHERE users.id != %s "
                 "GROUP BY users.id, users.username, users.flag "
                 "HAVING COUNT(provinces.id) BETWEEN %s AND %s "
+                # Influence range in SQL, BEFORE the limit: filtering it in
+                # Python after LIMIT 50 hid most valid targets (233 of 289
+                # nations share the 0-1 province band; only the first 50
+                # alphabetically were ever considered).
+                "AND COALESCE(MAX(inf.influence), 0) BETWEEN %s AND %s "
                 "ORDER BY users.username "
                 "LIMIT 50"
             )
-            db.execute(query, (cId, cId, min_provinces, max_provinces))
+            db.execute(
+                query,
+                (cId, cId, min_provinces, max_provinces, min_influence, max_influence),
+            )
             targets = db.fetchall()
         targets_list = []
         for target in targets:
