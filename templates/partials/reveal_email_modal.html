@@ -4,8 +4,8 @@
         <h2><span class="material-icons-outlined">visibility</span> View Email Address</h2>
         <p>Enter your password to view your account's email address.</p>
         <div class="modal-input">
-            <label for="reveal_email_password">Password</label>
-            <input type="password" id="reveal_email_password" autocomplete="current-password" required>
+            <label for="reveal_email_password">{{ 'Password' if has_password is not defined or has_password else 'Your nation name' }}</label>
+            <input type="{{ 'password' if has_password is not defined or has_password else 'text' }}" id="reveal_email_password" autocomplete="{{ 'current-password' if has_password is not defined or has_password else 'off' }}" required>
         </div>
         <p id="revealEmailError" style="color:#ff4444; display:none;"></p>
         <div class="modal-buttons">

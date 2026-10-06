@@ -1220,9 +1220,9 @@ def delete_own_account():
     cache_response fix closed) and can just POST directly. Now requires
     the account's current password, same as reset_account.
     """
-    import bcrypt
     from flask import request
     from helpers import error
+    from app_core.auth.passwords import confirm_identity
 
     cId = session["user_id"]
 
@@ -1230,22 +1230,29 @@ def delete_own_account():
     if not confirm_password:
         return error(400, "Confirm your password to delete your account")
     with get_request_cursor() as db:
-        db.execute("SELECT hash FROM users WHERE id=%s", (cId,))
+        db.execute("SELECT hash, username FROM users WHERE id=%s", (cId,))
         row = db.fetchone()
     if not row or not row[0]:
         return error(500, "Account data is missing. Please contact support.")
-    try:
-        password_ok = bcrypt.checkpw(
-            confirm_password.encode("utf-8"), row[0].encode("utf-8")
-        )
-    except Exception:
-        password_ok = False
-    if not password_ok:
+    # Discord/Google-only accounts confirm with their nation name instead.
+    if not confirm_identity(row[0], row[1], confirm_password):
         return error(400, "Confirm your password to delete your account")
 
     from repositories.country_repository import CountryRepository
 
     CountryRepository.delete_own_account(cId)
+
+    # Drop cached pages that still list/link the deleted nation, otherwise
+    # /countries (60s cache) shows it and its link resolves to "Country
+    # doesn't exist". Lost in the 2026-08-10 CountryRepository refactor.
+    try:
+        from database import invalidate_view_cache
+
+        invalidate_view_cache("countries")
+        invalidate_view_cache("country", page=f"/country/id={cId}")
+        invalidate_view_cache("my_country", user_id=cId)
+    except Exception:
+        pass
     session.clear()
     return redirect("/")
 
@@ -1254,7 +1261,6 @@ def delete_own_account():
 
 
 def reset_account():
-    import bcrypt
     from flask import request, session, redirect, flash
     from helpers import error
     from database import get_request_cursor, invalidate_view_cache
@@ -1275,17 +1281,14 @@ def reset_account():
     if not confirm_password:
         return error(400, "Confirm your password to reset your account")
     with get_request_cursor() as db:
-        db.execute("SELECT hash FROM users WHERE id=%s", (cId,))
+        db.execute("SELECT hash, username FROM users WHERE id=%s", (cId,))
         row = db.fetchone()
     if not row or not row[0]:
         return error(500, "Account data is missing. Please contact support.")
-    try:
-        password_ok = bcrypt.checkpw(
-            confirm_password.encode("utf-8"), row[0].encode("utf-8")
-        )
-    except Exception:
-        password_ok = False
-    if not password_ok:
+    from app_core.auth.passwords import confirm_identity
+
+    # Discord/Google-only accounts confirm with their nation name instead.
+    if not confirm_identity(row[0], row[1], confirm_password):
         return error(400, "Confirm your password to reset your account")
 
     try:

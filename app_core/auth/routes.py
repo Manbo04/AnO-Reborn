@@ -73,6 +73,19 @@ def account():
 
     from app_core.auth import totp
 
+    # Discord/Google-only accounts store the provider id in users.hash; the
+    # page asks them for their nation name instead of a password they lack.
+    has_password = True
+    try:
+        from app_core.auth.passwords import account_has_password
+
+        with get_request_cursor() as db:
+            db.execute("SELECT hash FROM users WHERE id=%s", (cId,))
+            _row = db.fetchone()
+        has_password = account_has_password(_row[0] if _row else None)
+    except Exception:
+        pass
+
     template = "account_v2.html" if is_theme_v2_enabled("account") else "account.html"
     return render_template(
         template,
@@ -83,6 +96,7 @@ def account():
         has_2fa_enabled=totp.has_2fa_enabled(cId),
         referral_dashboard=referral_dashboard,
         reset_is_first=(reset_count == 0),
+        has_password=has_password,
     )
 
 
@@ -101,7 +115,7 @@ def reveal_email():
     (not a page route): the account page never embeds the real email in
     its initial HTML anymore, only after this call succeeds.
     """
-    import bcrypt
+    from app_core.auth.passwords import confirm_identity
 
     cId = session["user_id"]
     confirm_password = request.form.get("confirm_password")
@@ -109,16 +123,13 @@ def reveal_email():
         return {"ok": False, "error": "Confirm your password to view your email"}, 400
 
     with get_request_cursor() as db:
-        db.execute("SELECT hash, email FROM users WHERE id=%s", (cId,))
+        db.execute("SELECT hash, email, username FROM users WHERE id=%s", (cId,))
         row = db.fetchone()
     if not row or not row[0]:
         return {"ok": False, "error": "Account data is missing. Please contact support."}, 500
 
-    try:
-        password_ok = bcrypt.checkpw(confirm_password.encode("utf-8"), row[0].encode("utf-8"))
-    except Exception:
-        password_ok = False
-    if not password_ok:
+    # Discord/Google-only accounts confirm with their nation name instead.
+    if not confirm_identity(row[0], row[2], confirm_password):
         return {"ok": False, "error": "Incorrect password"}, 400
 
     return {"ok": True, "email": row[1]}
@@ -184,8 +195,8 @@ def twofa_confirm():
 @bp.route("/account/2fa/disable", methods=["POST"])
 @login_required
 def twofa_disable():
-    import bcrypt
     from app_core.auth import totp
+    from app_core.auth.passwords import account_has_password, password_matches
 
     cId = session["user_id"]
 
@@ -201,12 +212,13 @@ def twofa_disable():
         row = db.fetchone()
     if not row or not row[0]:
         return error(500, "Account data is missing. Please contact support.")
-    try:
-        password_ok = bcrypt.checkpw(
-            confirm_password.encode("utf-8"), row[0].encode("utf-8")
-        )
-    except Exception:
-        password_ok = False
+    if account_has_password(row[0]):
+        password_ok = password_matches(row[0], confirm_password)
+    else:
+        # Discord/Google-only accounts have no password; typing the nation
+        # name would be weaker than the factor being removed, so they prove
+        # it with a current authenticator code instead.
+        password_ok = totp.verify_login_code(cId, confirm_password.strip())
     if not password_ok:
         return error(400, "Confirm your password to disable two-factor authentication")
 

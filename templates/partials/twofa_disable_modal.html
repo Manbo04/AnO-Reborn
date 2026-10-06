@@ -8,8 +8,8 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             {% endif %}
             <div class="modal-input">
-                <label for="twofa_disable_password">Enter your password to confirm</label>
-                <input type="password" name="confirm_password" id="twofa_disable_password" autocomplete="current-password" required>
+                <label for="twofa_disable_password">{{ 'Enter your password to confirm' if has_password is not defined or has_password else 'Enter a current code from your authenticator app' }}</label>
+                <input type="{{ 'password' if has_password is not defined or has_password else 'text' }}" name="confirm_password" id="twofa_disable_password" autocomplete="{{ 'current-password' if has_password is not defined or has_password else 'one-time-code' }}" required>
             </div>
             <div class="modal-buttons">
                 <button type="button" onclick="closeTwofaDisableModal()" class="templatedivbutton">Cancel</button>

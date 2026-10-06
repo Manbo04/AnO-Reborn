@@ -1,5 +1,6 @@
 from repositories.country_repository import CountryRepository
 from database import get_coalition_members_table
+import variables
 
 
 def _scale_revenue_dict(value, factor):
@@ -106,25 +107,10 @@ class CountryService:
         """
 
         def default_revenue_data():
-            base_resources = [
-                "rations",
-                "oil",
-                "coal",
-                "uranium",
-                "bauxite",
-                "iron",
-                "lead",
-                "copper",
-                "lumber",
-                "components",
-                "steel",
-                "consumer_goods",
-                "aluminium",
-                "gasoline",
-                "ammunition",
-                "money",
-                "energy",
-            ]
+            # Every resource the templates read, from the one canonical list --
+            # a hardcoded copy here missed silver/diamonds/bullion and turned
+            # this graceful fallback into a 500 on the country page.
+            base_resources = list(variables.RESOURCES) + ["money", "energy"]
             gross = {r: 0 for r in base_resources}
             net = {r: 0 for r in base_resources}
             return {"gross": gross, "net": net, "gross_theoretical": gross.copy()}

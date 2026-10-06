@@ -58,7 +58,7 @@
                 </div>
 
                 <div class="account-action-form" style="margin-top: 15px;">
-                    {% if user.get('auth_type') != 'discord' %}
+                    {% if has_password %}
                     <input class="loginsignupinput account-action-form-input" type="password" name="current_password" placeholder="Enter current password to save details" required />
                     {% endif %}
                     {{ game_button('Save Details', icon='save') }}
@@ -168,7 +168,7 @@
             {% endif %}
 
             <form action="/generate_discord_link_code" method="POST" class="account-action-form">
-                {% if user.get('auth_type') != 'discord' %}
+                {% if has_password %}
                 <input class="loginsignupinput account-action-form-input" type="password" name="password" placeholder="Enter current password" required />
                 {% endif %}
                 {{ game_button('Generate Bot Link Code', icon='smart_toy') }}
@@ -183,7 +183,7 @@
             {% endif %}
             <p style="margin-bottom: 10px; opacity: 0.8;">Generate a recovery key to regain access to your account if you lose your password. <strong>Save it securely</strong>, it will only be shown once.</p>
             <form action="/generate_recovery_key" method="POST" class="account-action-form">
-                {% if user.get('auth_type') != 'discord' %}
+                {% if has_password %}
                 <input class="loginsignupinput account-action-form-input" type="password" name="password" placeholder="Enter current password to generate" required />
                 {% endif %}
                 {{ game_button('Generate Key', icon='key') }}
@@ -280,7 +280,7 @@
         </div>
         <div class="modal-input">
             <label>Enter your password to confirm</label>
-            <input type="password" id="deleteConfirmPassword" placeholder="Password" autocomplete="current-password" />
+            <input type="{{ 'password' if has_password else 'text' }}" id="deleteConfirmPassword" placeholder="{{ 'Password' if has_password else 'Type your nation name again' }}" autocomplete="{{ 'current-password' if has_password else 'off' }}" />
         </div>
         <div class="modal-buttons">
             <button onclick="closeDeleteModal()" class="templatedivbutton">Cancel</button>
