@@ -446,6 +446,15 @@ body.page-country .templatedivcontent .infodiv {
    size the uploaded image is: letterboxed, never stretched or oversized. */
 .tip-card--player { aspect-ratio: 160 / 600; max-height: 600px; background: #0b1220; }
 .tip-card--player img { width: 100%; height: 100%; display: block; object-fit: contain; border-radius: 16px; }
+/* Blurred, cover-scaled copy of the banner fills the letterbox bars so an
+   off-size upload still looks like a full slot instead of floating in black. */
+.tip-card--player .nation-banner-backdrop,
+.nation-top-banner .nation-banner-backdrop {
+    position: absolute; inset: -12px; width: calc(100% + 24px); height: calc(100% + 24px);
+    object-fit: cover; filter: blur(14px) brightness(0.7); transform: scale(1.05); border-radius: 0;
+}
+.tip-card--player .nation-banner-img,
+.nation-top-banner .nation-banner-img { position: relative; }
 .tip-card--player .tip-card-playertag {
     position: absolute;
     top: 8px;
@@ -473,6 +482,7 @@ body.page-country .templatedivcontent .infodiv {
 }
 .nation-top-banner img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .nation-top-banner .tip-card-playertag {
+    z-index: 1;
     position: absolute; top: 6px; right: 6px; line-height: 1.4;
     font-size: 0.62rem; font-weight: 700; padding: 2px 8px; border-radius: 999px;
     background: rgba(0, 0, 0, 0.55); color: rgba(255, 255, 255, 0.85);

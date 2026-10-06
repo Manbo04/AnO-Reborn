@@ -584,7 +584,8 @@
         {% set rotating = rotating_ads | default({}) %}
         {% if rotating.top_ad and session.get('user_id') %}
         <a class="nation-top-banner" href="{{ rotating.top_ad.target_url }}" target="_blank" rel="noopener">
-            <img src="{{ rotating.top_ad.image_url }}" alt="Nation banner" onerror="this.parentNode.remove()" />
+            <img class="nation-banner-backdrop" src="{{ rotating.top_ad.image_url }}" alt="" aria-hidden="true" />
+            <img class="nation-banner-img" src="{{ rotating.top_ad.image_url }}" alt="Nation banner" onerror="this.parentNode.remove()" />
             <span class="tip-card-playertag">Nation banner</span>
         </a>
         {% endif %}
