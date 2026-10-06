@@ -1,0 +1,8 @@
+{
+ "status": "fixed",
+ "reply": "glad it's sorted, enjoy the speed",
+ "nonce": "2f81a6280b64ac40",
+ "updated_at": "2026-10-06T22:18:38Z",
+ "branch": null,
+ "summary": "Mass purchase blackout false positives fixed earlier (shared power calc); player confirmed."
+}
