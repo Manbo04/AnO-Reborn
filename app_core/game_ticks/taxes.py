@@ -866,7 +866,10 @@ def war_reparation_tax():
                 }
 
                 db.execute("SELECT war_type FROM wars WHERE id=%s", (war_id,))
-                war_type = db.fetchone()
+                # fetchone() returns a row tuple: compare the value, not the
+                # tuple (the Raze 5% rate never applied before 2026-10-06).
+                war_type_row = db.fetchone()
+                war_type = war_type_row[0] if war_type_row else None
 
                 for resource in Economy.resources:
                     resource_amount = resource_amounts.get(resource, 0) or 0

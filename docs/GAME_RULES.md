@@ -98,10 +98,9 @@ Rules:
   fallout; Iron Domes get one interception roll (`wars/nuclear.py`).
   🔒 `tests/test_nuclear_strike.py` (incl. two concurrent launches, one nuke)
 - **Reparations** (`app_core/game_ticks/taxes.py::war_reparation_tax`, daily, for 7
-  days after a truce): loser pays **20% of every resource per day**. The code
-  intends 5% for Raze wars, but compares a DB row tuple to the string `"Raze"`, so
-  that branch never runs — **open decision for Dede** (changing it changes war
-  balance).
+  days after a truce): loser pays **20% of every resource per day**, **5% for Raze
+  wars** (the Raze rate never applied until 2026-10-06: the code compared a DB row
+  tuple to the string). 🔒 `tests/test_war_reparations.py`
 
 ## 5. Accounts & security
 
@@ -133,7 +132,7 @@ resources by hand — iterate `variables.RESOURCES` (the silver 500 on 10-06).
 **New building** — `building_dictionary` row (migration); `PROVINCE_UNIT_PRICES`
 `<name>_price` (+ `<name>_resource`); effects in `variables` / `province_effects.py`;
 workers/education in variables; image in `game_ui.BUILDING_LEGACY_IMAGES` (a real
-HQ image, not a stand-in).
+HQ image, not a stand-in; public-domain/CC sources credited in a comment).
 
 **New migration** — `migrations/YYYYMMDD_HHMM_name.sql`, re-runnable; after it ships,
 refresh `db/schema.sql` with `scripts/snapshot_prod_schema.sh`.

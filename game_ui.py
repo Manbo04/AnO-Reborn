@@ -62,6 +62,9 @@ BUILDING_LEGACY_IMAGES: dict[str, str] = {
     "nuclear_reactors": "nuclearreactor.jpg",
     "gas_stations": "gasstation.jpg",
     "general_stores": "generalstore.jpg",
+    # Public domain (USDA): Community FoodBank of New Jersey, Wikimedia Commons
+    # "USDA Foods - Community FoodBank of New Jersey (20160120-FNS-LSC-0511)".
+    "food_banks": "foodbank.jpg",
     "farmers_markets": "farmersmarket.jpg",
     "banks": "bank.jpg",
     "malls": "mall.jpg",
