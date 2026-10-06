@@ -442,7 +442,10 @@ body.page-country .templatedivcontent .infodiv {
 .tip-card--advertise   { background: linear-gradient(160deg, #111827, #00a7e1 160%); }
 
 .tip-card--player { padding: 0; min-height: 0; }
-.tip-card--player img { width: 100%; display: block; border-radius: 16px; }
+/* Player banners always render in the advertised 160x600 slot, whatever
+   size the uploaded image is: letterboxed, never stretched or oversized. */
+.tip-card--player { aspect-ratio: 160 / 600; max-height: 600px; background: #0b1220; }
+.tip-card--player img { width: 100%; height: 100%; display: block; object-fit: contain; border-radius: 16px; }
 .tip-card--player .tip-card-playertag {
     position: absolute;
     top: 8px;
@@ -458,14 +461,17 @@ body.page-country .templatedivcontent .infodiv {
 .nation-top-banner {
     position: relative;
     display: block;
-    width: fit-content;
-    max-width: min(728px, calc(100% - 24px));
+    /* Fixed 728x90 slot (scaled down on narrow screens) so every top
+       banner is the same size regardless of the uploaded image. */
+    width: min(728px, calc(100% - 24px));
+    aspect-ratio: 728 / 90;
+    background: #0b1220;
     margin: 12px auto 0;
     border-radius: 10px;
     overflow: hidden;
     line-height: 0;
 }
-.nation-top-banner img { display: block; max-width: 100%; height: auto; }
+.nation-top-banner img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .nation-top-banner .tip-card-playertag {
     position: absolute; top: 6px; right: 6px; line-height: 1.4;
     font-size: 0.62rem; font-weight: 700; padding: 2px 8px; border-radius: 999px;
