@@ -26,5 +26,5 @@ echo "::group::SQL vs production schema"
 echo "::endgroup::"
 
 echo "::group::Full test suite"
-"$PY" -m pytest tests -q -p no:cacheprovider --timeout=120 -rfE
+"$PY" -m pytest tests -p no:cacheprovider --timeout=120 -rfE
 echo "::endgroup::"
