@@ -1,0 +1,8 @@
+{
+ "status": "not_a_bug",
+ "reply": "as the earlier answer said, this is how the two ticks add up for huge pops: old-age deaths scale with how many elderly you have, while growth is split across your provinces, so a very large capital can shrink even when nothing is broken. the pop cap isn't what's stopping it, it's growth being lower than deaths. changing the growth or death rates is a balance decision, so post it in #suggestions and it goes on the next ballot for the community vote. i'll pass the numbers on to staff too",
+ "nonce": "cde52d5b3de6412f9daa38d1b2643b3d",
+ "updated_at": "2026-10-06T18:18:49Z",
+ "branch": null,
+ "summary": "Huge-pop nations shrink: old-age deaths (0.1%/h of elderly) exceed per-province growth share; balance issue, directed to suggestions"
+}
