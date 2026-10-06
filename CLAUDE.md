@@ -189,6 +189,12 @@ celery -A tasks beat --loglevel=info
 
 ## Architecture
 
+**Start here:** [`docs/GAME_RULES.md`](docs/GAME_RULES.md) — what each mechanic must do, its single
+source-of-truth module, enforced invariants, and add-a-unit/resource/building checklists.
+[`docs/SYSTEM_MAP.md`](docs/SYSTEM_MAP.md) — generated from code (CI-checked): every scheduled job
+with its gate, which files write/read every table, every route's handler. After changing routes,
+SQL or the beat schedule run `python scripts/generate_system_map.py`.
+
 **Flask monolith, mid-migration to a modular layout.** `app.py` is the single
 entrypoint: it configures the app, initializes Sentry (if `SENTRY_DSN` set),
 and wires up every feature by calling that feature's `register_<name>_routes(app)`

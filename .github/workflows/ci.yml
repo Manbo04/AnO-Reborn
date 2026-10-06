@@ -35,6 +35,9 @@ jobs:
       - name: Check no runtime schema changes in app code
         run: python3 scripts/check_no_runtime_ddl.py
 
+      - name: System map is up to date (docs/SYSTEM_MAP.md)
+        run: python scripts/generate_system_map.py --check
+
       - name: Progression health (strict when DB secret present)
         env:
           DATABASE_URL: ${{ secrets.DATABASE_PUBLIC_URL || secrets.DATABASE_URL }}

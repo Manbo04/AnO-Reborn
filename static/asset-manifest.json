@@ -78,6 +78,26 @@
       "legacy": "skytrain.jpg",
       "path": "images/game/buildings/monorails.png"
     },
+    "railways": {
+      "legacy": "railway.jpg",
+      "path": "images/game/buildings/railways.png"
+    },
+    "metros": {
+      "legacy": "metro.jpg",
+      "path": "images/game/buildings/metros.png"
+    },
+    "firewatch_towers": {
+      "legacy": "firewatch.jpg",
+      "path": "images/game/buildings/firewatch_towers.png"
+    },
+    "levees": {
+      "legacy": "levee.jpg",
+      "path": "images/game/buildings/levees.png"
+    },
+    "seismic_reinforcements": {
+      "legacy": "seismic.jpg",
+      "path": "images/game/buildings/seismic_reinforcements.png"
+    },
     "primary_school": {
       "legacy": "library.jpg",
       "path": "images/game/buildings/primary_school.png"
@@ -169,6 +189,34 @@
     "missile_batteries": {
       "legacy": "missilebattery.jpg",
       "path": "images/game/buildings/missile_batteries.png"
+    },
+    "silver_mines": {
+      "legacy": "silvermine.jpg",
+      "path": "images/game/buildings/silver_mines.png"
+    },
+    "diamond_mines": {
+      "legacy": "diamondmine.jpg",
+      "path": "images/game/buildings/diamond_mines.png"
+    },
+    "bullion_mines": {
+      "legacy": "bullionmine.jpg",
+      "path": "images/game/buildings/bullion_mines.png"
+    },
+    "fisheries": {
+      "legacy": "fishery.jpg",
+      "path": "images/game/buildings/fisheries.png"
+    },
+    "workshops": {
+      "legacy": "workshop.jpg",
+      "path": "images/game/buildings/workshops.png"
+    },
+    "jewelry_stores": {
+      "legacy": "jewelrystore.jpg",
+      "path": "images/game/buildings/jewelry_stores.png"
+    },
+    "automotive_plants": {
+      "legacy": "automotiveplant.jpg",
+      "path": "images/game/buildings/automotive_plants.png"
     }
   },
   "units": {
@@ -188,6 +236,10 @@
       "legacy": "fighterjet.jpg",
       "path": "images/game/units/fighter_jets.png"
     },
+    "fighters": {
+      "legacy": "fighterjet.jpg",
+      "path": "images/game/units/fighters.png"
+    },
     "bombers": {
       "legacy": "bomber.jpg",
       "path": "images/game/units/bombers.png"
@@ -195,6 +247,10 @@
     "attack_helicopters": {
       "legacy": "apache.jpg",
       "path": "images/game/units/attack_helicopters.png"
+    },
+    "apaches": {
+      "legacy": "apache.jpg",
+      "path": "images/game/units/apaches.png"
     },
     "submarines": {
       "legacy": "submarine.jpg",
@@ -211,6 +267,14 @@
     "spies": {
       "legacy": "spy.jpg",
       "path": "images/game/units/spies.png"
+    },
+    "counter_intel_agents": {
+      "legacy": "counter_intel.jpg",
+      "path": "images/game/units/counter_intel_agents.png"
+    },
+    "sam_batteries": {
+      "legacy": "sam_batteries.jpg",
+      "path": "images/game/units/sam_batteries.png"
     },
     "icbms": {
       "legacy": "icbm.jpg",
@@ -277,6 +341,18 @@
     "lumber": {
       "legacy": "reslumber.png",
       "path": "images/game/resources/lumber.png"
+    },
+    "silver": {
+      "legacy": "ressilver.png",
+      "path": "images/game/resources/silver.png"
+    },
+    "diamonds": {
+      "legacy": "resdiamonds.png",
+      "path": "images/game/resources/diamonds.png"
+    },
+    "bullion": {
+      "legacy": "resbullion.png",
+      "path": "images/game/resources/bullion.png"
     },
     "components": {
       "legacy": "rescomponents.png",
