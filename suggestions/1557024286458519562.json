@@ -1,0 +1,76 @@
+{
+  "author_id": "1180720719060029500",
+  "created_at": "2026-10-06T13:38:38Z",
+  "kind": "suggestion",
+  "last_message_id": "1557028309227806791",
+  "last_player_message_at": "2026-10-06T13:54:37Z",
+  "messages": [
+    {
+      "at": "2026-10-06T13:38:38Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1557024286458519562/1557024286928273498/image.png?backend=b2&ex=6ac64b5e&is=6ac4f9de&hm=73669c5d0fb421c246ac1001a97491bd14c78dfc7f8ef702ade9f36c5b6c74ac&",
+        "https://cdn.discordapp.com/attachments/1557024286458519562/1557024288685690961/image.png?backend=b2&ex=6ac64b5e&is=6ac4f9de&hm=2dd9146823c5e508208f29a483c3d215d6cb86f1211d22b082cb59f9b579e146&"
+      ],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1557024286458519562",
+      "staff": false,
+      "text": "As it stands, the UI is not the most userfriendly  in the world. There are things hidden within things, like how the Policies are nested in the Edit tab.\n\nI'd like to make things a little easier for everyone by suggesting that things be organized in a sidebar like the 2nd image. Bold items can be dropdowns except for the big ol Affairs and Order. \n\nFor mobile users, the sidebar would hidden by a button, pressing that button reveals the sidebar.\n\nIf the 2nd image doesn't really do it,  then think of PnW's interface or DnS. PnW has an organized sidebar, DnS has an organized top bar.\n\nIt's also be nice if we can either see our resources via a topbar dropdown or the dollar button we have now.\n\nThats really it. \n**This is mostly a QOL thing everybody is free to add on to.** Because personally, UI is the biggest fish we have to fry."
+    },
+    {
+      "at": "2026-10-06T13:45:30Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1557026018303152209",
+      "staff": false,
+      "text": "ps 1: Forgot to talk about an optional resources dropdown from the top bar. Players can choose between button and topbar dropdown."
+    },
+    {
+      "at": "2026-10-06T13:48:43Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1557026827732521083",
+      "staff": false,
+      "text": "ps 2: i thought of a **national statistics tab** too, under  \"nation\", where we can see important stuff like age demographics/population pyramid, growth rate, total educational attainment and whatnot.\n\nMaybe flavor stuff too, like gdp, gdp/capita, hdi and shit, but that's not really important. the end goal is decluttering."
+    },
+    {
+      "at": "2026-10-06T13:52:47Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1557027847787520051",
+      "staff": false,
+      "text": "ps 3: a **national character** tab in the future could be nice too. that's where the deeper larp goes. overview would only show surface-level larping.\n\nsome events could also give you \"national spirits\" (haha hoi4 infested brain) that give you effects as long as the \"spirit\" exists, like raised baseline happiness, raised growth rate % or a fixed-number, non negotiable growth rate."
+    },
+    {
+      "at": "2026-10-06T13:53:55Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1557028136477007883",
+      "staff": false,
+      "text": "ps4: **achievements tab** maybe??\n\n\"there's no limit to the larp\" - have a total of 10,000 or more words in your national lore"
+    },
+    {
+      "at": "2026-10-06T13:54:37Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1557028309227806791",
+      "staff": false,
+      "text": "**ps 5: the PS'es are not included in the actual suggestion.**"
+    }
+  ],
+  "status": "new",
+  "thread_id": "1557024286458519562",
+  "title": "Affairs and More Order (UI) - Sidebar/Topbar",
+  "url": "https://discord.com/channels/708006319658893385/1557024286458519562"
+}
