@@ -47,6 +47,23 @@ TASK_RUN_THRESHOLDS = {
     "assembly_tick": int(os.getenv("ASSEMBLY_TICK_MIN_INTERVAL", "300")),
 }
 
+# Ticks that must run AT MOST ONCE PER CALENDAR PERIOD (UTC). These are gated
+# on the period a run claimed (task_runs.last_period), not on time since the
+# last run: an elapsed-time window skipped a whole hour whenever a run was
+# delayed (2-hour tax skip, 2026-10-03) and let late nudges/deploys bill an
+# hour twice (upkeep up to 6x, 2026-10-05). See common.claim_tick_period().
+TASK_PERIODS = {
+    "tax_income": "hour",
+    "generate_province_revenue": "hour",
+    "population_growth": "hour",
+    "produce_unit_stockpiles": "hour",
+    "military_maintenance": "hour",
+    "war_supply_regen": "hour",
+    "natural_disasters": "hour",
+    "loan_interest": "hour",
+    "bond_tick": "day",
+}
+
 CELERY_BEAT_SCHEDULE = {
     "check_achievements": {
         "task": "tasks.task_check_achievements",

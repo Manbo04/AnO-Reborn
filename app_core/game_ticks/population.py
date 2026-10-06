@@ -425,7 +425,7 @@ def population_growth():  # Function for growing population
             ("population_growth",),
         )
         row = db.fetchone()
-        if should_skip_task(row, "population_growth"):
+        if should_skip_task(row, "population_growth", db=db):
             try:
                 release_pg_advisory_lock(conn, 9003)
             except Exception:

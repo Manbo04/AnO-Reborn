@@ -463,7 +463,7 @@ def test_real_ticks_write_ledger_and_clamp_pollution_last():
                 (uid, pids[0], q, name),
             )
         db.execute(
-            "UPDATE task_runs SET last_run = now() - interval '1 day' "
+            "UPDATE task_runs SET last_run = now() - interval '1 day', last_period = NULL "
             "WHERE task_name IN ('generate_province_revenue', 'tax_income')"
         )
         conn.commit()

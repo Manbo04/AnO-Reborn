@@ -895,8 +895,8 @@ never applied, and CI running only 17 of 199 test files while the robot auto-mer
 - Canary branch reintroducing `p.location` went red on GitHub with the exact file:line.
 - `master` protected: PR required, `prod-shaped` + `lint-and-test` required, enforced for admins.
   Robot auto-merge now merges via PR. Workflow documented in CLAUDE.md "How changes ship".
-- Live bugs fixed: migration 0105 (`spyinfo.iron_domes`) had never run → spy reports 500'd when
-  Iron Domes were revealed (0104–0106 now registered, applied 09:48 UTC); `POST /spyAmount`
+- Live bugs fixed: (CORRECTION: `spyinfo.iron_domes` from 0105 already existed in prod -- applied by
+  hand -- so there was no spy-report 500; registering 0104–0106 only fixed bookkeeping.) `POST /spyAmount`
   always 500'd (dropped `users.defcon`); Discord spam-warning sync wrote to a nonexistent table;
   admin DB stats used pre-PG13 columns; reset script wrote a nonexistent column + echoed passwords.
 - Runtime DDL removed (game_map ALTERed `provinces` on every boot; reset ALTERed `users`) +
@@ -907,4 +907,27 @@ never applied, and CI running only 17 of 199 test files while the robot auto-mer
 - Work down `tests/known_failures.txt` (71) — some may be real bugs (e.g. revenue UI 500s,
   2FA enrollment tests). Phase 2 next: one tick framework with exactly-once period ledger.
 - Refresh `db/schema.sql` after every migration that ships.
+
+## 2026-10-06 — Phase 2: hourly ticks run at most once per hour (period gate)
+
+**Why**: ticks were gated on "last run < 55 min ago". A delayed run swallowed the next hour
+(2-hour tax skip, 10-03); late watchdog/deploy nudges billed an hour again (upkeep up to 6x, 10-05).
+
+**What was done**:
+- `TASK_PERIODS` (app_core/celery_schedule.py): tax, production, population, unit production,
+  military maintenance, war supply regen, disasters, loan interest = hourly; bond tick = daily.
+- `claim_tick_period()` (app_core/game_ticks/common.py) claims the current UTC period in
+  `task_runs.last_period` and COMMITS the claim before any work (ticks roll back + continue on
+  per-chunk errors, so an in-transaction claim could be undone while work committed). A period's
+  work can never run twice; a run that crashes before working loses that hour (watchdog-visible).
+- All 9 period-gated call sites pass their cursor to `should_skip_task(..., db=db)`; sub-hourly
+  ticks (global_tick, trade agreements, assembly) keep the elapsed-time gate.
+- Migration `20261006_1400_task_runs_last_period.sql` adds the column and backfills it from
+  `last_run`, so the deploy itself can't re-run the current hour.
+- Removed finished one-offs from boot (`reimburse_players_24h.py`, 10-03 production replay).
+- Snapshot refreshed (`scripts/snapshot_prod_schema.sh`, run from the Mac).
+- Tests: `tests/test_tick_periods.py` replays both incident patterns + claim survives rollback.
+
+**What to watch**: military maintenance currently bills at :50 (it last ran 12:50); after deploy the
+first global tick in a new hour claims it, so it moves to ~:00/:10 once -- no double, no gap.
 

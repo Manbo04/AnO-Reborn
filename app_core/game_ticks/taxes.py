@@ -222,7 +222,7 @@ def tax_income():
                 ("tax_income",),
             )
             row = db.fetchone()
-            if should_skip_task(row, "tax_income"):
+            if should_skip_task(row, "tax_income", db=db):
                 try:
                     release_pg_advisory_lock(conn, 9001)
                 except Exception:

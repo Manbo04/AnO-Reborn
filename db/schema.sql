@@ -1,5 +1,5 @@
 -- Production schema snapshot (structure only, no player data).
--- Source: live Railway Postgres 17 via scripts/snapshot_prod_schema.sh
+-- Source: live Railway Postgres via scripts/snapshot_prod_schema.sh
 -- Taken: 2026-10-06. Refresh after every migration that ships.
 -- CI builds its test database from this file, so tests run against the real schema.
 
