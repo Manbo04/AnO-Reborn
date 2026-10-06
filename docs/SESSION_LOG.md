@@ -878,3 +878,33 @@ DATABASE_PUBLIC_URL=... python3 scripts/apply_all_pending_migrations.py
 - Command Briefing now only runs for nations founded on/after 2026-10-04 (`tour.is_tour_eligible`, users.date). Older nations get no card and no rewards; `/tutorial` shows them the old written guide. Triggered by the tour having started on Dede's own established nation.
 - Province page (v2): the page photo (custom province picture or default province.jpg) was never rendered whenever FEATURE_PROVINCE_BASE_VIEW was on, because the server always builds the district-map payload — so the default classic view had no photo since 08-31. It's now always rendered and hidden via CSS only while `body.province-base-view-active` (district map actually showing).
 - What to watch: an established nation that already saw the tour this session may have been paid some CHAPTER_REWARDS before this fix (Dede's own nation, 2026-10-05 ~02:55 UTC+3).
+
+## 2026-10-06 — Guardrails: production-schema CI gate (PR #124, 522cd023)
+
+**Why**: bug rate kept rising. Root-cause review of ~120 fix commits since 09-12 found most
+bugs fall into a few classes CI could not see: code referencing tables/columns missing in prod
+(e.g. `provinces.location` killed resource production ~12h on 10-03), migrations shipped but
+never applied, and CI running only 17 of 199 test files while the robot auto-merged on it.
+
+**What was done**:
+- `db/schema.sql` = live schema snapshot (refresh: `scripts/snapshot_prod_schema.sh`);
+  `db/reference_data.sql` (catalogs + applied migrations), `db/test_seed.sql` (accounts 1, 16).
+- New CI job `prod-shaped` (`scripts/ci_full_check.sh`): load snapshot → strict migrations →
+  `scripts/check_sql_against_schema.py` (PREPAREs ~1,440 app queries) → full pytest
+  (733 pass; 71 pre-existing failures in `tests/known_failures.txt`, shrink-only).
+- Canary branch reintroducing `p.location` went red on GitHub with the exact file:line.
+- `master` protected: PR required, `prod-shaped` + `lint-and-test` required, enforced for admins.
+  Robot auto-merge now merges via PR. Workflow documented in CLAUDE.md "How changes ship".
+- Live bugs fixed: migration 0105 (`spyinfo.iron_domes`) had never run → spy reports 500'd when
+  Iron Domes were revealed (0104–0106 now registered, applied 09:48 UTC); `POST /spyAmount`
+  always 500'd (dropped `users.defcon`); Discord spam-warning sync wrote to a nonexistent table;
+  admin DB stats used pre-PG13 columns; reset script wrote a nonexistent column + echoed passwords.
+- Runtime DDL removed (game_map ALTERed `provinces` on every boot; reset ALTERed `users`) +
+  `scripts/check_no_runtime_ddl.py` guard. New migrations: `YYYYMMDD_HHMM_name.sql`, auto-discovered.
+- Follow-up: removed dead `patch_wars.py` calls from `scripts/start_production.sh`.
+
+**What to watch / next steps**:
+- Work down `tests/known_failures.txt` (71) — some may be real bugs (e.g. revenue UI 500s,
+  2FA enrollment tests). Phase 2 next: one tick framework with exactly-once period ledger.
+- Refresh `db/schema.sql` after every migration that ships.
+

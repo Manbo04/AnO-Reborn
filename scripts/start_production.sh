@@ -45,7 +45,6 @@ if [[ -n "${DATABASE_PUBLIC_URL:-}${DATABASE_URL:-}" ]] && _is_worker_service; t
   echo "[start] Worker boot: applying migrations and schema compat..."
   python3 scripts/apply_all_pending_migrations.py || echo "[start] WARN: migrations script exited non-zero"
   python3 scripts/reimburse_players_24h.py || echo "[start] WARN: reimburse_players_24h exited non-zero"
-  python3 patch_wars.py || echo "[start] WARN: patch_wars exited non-zero"
   python3 scripts/patch_interactive_events.py || echo "[start] WARN: patch_interactive_events exited non-zero"
   python3 scripts/apply_nextjs_compat_views.py || echo "[start] WARN: compat views script exited non-zero"
   python3 -c "
@@ -61,7 +60,6 @@ elif [[ -n "${DATABASE_PUBLIC_URL:-}${DATABASE_URL:-}" ]]; then
   python3 scripts/apply_all_pending_migrations.py || echo "[start] WARN: migrations script exited non-zero"
   python3 scripts/reimburse_players_24h.py || echo "[start] WARN: reimburse_players_24h exited non-zero"
   (python3 scripts/replay_missed_production_2026_10_03.py || echo "[start] WARN: production replay exited non-zero") &
-  python3 patch_wars.py || echo "[start] WARN: patch_wars exited non-zero"
   python3 scripts/patch_interactive_events.py || echo "[start] WARN: patch_interactive_events exited non-zero"
   python3 -c "
 from database import ensure_schema_compat, schema_compat_succeeded
