@@ -1,0 +1,50 @@
+{
+  "author_id": "204961091892019200",
+  "created_at": "2026-10-06T18:46:45Z",
+  "kind": "bug",
+  "last_message_id": "1557109761164582953",
+  "last_player_message_at": "2026-10-06T19:18:16Z",
+  "messages": [
+    {
+      "at": "2026-10-06T18:46:45Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1557101827990749346/1557101831379877898/image.png?backend=b2&ex=6ac69396&is=6ac54216&hm=d3764e3cd1a0c8213b61a783f136a5df7119cb57ce81b10035dc3077088929ae&",
+        "https://cdn.discordapp.com/attachments/1557101827990749346/1557101835670790144/image.png?backend=b2&ex=6ac69397&is=6ac54217&hm=47ec7d665351cf65e1954eb726308fabeb480c2af9dbef6cb2eadf5726d708bc&",
+        "https://cdn.discordapp.com/attachments/1557101827990749346/1557101838535364618/image.png?backend=b2&ex=6ac69397&is=6ac54217&hm=150936337158a3128c1c0b5d9f527c2162abbd6d7f0b115dcfe9d0ec7ed2ccb1&",
+        "https://cdn.discordapp.com/attachments/1557101827990749346/1557101841718837329/image.png?backend=b2&ex=6ac69398&is=6ac54218&hm=d21f6bdb21eee315d2ea721be6304784848b53e2132c246359dc92837af50d8e&",
+        "https://cdn.discordapp.com/attachments/1557101827990749346/1557101847095943258/image.png?backend=b2&ex=6ac69399&is=6ac54219&hm=cd6ac53f0300450b781e54a61993d35f482943843244747e2bd77293adf245d3&",
+        "https://cdn.discordapp.com/attachments/1557101827990749346/1557101849977290803/image.png?backend=b2&ex=6ac6939a&is=6ac5421a&hm=928da5a55465409c45b5ebd3b633dc431bd096fb82acf2993e3150939387d4f4&",
+        "https://cdn.discordapp.com/attachments/1557101827990749346/1557101852510658650/image.png?backend=b2&ex=6ac6939b&is=6ac5421b&hm=9213ef072a0b7ce1a69e4a067be5494e5246481dbf0ebf75eb01d541478be266&"
+      ],
+      "author": "ieb",
+      "author_id": "204961091892019200",
+      "bot": false,
+      "id": "1557101827990749346",
+      "staff": false,
+      "text": "The mass purchase tool sgoows some procinves as blacked out when they are not\nI have rescource's to support power demand, and enough capacity. Individual province's do not show issues\nAll screenshots of the same province"
+    },
+    {
+      "at": "2026-10-06T19:12:41Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1557108356194377750",
+      "staff": false,
+      "text": "<@204961091892019200> fixed, mass purchase was using a simpler power check than the province page (ignored productivity, better engineering etc) so it flagged provinces that were actually fine. both use the same calc now, refresh and lmk if any still show blackout"
+    },
+    {
+      "at": "2026-10-06T19:18:16Z",
+      "attachments": [],
+      "author": "ieb",
+      "author_id": "204961091892019200",
+      "bot": false,
+      "id": "1557109761164582953",
+      "staff": false,
+      "text": "Fixed, And what black magic sorcery made that page load so fast"
+    }
+  ],
+  "thread_id": "1557101827990749346",
+  "title": "Mass purchase blackout",
+  "url": "https://discord.com/channels/708006319658893385/1557101827990749346"
+}

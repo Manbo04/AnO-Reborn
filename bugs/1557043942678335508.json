@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-06T18:19:02Z",
   "delivered_nonce": "cde52d5b3de6412f9daa38d1b2643b3d",
   "kind": "bug",
-  "last_message_id": "1557060109581025280",
-  "last_player_message_at": "2026-10-06T16:00:58Z",
+  "last_message_id": "1557077643969699991",
+  "last_player_message_at": "2026-10-06T17:10:39Z",
   "messages": [
     {
       "at": "2026-10-06T14:56:44Z",
@@ -218,6 +218,126 @@
       "id": "1557060109581025280",
       "staff": false,
       "text": "https://cdn.discordapp.com/attachments/779196945448304640/1364708570355990538/togif.gif"
+    },
+    {
+      "at": "2026-10-06T17:05:39Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1557076387737903167",
+      "staff": false,
+      "text": "<@1166065212537970722> correction to my numbers first: you already have universal healthcare, so your old-age deaths are 0.07%/h, not 0.1%. measured on the live ticks just now: capital -129k/h (gets 79k growth, loses 208k to old age), but your whole nation is actually still growing, +75k/h (808k growth vs 733k deaths). so the people aren't vanishing. the big provinces shrink a little and the small ones grow, because growth is split by cities/land and not by how many people already live there\n\non the 4.5B: there's no per-province max anymore since the 10-04 rebalance. that number is just your capital's weight for splitting growth, it's not a cap. the actual slowdown comes from a nation-wide comfort level, which is ~878M for you. you're at 4.03B (~4.6x over), so growth sits at the minimum floor. nothing caps you, it just grows really slowly past that point\n\nwhat you can do: honestly not much is needed. it's ~0.015%/h on the capital, ~3M a day out of 856M. higher happiness and lower pollution raise your comfort a bit, and so do more cities/land, but those flatten out at your size"
+    },
+    {
+      "at": "2026-10-06T17:07:04Z",
+      "attachments": [],
+      "author": "𝕿𝖍𝖊_𝖐𝖆𝖎𝖘𝖊𝖗",
+      "author_id": "1166065212537970722",
+      "bot": false,
+      "id": "1557076741791678487",
+      "staff": true,
+      "text": "<:pepecry:1521723285304381491> so I will have my population die?"
+    },
+    {
+      "at": "2026-10-06T17:07:26Z",
+      "attachments": [],
+      "author": "𝕿𝖍𝖊_𝖐𝖆𝖎𝖘𝖊𝖗",
+      "author_id": "1166065212537970722",
+      "bot": false,
+      "id": "1557076834741522504",
+      "staff": true,
+      "text": "That damn wiki bot"
+    },
+    {
+      "at": "2026-10-06T17:07:35Z",
+      "attachments": [],
+      "author": "𝕿𝖍𝖊_𝖐𝖆𝖎𝖘𝖊𝖗",
+      "author_id": "1166065212537970722",
+      "bot": false,
+      "id": "1557076871806587042",
+      "staff": true,
+      "text": "Lamlor has fallen<:pepecry:1521723285304381491>"
+    },
+    {
+      "at": "2026-10-06T17:07:56Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1557076958620418070",
+      "staff": true,
+      "text": "you just have to buy more provinces and land and cities"
+    },
+    {
+      "at": "2026-10-06T17:07:58Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1557076968480968709",
+      "staff": true,
+      "text": "I think"
+    },
+    {
+      "at": "2026-10-06T17:08:29Z",
+      "attachments": [],
+      "author": "𝕿𝖍𝖊_𝖐𝖆𝖎𝖘𝖊𝖗",
+      "author_id": "1166065212537970722",
+      "bot": false,
+      "id": "1557077100987551745",
+      "staff": true,
+      "text": "I did the calculations weeks ago, the cities on my capital can work for 4.5 billion peoples"
+    },
+    {
+      "at": "2026-10-06T17:08:50Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1557077187771764809",
+      "staff": true,
+      "text": "there have been lots of rebalances and updates"
+    },
+    {
+      "at": "2026-10-06T17:08:52Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1557077196219355137",
+      "staff": false,
+      "text": "<@1166065212537970722> no, your population isn't dying. the nation as a whole is still going up, about +75k/h. only the biggest provinces slowly lose people to the smaller ones, around 3M a day off the capital, which is ~0.35%/day\n\nsmall correction to what was said above: buying more provinces/cities/land won't really change it at your size. your comfort is already maxed out (58k cities and 45k land, and the curve flattens after a few thousand), so your total growth stays at ~808k/h either way. I checked: even +5000 cities put straight into the capital only raises its share from ~79k/h to ~131k/h, still under the ~208k/h that dies of old age there. happiness is already 100%, and pollution (81% avg) only moves it by ~1%\n\nso the short answer: nothing is broken on your side and you don't need to do anything. the capital will drift down slowly while the rest of the nation fills up"
+    },
+    {
+      "at": "2026-10-06T17:09:21Z",
+      "attachments": [],
+      "author": "𝕿𝖍𝖊_𝖐𝖆𝖎𝖘𝖊𝖗",
+      "author_id": "1166065212537970722",
+      "bot": false,
+      "id": "1557077316738220144",
+      "staff": true,
+      "text": "You confirm to me that buying new provinces now won't help?"
+    },
+    {
+      "at": "2026-10-06T17:10:24Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1557077581663051952",
+      "staff": false,
+      "text": "<@1166065212537970722> yes, confirmed. a new province doesn't add to your total growth, because your comfort is already maxed. it even takes a small slice of the same ~808k/h, so the capital's share would go down a bit, not up. your total population keeps going up either way, it just won't stop the capital itself from drifting down"
+    },
+    {
+      "at": "2026-10-06T17:10:39Z",
+      "attachments": [],
+      "author": "𝕿𝖍𝖊_𝖐𝖆𝖎𝖘𝖊𝖗",
+      "author_id": "1166065212537970722",
+      "bot": false,
+      "id": "1557077643969699991",
+      "staff": true,
+      "text": "So I have to keep it how it is, buying newer provinces would help or nah? And other countries, like pharloom that has a huge population is in my same boat?"
     }
   ],
   "thread_id": "1557043942678335508",

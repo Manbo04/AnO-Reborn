@@ -1,0 +1,23 @@
+{
+  "author_id": "204961091892019200",
+  "created_at": "2026-10-06T18:17:08Z",
+  "kind": "suggestion",
+  "last_message_id": "1557094373634609202",
+  "last_player_message_at": "2026-10-06T18:17:08Z",
+  "messages": [
+    {
+      "at": "2026-10-06T18:17:08Z",
+      "attachments": [],
+      "author": "ieb",
+      "author_id": "204961091892019200",
+      "bot": false,
+      "id": "1557094373634609202",
+      "staff": false,
+      "text": "Display your own trades in the list on the market. This would make it easier to see if they need adjustment, and prevent posting of duplicate offers.\nAn option to edit active trades, to easily be able to adjust prices and quantities would also be appreciated (by me)"
+    }
+  ],
+  "status": "new",
+  "thread_id": "1557094373634609202",
+  "title": "Trades in trade menu's",
+  "url": "https://discord.com/channels/708006319658893385/1557094373634609202"
+}

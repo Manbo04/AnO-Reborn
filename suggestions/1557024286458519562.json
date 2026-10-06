@@ -2,8 +2,8 @@
   "author_id": "1180720719060029500",
   "created_at": "2026-10-06T13:38:38Z",
   "kind": "suggestion",
-  "last_message_id": "1557028309227806791",
-  "last_player_message_at": "2026-10-06T13:54:37Z",
+  "last_message_id": "1557095619581968467",
+  "last_player_message_at": "2026-10-06T18:22:05Z",
   "messages": [
     {
       "at": "2026-10-06T13:38:38Z",
@@ -67,6 +67,16 @@
       "id": "1557028309227806791",
       "staff": false,
       "text": "**ps 5: the PS'es are not included in the actual suggestion.**"
+    },
+    {
+      "at": "2026-10-06T18:22:05Z",
+      "attachments": [],
+      "author": "Andrew",
+      "author_id": "218061971809894400",
+      "bot": false,
+      "id": "1557095619581968467",
+      "staff": false,
+      "text": "Also, maybe a sliding bar in the options menu to let us select how large gaps should be, so we can make things closer together. IDK about anyone else, maybe my screen is tiny, but it feels like most things are just really big and spaced out such that not much information is ever on the screen at one time, IE I have to scroll around a LOT for most things which aren't at the top of any given page."
     }
   ],
   "status": "new",

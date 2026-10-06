@@ -1,0 +1,53 @@
+{
+  "author_id": "519965006867988490",
+  "created_at": "2026-10-06T19:16:26Z",
+  "kind": "suggestion",
+  "last_message_id": "1557112924001276028",
+  "last_player_message_at": "2026-10-06T19:30:50Z",
+  "messages": [
+    {
+      "at": "2026-10-06T19:16:26Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1557109297739989002",
+      "staff": true,
+      "text": "Similar to Mass Purchase but opposite. \nUseful for when deleting buildings across all your provinces."
+    },
+    {
+      "at": "2026-10-06T19:28:53Z",
+      "attachments": [],
+      "author": "Kurai",
+      "author_id": "1002628734932762755",
+      "bot": false,
+      "id": "1557112432474718291",
+      "staff": true,
+      "text": "This is me being a smartass but could you try putting bring all provinces to option and select 0"
+    },
+    {
+      "at": "2026-10-06T19:30:13Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1557112769214419038",
+      "staff": true,
+      "text": "It wants a number value that is greater than 0."
+    },
+    {
+      "at": "2026-10-06T19:30:50Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1557112924001276028",
+      "staff": true,
+      "text": "I tried that and putting in a negative number. Neither option worked."
+    }
+  ],
+  "status": "new",
+  "thread_id": "1557109297739989002",
+  "title": "Add a mass delete button to the province page",
+  "url": "https://discord.com/channels/708006319658893385/1557109297739989002"
+}
