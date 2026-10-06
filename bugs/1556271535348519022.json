@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-05T22:20:32Z",
   "delivered_nonce": "e53acae80e574a4f927bbe7ecbfe64e1",
   "kind": "bug",
-  "last_message_id": "1556726162837999620",
+  "last_message_id": "1556793240311570533",
   "last_player_message_at": "2026-10-05T17:53:59Z",
   "messages": [
     {
@@ -78,6 +78,16 @@
       "id": "1556726162837999620",
       "staff": true,
       "text": "Still happening to me."
+    },
+    {
+      "at": "2026-10-05T22:20:32Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1556793240311570533",
+      "staff": false,
+      "text": "<@616524068987863060> found the real cause this time: the page broke whenever there was a closed proposal in the history, because one vote count (abstain) wasn't being loaded for those. fixed, should be live within the hour. sorry for the wait"
     }
   ],
   "thread_id": "1556271535348519022",

@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-05T16:21:36Z",
   "delivered_nonce": "bfb47b8c1a364848866309411963ed66",
   "kind": "bug",
-  "last_message_id": "1556727857265385613",
-  "last_player_message_at": "2026-10-05T14:05:28Z",
+  "last_message_id": "1556848312139780167",
+  "last_player_message_at": "2026-10-06T01:59:22Z",
   "messages": [
     {
       "at": "2026-10-05T14:05:28Z",
@@ -36,6 +36,16 @@
       "id": "1556727857265385613",
       "staff": false,
       "text": "<@249007223454433292> good catch, you were right. revenue history was showing what you actually paid, the bug was that upkeep was sometimes getting charged more than once an hour. fixed now, it's back to once per hour so the 24h number should line up with hourly x 24 going forward"
+    },
+    {
+      "at": "2026-10-06T01:59:22Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1556848312139780167",
+      "staff": false,
+      "text": "awesome"
     }
   ],
   "thread_id": "1556668651871010966",

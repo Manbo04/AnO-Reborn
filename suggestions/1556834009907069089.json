@@ -1,0 +1,25 @@
+{
+  "author_id": "1043204044774183032",
+  "created_at": "2026-10-06T01:02:32Z",
+  "kind": "suggestion",
+  "last_message_id": "1556834009907069089",
+  "last_player_message_at": "2026-10-06T01:02:32Z",
+  "messages": [
+    {
+      "at": "2026-10-06T01:02:32Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1556834009907069089/1556834013858107462/Screenshot_20261005_210053_Samsung_Browser.jpg?backend=b2&ex=6ac59a29&is=6ac448a9&hm=679c1c635a9cfdc5ef844e2b7821562aba86596d51bf655e1dd116c8cf2921f5&"
+      ],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1556834009907069089",
+      "staff": false,
+      "text": "Just another blue button. But it adds to the bank balance and not your personal balance."
+    }
+  ],
+  "status": "new",
+  "thread_id": "1556834009907069089",
+  "title": "Add \"Donate\" bank deposit option",
+  "url": "https://discord.com/channels/708006319658893385/1556834009907069089"
+}
