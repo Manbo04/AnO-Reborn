@@ -86,7 +86,8 @@ jobs:
     timeout-minutes: 30
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/anodb
-      DATABASE_PUBLIC_URL: postgresql://postgres:postgres@localhost:5432/anodb
+      # No DATABASE_PUBLIC_URL on purpose: DB-writing tests (nuclear strike,
+      # influence) only run when it is unset, as a guard against prod.
       PG_HOST: 127.0.0.1
       PG_PORT: 5432
       PG_USER: postgres

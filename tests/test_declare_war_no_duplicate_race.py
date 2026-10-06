@@ -26,6 +26,7 @@ import bcrypt
 import pytest
 
 from database import get_db_connection
+from tests._db_cleanup import purge_users_where
 
 TEST_PASSWORD = bcrypt.hashpw(b"correct-horse-battery", bcrypt.gensalt()).decode()
 
@@ -68,7 +69,7 @@ def matched_pair():
             (attacker_id, defender_id, defender_id, attacker_id),
         )
         db.execute("DELETE FROM provinces WHERE userId IN (%s, %s)", (attacker_id, defender_id))
-        db.execute("DELETE FROM users WHERE id IN (%s, %s)", (attacker_id, defender_id))
+        purge_users_where(db, 'id IN (%s, %s)', (attacker_id, defender_id))
         conn.commit()
 
 

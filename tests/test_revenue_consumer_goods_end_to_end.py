@@ -2,6 +2,7 @@ import time
 from database import get_db_connection
 import tasks
 import countries
+from tests._db_cleanup import purge_users_where
 
 
 def create_test_user_with_mall():
@@ -72,7 +73,7 @@ def cleanup_user(uid):
         db.execute("DELETE FROM proInfra WHERE id=%s", (uid,))
         db.execute("DELETE FROM resources WHERE id=%s", (uid,))
         db.execute("DELETE FROM stats WHERE id=%s", (uid,))
-        db.execute("DELETE FROM users WHERE id=%s", (uid,))
+        purge_users_where(db, 'id=%s', (uid,))
         conn.commit()
     try:
         from database import invalidate_user_cache

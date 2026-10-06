@@ -19,6 +19,7 @@ legitimate execution, which pushes next_execution into the future the same
 way complete_or_reschedule_agreement does), then attempt to lock it again
 (simulating a second, racing caller) and assert it finds no row.
 """
+from tests._db_cleanup import purge_users_where
 import uuid
 
 import bcrypt
@@ -101,7 +102,7 @@ def test_second_lock_after_execution_finds_no_row():
             )
         finally:
             db.execute("DELETE FROM trade_agreements WHERE id = %s", (agreement_id,))
-            db.execute("DELETE FROM users WHERE id IN (%s, %s)", (proposer_id, receiver_id))
+            purge_users_where(db, 'id IN (%s, %s)', (proposer_id, receiver_id))
             conn.commit()
 
 
@@ -125,5 +126,5 @@ def test_freshly_activated_agreement_is_still_lockable():
         finally:
             conn.rollback()
             db.execute("DELETE FROM trade_agreements WHERE id = %s", (agreement_id,))
-            db.execute("DELETE FROM users WHERE id IN (%s, %s)", (proposer_id, receiver_id))
+            purge_users_where(db, 'id IN (%s, %s)', (proposer_id, receiver_id))
             conn.commit()

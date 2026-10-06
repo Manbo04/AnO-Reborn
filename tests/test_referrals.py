@@ -27,6 +27,10 @@ class ReferralFakeCursor:
         if "alter table" in sql_lower or "create table" in sql_lower or "create index" in sql_lower:
             return
 
+        # Transaction control used by the payout race fixes; nothing to model.
+        if sql_lower.startswith(("savepoint ", "release savepoint", "rollback to savepoint")):
+            return
+
         if "information_schema.columns" in sql_lower:
             self._last = ("is_verified",) if self.state.get("has_is_verified", True) else None
             return
@@ -103,11 +107,15 @@ class ReferralFakeCursor:
             referrer_id, referred_id, milestone_days = params
             payouts = self.state.setdefault("payouts", set())
             key = (referrer_id, referred_id, milestone_days)
+            # Mirrors ON CONFLICT DO NOTHING RETURNING id: a row only when
+            # this call inserted it (the double-payout race fix keys on it).
             if key not in payouts:
                 payouts.add(key)
                 self.rowcount = 1
+                self._last = (len(payouts),)
             else:
                 self.rowcount = 0
+                self._last = None
             return
 
         if "select u.id, u.username" in sql_lower and "referred_by_user_id" in sql_lower:

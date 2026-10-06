@@ -5,6 +5,7 @@ import random
 import string
 from dotenv import load_dotenv
 from init import BASE_URL
+from tests._db_cleanup import purge_users_where
 
 load_dotenv()
 
@@ -25,6 +26,7 @@ def create_user(session, username=None, email=None, password="testpassword12345"
         "confirmation": password,
         "key": os.environ.get("TEST_KEY", "testkey12345"),
         "continent": "1",
+        "terms_agree": "on",
     }
     r = session.post(f"{BASE_URL}/signup", data=data, allow_redirects=True)
     # Ensure the user is logged in for subsequent requests
@@ -61,7 +63,7 @@ def cleanup_user(username, email):
             db.execute("DELETE FROM coalitions WHERE userId=%s", (uid,))
             db.execute("DELETE FROM stats WHERE id=%s", (uid,))
             db.execute("DELETE FROM resources WHERE id=%s", (uid,))
-            db.execute("DELETE FROM users WHERE id=%s", (uid,))
+            purge_users_where(db, 'id=%s', (uid,))
             conn.commit()
     except Exception:
         pass

@@ -3,6 +3,7 @@ from services.country_service import CountryService
 from database import get_db_cursor
 import pytest
 import os
+from tests._db_cleanup import purge_users_where
 
 
 def _db_reachable() -> bool:
@@ -31,6 +32,12 @@ pytestmark = pytest.mark.skipif(
 
 def test_coalition_recommendations_solo_player():
     with get_db_cursor() as db:
+        # Leftover from an interrupted earlier run would break the unique email.
+        purge_users_where(db, "email = %s", ("test_rec@example.invalid",))
+        db.execute(
+            "DELETE FROM colNames WHERE name IN (%s, %s, %s)",
+            ("Recruiting Col 1", "Recruiting Col 2", "Closed Col"),
+        )
         # Create a test user
         db.execute(
             "INSERT INTO users (username, email, hash, date, auth_type) "
@@ -75,12 +82,13 @@ def test_coalition_recommendations_solo_player():
                 assert col3_id not in rec_ids
 
                 # Now put the user in a coalition and verify recommended_coalitions is empty/not returned
+                from database import get_coalition_members_table
+
+                members_tbl = get_coalition_members_table()
                 db.execute(
-                    "INSERT INTO coalitions_legacy (colid, userid, role) VALUES (%s, %s, 'member')",
-                    (col1_id, user_id)
+                    f"INSERT INTO {members_tbl} (colid, userid, role) VALUES (%s, %s, 'member')",
+                    (col1_id, user_id),
                 )
-                # Update the users table coalition_id
-                db.execute("UPDATE users SET coalition_id = %s WHERE id = %s", (col1_id, user_id))
                 db.connection.commit()
 
                 profile_joined = CountryService.get_country_profile(user_id, user_id)
@@ -88,8 +96,10 @@ def test_coalition_recommendations_solo_player():
 
         finally:
             # Clean up
-            db.execute("DELETE FROM coalitions_legacy WHERE userid = %s", (user_id,))
+            from database import get_coalition_members_table
+
+            db.execute(f"DELETE FROM {get_coalition_members_table()} WHERE userid = %s", (user_id,))
             db.execute("DELETE FROM stats WHERE id = %s", (user_id,))
-            db.execute("DELETE FROM users WHERE id = %s", (user_id,))
+            purge_users_where(db, 'id = %s', (user_id,))
             db.execute("DELETE FROM colNames WHERE id IN (%s, %s, %s)", (col1_id, col2_id, col3_id))
             db.connection.commit()

@@ -9,6 +9,7 @@ earned. The ping is now skipped while _real_admin_id is set.
 
 Runs against the real local ano_staging database.
 """
+from tests._db_cleanup import purge_users_where
 import uuid
 from datetime import date
 from time import time
@@ -48,7 +49,7 @@ def target_user():
         db.execute("DELETE FROM referral_active_days WHERE referred_user_id = %s", (user_id,))
         db.execute("DELETE FROM user_economy WHERE user_id = %s", (user_id,))
         db.execute("DELETE FROM stats WHERE id = %s", (user_id,))
-        db.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        purge_users_where(db, 'id = %s', (user_id,))
         conn.commit()
 
 

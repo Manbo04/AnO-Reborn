@@ -23,6 +23,13 @@ class FakeCursor:
         elif "count(*)::int from nation_treaties" in sql_lower:
             uid = params[0]
             self._last = (self.state.get("allies", {}).get(uid, 0),)
+        elif "select 1 from" in sql_lower and "where userid = %s" in sql_lower:
+            # coalition membership lookup (_joined_coalition)
+            uid = params[0]
+            self._last = (1,) if self.state.get("coalition_id", {}).get(uid) else None
+        else:
+            # Unknown query: answer "no row" rather than replaying the last one.
+            self._last = None
 
     def fetchone(self):
         return self._last

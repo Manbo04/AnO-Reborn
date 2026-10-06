@@ -1,3 +1,4 @@
+import re
 from contextlib import contextmanager
 
 
@@ -5,9 +6,12 @@ def test_login_button_submits_without_js(client):
     resp = client.get("/login")
     assert resp.status_code == 200
     body = resp.get_data(as_text=True)
-    assert 'form action="/login/"' in body
+    # Plain HTML form post: works with JavaScript disabled. (/login and
+    # /login/ are both registered; type="button" is only the show-password
+    # toggle, which must not be the thing that submits.)
+    assert re.search(r'<form action="/login/?"[^>]*method="POST"', body)
     assert 'button type="submit"' in body
-    assert 'button type="button"' not in body
+    assert 'name="username"' in body and 'name="password"' in body
 
 
 def test_login_missing_credentials_shows_message(client):

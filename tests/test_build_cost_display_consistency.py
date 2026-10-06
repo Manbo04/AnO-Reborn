@@ -18,7 +18,10 @@ def test_build_cost_uses_province_unit_prices_not_steel(building):
         assert "lumber" in display
         assert cost["resources"].get("lumber") == 40_000
     if building == "farms":
-        assert cost["resources"] == {}
+        # lumber sink (5912acdf); never steel
+        import variables
+
+        assert cost["resources"] == variables.PROVINCE_UNIT_PRICES["farms_resource"]
     if building == "lumber_mills":
         assert cost["resources"] == {}
 

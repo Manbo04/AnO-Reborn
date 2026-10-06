@@ -1,4 +1,5 @@
 """Password reset POST: schema-aware set_user_password and reset_codes."""
+import time
 import uuid
 from unittest.mock import MagicMock, patch
 
@@ -6,6 +7,7 @@ import bcrypt
 import pytest
 
 from database import set_user_password
+from tests._db_cleanup import purge_users_where
 
 
 def test_set_user_password_updates_hash_and_password_columns():
@@ -43,6 +45,8 @@ def test_set_user_password_hash_only():
 def client():
     from app import app
 
+    app.config["TESTING"] = True
+    app.config["WTF_CSRF_ENABLED"] = False  # CSRF itself: test_csrf_enforced_on_app.py
     with app.test_client() as c:
         yield c
 
@@ -78,7 +82,8 @@ def test_reset_password_post_success(client):
                     "INSERT INTO reset_codes (url_code, user_id, created_at) "
                     "VALUES (%s, %s, %s)"
                 ),
-                (code, user_id, "1"),
+                # epoch seconds, like _issue_reset_code; codes expire, so it must be fresh
+                (code, user_id, str(int(time.time()))),
             )
 
         resp = client.post(
@@ -101,4 +106,4 @@ def test_reset_password_post_success(client):
         if user_id is not None:
             with get_db_cursor() as db:
                 db.execute("DELETE FROM reset_codes WHERE user_id=%s", (user_id,))
-                db.execute("DELETE FROM users WHERE id=%s", (user_id,))
+                purge_users_where(db, 'id=%s', (user_id,))

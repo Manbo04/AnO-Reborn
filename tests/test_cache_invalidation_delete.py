@@ -1,5 +1,7 @@
+import bcrypt
 from flask import Flask, session
 import time
+from tests._db_cleanup import purge_users_where
 
 try:
     from database import get_db_connection
@@ -12,13 +14,17 @@ except Exception:
     import countries
 
 
+_PASSWORD = "cache-test-password"
+_PW_HASH = bcrypt.hashpw(_PASSWORD.encode(), bcrypt.gensalt(4)).decode()
+
+
 def create_user(username):
     """Insert a bare-bones user/ stats row and return its id."""
     with get_db_connection() as conn:
         db = conn.cursor()
         db.execute(
             "INSERT INTO users (username, email, date, hash) VALUES (%s,%s,%s,%s) RETURNING id",
-            (username, f"{username}@example.com", "2026-02-24", ""),
+            (username, f"{username}@example.com", "2026-02-24", _PW_HASH),
         )
         uid = db.fetchone()[0]
         db.execute(
@@ -32,7 +38,7 @@ def create_user(username):
 def cleanup_user(uid):
     with get_db_connection() as conn:
         db = conn.cursor()
-        db.execute("DELETE FROM users WHERE id=%s", (uid,))
+        purge_users_where(db, 'id=%s', (uid,))
         db.execute("DELETE FROM stats WHERE id=%s", (uid,))
         conn.commit()
 
@@ -57,8 +63,9 @@ def test_countries_cache_cleared_on_account_deletion(monkeypatch):
     username = f"cacheuser_{int(time.time())}"
     uid = create_user(username)
 
-    test_app = Flask(__name__)
-    test_app.secret_key = "test-secret"
+    # The real app: its teardown commits/returns the request DB connection.
+    # A bare Flask() would leave the deletion transaction open (row locks).
+    from app import app as test_app
 
     # 1. simulate an existing cached countries page for this user
     from database import response_cache_registry
@@ -70,7 +77,10 @@ def test_countries_cache_cleared_on_account_deletion(monkeypatch):
     assert fake_key in cache_dict
 
     # 2. delete the account using the real route (this should also clear cache)
-    with test_app.test_request_context("/delete_own_account", method="POST"):
+    # Deletion requires the account password (2026-09-23 hardening).
+    with test_app.test_request_context(
+        "/delete_own_account", method="POST", data={"confirm_password": _PASSWORD}
+    ):
         session["user_id"] = uid
         countries.delete_own_account()
 

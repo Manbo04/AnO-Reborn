@@ -17,6 +17,7 @@ from time import time
 import pytest
 
 from database import get_db_connection
+from tests._db_cleanup import purge_users
 
 WAR_KEYS = ("attack_units", "enemy_id", "war_domain", "from_wartarget")
 
@@ -94,7 +95,7 @@ def real_admin_user():
 
     with get_db_connection() as conn:
         db = conn.cursor()
-        db.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        purge_users(db, [user_id])
         conn.commit()
 
 

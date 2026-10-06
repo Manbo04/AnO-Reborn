@@ -32,6 +32,7 @@ import bcrypt
 import pytest
 
 from database import get_db_connection
+from tests._db_cleanup import purge_users_where
 
 TEST_PASSWORD = bcrypt.hashpw(b"correct-horse-battery", bcrypt.gensalt()).decode()
 
@@ -108,7 +109,7 @@ def coalition_bank_request():
         db.execute("DELETE FROM coalitions_legacy WHERE colid = %s", (coalition_id,))
         db.execute("DELETE FROM colNames WHERE id = %s", (coalition_id,))
         db.execute("DELETE FROM stats WHERE id IN (%s, %s)", (banker_id, requester_id))
-        db.execute("DELETE FROM users WHERE id IN (%s, %s)", (banker_id, requester_id))
+        purge_users_where(db, 'id IN (%s, %s)', (banker_id, requester_id))
         conn.commit()
 
 

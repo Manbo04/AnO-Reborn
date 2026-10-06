@@ -14,6 +14,7 @@ import bcrypt
 import pytest
 
 from database import get_db_cursor
+from tests._db_cleanup import purge_users
 
 TEST_PASSWORD = "correct-horse-battery"
 
@@ -22,6 +23,8 @@ TEST_PASSWORD = "correct-horse-battery"
 def client():
     from app import app
 
+    app.config["TESTING"] = True
+    app.config["WTF_CSRF_ENABLED"] = False
     with app.test_client() as c:
         yield c
 
@@ -50,7 +53,7 @@ def _create_user():
 
     if created_ids:
         with get_db_cursor() as db:
-            db.execute("DELETE FROM users WHERE id = ANY(%s)", (created_ids,))
+            purge_users(db, created_ids)
 
 
 def test_logged_in_reset_redirects_to_reset_page(client, _create_user):

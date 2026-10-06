@@ -33,6 +33,7 @@ context sharing the same session state, a barrier forcing overlap)
 against the real local ano_staging database -- same style as this
 session's other wars/coalitions race fixes.
 """
+from tests._db_cleanup import purge_users_where
 import threading
 import time
 import uuid
@@ -83,7 +84,7 @@ def war_pair():
     with get_db_connection() as conn:
         db = conn.cursor()
         db.execute("DELETE FROM wars WHERE id = %s", (war_id,))
-        db.execute("DELETE FROM users WHERE id IN (%s, %s)", (attacker_id, defender_id))
+        purge_users_where(db, 'id IN (%s, %s)', (attacker_id, defender_id))
         conn.commit()
 
 

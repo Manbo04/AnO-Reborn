@@ -26,6 +26,7 @@ import bcrypt
 import pytest
 
 from database import get_db_connection
+from tests._db_cleanup import purge_users
 
 TEST_PASSWORD = bcrypt.hashpw(b"correct-horse-battery", bcrypt.gensalt()).decode()
 
@@ -56,7 +57,7 @@ def fresh_user():
         db = conn.cursor()
         db.execute("DELETE FROM user_economy WHERE user_id = %s", (user_id,))
         db.execute("DELETE FROM stats WHERE id = %s", (user_id,))
-        db.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        purge_users(db, [user_id])
         conn.commit()
 
 

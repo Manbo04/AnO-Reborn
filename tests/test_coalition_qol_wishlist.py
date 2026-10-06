@@ -17,6 +17,7 @@ import uuid
 import pytest
 
 from database import get_coalition_members_table, get_db_connection
+from tests._db_cleanup import purge_users_where
 
 pytestmark = pytest.mark.skipif(
     not os.getenv("DATABASE_PUBLIC_URL") and not os.getenv("DATABASE_URL"),
@@ -120,7 +121,7 @@ def coalition(client):
                 db.execute(f"DELETE FROM {members_tbl} WHERE userid=%s", (uid,))
                 db.execute("DELETE FROM referral_active_days WHERE referred_user_id=%s", (uid,))
                 db.execute("DELETE FROM stats WHERE id=%s", (uid,))
-                db.execute("DELETE FROM users WHERE id=%s", (uid,))
+                purge_users_where(db, 'id=%s', (uid,))
             conn.commit()
 
 

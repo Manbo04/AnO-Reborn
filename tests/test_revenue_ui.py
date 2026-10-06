@@ -1,5 +1,6 @@
 from app import app
 from database import get_db_connection
+from tests._db_cleanup import purge_users_where
 
 
 def make_user(db, username):
@@ -34,7 +35,7 @@ def test_country_shows_theoretical_and_projected(monkeypatch):
     # Prepare DB user
     with get_db_connection() as conn:
         db = conn.cursor()
-        db.execute("DELETE FROM users WHERE username=%s", ("ui_revenue_test",))
+        purge_users_where(db, 'username=%s', ("ui_revenue_test",))
         conn.commit()
         uid = make_user(db, "ui_revenue_test")
         ensure_stats(db, uid)
@@ -55,7 +56,7 @@ def test_country_shows_theoretical_and_projected(monkeypatch):
     revenue["gross_theoretical"]["lumber"] = 140
     revenue["net"]["lumber"] = 77
 
-    monkeypatch.setattr(countries, "get_revenue", lambda cid: revenue)
+    monkeypatch.setattr(countries, "get_revenue", lambda cid, **kw: revenue)
 
     with app.test_client() as client:
         with client.session_transaction() as sess:
@@ -78,7 +79,7 @@ def test_country_handles_missing_gross_theoretical(monkeypatch):
     # Prepare DB user
     with get_db_connection() as conn:
         db = conn.cursor()
-        db.execute("DELETE FROM users WHERE username=%s", ("ui_revenue_test2",))
+        purge_users_where(db, 'username=%s', ("ui_revenue_test2",))
         conn.commit()
         uid = make_user(db, "ui_revenue_test2")
         ensure_stats(db, uid)
@@ -86,46 +87,17 @@ def test_country_handles_missing_gross_theoretical(monkeypatch):
 
     # Simulate get_revenue returning no 'gross_theoretical' key
     # Must include all resource keys that the template accesses
-    def minimal_revenue(cid):
-        return {
-            "gross_theoretical": {},
-            "gross": {
-                "lumber": 10,
-                "money": 0,
-                "rations": 0,
-                "oil": 0,
-                "coal": 0,
-                "uranium": 0,
-                "bauxite": 0,
-                "iron": 0,
-                "lead": 0,
-                "copper": 0,
-                "components": 0,
-                "steel": 0,
-                "consumer_goods": 0,
-                "aluminium": 0,
-                "gasoline": 0,
-                "ammunition": 0,
-            },
-            "net": {
-                "lumber": 10,
-                "money": 0,
-                "rations": 0,
-                "oil": 0,
-                "coal": 0,
-                "uranium": 0,
-                "bauxite": 0,
-                "iron": 0,
-                "lead": 0,
-                "copper": 0,
-                "components": 0,
-                "steel": 0,
-                "consumer_goods": 0,
-                "aluminium": 0,
-                "gasoline": 0,
-                "ammunition": 0,
-            },
-        }
+    def minimal_revenue(cid, **kw):
+        # Every resource the template reads (from the canonical list, so new
+        # resources like silver don't break this fake), but an EMPTY
+        # gross_theoretical -- that missing data is what this test covers.
+        from variables import RESOURCES
+
+        keys = list(RESOURCES) + ["money", "energy"]
+        gross = {k: 0 for k in keys}
+        gross["lumber"] = 10
+        net = dict(gross)
+        return {"gross_theoretical": {}, "gross": gross, "net": net}
 
     monkeypatch.setattr(countries, "get_revenue", minimal_revenue)
 

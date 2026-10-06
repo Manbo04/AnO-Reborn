@@ -1,6 +1,7 @@
 import time
 import pytest
 from database import get_db_connection
+from tests._db_cleanup import purge_users_where
 
 
 def create_test_user(username_prefix="ctest", provinces=1, soldiers=0, gold=0):
@@ -50,7 +51,7 @@ def cleanup_user(uid, provinces=1):
             db.execute("DELETE FROM provinces WHERE id=%s", (pid,))
         db.execute("DELETE FROM military WHERE id=%s", (uid,))
         db.execute("DELETE FROM stats WHERE id=%s", (uid,))
-        db.execute("DELETE FROM users WHERE id=%s", (uid,))
+        purge_users_where(db, 'id=%s', (uid,))
         conn.commit()
 
     # Invalidate any cached entries for the removed user so UI doesn't show them

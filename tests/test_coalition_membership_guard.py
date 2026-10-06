@@ -6,6 +6,7 @@ import uuid
 import pytest
 
 from database import get_coalition_members_table, get_db_connection
+from tests._db_cleanup import purge_users_where
 
 pytestmark = pytest.mark.skipif(
     not os.getenv("DATABASE_PUBLIC_URL") and not os.getenv("DATABASE_URL"),
@@ -48,7 +49,7 @@ def _cleanup_user(db, uid, members_tbl):
     db.execute("DELETE FROM requests WHERE reqId = %s", (uid,))
     db.execute("DELETE FROM referral_active_days WHERE referred_user_id = %s", (uid,))
     db.execute("DELETE FROM stats WHERE id = %s", (uid,))
-    db.execute("DELETE FROM users WHERE id = %s", (uid,))
+    purge_users_where(db, 'id = %s', (uid,))
 
 
 def test_leader_cannot_withdraw_from_other_coalition_bank(client):

@@ -1,4 +1,5 @@
 from database import get_db_connection
+from tests._db_cleanup import purge_users_where
 
 
 def test_get_particular_resources_returns_existing_values():
@@ -57,6 +58,6 @@ def test_get_particular_resources_returns_existing_values():
             db.execute("DELETE FROM wars WHERE attacker=%s OR defender=%s", (uid, uid))
             db.execute("DELETE FROM resources WHERE id=%s", (uid,))
             db.execute("DELETE FROM stats WHERE id=%s", (uid,))
-            db.execute("DELETE FROM users WHERE id=%s", (uid,))
+            purge_users_where(db, 'id=%s', (uid,))
             db.execute("DELETE FROM military WHERE id=%s", (uid,))
             conn.commit()

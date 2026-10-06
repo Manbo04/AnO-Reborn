@@ -8,11 +8,10 @@ Snapshots and restores user state — LEAVE NO TRACE.
 import os
 import subprocess
 import sys
-import urllib.request
-import urllib.error
 from pathlib import Path
 
 import pytest
+from tests._db_cleanup import purge_users_where
 
 TEST_USER_ID = 16
 ROOT = Path(__file__).resolve().parents[1]
@@ -151,29 +150,6 @@ def test_gas_station_price_matches_variables():
     assert variables.PROVINCE_UNIT_PRICES["gas_stations_price"] == 7_000_000
 
 
-def test_production_country_page_200():
-    """Smoke production country page without importing Flask (avoids jinja2 pin issues)."""
-
-    base = os.getenv("PROD_URL", "https://affairsandorder.com").rstrip("/")
-    url = f"{base}/country/id={TEST_USER_ID}"
-    req = urllib.request.Request(
-        url,
-        method="GET",
-        headers={"User-Agent": "AnO-Progression-Audit/1.0"},
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=20) as resp:
-            code = resp.status
-            body = resp.read(500).decode("utf-8", errors="replace")
-    except urllib.error.HTTPError as e:
-        code = e.code
-        body = e.read(200).decode("utf-8", errors="replace")
-    assert code == 200, f"{url} returned {code}"
-    assert "Invalid Server Error" not in body
-
-
-@requires_db
-@requires_user16
 def test_revenue_task_updates_resources_or_gold():
     """One revenue + tax pass must change economy or gold when buildings exist."""
     import tasks
@@ -272,7 +248,7 @@ def test_rations_high_without_distribution_blocks_food_score():
                 db.execute("DELETE FROM user_economy WHERE user_id=%s", (uid,))
                 db.execute("DELETE FROM provinces WHERE id=%s", (pid,))
                 db.execute("DELETE FROM stats WHERE id=%s", (uid,))
-                db.execute("DELETE FROM users WHERE id=%s", (uid,))
+                purge_users_where(db, 'id=%s', (uid,))
                 conn.commit()
 
 

@@ -19,6 +19,7 @@ import bcrypt
 import pytest
 
 from database import get_db_connection
+from tests._db_cleanup import purge_users
 
 REAL_PASSWORD = "correct-horse-battery-staple-2026"
 PASSWORD_HASH = bcrypt.hashpw(REAL_PASSWORD.encode(), bcrypt.gensalt()).decode()
@@ -53,7 +54,7 @@ def emailed_user():
     with get_db_connection() as conn:
         db = conn.cursor()
         db.execute("DELETE FROM stats WHERE id = %s", (user_id,))
-        db.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        purge_users(db, [user_id])
         conn.commit()
 
 

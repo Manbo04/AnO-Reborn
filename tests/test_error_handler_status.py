@@ -71,6 +71,7 @@ def test_signup_missing_password_returns_400(client, monkeypatch):
             "confirmation": "x",
             "key": "invalid",
             "continent": "1",
+            "terms_agree": "on",
         },
     )
     assert resp.status_code == 400
@@ -87,7 +88,7 @@ def test_province_invalid_unit_returns_400_not_500(client):
         sess["user_id"] = 16
 
     resp = client.post(
-        "/buy/not_a_real_building/1",
+        "/buy/not_a_real_building/101",  # account 16 owns province 101 (db/test_seed.sql)
         data={"not_a_real_building": "1"},
     )
     assert resp.status_code == 400

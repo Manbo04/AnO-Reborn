@@ -7,6 +7,7 @@ load_dotenv()
 
 from tasks import rations_distribution_capacity, food_stats
 import variables
+from tests._db_cleanup import purge_users_where
 
 # enable the new mechanic for the duration of these tests
 variables.FEATURE_RATIONS_DISTRIBUTION = True
@@ -89,7 +90,7 @@ def test_rations_distribution_affects_food_score():
     db.execute("DELETE FROM resources WHERE id=%s", (uid,))
     db.execute("DELETE FROM stats WHERE id=%s", (uid,))
     db.execute("DELETE FROM military WHERE id=%s", (uid,))
-    db.execute("DELETE FROM users WHERE id=%s", (uid,))
+    purge_users_where(db, 'id=%s', (uid,))
     conn.commit()
     conn.close()
 
@@ -130,6 +131,6 @@ def test_province_view_shows_distribution_capacity(client):
     db.execute("DELETE FROM resources WHERE id=%s", (uid,))
     db.execute("DELETE FROM stats WHERE id=%s", (uid,))
     db.execute("DELETE FROM military WHERE id=%s", (uid,))
-    db.execute("DELETE FROM users WHERE id=%s", (uid,))
+    purge_users_where(db, 'id=%s', (uid,))
     conn.commit()
     conn.close()

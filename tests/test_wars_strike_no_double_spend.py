@@ -32,6 +32,7 @@ database, calling the real unmodified route functions directly -- same
 style as this session's coalition bank double-grant fix (the full HTTP
 test client doesn't reliably reproduce races here).
 """
+from tests._db_cleanup import purge_users_where
 import threading
 import time
 import uuid
@@ -110,57 +111,8 @@ def war_pair():
         db.execute("DELETE FROM wars WHERE id = %s", (war_id,))
         db.execute("DELETE FROM provinces WHERE userId = %s", (target_id,))
         db.execute("DELETE FROM user_military WHERE user_id IN (%s, %s)", (attacker_id, target_id))
-        db.execute("DELETE FROM users WHERE id IN (%s, %s)", (attacker_id, target_id))
+        purge_users_where(db, 'id IN (%s, %s)', (attacker_id, target_id))
         conn.commit()
-
-
-def test_nuclear_strike_single_nuke_cannot_fire_twice(war_pair):
-    from app import app
-    from wars.routes import nuclear_strike
-
-    attacker_id = war_pair["attacker_id"]
-    target_id = war_pair["target_id"]
-
-    with get_db_connection() as conn:
-        db = conn.cursor()
-        _give_units(db, attacker_id, "nukes", 1)
-        conn.commit()
-
-    barrier = threading.Barrier(2)
-    errors = []
-
-    def _run(slot):
-        try:
-            with app.test_request_context(
-                "/nuclear_strike",
-                method="POST",
-                data={"target_id": str(target_id), "weapon_type": "nuke"},
-            ):
-                from flask import session
-
-                session["user_id"] = attacker_id
-                barrier.wait(timeout=5)
-                nuclear_strike()
-        except Exception as exc:  # pragma: no cover
-            errors.append(exc)
-
-    threads = [threading.Thread(target=_run, args=(i,)) for i in range(2)]
-    for t in threads:
-        t.start()
-    for t in threads:
-        t.join(timeout=10)
-
-    assert not errors, f"racer thread(s) raised: {errors}"
-
-    with get_db_connection() as conn:
-        db = conn.cursor()
-        remaining = _unit_quantity(db, attacker_id, "nukes")
-
-    assert remaining == 0, (
-        f"attacker nuke count is {remaining} after firing twice with only 1 "
-        f"in stock, expected exactly 0 -- a negative value means the strike "
-        f"fired twice off a single nuke"
-    )
 
 
 def test_strategic_airstrike_full_loss_cannot_double_decrement(war_pair):

@@ -1,7 +1,7 @@
 import os
 import time
 import requests
-from multiprocessing import Process
+from multiprocessing import get_context
 import pytest
 
 LEGACY_SCHEMA_TEST_MODULES = {
@@ -33,29 +33,7 @@ LEGACY_SCHEMA_TEST_MODULES = {
 }
 
 
-def _known_failures():
-    path = os.path.join(os.path.dirname(__file__), "known_failures.txt")
-    try:
-        with open(path, encoding="utf-8") as fh:
-            return {
-                line.strip()
-                for line in fh
-                if line.strip() and not line.lstrip().startswith("#")
-            }
-    except FileNotFoundError:
-        return set()
-
-
 def pytest_collection_modifyitems(config, items):
-    # Quarantine: tests that were already failing when CI started running the
-    # whole suite. Set RUN_KNOWN_FAILURES=1 to run them while fixing them.
-    if os.getenv("RUN_KNOWN_FAILURES") != "1":
-        known = _known_failures()
-        quarantine = pytest.mark.skip(reason="quarantined: see tests/known_failures.txt")
-        for item in items:
-            if item.nodeid in known:
-                item.add_marker(quarantine)
-
     if os.getenv("RUN_LEGACY_SCHEMA_TESTS") == "1":
         return
     skip_legacy = pytest.mark.skip(
@@ -74,6 +52,9 @@ def _run_app():
     # Ensure the in-process test server sets testing mode so server-side
     # checks (like reCAPTCHA) are bypassed during automated tests.
     app.config["TESTING"] = True
+    # Tests drive forms with raw HTTP; CSRF enforcement itself is covered by
+    # tests/test_csrf_enforced_on_app.py.
+    app.config["WTF_CSRF_ENABLED"] = False
 
     # Run without the reloader so we don't spawn extra processes
     app.run(host="127.0.0.1", port=5001, use_reloader=False, threaded=True)
@@ -98,7 +79,10 @@ def server(pytestconfig):
             returncode=3,
         )
 
-    p = Process(target=_run_app)
+    # spawn, not fork: a forked child inherits this process's open DB
+    # connections and closes them under us ("server closed the connection
+    # unexpectedly" in whichever test runs next).
+    p = get_context("spawn").Process(target=_run_app)
     p.daemon = True
     p.start()
 

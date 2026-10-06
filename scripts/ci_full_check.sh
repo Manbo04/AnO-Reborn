@@ -3,7 +3,7 @@
 #   1. build the DB from the production schema snapshot (db/)
 #   2. apply any NEW migrations -- must succeed (strict)
 #   3. every SQL query in the app must match the resulting schema
-#   4. the WHOLE test suite must pass (except tests/known_failures.txt)
+#   4. the WHOLE test suite must pass (no quarantine list)
 # Run locally with DATABASE_URL pointing at a throwaway database.
 set -euo pipefail
 cd "$(dirname "$0")/.."

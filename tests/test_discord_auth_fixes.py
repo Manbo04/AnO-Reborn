@@ -1,4 +1,5 @@
 """Tests for Discord OAuth registration, login, and account management fixes."""
+from tests._session import mark_validated
 from unittest.mock import MagicMock, patch
 import pytest
 
@@ -10,6 +11,7 @@ def test_generate_discord_link_code_bypasses_password_for_discord_auth(client):
     link code must not require or check passwords against snowflake hashes."""
     with client.session_transaction() as sess:
         sess["user_id"] = 42
+        mark_validated(sess)
 
     dummy_db = MagicMock()
     # SELECT hash, auth_type FROM users WHERE id=%s
@@ -35,6 +37,7 @@ def test_generate_recovery_key_bypasses_password_for_discord_auth(client):
     without providing a non-existent password."""
     with client.session_transaction() as sess:
         sess["user_id"] = 42
+        mark_validated(sess)
 
     dummy_db = MagicMock()
     dummy_db.fetchone.return_value = ("123456789012345678", "discord")
@@ -57,6 +60,7 @@ def test_change_account_bypasses_password_for_discord_auth(client):
     """Discord auth accounts should be able to update email/username without password."""
     with client.session_transaction() as sess:
         sess["user_id"] = 42
+        mark_validated(sess)
 
     dummy_db = MagicMock()
     # SELECT hash, auth_type FROM users WHERE id=%s

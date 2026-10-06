@@ -31,6 +31,7 @@ import pytest
 
 from database import get_db_connection
 from app_core.referrals.service import try_grant_milestones, record_active_day
+from tests._db_cleanup import purge_users_where
 
 pytestmark = pytest.mark.no_server
 
@@ -132,5 +133,5 @@ def test_two_concurrent_calls_pay_milestone_only_once():
             )
             db.execute("DELETE FROM user_economy WHERE user_id IN (%s, %s)", (referrer_id, referred_id))
             db.execute("DELETE FROM stats WHERE id IN (%s, %s)", (referrer_id, referred_id))
-            db.execute("DELETE FROM users WHERE id IN (%s, %s)", (referrer_id, referred_id))
+            purge_users_where(db, 'id IN (%s, %s)', (referrer_id, referred_id))
             conn.commit()
