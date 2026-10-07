@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.no_server
+
 ROOT = Path(__file__).resolve().parent.parent
 
 
