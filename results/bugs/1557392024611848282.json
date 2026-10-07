@@ -1,8 +1,8 @@
 {
-  "status": "needs_info",
-  "reply": "which page is this on? (e.g. buying units on the military page, picking units for an attack, or buying buildings in a province) and is it on phone or desktop? i can't open the screenshot",
-  "nonce": "263da63c097544edbfb8c2070ca0ce93",
-  "updated_at": "2026-10-07T16:21:23Z",
+  "status": "not_a_bug",
+  "reply": "thanks. that's how attacks work now: when you pick ground, naval or air, your whole stack of that domain's units is sent automatically, so there's no amount field anymore (it only shows for single special units). if you'd like to choose how many units to send, post it in #suggestions and it'll go on the next ballot",
+  "nonce": "a3f5c6727f774d0a926ad1f432fbabe1",
+  "updated_at": "2026-10-07T16:28:12Z",
   "branch": null,
-  "summary": "unit amount field missing: asked which page/device"
+  "summary": "attack amount field missing: by design (domain attacks send full domain); suggest via vote"
 }

@@ -1,0 +1,8 @@
+{
+  "status": "fixed",
+  "reply": "found it, the distribution center card on the province page was hidden unless you already owned one, so the retail tab had a gap there. it always shows now with buy/sell. fixed, should be live within the hour",
+  "nonce": "279ddce17b144112b5a30b77137062b9",
+  "updated_at": "2026-10-07T16:28:12Z",
+  "branch": "claude/robot-2026-10-07-ui-fixes",
+  "summary": "distribution centers buy card hidden when owning 0: always shown"
+}
