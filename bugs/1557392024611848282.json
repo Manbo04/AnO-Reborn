@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-07T16:21:37Z",
   "delivered_nonce": "263da63c097544edbfb8c2070ca0ce93",
   "kind": "bug",
-  "last_message_id": "1557392024611848282",
-  "last_player_message_at": "2026-10-07T13:59:53Z",
+  "last_message_id": "1557428833911701635",
+  "last_player_message_at": "2026-10-07T16:26:09Z",
   "messages": [
     {
       "at": "2026-10-07T13:59:53Z",
@@ -18,6 +18,36 @@
       "id": "1557392024611848282",
       "staff": true,
       "text": "the field to select the number of units is gone"
+    },
+    {
+      "at": "2026-10-07T16:21:37Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1557427692759154791",
+      "staff": false,
+      "text": "<@297362383226142720> which page is this on? (e.g. buying units on the military page, picking units for an attack, or buying buildings in a province) and is it on phone or desktop? i can't open the screenshot"
+    },
+    {
+      "at": "2026-10-07T16:26:01Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1557428801611366491",
+      "staff": true,
+      "text": "Picking units for attack"
+    },
+    {
+      "at": "2026-10-07T16:26:09Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1557428833911701635",
+      "staff": true,
+      "text": "Desktop"
     }
   ],
   "thread_id": "1557392024611848282",
