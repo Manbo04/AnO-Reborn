@@ -1,6 +1,8 @@
 {
   "author_id": "465912833352138768",
   "created_at": "2026-10-07T15:24:01Z",
+  "delivered_at": "2026-10-07T16:28:34Z",
+  "delivered_nonce": "279ddce17b144112b5a30b77137062b9",
   "kind": "bug",
   "last_message_id": "1557413196032385054",
   "last_player_message_at": "2026-10-07T15:24:01Z",
