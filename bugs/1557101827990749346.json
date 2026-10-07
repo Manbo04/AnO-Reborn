@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-06T22:18:53Z",
   "delivered_nonce": "2f81a6280b64ac40",
   "kind": "bug",
-  "last_message_id": "1557109761164582953",
+  "last_message_id": "1557155212819566593",
   "last_player_message_at": "2026-10-06T19:18:16Z",
   "messages": [
     {
@@ -44,6 +44,16 @@
       "id": "1557109761164582953",
       "staff": false,
       "text": "Fixed, And what black magic sorcery made that page load so fast"
+    },
+    {
+      "at": "2026-10-06T22:18:53Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1557155212819566593",
+      "staff": false,
+      "text": "<@204961091892019200> glad it's sorted, enjoy the speed"
     }
   ],
   "thread_id": "1557101827990749346",
