@@ -1,0 +1,24 @@
+{
+  "author_id": "297362383226142720",
+  "created_at": "2026-10-07T13:59:53Z",
+  "kind": "bug",
+  "last_message_id": "1557392024611848282",
+  "last_player_message_at": "2026-10-07T13:59:53Z",
+  "messages": [
+    {
+      "at": "2026-10-07T13:59:53Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1557392024611848282/1557392025005985914/image.png?backend=b2&ex=6ac7a1d9&is=6ac65059&hm=8f4f42a8ffff67943d485b4bbb2af2777095b6f58332bd29955dbff2f7501bfb&"
+      ],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1557392024611848282",
+      "staff": true,
+      "text": "the field to select the number of units is gone"
+    }
+  ],
+  "thread_id": "1557392024611848282",
+  "title": "unit selection broken",
+  "url": "https://discord.com/channels/708006319658893385/1557392024611848282"
+}

@@ -1,0 +1,22 @@
+{
+  "author_id": "465912833352138768",
+  "created_at": "2026-10-07T15:24:01Z",
+  "kind": "bug",
+  "last_message_id": "1557413196032385054",
+  "last_player_message_at": "2026-10-07T15:24:01Z",
+  "messages": [
+    {
+      "at": "2026-10-07T15:24:01Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1557413196032385054",
+      "staff": false,
+      "text": "When inside a province screen if you look at the city tab and then retail the distribution center is listed but when you scroll down to build the building it is just an empty space where the distribution center should be. You can however currently build them through the dropdown instead."
+    }
+  ],
+  "thread_id": "1557413196032385054",
+  "title": "Distribution Centers Do Not Appear Under Retail Buildings",
+  "url": "https://discord.com/channels/708006319658893385/1557413196032385054"
+}
