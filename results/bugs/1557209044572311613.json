@@ -1,0 +1,8 @@
+{
+ "status": "fixed",
+ "reply": "the recruitment banner was being cropped (cover fit) in the short header on phones. it now shows the whole image on phone widths. fixed, should be live within the hour. if it still looks off after that, send a fresh screenshot",
+ "nonce": "cc3b5bc195e64601b604c1c26040bfea",
+ "updated_at": "2026-10-07T10:19:38Z",
+ "branch": "claude/robot-20261007-mobile-banner-embargo",
+ "summary": "recruitment banner cropped on phones: contain fit"
+}

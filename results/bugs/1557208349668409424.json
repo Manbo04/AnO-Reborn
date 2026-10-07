@@ -1,0 +1,8 @@
+{
+ "status": "fixed",
+ "reply": "found it, the embargo button and its long note were squeezed side by side so the button got pushed off the edge on phones. they stack and wrap now. fixed, should be live within the hour",
+ "nonce": "9b5e648b03bc48b982ad6658bb41165f",
+ "updated_at": "2026-10-07T10:19:38Z",
+ "branch": "claude/robot-20261007-mobile-banner-embargo",
+ "summary": "embargo button off-screen on phones: wrapped row"
+}
