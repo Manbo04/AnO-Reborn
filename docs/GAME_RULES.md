@@ -22,7 +22,8 @@ mechanic, update its section here in the same PR.
 | :35 | `produce_unit_stockpiles` | unit production | once per hour |
 | :40 | `loan_interest` | loan interest garnish | once per hour |
 | :45 | `population_growth` | growth, aging, education graduation | once per hour |
-| 00:00 | `war_reparation_tax` | truce reparations (see §4) | ⚠ ungated |
+| 00:00 | `war_reparation_tax` | truce reparations (see §4) | once per day |
+| :05 every 4h | `manpower_increase` | manpower growth | once per hour |
 | 04:50 | `bond_tick` | bond interest / maturity | once per day |
 
 - **Once per period** = `task_runs.last_period`, claimed *before* work and committed
@@ -138,7 +139,8 @@ HQ image, not a stand-in; public-domain/CC sources credited in a comment).
 refresh `db/schema.sql` with `scripts/snapshot_prod_schema.sh`.
 
 **New scheduled job** — add to `CELERY_BEAT_SCHEDULE`; if it moves money/assets,
-gate it in `TASK_PERIODS` and pass `db=db` to `should_skip_task`.
+gate it in `TASK_PERIODS` and either pass `db=db` to `should_skip_task` or wrap the
+task in `common.run_once_per_period(name, lock_id, fn)` (unused lock id).
 
 **Any change** — branch → PR → CI (`prod-shaped`) → auto-merge. Regenerate the map:
 `python scripts/generate_system_map.py`.

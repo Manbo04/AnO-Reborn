@@ -101,6 +101,49 @@ def claim_tick_period(db, task_name, now=None) -> bool:
     return claimed
 
 
+def run_once_per_period(task_name, lock_id, fn):
+    """Run fn() at most once per TASK_PERIODS period for task_name.
+
+    For jobs that don't do their own gating: takes an advisory lock on a
+    dedicated connection, claims the period (committed before work, see
+    claim_tick_period), runs fn, then stamps task_runs.last_run. Returns
+    True if fn ran.
+    """
+    from database import get_db_connection
+    from app_core.game_ticks.locks import try_pg_advisory_lock, release_pg_advisory_lock
+
+    with get_db_connection() as conn:
+        if not try_pg_advisory_lock(conn, lock_id, task_name):
+            return False
+        try:
+            db = conn.cursor()
+            db.execute(
+                "INSERT INTO task_runs (task_name, last_run) VALUES (%s, NULL) "
+                "ON CONFLICT DO NOTHING",
+                (task_name,),
+            )
+            db.execute(
+                "SELECT last_run FROM task_runs WHERE task_name=%s FOR UPDATE",
+                (task_name,),
+            )
+            if should_skip_task(db.fetchone(), task_name, db=db):
+                conn.commit()
+                return False
+            conn.commit()
+            fn()
+            db.execute(
+                "UPDATE task_runs SET last_run = now() WHERE task_name = %s",
+                (task_name,),
+            )
+            conn.commit()
+            return True
+        finally:
+            try:
+                release_pg_advisory_lock(conn, lock_id)
+            except Exception:
+                pass
+
+
 def should_skip_task(row, task_name, db=None):
     """True if this run of `task_name` must not do its work.
 

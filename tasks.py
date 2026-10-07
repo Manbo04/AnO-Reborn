@@ -48,7 +48,7 @@ celery.conf.update(
 # Centralized helper for last_run threshold check
 
 # Re-exported moved names
-from app_core.game_ticks.common import should_skip_task, is_task_stale, handle_exception, log_verbose, _safe_update_productivity, _run_with_deadlock_retries, MAX_INT_32
+from app_core.game_ticks.common import run_once_per_period, should_skip_task, is_task_stale, handle_exception, log_verbose, _safe_update_productivity, _run_with_deadlock_retries, MAX_INT_32
 from app_core.game_ticks.locks import try_pg_advisory_lock, release_pg_advisory_lock, _get_redis_client, leader_only, _redis_pool, _delete_lock_lua
 from app_core.game_ticks.food import rations_needed, rations_distribution_capacity, food_stats, compute_rations_distribution_cap, nation_distribution_status, fetch_nation_distribution_status, consumer_goods_distribution_capacity, calculate_demographic_rations_need, calculate_demographic_consumer_goods_need
 from app_core.game_ticks.energy import energy_info, energy_stats
@@ -146,12 +146,16 @@ def task_market_auto_orders():
 @celery.task()
 @leader_only(ttl_seconds=300)
 def task_war_reparation_tax():
-    war_reparation_tax()
+    run_once_per_period("war_reparation_tax", 9030, war_reparation_tax)
 
 
 @celery.task()
 @leader_only(ttl_seconds=300)
 def task_manpower_increase():
+    run_once_per_period("manpower_increase", 9031, _manpower_increase)
+
+
+def _manpower_increase():
     from database import get_db_connection
     from psycopg2.extras import execute_batch, RealDictCursor
 

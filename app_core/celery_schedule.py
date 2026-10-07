@@ -62,6 +62,9 @@ TASK_PERIODS = {
     "natural_disasters": "hour",
     "loan_interest": "hour",
     "bond_tick": "day",
+    # Value-moving jobs gated via common.run_once_per_period():
+    "war_reparation_tax": "day",
+    "manpower_increase": "hour",  # scheduled every 4h; hour gate stops duplicates
 }
 
 CELERY_BEAT_SCHEDULE = {
