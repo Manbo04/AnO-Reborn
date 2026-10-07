@@ -79,3 +79,27 @@ def test_reparation_rate_by_war_type(truce, war_type, expected_taken):
         db = conn.cursor()
         assert _lumber(db, loser) == 1000 - expected_taken
         assert _lumber(db, winner) == expected_taken
+
+
+def test_reparations_run_once_per_day(truce):
+    """The daily job is gated (common.run_once_per_period): a duplicate
+    trigger the same day must not take reparations twice."""
+    from app_core.game_ticks.common import run_once_per_period
+    from app_core.game_ticks.taxes import war_reparation_tax
+
+    winner, loser = truce("Sustained")
+    with get_db_connection() as conn:
+        db = conn.cursor()
+        db.execute("DELETE FROM task_runs WHERE task_name = 'war_reparation_tax'")
+        conn.commit()
+    try:
+        assert run_once_per_period("war_reparation_tax", 9030, war_reparation_tax) is True
+        assert run_once_per_period("war_reparation_tax", 9030, war_reparation_tax) is False
+        with get_db_connection() as conn:
+            db = conn.cursor()
+            assert _lumber(db, loser) == 800 and _lumber(db, winner) == 200
+    finally:
+        with get_db_connection() as conn:
+            conn.cursor().execute("DELETE FROM task_runs WHERE task_name = 'war_reparation_tax'")
+            conn.commit()
+

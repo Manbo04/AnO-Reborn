@@ -24,7 +24,7 @@ claimed before work -- see `app_core/game_ticks/common.py::claim_tick_period`);
 | generate_province_revenue | `tasks.task_generate_province_revenue` | `25 * * * *` | per hour |
 | global_tick | `tasks.task_global_tick` | `*/10 * * * *` | min interval 540s |
 | loan_interest | `tasks.task_loan_interest` | `40 * * * *` | per hour |
-| manpower_increase | `tasks.task_manpower_increase` | `5 */4 * * *` | none (must be idempotent) |
+| manpower_increase | `tasks.task_manpower_increase` | `5 */4 * * *` | per hour |
 | market_auto_orders | `tasks.task_market_auto_orders` | `13 * * * *` | none (must be idempotent) |
 | natural_disasters | `tasks.task_natural_disasters` | `15 * * * *` | per hour |
 | patreon_gem_grant | `tasks.task_patreon_gem_grant` | `0 12 * 1 *` | none (must be idempotent) |
@@ -32,7 +32,7 @@ claimed before work -- see `app_core/game_ticks/common.py::claim_tick_period`);
 | produce_unit_stockpiles | `tasks.task_produce_unit_stockpiles` | `35 * * * *` | per hour |
 | recurring_bank_trades | `tasks.task_recurring_bank_trades` | `7,22,37,52 * * * *` | none (must be idempotent) |
 | tax_income | `tasks.task_tax_income` | `0 * * * *` | per hour |
-| war_reparation_tax | `tasks.task_war_reparation_tax` | `0 0 * * *` | none (must be idempotent) |
+| war_reparation_tax | `tasks.task_war_reparation_tax` | `0 0 * * *` | per day |
 
 Sub-steps gated inside `global_tick` (per hour): `military_maintenance`, `war_supply_regen`
 
