@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-07T16:28:33Z",
   "delivered_nonce": "a3f5c6727f774d0a926ad1f432fbabe1",
   "kind": "bug",
-  "last_message_id": "1557428833911701635",
-  "last_player_message_at": "2026-10-07T16:26:09Z",
+  "last_message_id": "1557429819682324583",
+  "last_player_message_at": "2026-10-07T16:30:04Z",
   "messages": [
     {
       "at": "2026-10-07T13:59:53Z",
@@ -48,6 +48,36 @@
       "id": "1557428833911701635",
       "staff": true,
       "text": "Desktop"
+    },
+    {
+      "at": "2026-10-07T16:28:33Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1557429438604386337",
+      "staff": false,
+      "text": "<@297362383226142720> thanks. that's how attacks work now: when you pick ground, naval or air, your whole stack of that domain's units is sent automatically, so there's no amount field anymore (it only shows for single special units). if you'd like to choose how many units to send, post it in #suggestions and it'll go on the next ballot"
+    },
+    {
+      "at": "2026-10-07T16:29:36Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1557429702132764773",
+      "staff": true,
+      "text": "Ok so if i have too many units i can't attack"
+    },
+    {
+      "at": "2026-10-07T16:30:04Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1557429819682324583",
+      "staff": true,
+      "text": "Cuz of the supply limit"
     }
   ],
   "thread_id": "1557392024611848282",

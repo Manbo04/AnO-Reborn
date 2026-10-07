@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-07T16:28:34Z",
   "delivered_nonce": "279ddce17b144112b5a30b77137062b9",
   "kind": "bug",
-  "last_message_id": "1557413196032385054",
+  "last_message_id": "1557429440223641622",
   "last_player_message_at": "2026-10-07T15:24:01Z",
   "messages": [
     {
@@ -16,6 +16,16 @@
       "id": "1557413196032385054",
       "staff": false,
       "text": "When inside a province screen if you look at the city tab and then retail the distribution center is listed but when you scroll down to build the building it is just an empty space where the distribution center should be. You can however currently build them through the dropdown instead."
+    },
+    {
+      "at": "2026-10-07T16:28:34Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1557429440223641622",
+      "staff": false,
+      "text": "<@465912833352138768> found it, the distribution center card on the province page was hidden unless you already owned one, so the retail tab had a gap there. it always shows now with buy/sell. fixed, should be live within the hour"
     }
   ],
   "thread_id": "1557413196032385054",

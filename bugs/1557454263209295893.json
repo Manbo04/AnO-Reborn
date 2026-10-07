@@ -1,0 +1,32 @@
+{
+  "author_id": "519965006867988490",
+  "created_at": "2026-10-07T18:07:12Z",
+  "kind": "bug",
+  "last_message_id": "1557454365332349019",
+  "last_player_message_at": "2026-10-07T18:07:36Z",
+  "messages": [
+    {
+      "at": "2026-10-07T18:07:12Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1557454263209295893",
+      "staff": true,
+      "text": "They are able to withdraw more funds than they personally deposited."
+    },
+    {
+      "at": "2026-10-07T18:07:36Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1557454365332349019",
+      "staff": true,
+      "text": "Coalition members able to withdraw coalition funds"
+    }
+  ],
+  "thread_id": "1557454263209295893",
+  "title": "Coalition members able to withdraw coalition funds",
+  "url": "https://discord.com/channels/708006319658893385/1557454263209295893"
+}
