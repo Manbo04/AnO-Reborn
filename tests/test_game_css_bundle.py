@@ -19,3 +19,11 @@ def test_game_css_bundle_check_passes():
         text=True,
     )
     assert result.returncode == 0, result.stderr or result.stdout
+
+
+def test_mobile_embargo_and_recruitment_banner_rules_bundled():
+    css = (ROOT / "static" / "style.css").read_text(encoding="utf-8")
+    assert ".embargo-row .embargo-note" in css
+    assert "background-size: contain" in css
+    tpl = (ROOT / "templates" / "country_v2.html").read_text(encoding="utf-8")
+    assert "embargo-row" in tpl and "embargo-note" in tpl
