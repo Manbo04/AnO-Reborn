@@ -702,13 +702,19 @@ def coalition(coalition_id):
                 except Exception:
                     rollback_db_cursor(db)
 
-        # Group contributions by user: {user_id: {username, flag_data, resources: {res: amount}}}
+        # Group contributions by user: {user_id: {username, flag_data, resources: {res: amount}, balances: {res: balance}}}
         contributions_by_user = {}
         for row in bank_contributions:
             uid, uname, flag_data, res, amt, withdrawn = row
             if uid not in contributions_by_user:
-                contributions_by_user[uid] = {"username": uname, "flag_data": flag_data, "resources": {}}
+                contributions_by_user[uid] = {
+                    "username": uname,
+                    "flag_data": flag_data,
+                    "resources": {},
+                    "balances": {},
+                }
             contributions_by_user[uid]["resources"][res] = amt
+            contributions_by_user[uid]["balances"][res] = max(0, amt - withdrawn)
             if uid == cId:
                 my_personal_bank_balances[res] = max(0, amt - withdrawn)
 
@@ -819,6 +825,7 @@ def coalition(coalition_id):
             tax_rate=tax_rate,
             allow_coalition_builds=allow_coalition_builds,
             build_share_qualifying_roles=BUILD_SHARE_QUALIFYING_ROLES,
+            all_resources=["money"] + list(variables.RESOURCES),
         )
 
 
@@ -1618,6 +1625,17 @@ def deposit_into_bank(coalition_id):
         if guard:
             return guard
 
+    # Determine deposit destination:
+    # "alliance": Deposited directly into coalition bank reserves as donation / payment.
+    #             Does NOT credit member's personal withdrawable balance.
+    # "personal": Deposited into member's personal balance (withdrawable without banker approval).
+    dest = (
+        request.form.get("deposit_destination")
+        or request.form.get("deposit_type")
+        or "alliance"
+    ).lower().strip()
+    is_personal = (dest == "personal")
+
     resources = ["money"] + variables.RESOURCES
 
     deposited_resources = []
@@ -1629,7 +1647,9 @@ def deposit_into_bank(coalition_id):
             resource = ""
 
         if resource is not None and resource != "":
-            resource = resource.replace(",", "")
+            resource = resource.replace(",", "").strip()
+            if not resource:
+                continue
             try:
                 resource_amount = int(resource)
             except (ValueError, TypeError):
@@ -1686,31 +1706,33 @@ def deposit_into_bank(coalition_id):
         update_statement = f"UPDATE colBanks SET {resource}={resource}+%s WHERE colId=%s"
         db.execute(update_statement, (amount, coalition_id))
 
-        # Track cumulative contribution — use SAVEPOINT so a failure here doesn't
-        # corrupt the cursor and roll back the bank UPDATE above.
-        try:
-            db.execute("SAVEPOINT contrib_track")
-            db.execute(
-                """
-                INSERT INTO col_bank_contributions (coalition_id, user_id, resource, total_deposited)
-                VALUES (%s, %s, %s, %s)
-                ON CONFLICT (coalition_id, user_id, resource)
-                DO UPDATE SET total_deposited = col_bank_contributions.total_deposited + EXCLUDED.total_deposited
-                """,
-                (coalition_id, cId, resource, amount),
-            )
-        except Exception:
-            db.execute("ROLLBACK TO SAVEPOINT contrib_track")
+        if is_personal:
+            # Track cumulative contribution — use SAVEPOINT so a failure here doesn't
+            # corrupt the cursor and roll back the bank UPDATE above.
+            try:
+                db.execute("SAVEPOINT contrib_track")
+                db.execute(
+                    """
+                    INSERT INTO col_bank_contributions (coalition_id, user_id, resource, total_deposited)
+                    VALUES (%s, %s, %s, %s)
+                    ON CONFLICT (coalition_id, user_id, resource)
+                    DO UPDATE SET total_deposited = col_bank_contributions.total_deposited + EXCLUDED.total_deposited
+                    """,
+                    (coalition_id, cId, resource, amount),
+                )
+            except Exception:
+                db.execute("ROLLBACK TO SAVEPOINT contrib_track")
 
+        log_kind = "personal" if is_personal else "donation"
         try:
             db.execute("SAVEPOINT txn_log")
             db.execute(
                 """
                 INSERT INTO col_bank_transactions
-                    (coalition_id, user_id, actor_id, resource, amount, direction)
-                VALUES (%s, %s, %s, %s, %s, 'deposit')
+                    (coalition_id, user_id, actor_id, resource, amount, direction, kind)
+                VALUES (%s, %s, %s, %s, %s, 'deposit', %s)
                 """,
-                (coalition_id, cId, cId, resource, amount),
+                (coalition_id, cId, cId, resource, amount, log_kind),
             )
         except Exception:
             db.execute("ROLLBACK TO SAVEPOINT txn_log")
@@ -1719,9 +1741,15 @@ def deposit_into_bank(coalition_id):
         for resource in deposited_resources:
             name = resource[0]
             amount = resource[1]
-            deposit(name, amount, db)
+            res_err = deposit(name, amount, db)
+            if res_err is not None:
+                return res_err
 
     _invalidate_bank_caches(coalition_id)
+    if is_personal:
+        flash("Deposited into your personal bank account.", "success")
+    else:
+        flash("Donated to alliance bank reserves.", "success")
     return redirect(f"/coalition/{coalition_id}")
 
 
@@ -2007,6 +2035,140 @@ def withdraw_personal_from_bank(coalition_id):
 
     _invalidate_bank_caches(coalition_id)
     flash("Successfully withdrew from your personal bank account.", "success")
+    return redirect(f"/coalition/{coalition_id}")
+
+
+# Route for coalition leadership to adjust / deduct a member's personal bank balance
+def adjust_personal_bank(coalition_id):
+    cId = session["user_id"]
+
+    with get_request_cursor() as db:
+        guard = _require_coalition_member(
+            db,
+            cId,
+            coalition_id,
+            roles=["leader", "deputy_leader", "banker"],
+        )
+        if guard:
+            return guard
+
+        target_uid_raw = request.form.get("target_user_id")
+        resource = request.form.get("resource", "").strip()
+        action_type = request.form.get("action_type", "deduct").strip()
+        amount_raw = (request.form.get("amount") or "").replace(",", "").strip()
+
+        try:
+            target_uid = int(target_uid_raw)
+        except (TypeError, ValueError):
+            flash("Invalid member selected.", "warning")
+            return redirect(f"/coalition/{coalition_id}")
+
+        # Ensure target member is actually in the coalition
+        db.execute(
+            f"SELECT userid FROM {_members_tbl()} WHERE colid=%s AND userid=%s",
+            (coalition_id, target_uid),
+        )
+        if not db.fetchone():
+            flash("Target player is not a member of this coalition.", "warning")
+            return redirect(f"/coalition/{coalition_id}")
+
+        _VALID_BANK_COLUMNS = frozenset(["money"] + variables.RESOURCES)
+        if resource not in _VALID_BANK_COLUMNS:
+            flash(f"Invalid resource: {resource}", "warning")
+            return redirect(f"/coalition/{coalition_id}")
+
+        try:
+            amount = int(amount_raw)
+            if amount < 0:
+                raise ValueError()
+        except (TypeError, ValueError):
+            flash("Amount must be a non-negative integer.", "warning")
+            return redirect(f"/coalition/{coalition_id}")
+
+        db.execute("SELECT username FROM users WHERE id=%s", (target_uid,))
+        urow = db.fetchone()
+        target_username = urow[0] if urow else f"User {target_uid}"
+
+        # Fetch current personal balance row with row lock
+        db.execute(
+            """
+            SELECT total_deposited, COALESCE(total_withdrawn, 0)
+            FROM col_bank_contributions
+            WHERE coalition_id = %s AND user_id = %s AND resource = %s
+            FOR UPDATE
+            """,
+            (coalition_id, target_uid, resource),
+        )
+        row = db.fetchone()
+        deposited, withdrawn = row if row else (0, 0)
+        current_available = max(0, deposited - withdrawn)
+
+        if action_type == "deduct":
+            if amount > current_available:
+                flash(
+                    f"Cannot deduct {amount:,} {resource}; {target_username} only has {current_available:,} personal balance.",
+                    "warning",
+                )
+                return redirect(f"/coalition/{coalition_id}")
+            new_available = current_available - amount
+            diff = amount
+        elif action_type == "set":
+            new_available = amount
+            diff = abs(new_available - current_available)
+        else:
+            flash("Invalid action type.", "warning")
+            return redirect(f"/coalition/{coalition_id}")
+
+        if not row:
+            if new_available > 0:
+                db.execute(
+                    """
+                    INSERT INTO col_bank_contributions
+                        (coalition_id, user_id, resource, total_deposited, total_withdrawn)
+                    VALUES (%s, %s, %s, %s, 0)
+                    """,
+                    (coalition_id, target_uid, resource, new_available),
+                )
+        else:
+            if new_available <= deposited:
+                new_withdrawn = deposited - new_available
+                db.execute(
+                    """
+                    UPDATE col_bank_contributions
+                    SET total_withdrawn = %s
+                    WHERE coalition_id = %s AND user_id = %s AND resource = %s
+                    """,
+                    (new_withdrawn, coalition_id, target_uid, resource),
+                )
+            else:
+                db.execute(
+                    """
+                    UPDATE col_bank_contributions
+                    SET total_deposited = %s, total_withdrawn = 0
+                    WHERE coalition_id = %s AND user_id = %s AND resource = %s
+                    """,
+                    (new_available, coalition_id, target_uid, resource),
+                )
+
+        direction = "withdraw" if new_available < current_available else "deposit"
+        try:
+            db.execute("SAVEPOINT txn_log")
+            db.execute(
+                """
+                INSERT INTO col_bank_transactions
+                    (coalition_id, user_id, actor_id, resource, amount, direction, kind)
+                VALUES (%s, %s, %s, %s, %s, %s, 'adjustment')
+                """,
+                (coalition_id, target_uid, cId, resource, diff, direction),
+            )
+        except Exception:
+            db.execute("ROLLBACK TO SAVEPOINT txn_log")
+
+    _invalidate_bank_caches(coalition_id)
+    flash(
+        f"Successfully updated {target_username}'s personal {resource} balance to {new_available:,}.",
+        "success",
+    )
     return redirect(f"/coalition/{coalition_id}")
 
 
@@ -2952,6 +3114,9 @@ def register_coalitions_routes(app_instance):
     withdraw_personal_from_bank_wrapped = login_required(
         require_post_origin(withdraw_personal_from_bank)
     )
+    adjust_personal_bank_wrapped = login_required(
+        require_post_origin(adjust_personal_bank)
+    )
     request_from_bank_wrapped = login_required(require_post_origin(request_from_bank))
     remove_bank_request_wrapped = login_required(require_post_origin(remove_bank_request))
     accept_bank_request_wrapped = login_required(require_post_origin(accept_bank_request))
@@ -3061,6 +3226,11 @@ def register_coalitions_routes(app_instance):
     app_instance.add_url_rule(
         "/withdraw_personal_from_bank/<coalition_id>",
         view_func=withdraw_personal_from_bank_wrapped,
+        methods=["POST"],
+    )
+    app_instance.add_url_rule(
+        "/adjust_personal_bank/<coalition_id>",
+        view_func=adjust_personal_bank_wrapped,
         methods=["POST"],
     )
     app_instance.add_url_rule(

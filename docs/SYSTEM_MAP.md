@@ -191,6 +191,7 @@ Tables no static query touches (dynamic SQL, scripts, or dead): `coalition_membe
 | `/account/request_password_reset` | POST | `change:account_request_password_reset` |
 | `/account/reveal_email` | POST | `app_core.auth.routes:reveal_email` |
 | `/add/<uId>` | POST | `app_core.coalitions.routes:adding` |
+| `/adjust_personal_bank/<coalition_id>` | POST | `app_core.coalitions.routes:adjust_personal_bank` |
 | `/admin/ads` | GET,POST | `app_core.ads.routes:admin_ads` |
 | `/admin/analytics` | GET | `app_core.analytics.routes:admin_analytics` |
 | `/admin/command-center` | GET | `app_core.admin.routes:admin_command_center` |

@@ -124,6 +124,8 @@ def tables_section(tables, writes, reads) -> list[str]:
 
 def routes_section() -> list[str]:
     logging.disable(logging.CRITICAL)
+    import database
+    database.ensure_schema_compat = lambda: None
     from app import app
 
     rows = []
