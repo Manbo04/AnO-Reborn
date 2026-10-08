@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-07T22:19:17Z",
   "delivered_nonce": "8159c886282348c7bdad0cbe3919c557",
   "kind": "bug",
-  "last_message_id": "1557454365332349019",
-  "last_player_message_at": "2026-10-07T18:07:36Z",
+  "last_message_id": "1557536654938476615",
+  "last_player_message_at": "2026-10-07T23:34:36Z",
   "messages": [
     {
       "at": "2026-10-07T18:07:12Z",
@@ -26,6 +26,36 @@
       "id": "1557454365332349019",
       "staff": true,
       "text": "Coalition members able to withdraw coalition funds"
+    },
+    {
+      "at": "2026-10-07T22:19:17Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1557517702539771997",
+      "staff": false,
+      "text": "<@519965006867988490> checked the bank code: members with no banking role can only take out their own deposited balance, and only leaders/deputies/bankers can pull from the shared pot (by design). which role did the person have who took out more than they put in, and was it with the 'withdraw' button or by a request being approved?"
+    },
+    {
+      "at": "2026-10-07T23:34:17Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1557536575934562325",
+      "staff": true,
+      "text": "It was personal withdrawal, for amounts they shouldnt have. I know I had the same issue. I was given \"personal deposits\" for stuff I never deposited for weeks or months. Yet showed up under personal deposits."
+    },
+    {
+      "at": "2026-10-07T23:34:36Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1557536654938476615",
+      "staff": true,
+      "text": "They were domestic minister and didnt have bank withdrawal perms fyi."
     }
   ],
   "thread_id": "1557454263209295893",

@@ -1,0 +1,35 @@
+{
+  "author_id": "1043204044774183032",
+  "created_at": "2026-10-07T22:41:28Z",
+  "kind": "suggestion",
+  "last_message_id": "1557560112024133734",
+  "last_player_message_at": "2026-10-08T01:07:48Z",
+  "messages": [
+    {
+      "at": "2026-10-07T22:41:28Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1557523286643056750/1557523287003627590/Screenshot_2026-10-07_183611.png?backend=b2&ex=6ac81c19&is=6ac6ca99&hm=172c2f58bb5f76047183f6b5ea40a772285065c64c6e28dab0b519ec233a2e5d&"
+      ],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1557523286643056750",
+      "staff": false,
+      "text": "the building cards accessed through the province map are a convenient way to view all the options for buildings, with the costs listed. BUT it would be better if the effects and outputs of the buildings were also listed. to avoid clutter, this could be collapsible or an _i in a circle_ whatever the real name for that icon is"
+    },
+    {
+      "at": "2026-10-08T01:07:48Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1557560112024133734",
+      "staff": false,
+      "text": "additional: add a number box for multi building and a - button for selling/destroying in provincial view"
+    }
+  ],
+  "status": "new",
+  "thread_id": "1557523286643056750",
+  "title": "add i for information on building cards",
+  "url": "https://discord.com/channels/708006319658893385/1557523286643056750"
+}
