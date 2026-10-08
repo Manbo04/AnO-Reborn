@@ -101,11 +101,17 @@
                                 cityCount = parseInt(cityCount) || 0;
 
                                 function sum_cost_linear(basePrice, incrementPerItem, currentOwned, numPurchased, capThreshold) {
-                                    // Mirrors land_city_purchase_cost() on the server: each unit costs
-                                    // basePrice + owned*increment, capped at basePrice + capThreshold*increment,
-                                    // then the "Free Trade" policy discount. Without the cap this estimate
-                                    // showed ~10x the real price for provinces with lots of land/cities.
+                                    if (!numPurchased || numPurchased === 0) return 0;
                                     let maxPrice = basePrice + capThreshold * incrementPerItem;
+                                    if (numPurchased < 0) {
+                                        let sellUnits = Math.min(Math.abs(numPurchased), currentOwned);
+                                        let remaining = currentOwned - sellUnits;
+                                        let uncapped = Math.max(0, Math.min(sellUnits, capThreshold - remaining));
+                                        let rawVal = uncapped * basePrice +
+                                                     incrementPerItem * (uncapped * remaining + uncapped * (uncapped - 1) / 2) +
+                                                     (sellUnits - uncapped) * maxPrice;
+                                        return Math.floor(rawVal * {{ gold_policy_mult|default(1.0) }} * 0.75);
+                                    }
                                     let uncapped = Math.max(0, Math.min(numPurchased, capThreshold - currentOwned));
                                     let totalCost = uncapped * basePrice +
                                                     incrementPerItem * (uncapped * currentOwned + uncapped * (uncapped - 1) / 2) +
@@ -162,11 +168,17 @@
                                 current_land = parseInt(current_land) || 0;
 
                                 function sum_cost_linear(basePrice, incrementPerItem, currentOwned, numPurchased, capThreshold) {
-                                    // Mirrors land_city_purchase_cost() on the server: each unit costs
-                                    // basePrice + owned*increment, capped at basePrice + capThreshold*increment,
-                                    // then the "Free Trade" policy discount. Without the cap this estimate
-                                    // showed ~10x the real price for provinces with lots of land/cities.
+                                    if (!numPurchased || numPurchased === 0) return 0;
                                     let maxPrice = basePrice + capThreshold * incrementPerItem;
+                                    if (numPurchased < 0) {
+                                        let sellUnits = Math.min(Math.abs(numPurchased), currentOwned);
+                                        let remaining = currentOwned - sellUnits;
+                                        let uncapped = Math.max(0, Math.min(sellUnits, capThreshold - remaining));
+                                        let rawVal = uncapped * basePrice +
+                                                     incrementPerItem * (uncapped * remaining + uncapped * (uncapped - 1) / 2) +
+                                                     (sellUnits - uncapped) * maxPrice;
+                                        return Math.floor(rawVal * {{ gold_policy_mult|default(1.0) }} * 0.75);
+                                    }
                                     let uncapped = Math.max(0, Math.min(numPurchased, capThreshold - currentOwned));
                                     let totalCost = uncapped * basePrice +
                                                     incrementPerItem * (uncapped * currentOwned + uncapped * (uncapped - 1) / 2) +
