@@ -2,7 +2,7 @@
   "author_id": "204961091892019200",
   "created_at": "2026-10-07T20:15:57Z",
   "kind": "bug",
-  "last_message_id": "1557486665306742926",
+  "last_message_id": "1557850109834698855",
   "last_player_message_at": "2026-10-07T20:15:57Z",
   "messages": [
     {
@@ -17,6 +17,16 @@
       "id": "1557486665306742926",
       "staff": false,
       "text": "When spying on rescources, some of the numbers are slightly off, namely Lumber and cg. rest is accurate so far.\nand show money ples"
+    },
+    {
+      "at": "2026-10-08T20:20:09Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1557850109834698855",
+      "staff": false,
+      "text": "Hello! Thanks for the report. We've fixed the missing resource, and Money (Gold) will correctly appear in your spy reports alongside all other resources starting in the next update! \n\nRegarding the slight inaccuracies in Lumber and Consumer Goods: this is actually working as intended. Spy reports take a static 'snapshot' of the nation at the exact split-second the operation executes. Because the game is constantly running (buildings continuously consuming lumber, hourly production ticks, market trades, etc.), your live UI will always slowly drift from the numbers captured in the historical static report. Let us know if you have any other questions!"
     }
   ],
   "thread_id": "1557486665306742926",

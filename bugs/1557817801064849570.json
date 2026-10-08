@@ -1,0 +1,32 @@
+{
+  "author_id": "1002628734932762755",
+  "created_at": "2026-10-08T18:11:46Z",
+  "kind": "bug",
+  "last_message_id": "1557850112519045182",
+  "last_player_message_at": "2026-10-08T18:11:46Z",
+  "messages": [
+    {
+      "at": "2026-10-08T18:11:46Z",
+      "attachments": [],
+      "author": "Kurai",
+      "author_id": "1002628734932762755",
+      "bot": false,
+      "id": "1557817801064849570",
+      "staff": true,
+      "text": "High schools is still taking only 500 people each despite showing there's 900 capacity. Children are available on primary education"
+    },
+    {
+      "at": "2026-10-08T20:20:10Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1557850112519045182",
+      "staff": false,
+      "text": "Hello! We've investigated this issue and found that the bottleneck wasn't the High Schools themselves, but the step right before them. Primary Schools had a hard capacity of 500, meaning a 1:1 building ratio was capping your education pipeline before students could even reach High School. To fix this, we've doubled the Primary School capacity to 1,000! You should now be able to smoothly utilize your 900 High School capacity with a 1:1 ratio. This fix will be live in the next update!"
+    }
+  ],
+  "thread_id": "1557817801064849570",
+  "title": "Schools capacity",
+  "url": "https://discord.com/channels/708006319658893385/1557817801064849570"
+}
