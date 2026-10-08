@@ -444,19 +444,24 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                     </div>
                     <div class="templatedivflex2 divflex2center" style="gap: 8px; flex-wrap: wrap;">
                         <div class="templatedivflex2left">
-                            <button formaction="/deposit_into_bank/{{ colId }}" onclick="return confirm('Are you sure you want to deposit these resources?');" class="templatedivbutton templatecenteredbutton" type="submit">
-                                <span class="material-icons-outlined">arrow_downward</span>Deposit
+                            <button formaction="/deposit_into_bank/{{ colId }}" name="deposit_destination" value="alliance" onclick="return confirm('Donate these resources to alliance reserves? They cannot be withdrawn personally.');" class="templatedivbutton templatecenteredbutton" type="submit" title="Donate directly to Alliance Reserves (for contributions, loans, debt repayment). Cannot be withdrawn personally.">
+                                <span class="material-icons-outlined">volunteer_activism</span>Donate to Alliance
+                            </button>
+                        </div>
+                        <div class="templatedivflex2left">
+                            <button formaction="/deposit_into_bank/{{ colId }}" name="deposit_destination" value="personal" onclick="return confirm('Deposit these resources into your Personal Account? You can withdraw them later.');" class="templatedivbutton templatecenteredbutton" type="submit" title="Deposit into your personal account. Can be withdrawn by you without banker approval.">
+                                <span class="material-icons-outlined">account_balance_wallet</span>Personal Deposit
                             </button>
                         </div>
                         <div class="templatedivflex2left">
                             <button formaction="/withdraw_personal_from_bank/{{ colId }}" onclick="return confirm('Are you sure you want to withdraw these resources from your personal deposited balance?');" class="templatedivbutton templatecenteredbutton" type="submit" title="Withdraw up to your personal deposited balance instantly without banker approval">
-                                <span class="material-icons-outlined">account_balance_wallet</span>Withdraw Personal
+                                <span class="material-icons-outlined">arrow_upward</span>Withdraw Personal
                             </button>
                         </div>
                         {% if user_role in ["leader", "deputy_leader", "banker"] %}
                         <div class="templatedivflex2left">
                             <button formaction="/withdraw_from_bank/{{ colId }}" onclick="return confirm('Are you sure you want to withdraw these resources from alliance reserves?');" class="templatedivbutton templatecenteredbutton" type="submit">
-                                <span class="material-icons-outlined">arrow_upward</span>Withdraw (Alliance)
+                                <span class="material-icons-outlined">account_balance</span>Withdraw (Alliance)
                             </button>
                         </div>
                         {% else %}
@@ -468,6 +473,49 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                         {% endif %}
                     </div>
                 </form>
+
+                {% if user_role in ["leader", "deputy_leader", "banker"] %}
+                <h2 class="templatecontentheaderleft" style="margin-top:20px;">Manage Member Personal Balances</h2>
+                <p style="margin-bottom:12px; color: var(--text-secondary); font-size:0.9em;">
+                    Adjust or deduct personal balances for debt settlements, member requests, or past deposit corrections. Deducting a personal balance leaves the resources in the alliance vault and clears the member's personal withdrawal rights.
+                </p>
+                <form method="POST" action="/adjust_personal_bank/{{ colId }}" style="margin-bottom: 24px;">
+                    <div class="templatedivflex2" style="gap: 10px; flex-wrap: wrap; align-items: flex-end;">
+                        <div style="flex: 1; min-width: 140px;">
+                            <label style="font-size: 0.85em; display: block; margin-bottom: 4px;">Member</label>
+                            <select name="target_user_id" class="loginsignupinput" style="width: 100%;" required>
+                                {% for m in members %}
+                                <option value="{{ m[0] }}">{{ m[1] }} ({{ m[2] | replace('_', ' ') }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div style="flex: 1; min-width: 120px;">
+                            <label style="font-size: 0.85em; display: block; margin-bottom: 4px;">Resource</label>
+                            <select name="resource" class="loginsignupinput" style="width: 100%;" required>
+                                {% for r in all_resources %}
+                                <option value="{{ r }}">{{ r | replace('_', ' ') | title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div style="flex: 1; min-width: 120px;">
+                            <label style="font-size: 0.85em; display: block; margin-bottom: 4px;">Action</label>
+                            <select name="action_type" class="loginsignupinput" style="width: 100%;" required>
+                                <option value="deduct">Deduct from Balance</option>
+                                <option value="set">Set Balance To</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1; min-width: 120px;">
+                            <label style="font-size: 0.85em; display: block; margin-bottom: 4px;">Amount</label>
+                            <input type="number" min="0" name="amount" class="loginsignupinput" placeholder="Amount" style="width: 100%;" required />
+                        </div>
+                        <div>
+                            <button type="submit" onclick="return confirm('Are you sure you want to update this member\'s personal bank balance?');" class="templatedivbutton" style="margin: 0; white-space: nowrap;">
+                                <span class="material-icons-outlined">tune</span>Update Balance
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                {% endif %}
 
                 {% if user_role in ["leader", "deputy_leader", "banker"] and bankRequests %}
                 <h2 class="templatecontentheaderleft" style="margin-top:20px;">Pending Withdrawal Requests</h2>
@@ -521,10 +569,13 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                         </div>
                         <div class="contrib-resources">
                             {% for res, amt in contrib.resources.items() %}
+                            {% set bal = contrib.balances.get(res, 0) if contrib.balances else 0 %}
                             <div class="contrib-res-row">
                                 <img src="{{ url_for('static', filename=game_asset_path('resources', res)) }}" alt="{{ res }}" class="contrib-res-icon" />
                                 <span class="contrib-res-name">{{ res | replace('_', ' ') | title }}</span>
-                                <span class="contrib-res-amt">{{ amt | commas }}</span>
+                                <span class="contrib-res-amt" title="Personal Withdrawable: {{ bal | commas }} | Lifetime Deposited: {{ amt | commas }}">
+                                    {{ bal | commas }} <span style="font-size:0.8em; color:var(--text-secondary);">(dep: {{ amt | commas }})</span>
+                                </span>
                             </div>
                             {% endfor %}
                         </div>
