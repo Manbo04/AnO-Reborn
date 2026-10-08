@@ -1,0 +1,36 @@
+{
+  "author_id": "249007223454433292",
+  "created_at": "2026-10-08T02:43:55Z",
+  "kind": "bug",
+  "last_message_id": "1557584417000661052",
+  "last_player_message_at": "2026-10-08T02:44:23Z",
+  "messages": [
+    {
+      "at": "2026-10-08T02:43:55Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1557584298633076776/1557584298817622017/image.png?ex=6ac854eb&is=6ac7036b&hm=20c889d57b06ab2b4200e17c9cd20e89a73d48599eef9ffd57f61a8ba2747f34&"
+      ],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1557584298633076776",
+      "staff": false,
+      "text": "I accidentally clicked Build when I wanted Base View"
+    },
+    {
+      "at": "2026-10-08T02:44:23Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1557584298633076776/1557584416321044610/image.png?ex=6ac85507&is=6ac70387&hm=f59160b1e69007bce50beb262381a1a26904b126ef4c641853db3c8f37313d26&"
+      ],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1557584417000661052",
+      "staff": false,
+      "text": "But I can't dismantle it, and it supposedly costing me gasoline"
+    }
+  ],
+  "thread_id": "1557584298633076776",
+  "title": "Error in Dismantling Iron Dome",
+  "url": "https://discord.com/channels/708006319658893385/1557584298633076776"
+}

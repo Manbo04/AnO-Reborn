@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-07T22:19:17Z",
   "delivered_nonce": "8159c886282348c7bdad0cbe3919c557",
   "kind": "bug",
-  "last_message_id": "1557536654938476615",
-  "last_player_message_at": "2026-10-07T23:34:36Z",
+  "last_message_id": "1557628786462433281",
+  "last_player_message_at": "2026-10-08T05:40:42Z",
   "messages": [
     {
       "at": "2026-10-07T18:07:12Z",
@@ -56,6 +56,16 @@
       "id": "1557536654938476615",
       "staff": true,
       "text": "They were domestic minister and didnt have bank withdrawal perms fyi."
+    },
+    {
+      "at": "2026-10-08T05:40:42Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1557628786462433281",
+      "staff": true,
+      "text": "Disregard. New information has come to light."
     }
   ],
   "thread_id": "1557454263209295893",

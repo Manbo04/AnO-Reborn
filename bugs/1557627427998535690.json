@@ -1,0 +1,62 @@
+{
+  "author_id": "1166065212537970722",
+  "created_at": "2026-10-08T05:35:18Z",
+  "kind": "bug",
+  "last_message_id": "1557644516020723753",
+  "last_player_message_at": "2026-10-08T06:43:12Z",
+  "messages": [
+    {
+      "at": "2026-10-08T05:35:18Z",
+      "attachments": [],
+      "author": "𝕿𝖍𝖊_𝖐𝖆𝖎𝖘𝖊𝖗",
+      "author_id": "1166065212537970722",
+      "bot": false,
+      "id": "1557627427998535690",
+      "staff": true,
+      "text": "I did tanks against infantry, I won, I lost 5 tanks but the enemy didn't lose a single infantry even though he has 2k infantry, and he didn't lose morale too"
+    },
+    {
+      "at": "2026-10-08T05:45:13Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1557629925232615465",
+      "staff": false,
+      "text": "I think you need to do another ground attack and double check the results😉"
+    },
+    {
+      "at": "2026-10-08T05:45:18Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1557629947328331797",
+      "staff": false,
+      "text": "Not a bug btw"
+    },
+    {
+      "at": "2026-10-08T06:35:40Z",
+      "attachments": [],
+      "author": "𝕿𝖍𝖊_𝖐𝖆𝖎𝖘𝖊𝖗",
+      "author_id": "1166065212537970722",
+      "bot": false,
+      "id": "1557642622011449406",
+      "staff": true,
+      "text": "Wym"
+    },
+    {
+      "at": "2026-10-08T06:43:12Z",
+      "attachments": [],
+      "author": "𝕿𝖍𝖊_𝖐𝖆𝖎𝖘𝖊𝖗",
+      "author_id": "1166065212537970722",
+      "bot": false,
+      "id": "1557644516020723753",
+      "staff": true,
+      "text": "And still chev morale didn't drop"
+    }
+  ],
+  "thread_id": "1557627427998535690",
+  "title": "Even if I win a battle, enemy units aren't dying",
+  "url": "https://discord.com/channels/708006319658893385/1557627427998535690"
+}

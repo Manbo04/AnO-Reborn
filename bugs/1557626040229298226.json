@@ -1,0 +1,24 @@
+{
+  "author_id": "1166065212537970722",
+  "created_at": "2026-10-08T05:29:47Z",
+  "kind": "bug",
+  "last_message_id": "1557626040229298226",
+  "last_player_message_at": "2026-10-08T05:29:47Z",
+  "messages": [
+    {
+      "at": "2026-10-08T05:29:47Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1557626040229298226/1557626040631820388/Screenshot_20261008-072850_Discord.png?ex=6ac87bcb&is=6ac72a4b&hm=0ea59a55e749dbc7778b2e561445c8713c05b7000b3daa0e8c4e763b3cb1ae78&"
+      ],
+      "author": "𝕿𝖍𝖊_𝖐𝖆𝖎𝖘𝖊𝖗",
+      "author_id": "1166065212537970722",
+      "bot": false,
+      "id": "1557626040229298226",
+      "staff": true,
+      "text": "When I try to launch them this happens"
+    }
+  ],
+  "thread_id": "1557626040229298226",
+  "title": "Kamikaze drones and cruise missiles not working",
+  "url": "https://discord.com/channels/708006319658893385/1557626040229298226"
+}
