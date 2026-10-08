@@ -1,0 +1,87 @@
+{
+  "author_id": "1180720719060029500",
+  "created_at": "2026-10-08T11:31:58Z",
+  "kind": "suggestion",
+  "last_message_id": "1557720180640059473",
+  "last_player_message_at": "2026-10-08T11:43:52Z",
+  "messages": [
+    {
+      "at": "2026-10-08T11:31:58Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1557717189346205756/1557717189749112892/image.png?ex=6ac8d0af&is=6ac77f2f&hm=b871dea740be82bcc5d6fa2939ee6e7f2ab5db37de9cfcedd45812d5714c093d&"
+      ],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1557717189346205756",
+      "staff": false,
+      "text": "There's a thing in coalition banks where personal balance is included in the bank balance.\n\nThis means the alliance can withdraw what you put in for yourself. Obviously, this is a terrible idea"
+    },
+    {
+      "at": "2026-10-08T11:32:41Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1557717189346205756/1557717357340794940/image.png?ex=6ac8d0d6&is=6ac77f56&hm=ec6e36a59485fc64d5e64c2fa21998aced01a03c1dbeb5304e85f4b5bae6dd03&"
+      ],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1557717368203907163",
+      "staff": false,
+      "text": "extra pics. personal balance is added to bank balance"
+    },
+    {
+      "at": "2026-10-08T11:38:15Z",
+      "attachments": [],
+      "author": "luciuskonst",
+      "author_id": "218250058368417792",
+      "bot": false,
+      "id": "1557718770863312967",
+      "staff": false,
+      "text": "yes plz"
+    },
+    {
+      "at": "2026-10-08T11:38:23Z",
+      "attachments": [],
+      "author": "luciuskonst",
+      "author_id": "218250058368417792",
+      "bot": false,
+      "id": "1557718801523409059",
+      "staff": false,
+      "text": "they NEED to be separate pools"
+    },
+    {
+      "at": "2026-10-08T11:38:44Z",
+      "attachments": [],
+      "author": "luciuskonst",
+      "author_id": "218250058368417792",
+      "bot": false,
+      "id": "1557718890216296559",
+      "staff": false,
+      "text": "otherwise there is no certainty about what the alliance bankers can use, and what 'belongs' to individuals"
+    },
+    {
+      "at": "2026-10-08T11:41:31Z",
+      "attachments": [],
+      "author": "luciuskonst",
+      "author_id": "218250058368417792",
+      "bot": false,
+      "id": "1557719589427613799",
+      "staff": false,
+      "text": "there are all sorts of security issues with a mixed pool as well, like how it's possible for people to only deposit to their personal, while only taking alliance grants, thereby allowing them to withdraw in excess of their actual deposits at a whim"
+    },
+    {
+      "at": "2026-10-08T11:43:52Z",
+      "attachments": [],
+      "author": "luciuskonst",
+      "author_id": "218250058368417792",
+      "bot": false,
+      "id": "1557720180640059473",
+      "staff": false,
+      "text": "We'll also need 2 types of withdrawals (grant, and personal withdrawal) and 2 types of deposits (donation, and personal deposit) to fix the banking system"
+    }
+  ],
+  "status": "new",
+  "thread_id": "1557717189346205756",
+  "title": "Separate personal balances from bank balances.",
+  "url": "https://discord.com/channels/708006319658893385/1557717189346205756"
+}

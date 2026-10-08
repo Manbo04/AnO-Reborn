@@ -2,8 +2,8 @@
   "author_id": "204961091892019200",
   "created_at": "2026-09-30T12:54:04Z",
   "kind": "ticket",
-  "last_message_id": "1554902945131274346",
-  "last_player_message_at": "2026-09-30T12:55:05Z",
+  "last_message_id": "1557777049853100063",
+  "last_player_message_at": "2026-10-08T15:29:50Z",
   "messages": [
     {
       "at": "2026-09-30T12:54:04Z",
@@ -44,6 +44,41 @@
       "id": "1554902945131274346",
       "staff": true,
       "text": "I will probably make it on Saturday though as I am swamped"
+    },
+    {
+      "at": "2026-10-08T15:26:51Z",
+      "attachments": [],
+      "author": "ieb",
+      "author_id": "204961091892019200",
+      "bot": false,
+      "id": "1557776299525677197",
+      "staff": false,
+      "text": "<@710359818329915443> just hijacking this ticket for now to say I've found an exploit, and I want to say I suspect someone has been abusing it (not 100% guaranteed)\nI will take a second to type some things out, and test it one last time in game to make some screenshots.\n(Oh yeah, so far I was thinking cherryblossom something theme but my brain has been fried last week)"
+    },
+    {
+      "at": "2026-10-08T15:28:59Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1554838744463573073/1557776833305649244/image.png?ex=6ac9083b&is=6ac7b6bb&hm=da08e2231b4aec27bde1edb83e118cd348f3e46e7604530a1985c92b1751b689&",
+        "https://cdn.discordapp.com/attachments/1554838744463573073/1557776833733329018/image.png?ex=6ac9083b&is=6ac7b6bb&hm=3858df56857fc33adce6ea396992f5d53bf4d4c7a3e32d6cbb75194074e0bfec&",
+        "https://cdn.discordapp.com/attachments/1554838744463573073/1557776834119336016/image.png?ex=6ac9083b&is=6ac7b6bb&hm=d2b233e596215be3b2cca74644579aaba1f6403238f22b8b9e0fe3d27fab2a39&",
+        "https://cdn.discordapp.com/attachments/1554838744463573073/1557776834563809320/image.png?ex=6ac9083b&is=6ac7b6bb&hm=a269f17487ff0fb8b8d34445a513cc585a016dbb8c260a5086b4254ba78e27f8&"
+      ],
+      "author": "ieb",
+      "author_id": "204961091892019200",
+      "bot": false,
+      "id": "1557776834853343252",
+      "staff": false,
+      "text": "Actually, I think the screenshots basically tell the whole story.\nBuying and selling below the cap of 200 fucks up, Might just give the city cost off 200 back 200 times? idk"
+    },
+    {
+      "at": "2026-10-08T15:29:50Z",
+      "attachments": [],
+      "author": "ieb",
+      "author_id": "204961091892019200",
+      "bot": false,
+      "id": "1557777049853100063",
+      "staff": false,
+      "text": "Also works on land as far as I can see"
     }
   ],
   "thread_id": "1554838744463573073",

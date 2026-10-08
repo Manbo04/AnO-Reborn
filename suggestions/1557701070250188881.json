@@ -1,0 +1,53 @@
+{
+  "author_id": "297362383226142720",
+  "created_at": "2026-10-08T10:27:55Z",
+  "kind": "suggestion",
+  "last_message_id": "1557712175794098287",
+  "last_player_message_at": "2026-10-08T11:12:03Z",
+  "messages": [
+    {
+      "at": "2026-10-08T10:27:55Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1557701070250188881",
+      "staff": true,
+      "text": "Right now each building’s workforce slots are tied to specific education levels, and the hiring routine matches workers to those slots by their education — it does not let a college‑educated worker fill a “uneducated” slot or a high‑school slot replace a college requirement. \n\nI propose a change to the system, allowing higher education pops fill jobs with lower education requirements so long as no better job is available.\n\nThis change would remove a lot of friction coming from demographics and create a more realistic system in which educated people dont simply refuse to work."
+    },
+    {
+      "at": "2026-10-08T11:00:13Z",
+      "attachments": [],
+      "author": "Andrew",
+      "author_id": "218061971809894400",
+      "bot": false,
+      "id": "1557709198345896067",
+      "staff": false,
+      "text": "Let us put people who choose not to work into the infantry first."
+    },
+    {
+      "at": "2026-10-08T11:00:22Z",
+      "attachments": [],
+      "author": "Andrew",
+      "author_id": "218061971809894400",
+      "bot": false,
+      "id": "1557709234290954301",
+      "staff": false,
+      "text": "Straight to the front lines"
+    },
+    {
+      "at": "2026-10-08T11:12:03Z",
+      "attachments": [],
+      "author": "luciuskonst",
+      "author_id": "218250058368417792",
+      "bot": false,
+      "id": "1557712175794098287",
+      "staff": false,
+      "text": "so true"
+    }
+  ],
+  "status": "new",
+  "thread_id": "1557701070250188881",
+  "title": "Higher education pops should be able to substitute lower education ones",
+  "url": "https://discord.com/channels/708006319658893385/1557701070250188881"
+}
