@@ -1840,6 +1840,7 @@ def province_sell_buy(way, units, province_id):
         _prov_row = db.fetchone()
         current_cityCount = int(_prov_row[0] or 0) if _prov_row else 0
         current_land = int(_prov_row[1] or 0) if _prov_row else 0
+        unit_prices = variables.PROVINCE_UNIT_PRICES
 
         SELL_REFUND_RATIO = 0.75  # 75% refund on sell to prevent arbitrage
 
