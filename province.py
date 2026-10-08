@@ -1692,6 +1692,9 @@ def get_free_slots(pId, slot_type, db=None):  # pId = province id
 def province_sell_buy(way, units, province_id):
     cId = session["user_id"]
 
+    if way not in ("buy", "sell"):
+        return error(400, "Invalid action.")
+
     with get_request_cursor() as db:
         # Serializes this user's buy/sell calls on this route (same pattern
         # as action_loop.py's build_structure, app_core/military/services.py,
@@ -1837,36 +1840,9 @@ def province_sell_buy(way, units, province_id):
         _prov_row = db.fetchone()
         current_cityCount = int(_prov_row[0] or 0) if _prov_row else 0
         current_land = int(_prov_row[1] or 0) if _prov_row else 0
-
-        if units == "cityCount":
-            cityCount_price = sum_cost_capped_linear(
-                750000, 50000, current_cityCount, wantedUnits, cap_threshold=200
-            )
-        else:
-            cityCount_price = 0
-
-        if units == "land":
-            land_price = sum_cost_capped_linear(
-                520000, 25000, current_land, wantedUnits, cap_threshold=100
-            )
-        else:
-            land_price = 0
-
-        # All the unit prices in this format:
-        """
-        unit_price: <price of the unit>
-        unit_resource (optional): {resource_name: amount}
-        unit_resource2 (optional): second resource dict (if applicable)
-        """
-        # TODO: change the unit_resource and unit_resource2 into list based system
         unit_prices = variables.PROVINCE_UNIT_PRICES
-        unit_prices["land_price"] = land_price
-        unit_prices["cityCount_price"] = cityCount_price
 
-        if units not in allUnits:
-            return error(400, "No such unit exists.")
-
-        price = unit_prices[f"{units}_price"]
+        SELL_REFUND_RATIO = 0.75  # 75% refund on sell to prevent arbitrage
 
         policies = []
         try:
@@ -1878,18 +1854,33 @@ def province_sell_buy(way, units, province_id):
             rollback_db_cursor(db)
             policies = []
 
-        if 2 in policies:
-            price *= 0.96
-        if 6 in policies and units == "universities":
-            price *= 0.93
-        if 1 in policies and units == "universities":
-            price *= 1.14
+        if units in ("land", "cityCount") and way == "sell":
+            current_units = current_cityCount if units == "cityCount" else current_land
+            if wantedUnits > current_units:
+                return error(400, "You don't have enough units.")
+            remaining = current_units - wantedUnits
+            if remaining < 1:
+                return error(400, f"You must keep at least 1 {units if units == 'land' else 'city'}.")
 
-        if units not in ["cityCount", "land"]:
-            totalPrice = wantedUnits * price
-        elif way == "buy":
-            # Shared with Mass Purchase (land_city_purchase_cost) so a mass
-            # buy always costs exactly the same as these per-province buys.
+            # Check infrastructure slot usage to prevent orphaning buildings
+            slot_type = "city" if units == "cityCount" else "land"
+            used_slots = current_units - get_free_slots(province_id, slot_type, db=db)
+            if remaining < used_slots:
+                return error(400, f"You have {used_slots} {slot_type} slots in use. Sell infrastructure first.")
+
+            # Calculate price of units being removed (from remaining to current_units)
+            if units == "cityCount":
+                raw_price = sum_cost_capped_linear(
+                    750000, 50000, remaining, wantedUnits, cap_threshold=200
+                )
+            else:
+                raw_price = sum_cost_capped_linear(
+                    520000, 25000, remaining, wantedUnits, cap_threshold=100
+                )
+            from app_core.economy.building_costs import apply_policy_gold_discount
+            discounted_price = apply_policy_gold_discount(units, raw_price, policies)
+            totalPrice = max(0, int(discounted_price * SELL_REFUND_RATIO))
+        elif units in ("land", "cityCount") and way == "buy":
             totalPrice = land_city_purchase_cost(
                 units,
                 current_cityCount if units == "cityCount" else current_land,
@@ -1897,7 +1888,16 @@ def province_sell_buy(way, units, province_id):
                 policies,
             )
         else:
-            totalPrice = price
+            if units not in allUnits:
+                return error(400, "No such unit exists.")
+            price = unit_prices.get(f"{units}_price", 0)
+            if 2 in policies:
+                price *= 0.96
+            if 6 in policies and units == "universities":
+                price *= 0.93
+            if 1 in policies and units == "universities":
+                price *= 1.14
+            totalPrice = wantedUnits * price
 
         try:
             resources_data = unit_prices[f"{units}_resource"].items()

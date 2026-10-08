@@ -917,7 +917,7 @@ def create_app():
         cache_key = f"resources_{target_user_id}"
         cached = query_cache.get(cache_key)
         if cached is not None:
-            return cached
+            return default_resources | cached
 
         try:
             with get_db_cursor(cursor_factory=RealDictCursor) as db:

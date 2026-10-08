@@ -448,7 +448,7 @@
             {% set resources = get_resources() %}
             <div class="resourcetagparent" tabindex="0">
                 <img src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" alt="Gold" class="resource" loading="lazy" />
-                <p class="resourcetag" title="${{ resources['gold'] | fmt }}">${{ resources["gold"] | fmt }}</p>
+                <p class="resourcetag" title="${{ resources.get('gold', 0) | fmt }}">${{ resources.get('gold', 0) | fmt }}</p>
                 <div class="resourceinfo">Money is the primary facilitator of trade in Terra.</div>
             </div>
             <p class="resource-section-label">Consumables</p>
