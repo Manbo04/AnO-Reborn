@@ -105,6 +105,7 @@ def change_domes(db, user_id, province_id, way, amount):
         update_manpower_and_gold(
             db, user_id, gold_delta=int(DOME_GOLD_COST * SELL_REFUND * amount), manpower_delta=0
         )
+        insert_revenue(db, user_id, "revenue", f"Dismantling {amount} Iron Dome(s).", "", "iron_domes", amount)
         # A plain UPDATE: the upsert below would first try to INSERT a row
         # with quantity -amount, which the quantity >= 0 check rejects (500
         # on every dismantle, celess 2026-10-08).
@@ -116,12 +117,22 @@ def change_domes(db, user_id, province_id, way, amount):
     else:
         return False, "Invalid action"
 
-    db.execute(
-        """
-        INSERT INTO province_iron_domes (province_id, quantity) VALUES (%s, %s)
-        ON CONFLICT (province_id) DO UPDATE
-        SET quantity = province_iron_domes.quantity + EXCLUDED.quantity
-        """,
-        (province_id, delta),
-    )
+    if way == "buy":
+        db.execute(
+            """
+            INSERT INTO province_iron_domes (province_id, quantity) VALUES (%s, %s)
+            ON CONFLICT (province_id) DO UPDATE
+            SET quantity = province_iron_domes.quantity + EXCLUDED.quantity
+            """,
+            (province_id, amount),
+        )
+    elif way == "sell":
+        db.execute(
+            """
+            UPDATE province_iron_domes
+            SET quantity = quantity - %s
+            WHERE province_id = %s
+            """,
+            (amount, province_id),
+        )
     return True, "Success"
