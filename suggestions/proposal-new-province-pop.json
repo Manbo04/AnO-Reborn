@@ -5,8 +5,12 @@
   "detail": "Chel's suggestion.",
   "kind": "proposal",
   "poll_message_id": "1556457143844999219",
-  "status": "voting",
+  "status": "passed",
   "suggestion_id": "proposal-new-province-pop",
   "title": "Should new provinces start with about 10,000 people instead of 1 million?",
-  "url": null
+  "url": null,
+  "votes": {
+    "no": 6,
+    "yes": 12
+  }
 }

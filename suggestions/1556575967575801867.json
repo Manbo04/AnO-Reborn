@@ -1,5 +1,6 @@
 {
   "author_id": "1180720719060029500",
+  "ballot_id": "2026-10-09",
   "created_at": "2026-10-05T07:57:10Z",
   "kind": "suggestion",
   "last_message_id": "1556578325202214933",
@@ -128,7 +129,8 @@
       "text": "gets"
     }
   ],
-  "status": "new",
+  "poll_message_id": "1558148246470271199",
+  "status": "voting",
   "thread_id": "1556575967575801867",
   "title": "New provinces should take population from old ones",
   "url": "https://discord.com/channels/708006319658893385/1556575967575801867"

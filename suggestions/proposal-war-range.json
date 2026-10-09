@@ -5,8 +5,12 @@
   "detail": "Players are split: some want a range so big nations can't farm much smaller ones, others want no limits at all. Either way, new players keep 2 weeks of protection.",
   "kind": "proposal",
   "poll_message_id": "1556457117135929456",
-  "status": "voting",
+  "status": "passed",
   "suggestion_id": "proposal-war-range",
   "title": "Should there be a war range, so you can only declare war on nations near your strength (strength based on population + military, not resources)?",
-  "url": null
+  "url": null,
+  "votes": {
+    "no": 3,
+    "yes": 14
+  }
 }

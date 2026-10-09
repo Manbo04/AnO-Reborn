@@ -5,8 +5,12 @@
   "detail": "Josh's suggestion: without an end, a nation can be kept unplayable.",
   "kind": "proposal",
   "poll_message_id": "1556457126325653515",
-  "status": "voting",
+  "status": "passed",
   "suggestion_id": "proposal-wars-expire",
   "title": "Should wars end automatically after 7 days, so nobody can be bombed forever?",
-  "url": null
+  "url": null,
+  "votes": {
+    "no": 3,
+    "yes": 15
+  }
 }

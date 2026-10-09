@@ -1,0 +1,85 @@
+{
+  "channel_id": "1556457101025353888",
+  "closes_at": "2026-10-16T16:00:00Z",
+  "header_message_id": "1558148239730020528",
+  "id": "2026-10-09",
+  "items": [
+    {
+      "message_id": "1558148241701212213",
+      "question": "Should drone, missile and nuke strikes use up the attacker's supply, and should successful ones reduce the defender's morale?",
+      "suggestion_id": "1556510156542705795"
+    },
+    {
+      "message_id": "1558148246470271199",
+      "question": "Should new provinces start with 0 population, with the player choosing how much population to move into them from their existing provinces?",
+      "suggestion_id": "1556575967575801867"
+    },
+    {
+      "message_id": "1558148249226059807",
+      "question": "Should population growth go back to being calculated per province (each province with its own growth and limits) instead of the current nation-wide system?",
+      "suggestion_id": "1556584470830784632"
+    },
+    {
+      "message_id": "1558148252346359829",
+      "question": "Should the game show why unrest is rising or falling, and show unemployed people and open jobs, in the province view?",
+      "suggestion_id": "1556655602455810138"
+    },
+    {
+      "message_id": "1558148254959534258",
+      "question": "Should resource amount fields (market orders etc.) accept suffixes like k, m, kt so large amounts are easier to type?",
+      "suggestion_id": "1556666480668713020"
+    },
+    {
+      "message_id": "1558148258864304230",
+      "question": "Should electricity become a storable resource (batteries, hourly surplus/deficit, tradable power) instead of the current simple power check?",
+      "suggestion_id": "1556678856079970354"
+    },
+    {
+      "message_id": "1558148262437978175",
+      "question": "Should the coalition bank get a separate \"Donate\" deposit button that adds resources to the coalition bank instead of the player's personal balance?",
+      "suggestion_id": "1556834009907069089"
+    },
+    {
+      "message_id": "1558148265365602366",
+      "question": "Should the game UI be reorganised around a sidebar (hidden behind a button on mobile) with grouped dropdown sections, and an optional resources dropdown in the top bar?",
+      "suggestion_id": "1557024286458519562"
+    },
+    {
+      "message_id": "1558148268008153152",
+      "question": "Should your own open orders be shown inside the main Market offer list, next to other players' orders (in addition to the Your Orders tab)?",
+      "suggestion_id": "1557094088946352148"
+    },
+    {
+      "message_id": "1558148273892761601",
+      "question": "Should your own trades be shown in the market trade list (to avoid duplicate offers), with an option to edit active trades' prices and quantities?",
+      "suggestion_id": "1557094373634609202"
+    },
+    {
+      "message_id": "1558148276560072837",
+      "question": "Should a mass delete (sell off) buildings button be added so you can remove a building type across all your provinces at once, like Mass Purchase in reverse?",
+      "suggestion_id": "1557109297739989002"
+    },
+    {
+      "message_id": "1558148280695922790",
+      "question": "Should the loan fee above 70% of the loan limit be a 20% fee on only the portion above 70%, instead of the current 15% fee on the whole loan?",
+      "suggestion_id": "1557148032170991686"
+    },
+    {
+      "message_id": "1558148284554420305",
+      "question": "add i for information on building cards",
+      "suggestion_id": "1557523286643056750"
+    },
+    {
+      "message_id": "1558148288509911092",
+      "question": "Higher education pops should be able to substitute lower education ones",
+      "suggestion_id": "1557701070250188881"
+    },
+    {
+      "message_id": "1558148292573921311",
+      "question": "Separate personal balances from bank balances.",
+      "suggestion_id": "1557717189346205756"
+    }
+  ],
+  "opened_at": "2026-10-09T16:04:49Z",
+  "tallied": false
+}

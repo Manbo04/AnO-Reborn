@@ -1,5 +1,6 @@
 {
   "author_id": "218250058368417792",
+  "ballot_id": "2026-10-09",
   "created_at": "2026-10-05T14:46:00Z",
   "kind": "suggestion",
   "last_message_id": "1556879132305002507",
@@ -88,7 +89,8 @@
       "text": "rather than decimals, I'd just make the non-food bank stuff eat (haha geddit) more power. Decimals give me tummy aches"
     }
   ],
-  "status": "new",
+  "poll_message_id": "1558148258864304230",
+  "status": "voting",
   "thread_id": "1556678856079970354",
   "title": "Electricity concept",
   "url": "https://discord.com/channels/708006319658893385/1556678856079970354"

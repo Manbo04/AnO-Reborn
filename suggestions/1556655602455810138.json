@@ -1,5 +1,6 @@
 {
   "author_id": "465912833352138768",
+  "ballot_id": "2026-10-09",
   "created_at": "2026-10-05T13:13:36Z",
   "kind": "suggestion",
   "last_message_id": "1556655602455810138",
@@ -16,7 +17,8 @@
       "text": "Would love other people to contribute to this as well but some info I think is important to show the player is\n\n- Why unrest is growing/decreasing. This one is extremely important as it has huge consequences, and mine seemingly grows and decreases on a whim with no clear reasons why.\n\n- Economic info in a province, such as unemployed people, open jobs"
     }
   ],
-  "status": "new",
+  "poll_message_id": "1558148252346359829",
+  "status": "voting",
   "thread_id": "1556655602455810138",
   "title": "Expose Important Information To The User",
   "url": "https://discord.com/channels/708006319658893385/1556655602455810138"

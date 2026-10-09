@@ -1,5 +1,6 @@
 {
   "author_id": "519965006867988490",
+  "ballot_id": "2026-10-09",
   "created_at": "2026-10-06T19:16:26Z",
   "kind": "suggestion",
   "last_message_id": "1557112924001276028",
@@ -46,7 +47,8 @@
       "text": "I tried that and putting in a negative number. Neither option worked."
     }
   ],
-  "status": "new",
+  "poll_message_id": "1558148276560072837",
+  "status": "voting",
   "thread_id": "1557109297739989002",
   "title": "Add a mass delete button to the province page",
   "url": "https://discord.com/channels/708006319658893385/1557109297739989002"

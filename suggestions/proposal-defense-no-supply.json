@@ -5,8 +5,12 @@
   "detail": "Josh's suggestion: being attacked first currently drains your supply and delays your counterattack.",
   "kind": "proposal",
   "poll_message_id": "1556457120873062513",
-  "status": "voting",
+  "status": "failed",
   "suggestion_id": "proposal-defense-no-supply",
   "title": "Should defending stop using up your war supply? (Only attacks would cost supply.)",
-  "url": null
+  "url": null,
+  "votes": {
+    "no": 12,
+    "yes": 3
+  }
 }

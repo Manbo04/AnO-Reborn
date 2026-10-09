@@ -1,5 +1,6 @@
 {
   "author_id": "204961091892019200",
+  "ballot_id": "2026-10-09",
   "created_at": "2026-10-06T21:50:21Z",
   "kind": "suggestion",
   "last_message_id": "1557148174563549217",
@@ -36,7 +37,8 @@
       "text": "Loan fee"
     }
   ],
-  "status": "new",
+  "poll_message_id": "1558148280695922790",
+  "status": "voting",
   "thread_id": "1557148032170991686",
   "title": "Loan fee",
   "url": "https://discord.com/channels/708006319658893385/1557148032170991686"

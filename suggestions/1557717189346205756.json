@@ -1,5 +1,6 @@
 {
   "author_id": "1180720719060029500",
+  "ballot_id": "2026-10-09",
   "created_at": "2026-10-08T11:31:58Z",
   "kind": "suggestion",
   "last_message_id": "1557799449240272927",
@@ -110,7 +111,8 @@
       "text": "(but yes, the dns banking system was genuinely good)"
     }
   ],
-  "status": "new",
+  "poll_message_id": "1558148292573921311",
+  "status": "voting",
   "thread_id": "1557717189346205756",
   "title": "Separate personal balances from bank balances.",
   "url": "https://discord.com/channels/708006319658893385/1557717189346205756"

@@ -5,8 +5,12 @@
   "detail": "Added Oct 4. Josh, Silent and Chel asked for it to be removed.",
   "kind": "proposal",
   "poll_message_id": "1556457110827565087",
-  "status": "voting",
+  "status": "passed",
   "suggestion_id": "proposal-remove-growth-freeze",
   "title": "Should we remove the 'no population growth' penalty (12h after losing a battle, 24h after being nuked) and only count the people actually killed?",
-  "url": null
+  "url": null,
+  "votes": {
+    "no": 3,
+    "yes": 14
+  }
 }

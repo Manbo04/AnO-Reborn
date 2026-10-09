@@ -1,5 +1,6 @@
 {
   "author_id": "204961091892019200",
+  "ballot_id": "2026-10-09",
   "created_at": "2026-10-05T08:30:57Z",
   "kind": "suggestion",
   "last_message_id": "1556786276643115121",
@@ -428,7 +429,8 @@
       "text": "I have a hard time displaying that information everywhere reliably"
     }
   ],
-  "status": "new",
+  "poll_message_id": "1558148249226059807",
+  "status": "voting",
   "thread_id": "1556584470830784632",
   "title": "Changes to population growth",
   "url": "https://discord.com/channels/708006319658893385/1556584470830784632"

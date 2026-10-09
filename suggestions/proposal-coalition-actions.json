@@ -5,8 +5,12 @@
   "detail": "andythewinterdog's suggestion.",
   "kind": "proposal",
   "poll_message_id": "1556457151034302475",
-  "status": "voting",
+  "status": "passed",
   "suggestion_id": "proposal-coalition-actions",
   "title": "Should coalitions get an Actions tab, including one-click embargo of a whole coalition?",
-  "url": null
+  "url": null,
+  "votes": {
+    "no": 1,
+    "yes": 18
+  }
 }

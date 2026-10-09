@@ -1,5 +1,6 @@
 {
   "author_id": "218061971809894400",
+  "ballot_id": "2026-10-09",
   "created_at": "2026-10-06T18:16:00Z",
   "kind": "suggestion",
   "last_message_id": "1557094932559302770",
@@ -66,7 +67,8 @@
       "text": "(and i just posted mine)"
     }
   ],
-  "status": "new",
+  "poll_message_id": "1558148268008153152",
+  "status": "voting",
   "thread_id": "1557094088946352148",
   "title": "Let us see our own orders in the Market",
   "url": "https://discord.com/channels/708006319658893385/1557094088946352148"

@@ -5,8 +5,12 @@
   "detail": "Unknown Identity's suggestion, so people know who runs which nation.",
   "kind": "proposal",
   "poll_message_id": "1556457160647643217",
-  "status": "voting",
+  "status": "passed",
   "suggestion_id": "proposal-discord-on-profile",
   "title": "Should players be able to show their Discord name on their nation page? (Opt-in, off by default.)",
-  "url": null
+  "url": null,
+  "votes": {
+    "no": 0,
+    "yes": 21
+  }
 }

@@ -2,8 +2,8 @@
   "author_id": "249007223454433292",
   "created_at": "2026-10-08T02:43:55Z",
   "kind": "bug",
-  "last_message_id": "1557941357685772391",
-  "last_player_message_at": "2026-10-09T02:22:44Z",
+  "last_message_id": "1558105581968035973",
+  "last_player_message_at": "2026-10-09T13:15:18Z",
   "messages": [
     {
       "at": "2026-10-08T02:43:55Z",
@@ -68,6 +68,100 @@
       "id": "1557941357685772391",
       "staff": true,
       "text": "We will reimburse your lost gas when it is fixed."
+    },
+    {
+      "at": "2026-10-09T08:50:45Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1558039005071675414",
+      "staff": false,
+      "text": "oic, thanks! TIL what the thumb means"
+    },
+    {
+      "at": "2026-10-09T08:52:12Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1558039370131312682",
+      "staff": true,
+      "text": "yeah sorry forgot to mention that lol"
+    },
+    {
+      "at": "2026-10-09T08:52:15Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1558039383490306079",
+      "staff": true,
+      "text": "I am wokring on it rn"
+    },
+    {
+      "at": "2026-10-09T10:45:44Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558067940719464489",
+      "staff": false,
+      "text": "<@249007223454433292> Iron Dome dismantle is fixed! It will correctly refund your resources now."
+    },
+    {
+      "at": "2026-10-09T10:48:33Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1558068649934458891",
+      "staff": false,
+      "text": "Thank you!"
+    },
+    {
+      "at": "2026-10-09T13:04:58Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1557584298633076776/1558102980438397008/image.png?ex=6aca37fa&is=6ac8e67a&hm=5c19c0d2fb380d02a27fda0902fe77d68e62154e12c45a51a4ba8e598a7f2fc2&"
+      ],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1558102980941840467",
+      "staff": false,
+      "text": "oops. still error"
+    },
+    {
+      "at": "2026-10-09T13:06:54Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1557584298633076776/1558103466440658994/image.png?ex=6aca386e&is=6ac8e6ee&hm=cc6ea28f70379c842c4bf152a23839c9ca74174684b205e20ba29a7252ddf4d9&"
+      ],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1558103466767945728",
+      "staff": false,
+      "text": "FYI, this is if I try to demolish 2"
+    },
+    {
+      "at": "2026-10-09T13:15:08Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1558105537197903933",
+      "staff": true,
+      "text": "Hmmm"
+    },
+    {
+      "at": "2026-10-09T13:15:18Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1558105581968035973",
+      "staff": true,
+      "text": "Yeah apologies it will take me a bit"
     }
   ],
   "thread_id": "1557584298633076776",

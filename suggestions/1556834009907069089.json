@@ -1,5 +1,6 @@
 {
   "author_id": "1043204044774183032",
+  "ballot_id": "2026-10-09",
   "created_at": "2026-10-06T01:02:32Z",
   "kind": "suggestion",
   "last_message_id": "1556834009907069089",
@@ -18,7 +19,8 @@
       "text": "Just another blue button. But it adds to the bank balance and not your personal balance."
     }
   ],
-  "status": "new",
+  "poll_message_id": "1558148262437978175",
+  "status": "voting",
   "thread_id": "1556834009907069089",
   "title": "Add \"Donate\" bank deposit option",
   "url": "https://discord.com/channels/708006319658893385/1556834009907069089"

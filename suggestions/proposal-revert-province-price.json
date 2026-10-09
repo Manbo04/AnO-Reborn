@@ -5,8 +5,12 @@
   "detail": "Added Oct 4 to stop province spam.",
   "kind": "proposal",
   "poll_message_id": "1556457115349033022",
-  "status": "voting",
+  "status": "failed",
   "suggestion_id": "proposal-revert-province-price",
   "title": "Should province prices go back to the old linear price (remove the +8% per province after the 20th)?",
-  "url": null
+  "url": null,
+  "votes": {
+    "no": 14,
+    "yes": 0
+  }
 }

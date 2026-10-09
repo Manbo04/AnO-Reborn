@@ -5,8 +5,12 @@
   "detail": "Players are split: some say free refunds make the beta easier to test, others say they're being abused.",
   "kind": "proposal",
   "poll_message_id": "1556457119098732585",
-  "status": "voting",
+  "status": "failed",
   "suggestion_id": "proposal-no-refunds",
   "title": "Should deleting buildings, cities or land stop refunding their cost? (Stops free biome swapping and shrinking yourself to dodge war ranges.)",
-  "url": null
+  "url": null,
+  "votes": {
+    "no": 9,
+    "yes": 8
+  }
 }

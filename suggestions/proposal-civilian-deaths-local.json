@@ -5,8 +5,12 @@
   "detail": "Right now winning attacks kill 0.1-0.3% (ground) or 0.2-0.6% (bombers) of the whole nation.",
   "kind": "proposal",
   "poll_message_id": "1556457112840966200",
-  "status": "voting",
+  "status": "passed",
   "suggestion_id": "proposal-civilian-deaths-local",
   "title": "Should civilian deaths from winning an attack hit only the province that was attacked, instead of a % of the whole nation?",
-  "url": null
+  "url": null,
+  "votes": {
+    "no": 2,
+    "yes": 14
+  }
 }

@@ -5,8 +5,12 @@
   "detail": "Kaiser's suggestion.",
   "kind": "proposal",
   "poll_message_id": "1556457148211404932",
-  "status": "voting",
+  "status": "passed",
   "suggestion_id": "proposal-drones-small-buildings",
   "title": "Should drones and cruise missiles be able to hit smaller buildings like mines and lumber mills, not just big factories?",
-  "url": null
+  "url": null,
+  "votes": {
+    "no": 1,
+    "yes": 17
+  }
 }

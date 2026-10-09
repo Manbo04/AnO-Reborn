@@ -5,8 +5,12 @@
   "detail": "Chel, Silent and Unknown Identity's suggestion. This is a big rework and would take a while.",
   "kind": "proposal",
   "poll_message_id": "1556457145644355739",
-  "status": "voting",
+  "status": "passed",
   "suggestion_id": "proposal-branch-points",
   "title": "Should war get separate ground / air / naval action points, plus entrenchment, intel and naval blockades (Diplomacy & Strife-style)?",
-  "url": null
+  "url": null,
+  "votes": {
+    "no": 3,
+    "yes": 14
+  }
 }

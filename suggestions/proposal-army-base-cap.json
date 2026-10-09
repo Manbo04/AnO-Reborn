@@ -5,8 +5,12 @@
   "detail": "Silent's point: right now one province can hold 50,000 army bases.",
   "kind": "proposal",
   "poll_message_id": "1556457134546354307",
-  "status": "voting",
+  "status": "failed",
   "suggestion_id": "proposal-army-base-cap",
   "title": "Should army bases have a limit per province, like other buildings?",
-  "url": null
+  "url": null,
+  "votes": {
+    "no": 10,
+    "yes": 6
+  }
 }

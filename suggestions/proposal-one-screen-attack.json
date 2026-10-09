@@ -5,8 +5,12 @@
   "detail": "Silent's suggestion.",
   "kind": "proposal",
   "poll_message_id": "1556457158252437576",
-  "status": "voting",
+  "status": "passed",
   "suggestion_id": "proposal-one-screen-attack",
   "title": "Should attacking happen from one screen per war (pick units, amounts and target in one place) instead of several pages?",
-  "url": null
+  "url": null,
+  "votes": {
+    "no": 1,
+    "yes": 18
+  }
 }

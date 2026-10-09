@@ -1,5 +1,6 @@
 {
   "author_id": "465912833352138768",
+  "ballot_id": "2026-10-09",
   "created_at": "2026-10-05T03:35:39Z",
   "kind": "suggestion",
   "last_message_id": "1556534657531510835",
@@ -42,7 +43,8 @@
       "text": "And you need supplies for nukes and icbm's"
     }
   ],
-  "status": "new",
+  "poll_message_id": "1558148241701212213",
+  "status": "voting",
   "thread_id": "1556510156542705795",
   "title": "Make Drones, Missiles, Nukes Lower Moral And Use Supply",
   "url": "https://discord.com/channels/708006319658893385/1556510156542705795"

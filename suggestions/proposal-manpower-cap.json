@@ -5,8 +5,12 @@
   "detail": "Chel's suggestion: e.g. 5% of your population can be soldiers in total.",
   "kind": "proposal",
   "poll_message_id": "1556457132830752809",
-  "status": "voting",
+  "status": "passed",
   "suggestion_id": "proposal-manpower-cap",
   "title": "Should army size be capped by population, with troops already in the field counting toward the cap?",
-  "url": null
+  "url": null,
+  "votes": {
+    "no": 4,
+    "yes": 13
+  }
 }

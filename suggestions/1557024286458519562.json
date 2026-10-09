@@ -1,5 +1,6 @@
 {
   "author_id": "1180720719060029500",
+  "ballot_id": "2026-10-09",
   "created_at": "2026-10-06T13:38:38Z",
   "kind": "suggestion",
   "last_message_id": "1557095619581968467",
@@ -79,7 +80,8 @@
       "text": "Also, maybe a sliding bar in the options menu to let us select how large gaps should be, so we can make things closer together. IDK about anyone else, maybe my screen is tiny, but it feels like most things are just really big and spaced out such that not much information is ever on the screen at one time, IE I have to scroll around a LOT for most things which aren't at the top of any given page."
     }
   ],
-  "status": "new",
+  "poll_message_id": "1558148265365602366",
+  "status": "voting",
   "thread_id": "1557024286458519562",
   "title": "Affairs and More Order (UI) - Sidebar/Topbar",
   "url": "https://discord.com/channels/708006319658893385/1557024286458519562"

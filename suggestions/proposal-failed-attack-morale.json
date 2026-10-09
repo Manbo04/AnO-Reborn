@@ -5,8 +5,12 @@
   "detail": "Josh's suggestion.",
   "kind": "proposal",
   "poll_message_id": "1556457123783770228",
-  "status": "voting",
+  "status": "passed",
   "suggestion_id": "proposal-failed-attack-morale",
   "title": "Should a failed attack stop costing the attacker morale? (Lets smaller nations wear down a bigger enemy.)",
-  "url": null
+  "url": null,
+  "votes": {
+    "no": 8,
+    "yes": 9
+  }
 }
