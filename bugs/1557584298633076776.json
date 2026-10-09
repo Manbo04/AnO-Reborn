@@ -2,8 +2,8 @@
   "author_id": "249007223454433292",
   "created_at": "2026-10-08T02:43:55Z",
   "kind": "bug",
-  "last_message_id": "1557584417000661052",
-  "last_player_message_at": "2026-10-08T02:44:23Z",
+  "last_message_id": "1557941357685772391",
+  "last_player_message_at": "2026-10-09T02:22:44Z",
   "messages": [
     {
       "at": "2026-10-08T02:43:55Z",
@@ -28,6 +28,46 @@
       "id": "1557584417000661052",
       "staff": false,
       "text": "But I can't dismantle it, and it supposedly costing me gasoline"
+    },
+    {
+      "at": "2026-10-09T02:08:02Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1557937657760194731",
+      "staff": false,
+      "text": "So I'm stuck with it?"
+    },
+    {
+      "at": "2026-10-09T02:21:54Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1557941145529622640",
+      "staff": true,
+      "text": "No the thumbs up is dede acknowledging it. It will be fixed soon."
+    },
+    {
+      "at": "2026-10-09T02:22:16Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1557941238181920809",
+      "staff": true,
+      "text": "Probably during the update this weekend. Possibly tomorrow."
+    },
+    {
+      "at": "2026-10-09T02:22:44Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1557941357685772391",
+      "staff": true,
+      "text": "We will reimburse your lost gas when it is fixed."
     }
   ],
   "thread_id": "1557584298633076776",
