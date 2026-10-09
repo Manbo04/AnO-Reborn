@@ -3,7 +3,7 @@
   "ballot_id": "2026-10-09",
   "created_at": "2026-10-05T14:46:00Z",
   "kind": "suggestion",
-  "last_message_id": "1556879132305002507",
+  "last_message_id": "1558148260542292021",
   "last_player_message_at": "2026-10-06T04:01:50Z",
   "messages": [
     {
@@ -87,6 +87,16 @@
       "id": "1556879132305002507",
       "staff": false,
       "text": "rather than decimals, I'd just make the non-food bank stuff eat (haha geddit) more power. Decimals give me tummy aches"
+    },
+    {
+      "at": "2026-10-09T16:04:54Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558148260542292021",
+      "staff": false,
+      "text": "<@218250058368417792> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1558148258864304230\nVoting closes <t:1792166400:F>. If Yes wins, it gets built."
     }
   ],
   "poll_message_id": "1558148258864304230",

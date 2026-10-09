@@ -3,7 +3,7 @@
   "ballot_id": "2026-10-09",
   "created_at": "2026-10-07T22:41:28Z",
   "kind": "suggestion",
-  "last_message_id": "1557845942831415297",
+  "last_message_id": "1558148287083843768",
   "last_player_message_at": "2026-10-08T20:03:36Z",
   "messages": [
     {
@@ -47,6 +47,16 @@
       "id": "1557845942831415297",
       "staff": false,
       "text": "You'd be using this tool design a province, before going to the mass build page to make the others like it"
+    },
+    {
+      "at": "2026-10-09T16:05:00Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558148287083843768",
+      "staff": false,
+      "text": "<@1043204044774183032> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1558148284554420305\nVoting closes <t:1792166400:F>. If Yes wins, it gets built."
     }
   ],
   "poll_message_id": "1558148284554420305",

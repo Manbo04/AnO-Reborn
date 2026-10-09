@@ -3,7 +3,7 @@
   "ballot_id": "2026-10-09",
   "created_at": "2026-10-06T21:50:21Z",
   "kind": "suggestion",
-  "last_message_id": "1557148174563549217",
+  "last_message_id": "1558148283187200081",
   "last_player_message_at": "2026-10-06T21:50:55Z",
   "messages": [
     {
@@ -35,6 +35,16 @@
       "id": "1557148174563549217",
       "staff": false,
       "text": "Loan fee"
+    },
+    {
+      "at": "2026-10-09T16:04:59Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558148283187200081",
+      "staff": false,
+      "text": "<@204961091892019200> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1558148280695922790\nVoting closes <t:1792166400:F>. If Yes wins, it gets built."
     }
   ],
   "poll_message_id": "1558148280695922790",

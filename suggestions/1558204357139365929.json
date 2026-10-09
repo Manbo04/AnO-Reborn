@@ -1,0 +1,23 @@
+{
+  "author_id": "1043204044774183032",
+  "created_at": "2026-10-09T19:47:48Z",
+  "kind": "suggestion",
+  "last_message_id": "1558204357139365929",
+  "last_player_message_at": "2026-10-09T19:47:48Z",
+  "messages": [
+    {
+      "at": "2026-10-09T19:47:48Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1558204357139365929",
+      "staff": false,
+      "text": "Under \"my offers\", display all past trades (could be 250 most recent or something if all time is too much.)\nThey can be filtered by resource, price, and/or date."
+    }
+  ],
+  "status": "new",
+  "thread_id": "1558204357139365929",
+  "title": "Add transaction history",
+  "url": "https://discord.com/channels/708006319658893385/1558204357139365929"
+}

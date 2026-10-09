@@ -3,7 +3,7 @@
   "ballot_id": "2026-10-09",
   "created_at": "2026-10-05T13:56:50Z",
   "kind": "suggestion",
-  "last_message_id": "1556666480668713020",
+  "last_message_id": "1558148257656602806",
   "last_player_message_at": "2026-10-05T13:56:50Z",
   "messages": [
     {
@@ -15,6 +15,16 @@
       "id": "1556666480668713020",
       "staff": false,
       "text": "Ok, so first of all rather than having everything work in terms of 1 unit of resource = 1kg, I think it would be better to just have resource costs and outputs just in in resource units (ie just get rid of the kg). \n\nBut anyway, basically the issue is that when posting sell orders on the market etc, its a big hassle to sell large amounts, simply because there are a LOT of zeros to type when making orders. I have 2kt of bauxite, for example. thats 2000t, or 2000000kg, 2000000000g of bauxite (which is what you'd think the number should be, kg = 1,000 g, which is the base unit). \n\n\nBasically, please let us use kg, t, kt, etc as suffixes when typing (ie, 500kt), and kt = x1,000,000 or however it works out with the units used. \n\nAlternatively go for regular units and it can be k, m, b, t, q etc for thousand, million, billion, trillion etc. \n\nJust as long as I don't have to manually type a ton of 0s I'm happy pretty much."
+    },
+    {
+      "at": "2026-10-09T16:04:53Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558148257656602806",
+      "staff": false,
+      "text": "<@218061971809894400> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1558148254959534258\nVoting closes <t:1792166400:F>. If Yes wins, it gets built."
     }
   ],
   "poll_message_id": "1558148254959534258",

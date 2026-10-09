@@ -3,7 +3,7 @@
   "ballot_id": "2026-10-09",
   "created_at": "2026-10-08T11:31:58Z",
   "kind": "suggestion",
-  "last_message_id": "1557799449240272927",
+  "last_message_id": "1558148294729797743",
   "last_player_message_at": "2026-10-08T16:58:51Z",
   "messages": [
     {
@@ -109,6 +109,16 @@
       "id": "1557799449240272927",
       "staff": false,
       "text": "(but yes, the dns banking system was genuinely good)"
+    },
+    {
+      "at": "2026-10-09T16:05:02Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558148294729797743",
+      "staff": false,
+      "text": "<@1180720719060029500> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1558148292573921311\nVoting closes <t:1792166400:F>. If Yes wins, it gets built."
     }
   ],
   "poll_message_id": "1558148292573921311",

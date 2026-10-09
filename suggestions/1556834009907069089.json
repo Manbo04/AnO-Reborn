@@ -3,8 +3,8 @@
   "ballot_id": "2026-10-09",
   "created_at": "2026-10-06T01:02:32Z",
   "kind": "suggestion",
-  "last_message_id": "1556834009907069089",
-  "last_player_message_at": "2026-10-06T01:02:32Z",
+  "last_message_id": "1558202531081887808",
+  "last_player_message_at": "2026-10-09T19:40:33Z",
   "messages": [
     {
       "at": "2026-10-06T01:02:32Z",
@@ -17,6 +17,26 @@
       "id": "1556834009907069089",
       "staff": false,
       "text": "Just another blue button. But it adds to the bank balance and not your personal balance."
+    },
+    {
+      "at": "2026-10-09T16:04:55Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558148263968768037",
+      "staff": false,
+      "text": "<@1043204044774183032> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1558148262437978175\nVoting closes <t:1792166400:F>. If Yes wins, it gets built."
+    },
+    {
+      "at": "2026-10-09T19:40:33Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1558202531081887808",
+      "staff": false,
+      "text": "It was already added lmao"
     }
   ],
   "poll_message_id": "1558148262437978175",

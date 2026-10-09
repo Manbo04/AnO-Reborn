@@ -3,7 +3,7 @@
   "ballot_id": "2026-10-09",
   "created_at": "2026-10-05T13:13:36Z",
   "kind": "suggestion",
-  "last_message_id": "1556655602455810138",
+  "last_message_id": "1558148253562699879",
   "last_player_message_at": "2026-10-05T13:13:36Z",
   "messages": [
     {
@@ -15,6 +15,16 @@
       "id": "1556655602455810138",
       "staff": false,
       "text": "Would love other people to contribute to this as well but some info I think is important to show the player is\n\n- Why unrest is growing/decreasing. This one is extremely important as it has huge consequences, and mine seemingly grows and decreases on a whim with no clear reasons why.\n\n- Economic info in a province, such as unemployed people, open jobs"
+    },
+    {
+      "at": "2026-10-09T16:04:52Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558148253562699879",
+      "staff": false,
+      "text": "<@465912833352138768> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1558148252346359829\nVoting closes <t:1792166400:F>. If Yes wins, it gets built."
     }
   ],
   "poll_message_id": "1558148252346359829",
