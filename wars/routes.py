@@ -2328,11 +2328,11 @@ def _strike_news(db, attacker_id, target_id, attacker_msg, defender_msg):
     target_name = row[0] if row else "Unknown"
     db.execute(
         "INSERT INTO news (destination_id, message) VALUES (%s, %s)",
-        (attacker_id, attacker_msg.format(target_name=target_name)),
+        (attacker_id, attacker_msg.replace("{target_name}", target_name)),
     )
     db.execute(
         "INSERT INTO news (destination_id, message) VALUES (%s, %s)",
-        (target_id, defender_msg.format(attacker_name=attacker_name)),
+        (target_id, defender_msg.replace("{attacker_name}", attacker_name)),
     )
 
 
