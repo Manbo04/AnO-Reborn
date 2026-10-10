@@ -7,7 +7,6 @@ These functions are intentionally small and unit-testable so the large
 from typing import Dict, Tuple
 
 from attack_scripts.nations_helpers import calculate_bonuses
-from database import get_db_cursor
 
 
 def compute_user_army_strength(user_id: int) -> float:
@@ -16,6 +15,7 @@ def compute_user_army_strength(user_id: int) -> float:
     Strength uses the average of `base_attack` and `base_defense` per unit,
     multiplied by the owned quantity.
     """
+    from database import get_db_cursor
     with get_db_cursor() as db:
         db.execute(
             """
@@ -149,14 +149,18 @@ def compute_morale_delta(
 ) -> int:
     """Compute the morale delta for the loser based on unit composition.
 
-    Returns an integer delta (clamped 1..200) — matches the behaviour in
-    `Nations.fight` but is now testable in isolation.
+    A failed attack no longer costs the attacker morale: when the attacker
+    loses (winner_is_defender is True), returns 0.
+    When the defender loses (winner_is_defender is False), returns clamped 1..200.
     """
+    if winner_is_defender:
+        return 0
+
     attacker_strength = compute_strength(attacker_units)
     defender_strength = compute_strength(defender_units)
 
     advantage = attacker_strength / (attacker_strength + defender_strength + 1e-9)
-    advantage_factor = 1.0 - advantage if winner_is_defender else advantage
+    advantage_factor = advantage
 
     base_loser_value = 0.0
     for unit_name, count in (loser_units or {}).items():

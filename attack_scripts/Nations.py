@@ -893,6 +893,7 @@ class Military(Nation):
         )
 
         setattr(loser, "_computed_morale_delta", computed_morale_delta)
+        setattr(loser, "_attacker_lost", winner_is_defender)
 
         # Expose advantage for potential telemetry/debugging (keeps parity)
         attacker_strength = compute_strength(attacker.selected_units)
@@ -950,6 +951,7 @@ class Military(Nation):
             morale_column,
             computed_morale_delta,
             win_type,
+            attacker_lost=winner_is_defender,
         )
 
         # infrastructure damage (code commented out - connection removed)

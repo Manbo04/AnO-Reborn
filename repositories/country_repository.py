@@ -1,6 +1,7 @@
 from database import get_request_cursor
 from psycopg2.extras import RealDictCursor
 from influence_formula import influence_subquery_sql
+from wars.war_range import unit_weight_case_sql
 
 class CountryRepository:
     @staticmethod
@@ -16,7 +17,9 @@ class CountryRepository:
         per_page: int,
         search_filter: str,
         params: list,
-        coalition_src: str
+        coalition_src: str,
+        min_strength: float = None,
+        max_strength: float = None
     ) -> tuple:
         with get_request_cursor(read_only=True) as db:
             filter_sql = f"""
@@ -35,6 +38,7 @@ class CountryRepository:
                         COALESCE(p.provinces_count, 0) AS provinces_count,
                         u.join_number,
                         COALESCE(inf.influence, 0) AS influence,
+                        (COALESCE(p.province_population, 0) / 1000.0 + COALESCE(mil.mil_strength, 0)) AS strength,
                         COALESCE(EXTRACT(EPOCH FROM (CASE WHEN u.date ~ '^\\d{{4}}-\\d{{2}}-\\d{{2}}' THEN u.date ELSE '1970-01-01' END)::timestamp)::bigint, 0) AS unix
                     FROM users u
                     JOIN user_ids ui ON u.id = ui.id
@@ -46,6 +50,12 @@ class CountryRepository:
                         FROM provinces
                         WHERE userid = u.id
                     ) p ON true
+                    LEFT JOIN LATERAL (
+                        SELECT COALESCE(SUM(um.quantity * {unit_weight_case_sql()}), 0) AS mil_strength
+                        FROM user_military um
+                        JOIN unit_dictionary ud ON um.unit_id = ud.unit_id
+                        WHERE um.user_id = u.id
+                    ) mil ON true
                     LEFT JOIN {influence_subquery_sql("SELECT id FROM user_ids")} inf
                         ON inf.user_id = u.id
                     LEFT JOIN {coalition_src} cm ON cm.userid = u.id
@@ -56,16 +66,14 @@ class CountryRepository:
 
             range_filter = ""
             if province_range > 0:
-                # Regression from the country_repository migration (d2a3506a): the
-                # pre-refactor SQL used `provinces_count >= %s` (a floor -- can't war
-                # someone with far fewer provinces than you), which the refactor
-                # silently flipped to `<=`, inverting the filter. Restored per
-                # tests/test_countries_page.py::test_province_range_filtering.
                 range_filter += " AND provinces_count >= %s"
                 params.append(province_range)
             if upperinf is not None and lowerinf is not None and upperinf > 0 and lowerinf > 0:
                 range_filter += " AND influence >= %s AND influence <= %s"
                 params.extend([lowerinf, upperinf])
+            if min_strength is not None and max_strength is not None:
+                range_filter += " AND strength >= %s AND strength <= %s"
+                params.extend([min_strength, max_strength])
 
             count_query = f"SELECT COUNT(*) FROM ({filter_sql} {range_filter}) AS subquery"
             db.execute(count_query, params)
@@ -80,8 +88,12 @@ class CountryRepository:
             
             offset = (page - 1) * per_page
             
+            # Explicit columns: templates unpack exactly these 11 (strength is
+            # only used for filtering/sorting).
             final_query = f"""
-                SELECT * FROM ({filter_sql} {range_filter}) AS subquery
+                SELECT id, username, date, flag, province_population, colid, name,
+                       provinces_count, join_number, influence, unix
+                FROM ({filter_sql} {range_filter}) AS subquery
                 ORDER BY {sort_column} {sort_direction}, id {sort_direction}
                 LIMIT %s OFFSET %s
             """

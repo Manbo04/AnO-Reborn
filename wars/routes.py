@@ -397,7 +397,7 @@ def war_with_id(war_id):
             (
                 "SELECT id, attacker, defender, war_type, agressor_message, "
                 "peace_date, attacker_supplies, attacker_morale, "
-                "defender_supplies, defender_morale FROM wars WHERE id=(%s)"
+                "defender_supplies, defender_morale, start_date FROM wars WHERE id=(%s)"
             ),
             (war_id,),
         )
@@ -417,6 +417,7 @@ def war_with_id(war_id):
             attacker_morale,
             defender_supplies,
             defender_morale,
+            start_date,
         ) = war
 
         if peace_date:
@@ -484,6 +485,9 @@ def war_with_id(war_id):
             successChance = 100
         else:
             successChance = spyCount * spyPrep / eSpyCount / eDefcon
+        from app_core.game_ticks.war_expiry import format_war_auto_end
+        auto_end_text = format_war_auto_end(start_date)
+
         return render_template(
             template,
             attacker_flag=attacker_flag,
@@ -502,6 +506,7 @@ def war_with_id(war_id):
             successChance=successChance,
             peace_to_send=enemy_id,
             repeat_attack=_repeat_attack_ctx(war_id),
+            auto_end_text=auto_end_text,
         )
 
 
@@ -1370,41 +1375,17 @@ def declare_war():
             )
             if db.fetchone():
                 return error(400, "You're already in a war with this country!")
-            # Query provinces count directly using the current cursor to avoid
-            # nested DB contexts which have previously caused cursor closure errors.
-            db.execute(
-                "SELECT COUNT(id) FROM provinces WHERE userId=%s", (attacker.id,)
-            )
-            attacker_row = db.fetchone()
-            attacker_provinces = (attacker_row[0] or 0) if attacker_row else 0
-            db.execute(
-                "SELECT COUNT(id) FROM provinces WHERE userId=%s", (defender.id,)
-            )
-            defender_row = db.fetchone()
-            defender_provinces = (defender_row[0] or 0) if defender_row else 0
+            from wars.war_range import get_user_war_strength, in_war_range, format_war_range_error
+
+            attacker_strength = get_user_war_strength(db, attacker.id)
+            defender_strength = get_user_war_strength(db, defender.id)
             logger.debug(
-                "declare_war: attacker_provinces=%s defender_provinces=%s",
-                attacker_provinces,
-                defender_provinces,
+                "declare_war: attacker_strength=%s defender_strength=%s",
+                attacker_strength,
+                defender_strength,
             )
-            if attacker_provinces - defender_provinces > 1:
-                return error(
-                    400,
-                    (
-                        "That country has too few provinces for you! You can only "
-                        "declare war on countries within 3 provinces more or 1 "
-                        "less province than you."
-                    ),
-                )
-            if defender_provinces - attacker_provinces > 3:
-                return error(
-                    400,
-                    (
-                        "That country has too many provinces for you! You can only "
-                        "declare war on countries within 3 provinces more or 1 "
-                        "less province than you."
-                    ),
-                )
+            if not in_war_range(attacker_strength, defender_strength):
+                return error(400, format_war_range_error(attacker_strength))
             # Check most recent peace date between the two nations
             db.execute(
                 (
@@ -1660,7 +1641,7 @@ def wars():
                     db.execute(
                         (
                             "SELECT id, attacker_morale, attacker_supplies, "
-                            "defender_morale, defender_supplies "
+                            "defender_morale, defender_supplies, start_date "
                             "FROM wars WHERE id IN (" + war_placeholders + ")"
                         ),
                         tuple(war_ids),
@@ -1681,6 +1662,8 @@ def wars():
                         for row in db.fetchall()
                     }
 
+                    from app_core.game_ticks.war_expiry import format_war_auto_end
+
                     for war_id, defender, attacker in war_attacker_defender_ids:
                         # NOTE: supply regen now happens in global_tick's war_supply_regen
                         # phase (app_core/game_ticks/maintenance.py); skip here
@@ -1698,7 +1681,7 @@ def wars():
                         attacker_info["id"] = attacker
                         attacker_info["flag"] = att_data["flag"]
 
-                        details = war_details.get(war_id, (100, 0, 100, 0))
+                        details = war_details.get(war_id, (100, 0, 100, 0, 0))
                         attacker_info["morale"] = details[0]
                         attacker_info["supplies"] = details[1]
 
@@ -1708,7 +1691,14 @@ def wars():
                         defender_info["morale"] = details[2]
                         defender_info["supplies"] = details[3]
 
-                        war_info[war_id] = {"att": attacker_info, "def": defender_info}
+                        start_d = details[4] if len(details) > 4 else None
+                        auto_end_text = format_war_auto_end(start_d)
+
+                        war_info[war_id] = {
+                            "att": attacker_info,
+                            "def": defender_info,
+                            "auto_end_text": auto_end_text,
+                        }
             except Exception:
                 rollback_db_cursor(db)
                 war_attacker_defender_ids = []
@@ -1798,79 +1788,85 @@ def wars():
 def find_targets():
     cId = session["user_id"]
     if request.method == "GET":
+        from wars.war_range import get_user_war_strength, war_range_bounds, in_war_range
+
         with get_request_cursor() as db:
-            db.execute("SELECT COUNT(id) FROM provinces WHERE userid=%s", (cId,))
-            provinces_row = db.fetchone()
-            user_provinces = provinces_row[0] if provinces_row else 0
-            min_provinces = max(0, user_provinces - 3)
-            max_provinces = user_provinces + 1
-            user_influence = get_influence(cId)
-            # Choose a sensible search range around the player's influence.
-            # For very new/low-influence players, expand the max_influence so
-            # they still see potential targets (otherwise max would be 0 and
-            # filter out viable targets).
-            min_influence = max(0.0, user_influence * 0.9)
-            max_influence = max(user_influence * 2.0, 100.0)
-            # Influence comes from the shared formula (influence_formula);
-            # this used to be a separate military-only copy that drifted.
-            query = (
-                "SELECT users.id, users.username, users.flag, "
-                "COUNT(provinces.id) AS provinces_count, "
-                "COALESCE(MAX(inf.influence), 0) AS influence "
-                "FROM users "
-                "LEFT JOIN provinces ON users.id = provinces.userId "
-                "LEFT JOIN "
-                + influence_subquery_sql("SELECT id FROM users WHERE id != %s")
-                + " inf ON inf.user_id = users.id "
-                "WHERE users.id != %s "
-                "GROUP BY users.id, users.username, users.flag "
-                "HAVING COUNT(provinces.id) BETWEEN %s AND %s "
-                # Influence range in SQL, BEFORE the limit: filtering it in
-                # Python after LIMIT 50 hid most valid targets (233 of 289
-                # nations share the 0-1 province band; only the first 50
-                # alphabetically were ever considered).
-                "AND COALESCE(MAX(inf.influence), 0) BETWEEN %s AND %s "
-                "ORDER BY users.username "
-                "LIMIT 50"
-            )
-            db.execute(
-                query,
-                (cId, cId, min_provinces, max_provinces, min_influence, max_influence),
-            )
+            user_strength = get_user_war_strength(db, cId)
+            min_strength, max_strength = war_range_bounds(user_strength)
+
+            query = """
+                SELECT
+                    u.id,
+                    u.username,
+                    u.flag,
+                    COALESCE(p.provinces_count, 0) AS provinces_count,
+                    COALESCE(p.province_population, 0) AS population,
+                    (COALESCE(p.province_population, 0) / 1000.0 + COALESCE(mil.mil_strength, 0)) AS strength
+                FROM users u
+                LEFT JOIN LATERAL (
+                    SELECT
+                        COUNT(id) AS provinces_count,
+                        COALESCE(SUM(population), 0) AS province_population
+                    FROM provinces
+                    WHERE userid = u.id
+                ) p ON true
+                LEFT JOIN LATERAL (
+                    SELECT COALESCE(SUM(um.quantity * CASE LOWER(ud.name)
+                        WHEN 'soldiers' THEN 1
+                        WHEN 'tanks' THEN 40
+                        WHEN 'artillery' THEN 30
+                        WHEN 'sam_batteries' THEN 35
+                        WHEN 'fighters' THEN 60
+                        WHEN 'bombers' THEN 70
+                        WHEN 'apaches' THEN 50
+                        WHEN 'destroyers' THEN 120
+                        WHEN 'cruisers' THEN 200
+                        WHEN 'submarines' THEN 150
+                        WHEN 'aircraft_carriers' THEN 250
+                        WHEN 'kamikaze_drones' THEN 5
+                        WHEN 'cruise_missiles' THEN 100
+                        WHEN 'icbms' THEN 500
+                        WHEN 'nukes' THEN 2000
+                        ELSE 0 END), 0) AS mil_strength
+                    FROM user_military um
+                    JOIN unit_dictionary ud ON um.unit_id = ud.unit_id
+                    WHERE um.user_id = u.id
+                ) mil ON true
+                WHERE u.id != %s
+                  AND (COALESCE(p.province_population, 0) / 1000.0 + COALESCE(mil.mil_strength, 0)) BETWEEN %s AND %s
+                ORDER BY u.username
+                LIMIT 50
+            """
+            db.execute(query, (cId, min_strength, max_strength))
             targets = db.fetchall()
+
         targets_list = []
         for target in targets:
-            tid, tname, tflag, tprovinces, tinfluence = target
+            tid, tname, tflag, tprovinces, tpop, tstrength = target
             tflag = tflag or "default_flag.jpg"
-            if min_influence <= tinfluence <= max_influence:
-                targets_list.append(
-                    {
-                        "id": tid,
-                        "username": tname,
-                        "flag": tflag,
-                        "provinces": tprovinces,
-                        "influence": tinfluence,
-                    }
-                )
+            targets_list.append(
+                {
+                    "id": tid,
+                    "username": tname,
+                    "flag": tflag,
+                    "provinces": tprovinces,
+                    "strength": float(tstrength),
+                }
+            )
 
         # Handle filtering
         search = request.args.get("search", "").strip()
-        sort = request.args.get("sort", "influence")
+        sort = request.args.get("sort", "strength")
         sortway = request.args.get("sortway", "desc")
-
-        # Limit to 20 results after filtering and sorting
-        # (apply the slice after sort and search are applied so we don't drop
-        # candidates prematurely)
-        # the slice will be performed after sorting below
 
         if search:
             targets_list = [
                 t for t in targets_list if search.lower() in (t["username"] or "").lower()
             ]
 
-        if sort == "influence":
+        if sort == "strength":
             rev = sortway == "desc"
-            targets_list.sort(key=lambda x: x["influence"], reverse=rev)
+            targets_list.sort(key=lambda x: x["strength"], reverse=rev)
         elif sort == "provinces":
             rev = sortway == "desc"
             targets_list.sort(key=lambda x: x["provinces"], reverse=rev)
@@ -1882,7 +1878,13 @@ def find_targets():
         targets_list = targets_list[:20]
 
         template = "find_targets_v2.html" if is_theme_v2_enabled("find_targets") else "find_targets.html"
-        return render_template(template, targets=targets_list)
+        return render_template(
+            template,
+            targets=targets_list,
+            user_strength=user_strength,
+            min_strength=min_strength,
+            max_strength=max_strength,
+        )
     # POST - find a target by id or username and redirect
     defender_raw = request.form.get("defender")
     if not defender_raw:

@@ -89,6 +89,24 @@ Rules:
 
 ## 4. War
 
+- **War range by strength** (`wars/war_range.py`): Wars can only be declared
+  against nations whose military + population strength is between 75% and 133% of
+  the attacker's (`WAR_RANGE_LOW = 0.75`, `WAR_RANGE_HIGH = 1.33`). Strength is
+  `population / 1000 + sum(unit_count * weight)`. Allies joining an existing war
+  remain exempt. 🔒 `tests/test_war_range.py`
+- **7-day automatic war expiry** (`app_core/game_ticks/war_expiry.py`): Wars
+  automatically end after 7 days if still active (hourly tick). Concludes as
+  white peace with no reparations or winner, and notifies both combatants via
+  news. 🔒 `tests/test_war_expiry.py`
+- **Attacker battle morale**: When an attacker loses a combat engagement, the
+  attacker suffers 0 morale loss. Defenders who lose continue to suffer normal
+  morale penalties. 🔒 `tests/test_war_morale.py`
+- **Army size manpower cap** (`app_core/military/manpower.py`): Total army manpower
+  across all owned units (including troops currently fighting) cannot exceed
+  `MANPOWER_SHARE = 10%` of working-age population (`pop_working`, fallback `population`).
+  Units require crew (soldiers 1, tanks 4, artillery 3, fighters 2, bombers 3,
+  apaches 2, destroyers 100, cruisers 300, submarines 60; missiles/nukes/spies 0).
+  Over-cap nations cannot recruit further until under cap. 🔒 `tests/test_manpower_cap.py`
 - **Supply**: attacker *and* defender pay unit supply from their own pool; a
   defender can only field what its supply covers (`wars/supply.py`).
 - **Aftermath**: won ground/bomber attacks kill civilians nation-wide; bombers also

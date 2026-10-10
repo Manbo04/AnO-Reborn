@@ -115,7 +115,7 @@
 
     <div class="templatedivcontent">
         {% if win_condition != None %}
-        <span class="battle-intensity" data-tippy-content="<strong>Battle intensity: {{win_condition}}</strong><br>&bull; <em>Close victory</em> &rarr; loser's morale drops 5<br>&bull; <em>Definite victory</em> &rarr; drops 10<br>&bull; <em>Annihilation</em> &rarr; drops 15&ndash;20<br>Starting morale is 100. War ends when a side hits 0 &mdash; the winner loots 20% (or 30% with Looting Teams upgrade) of every enemy resource except gold, silver, diamonds and bullion.<br><br><a href='/mechanics/war' style='color:#4da8da;text-decoration:underline;'>&#128214; War mechanics</a>">
+        <span class="battle-intensity" data-tippy-content="<strong>Battle intensity: {{win_condition}}</strong><br>&bull; <em>Attacker victory</em> &rarr; defender's morale drops 5 (Close), 10 (Definite), 15&ndash;20 (Annihilation)<br>&bull; <em>Defender victory</em> &rarr; attacker loses 0 morale<br>Starting morale is 100. War ends when a side hits 0 &mdash; the winner loots 20% (or 30% with Looting Teams upgrade) of every enemy resource except gold, silver, diamonds and bullion.<br><br><a href='/mechanics/war' style='color:#4da8da;text-decoration:underline;'>&#128214; War mechanics</a>">
             <span class="material-icons-outlined">info</span> Battle intensity: <strong>{{win_condition}}</strong>
         </span>
         {% endif %}

@@ -183,6 +183,7 @@ def persist_fight_results(
     morale_column: str,
     computed_morale_delta: Optional[float] = None,
     win_type: Optional[int] = None,
+    attacker_lost: bool = False,
 ) -> str:
     """Persist casualties and morale change for a single fight.
 
@@ -192,6 +193,7 @@ def persist_fight_results(
     - morale_column: column name in `wars` to decrement on the loser side
     - computed_morale_delta: optional precomputed morale delta (preferred)
     - win_type: numeric win severity (used as fallback if delta not provided)
+    - attacker_lost: bool indicating if the attacker was the loser
 
     Returns the human-readable win condition string ("annihilation", etc.).
     """
@@ -238,9 +240,18 @@ def persist_fight_results(
             db.execute(sel, (war_id,))
             current = fetchone_first(db, 0) or 0
 
-            # (Legacy compatibility) The old code checked if `win_type >= 4`
-            # and applied fixed morale drops instead of `computed_morale_delta`.
-            if win_type is not None:
+            # Rule B3: A failed attack no longer costs the attacker morale.
+            # If the attacker lost, attacker morale does not drop (morale_delta = 0).
+            # "Attacker" = whoever launched THIS battle (counter-attacks
+            # included), not the war's original aggressor (morale_column).
+            is_attacker_loss = bool(
+                attacker_lost or getattr(loser, "_attacker_lost", False)
+            )
+            if is_attacker_loss:
+                morale_delta = 0
+            elif win_type is not None:
+                # (Legacy compatibility) The old code checked if `win_type >= 4`
+                # and applied fixed morale drops instead of `computed_morale_delta`.
                 if win_type >= 4:
                     morale_delta = 20
                 elif win_type >= 3:
@@ -250,7 +261,7 @@ def persist_fight_results(
                 else:
                     morale_delta = 5
             else:
-                morale_delta = int(computed_morale_delta)
+                morale_delta = int(computed_morale_delta or 0)
 
             new_morale = current - int(morale_delta)
 
@@ -413,6 +424,14 @@ def morale_change(column, win_type, winner, loser):
     # Preserve signature/behavior by delegating to persist_fight_results.
     # (the `computed_morale_delta` is expected to be attached to `loser` by callers)
     computed = getattr(loser, "_computed_morale_delta", None)
+    attacker_lost = bool(getattr(loser, "_attacker_lost", False))
     return persist_fight_results(
-        winner, loser, [], [], column, computed_morale_delta=computed, win_type=win_type
+        winner,
+        loser,
+        [],
+        [],
+        column,
+        computed_morale_delta=computed,
+        win_type=win_type,
+        attacker_lost=attacker_lost,
     )

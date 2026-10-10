@@ -19,6 +19,11 @@ def military():
         with get_request_cursor() as db:
             units_dict, units_active = get_user_units_with_stats(db, cId)
             manpower, _ = get_manpower_and_gold(db, cId)
+            from app_core.military.manpower import get_user_manpower_data
+            mp_data = get_user_manpower_data(db, cId)
+            manpower_used = mp_data["used"]
+            manpower_cap = mp_data["cap"]
+            manpower_free = mp_data["free"]
             stockpile = get_user_stockpile(db, cId)
             limits = compute_display_limits(cId, db, units_dict, stockpile)
             upgrades = get_upgrades(cId, db=db)  # Reuse cursor
@@ -32,6 +37,9 @@ def military():
             upgrades=upgrades,
             mildict=MILDICT,
             manpower=manpower,
+            manpower_used=manpower_used,
+            manpower_cap=manpower_cap,
+            manpower_free=manpower_free,
             stockpile=stockpile,
         )
 

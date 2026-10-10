@@ -34,7 +34,7 @@ class CountryService:
             return False
 
     @staticmethod
-    def get_countries_paginated(cId, search, lowerinf, upperinf, province_range, sort, sortway, page, per_page):
+    def get_countries_paginated(cId, search, lowerinf, upperinf, province_range, sort, sortway, page, per_page, min_strength=None, max_strength=None):
         # Default sort
         if not sort:
             sort = "influence"
@@ -58,6 +58,8 @@ class CountryService:
             "age": "date",
             "population": "province_population",
             "provinces": "provinces_count",
+            "war_range": "strength",
+            "strength": "strength",
         }
         sort_column = sort_map.get(sort, "influence")
         sort_direction = "DESC" if sortway == "desc" else "ASC"
@@ -77,7 +79,9 @@ class CountryService:
             per_page=per_page,
             search_filter=search_filter,
             params=params,
-            coalition_src=coalition_src
+            coalition_src=coalition_src,
+            min_strength=min_strength,
+            max_strength=max_strength,
         )
 
         return {

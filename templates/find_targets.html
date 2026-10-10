@@ -23,21 +23,21 @@
 
         <h2 class="templatecontentheaderleft">Potential War Targets</h2>
         <p class="templatecontentpleft landingpagecontent">
-            Browse potential war targets filtered by province count and influence. Use the filters below to sort and search.
+            Browse potential war targets near your strength. Your strength: <b>{{ "%.1f"|format(user_strength or 0) }}</b> (War range: <b>{{ "%.1f"|format(min_strength or 0) }}</b> &ndash; <b>{{ "%.1f"|format(max_strength or 0) }}</b>).
         </p>
         <form action="/find_targets" method="GET">
             <div class="templatedivflex2 divflex2full">
                 <div class="templatedivflex2left">
                     <select name="sort" class="templateselect">
-                        <option value="influence">Influence</option>
-                        <option value="provinces">Provinces</option>
-                        <option value="username">Name</option>
+                        <option value="strength" {% if request.args.get('sort') == 'strength' %}selected{% endif %}>Strength</option>
+                        <option value="provinces" {% if request.args.get('sort') == 'provinces' %}selected{% endif %}>Provinces</option>
+                        <option value="username" {% if request.args.get('sort') == 'username' %}selected{% endif %}>Name</option>
                     </select>
                 </div>
                 <div class="templatedivflex2right">
                     <select name="sortway" class="templateselect">
-                        <option value="desc">Descending</option>
-                        <option value="asc">Ascending</option>
+                        <option value="desc" {% if request.args.get('sortway') == 'desc' %}selected{% endif %}>Descending</option>
+                        <option value="asc" {% if request.args.get('sortway') == 'asc' %}selected{% endif %}>Ascending</option>
                     </select>
                 </div>
                 <div class="templatedivflex2left">
@@ -58,7 +58,7 @@
                     <div>
                         <a href="/country/id={{ target.id }}" class="templatelink">{{ target.username }}</a>
                         <br>
-                        Provinces: {{ target.provinces }} | Influence: {{ "%.2f"|format(target.influence) }}
+                        Provinces: {{ target.provinces }} | Strength: {{ "%.1f"|format(target.strength) }}
                     </div>
                 </div>
                 <div class="templatedivflex2right">
