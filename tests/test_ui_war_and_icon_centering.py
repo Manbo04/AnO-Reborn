@@ -73,7 +73,7 @@ def test_war_v2_attacker_rendering(app):
         assert "400 / 2000 Supplies" in html
 
         # Action attack button
-        assert 'href="/warchoose/77"' in html
+        assert 'href="/war/77/attack"' in html
         assert "Attack" in html
 
         # Espionage form
