@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-10T18:25:03Z",
   "delivered_nonce": "199d207e73694276b8e9978a6ecacc1a",
   "kind": "bug",
-  "last_message_id": "1558544517135859753",
-  "last_player_message_at": "2026-10-10T18:19:29Z",
+  "last_message_id": "1558574724626391145",
+  "last_player_message_at": "2026-10-10T20:19:31Z",
   "messages": [
     {
       "at": "2026-10-08T02:43:55Z",
@@ -214,6 +214,36 @@
       "id": "1558544517135859753",
       "staff": true,
       "text": "Sorry for the double ping"
+    },
+    {
+      "at": "2026-10-10T18:25:03Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558545917601255496",
+      "staff": false,
+      "text": "<@249007223454433292> found it, dismantling domes crashed because of a database check, so it never refunded anything. fixed (dismantling 1 or more works now), should be live within the hour. the gasoline you lost to the extra dome is a staff thing, they said they'd sort it"
+    },
+    {
+      "at": "2026-10-10T18:26:52Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1558546376663765245",
+      "staff": true,
+      "text": "Triple ping?"
+    },
+    {
+      "at": "2026-10-10T20:19:31Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1558574724626391145",
+      "staff": false,
+      "text": "Can we get a quad?"
     }
   ],
   "thread_id": "1557584298633076776",

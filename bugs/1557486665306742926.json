@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-10T18:25:02Z",
   "delivered_nonce": "f43b0069f12f428ba6a087162650ed11",
   "kind": "bug",
-  "last_message_id": "1558544389863772201",
+  "last_message_id": "1558545915592052872",
   "last_player_message_at": "2026-10-07T20:15:57Z",
   "messages": [
     {
@@ -57,6 +57,16 @@
       "author_id": "1447272377896669236",
       "bot": true,
       "id": "1558544389863772201",
+      "staff": false,
+      "text": "<@204961091892019200> money now shows up in spy reports (fixed, should be live within the hour). the small lumber/cg differences are just because the report is a snapshot of the moment the op ran, production and consumption keep moving after that"
+    },
+    {
+      "at": "2026-10-10T18:25:02Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558545915592052872",
       "staff": false,
       "text": "<@204961091892019200> money now shows up in spy reports (fixed, should be live within the hour). the small lumber/cg differences are just because the report is a snapshot of the moment the op ran, production and consumption keep moving after that"
     }

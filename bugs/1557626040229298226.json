@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-10T18:25:03Z",
   "delivered_nonce": "bb3a4fbee5204ab69cea437969739023",
   "kind": "bug",
-  "last_message_id": "1558544877904728156",
-  "last_player_message_at": "2026-10-10T18:20:55Z",
+  "last_message_id": "1558546120731394079",
+  "last_player_message_at": "2026-10-10T18:25:51Z",
   "messages": [
     {
       "at": "2026-10-08T05:29:47Z",
@@ -58,6 +58,26 @@
       "id": "1558544877904728156",
       "staff": true,
       "text": "Hermano🙏"
+    },
+    {
+      "at": "2026-10-10T18:25:03Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558545919694086286",
+      "staff": false,
+      "text": "<@1166065212537970722> found it, small building stacks could go negative when a strike hit them and that crashed the launch. fixed, should be live within the hour. try launching again after that"
+    },
+    {
+      "at": "2026-10-10T18:25:51Z",
+      "attachments": [],
+      "author": "𝕿𝖍𝖊_𝖐𝖆𝖎𝖘𝖊𝖗",
+      "author_id": "1166065212537970722",
+      "bot": false,
+      "id": "1558546120731394079",
+      "staff": true,
+      "text": "Man"
     }
   ],
   "thread_id": "1557626040229298226",

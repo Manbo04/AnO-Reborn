@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-10T18:25:04Z",
   "delivered_nonce": "438c386aa7764f30a655b1a4f6455883",
   "kind": "bug",
-  "last_message_id": "1558544822934053054",
-  "last_player_message_at": "2026-10-10T18:20:42Z",
+  "last_message_id": "1558545987860045865",
+  "last_player_message_at": "2026-10-10T18:25:19Z",
   "messages": [
     {
       "at": "2026-10-08T05:35:18Z",
@@ -116,6 +116,26 @@
       "id": "1558544822934053054",
       "staff": true,
       "text": "I already readed that the first time"
+    },
+    {
+      "at": "2026-10-10T18:25:03Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558545921002709033",
+      "staff": false,
+      "text": "<@1166065212537970722> looked at the battle code. when the defender has none of their units in their defense lineup (the 3 unit types set as defense), only a citizen militia fights: you still win, but the militia kills a few of your units and the enemy loses no units or morale. so if his 2k infantry weren't in his defense setup, that's what you saw. attack again and check the report. if you think the lineup did include infantry, tell me the exact battle report text"
+    },
+    {
+      "at": "2026-10-10T18:25:19Z",
+      "attachments": [],
+      "author": "𝕿𝖍𝖊_𝖐𝖆𝖎𝖘𝖊𝖗",
+      "author_id": "1166065212537970722",
+      "bot": false,
+      "id": "1558545987860045865",
+      "staff": true,
+      "text": "STOP"
     }
   ],
   "thread_id": "1557627427998535690",

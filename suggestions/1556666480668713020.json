@@ -3,8 +3,8 @@
   "ballot_id": "2026-10-09",
   "created_at": "2026-10-05T13:56:50Z",
   "kind": "suggestion",
-  "last_message_id": "1558148257656602806",
-  "last_player_message_at": "2026-10-05T13:56:50Z",
+  "last_message_id": "1558597197954809950",
+  "last_player_message_at": "2026-10-10T21:48:49Z",
   "messages": [
     {
       "at": "2026-10-05T13:56:50Z",
@@ -25,6 +25,46 @@
       "id": "1558148257656602806",
       "staff": false,
       "text": "<@218061971809894400> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1558148254959534258\nVoting closes <t:1792166400:F>. If Yes wins, it gets built."
+    },
+    {
+      "at": "2026-10-10T21:36:42Z",
+      "attachments": [],
+      "author": "hillbilly/South Appalachia/2660",
+      "author_id": "218211365062574081",
+      "bot": false,
+      "id": "1558594147391242281",
+      "staff": false,
+      "text": "Not to be redundant, but I would prefer the k, m, b, t, q instead of the kg, t, kt. Just plain numbers. K=thousands, M= million, B = billion, etc..."
+    },
+    {
+      "at": "2026-10-10T21:38:56Z",
+      "attachments": [],
+      "author": "hillbilly/South Appalachia/2660",
+      "author_id": "218211365062574081",
+      "bot": false,
+      "id": "1558594709520130081",
+      "staff": false,
+      "text": "Can't vote yet cuz the vote includes kt. What is kt. Million? Why not just M for million?"
+    },
+    {
+      "at": "2026-10-10T21:48:31Z",
+      "attachments": [],
+      "author": "hillbilly/South Appalachia/2660",
+      "author_id": "218211365062574081",
+      "bot": false,
+      "id": "1558597124717936691",
+      "staff": false,
+      "text": "Same for the resource tab. Would it be possible to present the resources and manufactured goods in k, m, b, t, etc... to represent thousands, millions, billions, trillions, etc..."
+    },
+    {
+      "at": "2026-10-10T21:48:49Z",
+      "attachments": [],
+      "author": "hillbilly/South Appalachia/2660",
+      "author_id": "218211365062574081",
+      "bot": false,
+      "id": "1558597197954809950",
+      "staff": false,
+      "text": "Or just plain old ordinary numbers."
     }
   ],
   "poll_message_id": "1558148254959534258",

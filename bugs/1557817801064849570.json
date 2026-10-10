@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-10T18:25:04Z",
   "delivered_nonce": "58247b4f24634d96b80a90e0c1018b06",
   "kind": "bug",
-  "last_message_id": "1558544396582916147",
-  "last_player_message_at": "2026-10-10T17:22:28Z",
+  "last_message_id": "1558546009355722936",
+  "last_player_message_at": "2026-10-10T18:25:25Z",
   "messages": [
     {
       "at": "2026-10-08T18:11:46Z",
@@ -88,6 +88,26 @@
       "id": "1558544396582916147",
       "staff": false,
       "text": "<@1002628734932762755> primary schools were the real bottleneck, they only seated 500 each. they seat 1000 now so 1 primary : 1 high school fills the high school's 900. should be live within the hour"
+    },
+    {
+      "at": "2026-10-10T18:25:04Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558545923288866846",
+      "staff": false,
+      "text": "<@1002628734932762755> primary schools were the real bottleneck, they only seated 500 each. they seat 1000 now so 1 primary : 1 high school fills the high school's 900. should be live within the hour"
+    },
+    {
+      "at": "2026-10-10T18:25:25Z",
+      "attachments": [],
+      "author": "Kurai",
+      "author_id": "1002628734932762755",
+      "bot": false,
+      "id": "1558546009355722936",
+      "staff": true,
+      "text": "Yes thank you"
     }
   ],
   "thread_id": "1557817801064849570",

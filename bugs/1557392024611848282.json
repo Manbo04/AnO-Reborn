@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-10T18:25:02Z",
   "delivered_nonce": "d2e542106c124ad0a8970c5193b2fde3",
   "kind": "bug",
-  "last_message_id": "1558544388081192991",
+  "last_message_id": "1558545913645899990",
   "last_player_message_at": "2026-10-07T16:30:04Z",
   "messages": [
     {
@@ -96,6 +96,16 @@
       "author_id": "1447272377896669236",
       "bot": true,
       "id": "1558544388081192991",
+      "staff": false,
+      "text": "<@297362383226142720> yeah, right now an attack sends your whole stack of that domain, so a very big army can run into the supply limit. choosing how many units to send isn't a bug fix, it's a change to how attacks work, so post it in #suggestions and it'll go on the next ballot"
+    },
+    {
+      "at": "2026-10-10T18:25:02Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558545913645899990",
       "staff": false,
       "text": "<@297362383226142720> yeah, right now an attack sends your whole stack of that domain, so a very big army can run into the supply limit. choosing how many units to send isn't a bug fix, it's a change to how attacks work, so post it in #suggestions and it'll go on the next ballot"
     }

@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-10T18:25:05Z",
   "delivered_nonce": "47b612cc1a2944548386e232069efa79",
   "kind": "bug",
-  "last_message_id": "1558544398717952051",
+  "last_message_id": "1558545925750792278",
   "last_player_message_at": "2026-10-10T15:33:45Z",
   "messages": [
     {
@@ -54,6 +54,16 @@
       "author_id": "1447272377896669236",
       "bot": true,
       "id": "1558544398717952051",
+      "staff": false,
+      "text": "<@465912833352138768> found it, the upkeep discount was applied in the real hourly charge but the expenses breakdown didn't show it, so it looked like nothing changed. the expenses page now shows the -30% on industrial buildings too. should be live within the hour"
+    },
+    {
+      "at": "2026-10-10T18:25:05Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558545925750792278",
       "staff": false,
       "text": "<@465912833352138768> found it, the upkeep discount was applied in the real hourly charge but the expenses breakdown didn't show it, so it looked like nothing changed. the expenses page now shows the -30% on industrial buildings too. should be live within the hour"
     }
