@@ -72,6 +72,10 @@ Rules:
 - Double-spend races are closed with row locks / conditional updates / advisory
   locks; every money action that can be double-clicked has a race test
   (`tests/test_*_no_double_*.py`, `*_no_replay.py`).
+- **Embargoes**:
+  - **Nation embargoes** (`embargoes` table): blocks public market purchases and direct trade offers between the two nations in both directions.
+  - **Coalition embargoes** (`coalition_embargoes` table): enacted or lifted by coalition leadership (`leader`, `deputy_leader`, `foreign_ambassador`) via the Actions tab. Blocks all trades between any member of the embargoing coalition and any member of the target coalition. Applied dynamically at trade check points without per-nation row duplication, so joining or leaving a coalition takes effect immediately. 🔒 `tests/test_coalition_embargo_logic.py`
+
 
 ## 3. Population
 
