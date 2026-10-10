@@ -882,12 +882,14 @@ def country(cId):
             bounty_total = get_open_bounty_total_for_target(db, cId)
 
     is_embargoed_by_viewer = False
+    coalition_embargo_reason = None
     if viewer_id and str(viewer_id) != str(cId):
         from database import get_request_cursor
-        from app_core.market.repositories import is_embargoed
+        from app_core.market.repositories import is_embargoed, get_coalition_embargo_block
 
         with get_request_cursor(read_only=True) as db:
             is_embargoed_by_viewer = is_embargoed(db, viewer_id, cId)
+            coalition_embargo_reason = get_coalition_embargo_block(db, viewer_id, cId)
 
     # Central bank (national currency) status -- only meaningful/shown for
     # the owner's own view, same viewer_id == cId check the blocks above use.
@@ -957,6 +959,7 @@ def country(cId):
         treaty_types=treaty_types,
         treaty_type_labels=treaty_type_labels,
         is_embargoed_by_viewer=is_embargoed_by_viewer,
+        coalition_embargo_reason=coalition_embargo_reason,
         achievements=all_achievements,
         currency_status=currency_status,
         **data

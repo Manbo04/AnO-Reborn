@@ -14,6 +14,12 @@ from .repositories import (
     role_can_see,
     member_shares_with_coalition,
     can_view_member_revenue,
+    is_coalition_embargoed,
+    add_coalition_embargo,
+    remove_coalition_embargo,
+    list_coalition_embargoes,
+    list_coalitions_embargoing,
+    post_coalition_members_news,
 )
 from .services import _no_coalition_response
 
@@ -768,6 +774,32 @@ def coalition(coalition_id):
             except Exception:
                 rollback_db_cursor(db)
 
+        # Coalition embargoes data
+        embargoed_coalitions = list_coalition_embargoes(db, coalition_id)
+        embargoing_coalitions = list_coalitions_embargoing(db, coalition_id)
+        viewer_coalition_id = None
+        viewer_coalition_name = None
+        viewer_role = None
+        viewer_is_leader = False
+        is_embargoed_by_viewer_coalition = False
+        target_is_embargoing_viewer = False
+
+        if cId:
+            viewer_coalition_id = _coalition_id_for_user(db, cId)
+            if viewer_coalition_id:
+                viewer_role = get_user_role(cId)
+                viewer_is_leader = viewer_role in ["leader", "deputy_leader", "foreign_ambassador"]
+                db.execute("SELECT name FROM colNames WHERE id=%s", (viewer_coalition_id,))
+                col_row = db.fetchone()
+                viewer_coalition_name = col_row[0] if col_row else None
+                if int(viewer_coalition_id) != int(coalition_id):
+                    is_embargoed_by_viewer_coalition = is_coalition_embargoed(
+                        db, viewer_coalition_id, coalition_id
+                    )
+                    target_is_embargoing_viewer = is_coalition_embargoed(
+                        db, coalition_id, viewer_coalition_id
+                    )
+
         template = "coalition_v2.html" if is_theme_v2_enabled("coalition") else "coalition.html"
         return render_template(
             template,
@@ -775,6 +807,14 @@ def coalition(coalition_id):
             colId=coalition_id,
             coalition_id=coalition_id,
             user_role=user_role,
+            embargoed_coalitions=embargoed_coalitions,
+            embargoing_coalitions=embargoing_coalitions,
+            viewer_coalition_id=viewer_coalition_id,
+            viewer_coalition_name=viewer_coalition_name,
+            viewer_role=viewer_role,
+            viewer_is_leader=viewer_is_leader,
+            is_embargoed_by_viewer_coalition=is_embargoed_by_viewer_coalition,
+            target_is_embargoing_viewer=target_is_embargoing_viewer,
             description=description,
             colType=colType,
             userInCol=userInCol,
@@ -3084,6 +3124,114 @@ def member_revenue(coalition_id, member_id):
     )
 
 
+def embargo_coalition(coalition_id):
+    """Place a coalition-level embargo on target coalition_id."""
+    cId = session["user_id"]
+    try:
+        target_id = int(coalition_id)
+    except (ValueError, TypeError):
+        return error(400, "Invalid coalition ID")
+
+    with get_request_cursor() as db:
+        user_coalition = _coalition_id_for_user(db, cId)
+        if not user_coalition:
+            return _no_coalition_response()
+
+        if user_coalition == target_id:
+            return error(400, "You cannot embargo your own coalition")
+
+        user_role = get_user_role(cId)
+        if user_role not in ["leader", "deputy_leader", "foreign_ambassador"]:
+            return error(403, "Only coalition leadership can enact a coalition embargo")
+
+        db.execute("SELECT name FROM colNames WHERE id=%s", (target_id,))
+        target_row = db.fetchone()
+        if not target_row:
+            return error(404, "Target coalition does not exist")
+        target_name = target_row[0]
+
+        db.execute("SELECT name FROM colNames WHERE id=%s", (user_coalition,))
+        user_col_row = db.fetchone()
+        user_col_name = user_col_row[0] if user_col_row else f"Coalition {user_coalition}"
+
+        add_coalition_embargo(db, user_coalition, target_id, cId)
+
+        post_coalition_members_news(
+            db,
+            user_coalition,
+            f"Your coalition ({user_col_name}) has placed a trade embargo on {target_name}.",
+        )
+        post_coalition_members_news(
+            db,
+            target_id,
+            f"{user_col_name} has placed a trade embargo on your coalition ({target_name}).",
+        )
+
+        from app_core.world_affairs.services import log_event
+        log_event(
+            db,
+            "coalition_embargo",
+            f"The {user_col_name} coalition has placed a trade embargo on the {target_name} coalition.",
+        )
+
+    flash(f"Trade embargo placed on {target_name}.")
+    return redirect(f"/coalition/{target_id}#actions")
+
+
+def lift_coalition_embargo(coalition_id):
+    """Lift an existing coalition-level embargo on target coalition_id."""
+    cId = session["user_id"]
+    try:
+        target_id = int(coalition_id)
+    except (ValueError, TypeError):
+        return error(400, "Invalid coalition ID")
+
+    with get_request_cursor() as db:
+        user_coalition = _coalition_id_for_user(db, cId)
+        if not user_coalition:
+            return _no_coalition_response()
+
+        user_role = get_user_role(cId)
+        if user_role not in ["leader", "deputy_leader", "foreign_ambassador"]:
+            return error(403, "Only coalition leadership can lift a coalition embargo")
+
+        db.execute("SELECT name FROM colNames WHERE id=%s", (target_id,))
+        target_row = db.fetchone()
+        if not target_row:
+            return error(404, "Target coalition does not exist")
+        target_name = target_row[0]
+
+        db.execute("SELECT name FROM colNames WHERE id=%s", (user_coalition,))
+        user_col_row = db.fetchone()
+        user_col_name = user_col_row[0] if user_col_row else f"Coalition {user_coalition}"
+
+        remove_coalition_embargo(db, user_coalition, target_id)
+
+        post_coalition_members_news(
+            db,
+            user_coalition,
+            f"Your coalition ({user_col_name}) has lifted its trade embargo on {target_name}.",
+        )
+        post_coalition_members_news(
+            db,
+            target_id,
+            f"{user_col_name} has lifted its trade embargo on your coalition ({target_name}).",
+        )
+
+        from app_core.world_affairs.services import log_event
+        log_event(
+            db,
+            "coalition_embargo_lifted",
+            f"The {user_col_name} coalition has lifted its trade embargo on the {target_name} coalition.",
+        )
+
+    flash(f"Trade embargo lifted on {target_name}.")
+    referer = request.referrer or ""
+    if f"/coalition/{user_coalition}" in referer or "/my_coalition" in referer:
+        return redirect(f"/coalition/{user_coalition}#actions")
+    return redirect(f"/coalition/{target_id}#actions")
+
+
 def register_coalitions_routes(app_instance):
     """Register all coalition routes after app initialization to avoid circular imports"""
 
@@ -3289,4 +3437,16 @@ def register_coalitions_routes(app_instance):
     )
     app_instance.add_url_rule(
         "/decline_treaty/<offer_id>", view_func=decline_treaty_wrapped, methods=["POST"]
+    )
+    embargo_coalition_wrapped = login_required(require_post_origin(embargo_coalition))
+    lift_coalition_embargo_wrapped = login_required(require_post_origin(lift_coalition_embargo))
+    app_instance.add_url_rule(
+        "/coalition/<int:coalition_id>/embargo",
+        view_func=embargo_coalition_wrapped,
+        methods=["POST"],
+    )
+    app_instance.add_url_rule(
+        "/coalition/<int:coalition_id>/lift_embargo",
+        view_func=lift_coalition_embargo_wrapped,
+        methods=["POST"],
     )

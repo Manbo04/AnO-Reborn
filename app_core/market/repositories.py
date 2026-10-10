@@ -380,13 +380,165 @@ def get_exchange_issuers(db, exclude_user_id):
     return {row[0] for row in db.fetchall()}
 
 def get_embargo_partners(db, user_id):
-    """Nations the user embargoes or is embargoed by (either direction)."""
+    """Nations the user embargoes or is embargoed by (either direction),
+    including members of coalitions under mutual coalition embargoes."""
     db.execute(
         "SELECT embargoed_id FROM market_embargoes WHERE embargoer_id=%s "
         "UNION SELECT embargoer_id FROM market_embargoes WHERE embargoed_id=%s",
         (user_id, user_id),
     )
-    return {row[0] for row in db.fetchall()}
+    partners = {row[0] for row in db.fetchall()}
+    # Members of coalitions under a coalition embargo (either direction).
+    partners |= get_coalition_embargo_partners(db, user_id)
+    return partners
+
+
+def get_coalition_embargo_partners(db, user_id):
+    """User IDs blocked specifically due to coalition-level embargoes."""
+    partners = set()
+    try:
+        from app_core.coalitions.repositories import (
+            _coalition_id_for_user,
+            _members_tbl,
+            coalition_embargoes_table_exists,
+        )
+        if coalition_embargoes_table_exists(db):
+            user_col = _coalition_id_for_user(db, user_id)
+            if user_col:
+                db.execute(
+                    "SELECT ce.target_coalition_id FROM coalition_embargoes ce WHERE ce.embargoer_coalition_id = %s "
+                    "UNION SELECT ce.embargoer_coalition_id FROM coalition_embargoes ce WHERE ce.target_coalition_id = %s",
+                    (user_col, user_col),
+                )
+                col_partners = [r[0] for r in db.fetchall()]
+                if col_partners:
+                    members_tbl = _members_tbl()
+                    db.execute(
+                        f"SELECT userid FROM {members_tbl} WHERE colid = ANY(%s)",
+                        (col_partners,),
+                    )
+                    for r in db.fetchall():
+                        partners.add(r[0])
+    except Exception:
+        pass
+    return partners
+
+
+def get_coalition_embargo_block(db, user_a_id, user_b_id):
+    """If trade between user_a_id and user_b_id is blocked by a coalition embargo,
+    returns a human-readable reason string, else None."""
+    if not user_a_id or not user_b_id or user_a_id == user_b_id:
+        return None
+    try:
+        from app_core.coalitions.repositories import (
+            _coalition_id_for_user,
+            coalition_embargoes_table_exists,
+        )
+        if not coalition_embargoes_table_exists(db):
+            return None
+        col_a = _coalition_id_for_user(db, user_a_id)
+        col_b = _coalition_id_for_user(db, user_b_id)
+        if not col_a or not col_b or col_a == col_b:
+            return None
+
+        db.execute(
+            "SELECT ce.embargoer_coalition_id, c1.name, ce.target_coalition_id, c2.name "
+            "FROM coalition_embargoes ce "
+            "JOIN colNames c1 ON c1.id = ce.embargoer_coalition_id "
+            "JOIN colNames c2 ON c2.id = ce.target_coalition_id "
+            "WHERE (ce.embargoer_coalition_id=%s AND ce.target_coalition_id=%s) "
+            "   OR (ce.embargoer_coalition_id=%s AND ce.target_coalition_id=%s)",
+            (col_a, col_b, col_b, col_a),
+        )
+        row = db.fetchone()
+        if row:
+            embargoer_id, embargoer_name, target_id, target_name = row
+            return (
+                f"Trade blocked by coalition embargo: "
+                f"{embargoer_name} has placed an embargo on {target_name}."
+            )
+    except Exception:
+        return None
+    return None
+
+
+def trade_blocked(a_id, b_id, nation_embargoes, coalition_of, coalition_embargoes) -> bool:
+    """Pure function checking if trade between a_id and b_id is blocked.
+
+    Args:
+        a_id: Nation/User ID A.
+        b_id: Nation/User ID B.
+        nation_embargoes: collection of (embargoer_id, target_id) pairs,
+            or dict mapping embargoer_id -> iterable of target_ids.
+        coalition_of: mapping (dict or callable) from nation_id -> coalition_id.
+        coalition_embargoes: collection of (embargoer_col_id, target_col_id) pairs,
+            or dict mapping embargoer_col_id -> iterable of target_col_ids.
+
+    Returns:
+        True if trade is blocked in either direction, False otherwise.
+    """
+    if a_id == b_id:
+        return False
+
+    # 1. Nation-level embargo check (either direction)
+    if nation_embargoes:
+        if isinstance(nation_embargoes, dict):
+            if b_id in nation_embargoes.get(a_id, ()) or a_id in nation_embargoes.get(b_id, ()):
+                return True
+        else:
+            if (a_id, b_id) in nation_embargoes or (b_id, a_id) in nation_embargoes:
+                return True
+
+    # 2. Coalition-level embargo check (either direction)
+    if coalition_of and coalition_embargoes:
+        col_a = coalition_of(a_id) if callable(coalition_of) else coalition_of.get(a_id)
+        col_b = coalition_of(b_id) if callable(coalition_of) else coalition_of.get(b_id)
+
+        if col_a and col_b and col_a != col_b:
+            if isinstance(coalition_embargoes, dict):
+                if col_b in coalition_embargoes.get(col_a, ()) or col_a in coalition_embargoes.get(col_b, ()):
+                    return True
+            else:
+                if (col_a, col_b) in coalition_embargoes or (col_b, col_a) in coalition_embargoes:
+                    return True
+
+    return False
+
+
+def trade_block_reason(a_id, b_id, nation_embargoes, coalition_of, coalition_embargoes):
+    """Pure function returning a human-readable reason string if trade is blocked, else None."""
+    if a_id == b_id:
+        return None
+
+    if nation_embargoes:
+        if isinstance(nation_embargoes, dict):
+            if b_id in nation_embargoes.get(a_id, ()):
+                return f"Nation-level embargo: nation {a_id} has embargoed nation {b_id}."
+            if a_id in nation_embargoes.get(b_id, ()):
+                return f"Nation-level embargo: nation {b_id} has embargoed nation {a_id}."
+        else:
+            if (a_id, b_id) in nation_embargoes:
+                return f"Nation-level embargo: nation {a_id} has embargoed nation {b_id}."
+            if (b_id, a_id) in nation_embargoes:
+                return f"Nation-level embargo: nation {b_id} has embargoed nation {a_id}."
+
+    if coalition_of and coalition_embargoes:
+        col_a = coalition_of(a_id) if callable(coalition_of) else coalition_of.get(a_id)
+        col_b = coalition_of(b_id) if callable(coalition_of) else coalition_of.get(b_id)
+
+        if col_a and col_b and col_a != col_b:
+            if isinstance(coalition_embargoes, dict):
+                if col_b in coalition_embargoes.get(col_a, ()):
+                    return f"Coalition embargo: coalition {col_a} has embargoed coalition {col_b}."
+                if col_a in coalition_embargoes.get(col_b, ()):
+                    return f"Coalition embargo: coalition {col_b} has embargoed coalition {col_a}."
+            else:
+                if (col_a, col_b) in coalition_embargoes:
+                    return f"Coalition embargo: coalition {col_a} has embargoed coalition {col_b}."
+                if (col_b, col_a) in coalition_embargoes:
+                    return f"Coalition embargo: coalition {col_b} has embargoed coalition {col_a}."
+
+    return None
 
 MARKET_PREFERENCE_DEFAULTS = {
     "default_resource": None,

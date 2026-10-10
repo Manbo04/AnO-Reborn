@@ -122,9 +122,9 @@
                 <tr>
                     <!-- Type -->
                     {% if type == "buy" %}
-                    <td>Buying to <a href="/country/id={{ offeree }}">{{ name }}</a></td>
+                    <td>Buying to <a href="/country/id={{ offeree }}">{{ name }}</a>{% if coalition_embargo_partners and offeree in coalition_embargo_partners %} <span class="game-badge" style="background:rgba(239,68,68,0.2);color:var(--colorRed);margin-left:4px;" title="Trade blocked by coalition embargo">Coalition Embargo</span>{% endif %}</td>
                     {% elif type == "sell" %}
-                    <td>Selling to <a href="/country/id={{ offeree }}">{{ name }}</a></td>
+                    <td>Selling to <a href="/country/id={{ offeree }}">{{ name }}</a>{% if coalition_embargo_partners and offeree in coalition_embargo_partners %} <span class="game-badge" style="background:rgba(239,68,68,0.2);color:var(--colorRed);margin-left:4px;" title="Trade blocked by coalition embargo">Coalition Embargo</span>{% endif %}</td>
                     {% endif %}
 
                     <!-- Resource -->
@@ -214,10 +214,10 @@
                 <tr>
                     <!-- Type -->
                     {% if type == "buy" %}
-                    <td>Buying from <a href="/country/id={{ offerer_id }}">{{ name }}</a>
+                    <td>Buying from <a href="/country/id={{ offerer_id }}">{{ name }}</a>{% if coalition_embargo_partners and offerer_id in coalition_embargo_partners %} <span class="game-badge" style="background:rgba(239,68,68,0.2);color:var(--colorRed);margin-left:4px;" title="Trade blocked by coalition embargo">Coalition Embargo</span>{% endif %}
                     </td>
                     {% elif type == "sell" %}
-                    <td>Selling from <a href="/country/id={{ offerer_id }}">{{ name }}</a>
+                    <td>Selling from <a href="/country/id={{ offerer_id }}">{{ name }}</a>{% if coalition_embargo_partners and offerer_id in coalition_embargo_partners %} <span class="game-badge" style="background:rgba(239,68,68,0.2);color:var(--colorRed);margin-left:4px;" title="Trade blocked by coalition embargo">Coalition Embargo</span>{% endif %}
                     </td> {% endif %}
 
                     <!-- Resource -->
@@ -272,7 +272,7 @@
                         <form method="POST">
                             <div class="templatedivflex2 divflex2center">
                                 <div class="templatedivflex2left">
-                                    <button type="submit" formaction="/accept_trade/{{ offer_id }}" class="material-icons iconblue">
+                                    <button type="submit" formaction="/accept_trade/{{ offer_id }}" class="material-icons iconblue" {% if coalition_embargo_partners and offerer_id in coalition_embargo_partners %}disabled title="Trade blocked by coalition embargo" style="opacity:0.4;cursor:not-allowed;"{% endif %}>
                                         check_circle_outline
                                     </button>
                                 </div>

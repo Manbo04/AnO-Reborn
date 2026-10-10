@@ -2443,6 +2443,12 @@
 
         <form method="POST">
             <div class="infodiv ">
+                {% if coalition_embargo_reason %}
+                <div style="margin-bottom: 12px; padding: 10px 14px; background: rgba(239, 68, 68, 0.1); border-left: 3px solid var(--colorRed); border-radius: 4px;">
+                    <span class="material-icons-outlined" style="vertical-align:middle;color:var(--colorRed);font-size:1.1em;">block</span>
+                    <strong>Trade Blocked:</strong> {{ coalition_embargo_reason }}
+                </div>
+                {% endif %}
                 <div class="templatedivflex2 divflex2center ">
                     <div class="templatedivflex2left flexchildvanilla ">
 
@@ -2493,7 +2499,7 @@
                 <div class="templatedivflex2 divflex2center ">
                     <div class="templatedivflex2left ">
 
-                        <button type="submit" formaction="/post_trade_offer/buy/{{ cId }}" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined ">
+                        <button type="submit" formaction="/post_trade_offer/buy/{{ cId }}" class="templatedivbutton templatecenteredbutton" {% if coalition_embargo_reason %}disabled title="{{ coalition_embargo_reason }}" style="opacity:0.5;cursor:not-allowed;"{% endif %}><span class="material-icons-outlined ">
                             payments
                             </span>Buy offer</button>
 
@@ -2501,7 +2507,7 @@
 
                     <div class="templatedivflex2left ">
 
-                        <button formaction="/post_trade_offer/sell/{{ cId }}" type="submit" value="Submit" class="templatedivbutton templatecenteredbutton "><span class="material-icons-outlined ">
+                        <button formaction="/post_trade_offer/sell/{{ cId }}" type="submit" value="Submit" class="templatedivbutton templatecenteredbutton " {% if coalition_embargo_reason %}disabled title="{{ coalition_embargo_reason }}" style="opacity:0.5;cursor:not-allowed;"{% endif %}><span class="material-icons-outlined ">
                             payments
                             </span>Sell Offer</button>
 

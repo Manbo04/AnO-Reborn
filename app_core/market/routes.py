@@ -14,7 +14,7 @@ from .repositories import (
     get_user_gold, get_user_resource_quantities, get_my_currency_ids,
     get_active_resources, get_resource_book, get_exchange_issuers, get_embargo_partners,
     get_market_preferences, upsert_market_preferences, record_market_fill,
-    get_last_fill_prices,
+    get_last_fill_prices, get_coalition_embargo_block, get_coalition_embargo_partners,
 )
 from .fees import trade_fee, trade_fee_percent, union_partner_ids, max_affordable_amount
 from .services import give_resource, report_trade_error
@@ -71,6 +71,9 @@ def _book_row(row, cId, ctx):
     else:
         # The viewer sells into this offer: capped by their stock.
         take = min(amount, ctx["my_resources"].get(resource, 0))
+    is_col_embargoed = user_id in ctx.get("coalition_embargo_partners", ())
+    if is_col_embargoed:
+        take = 0
     tag = classify_offer_currency(currency_id, cId, ctx["my_currency"], ctx["exchange_issuers"])
     return {
         "offer_id": offer_id,
@@ -89,6 +92,8 @@ def _book_row(row, cId, ctx):
         "tag_short": TAG_SHORT[tag],
         "max_take": max(0, take),
         "fee_percent": pct,
+        "coalition_embargo_blocked": is_col_embargoed,
+        "embargo_reason": "Trade blocked by coalition embargo" if is_col_embargoed else "",
     }
 
 
@@ -143,6 +148,7 @@ def market():
             "union_partners": union_partner_ids(db, cId),
             "exchange_issuers": get_exchange_issuers(db, cId) if currency_ids else set(),
             "labels": get_currency_labels(db, currency_ids | {cId} | set(my_currency)),
+            "coalition_embargo_partners": get_coalition_embargo_partners(db, cId),
         }
         embargo_partners = get_embargo_partners(db, cId) if prefs["hide_embargoed"] else set()
 
@@ -258,6 +264,13 @@ def buy_market_offer(offer_id):
 
         if is_embargoed(db, seller_id, cId):
             return error(403, "This nation has embargoed you and will not sell to you.")
+
+        if is_embargoed(db, cId, seller_id):
+            return error(403, "You have embargoed this nation and cannot trade with them.")
+
+        col_block = get_coalition_embargo_block(db, seller_id, cId)
+        if col_block:
+            return error(403, col_block)
 
         db.execute(
             "SELECT 1 FROM assembly_effects WHERE target_nation_id IN (%s, %s)"
@@ -379,6 +392,13 @@ def sell_market_offer(offer_id):
 
         if is_embargoed(db, buyer_id, seller_id):
             return error(403, "This nation has embargoed you and will not buy from you.")
+
+        if is_embargoed(db, seller_id, buyer_id):
+            return error(403, "You have embargoed this nation and cannot trade with them.")
+
+        col_block = get_coalition_embargo_block(db, buyer_id, seller_id)
+        if col_block:
+            return error(403, col_block)
 
         db.execute(
             "SELECT 1 FROM assembly_effects WHERE target_nation_id IN (%s, %s)"
@@ -625,6 +645,7 @@ def my_offers():
         offers["incoming"] = incoming
         offers["market"] = get_my_offers(db, cId)
         embargoes = list_embargoes(db, cId)
+        col_partners = get_coalition_embargo_partners(db, cId)
         offer_cur, trade_cur = get_my_currency_ids(db, cId)
         labels = get_currency_labels(db, list(offer_cur.values()) + list(trade_cur.values()))
 
@@ -633,6 +654,7 @@ def my_offers():
         template, cId=cId, offers=offers, embargoes=embargoes,
         offer_currency={k: labels.get(v, "currency") for k, v in offer_cur.items()},
         trade_currency={k: labels.get(v, "currency") for k, v in trade_cur.items()},
+        coalition_embargo_partners=col_partners,
     )
 
 @market_bp.route("/delete_offer/<offer_id>", methods=["POST"])
@@ -688,6 +710,14 @@ def post_trade_offer(offer_type, offeree_id):
         if offeree_int > MAX_TRADE_INT or not user_exists(db, offeree_int):
             return error(404, "That nation does not exist")
         offeree_id = str(offeree_int)
+
+        if is_embargoed(db, offeree_int, cId):
+            return error(403, "This nation has embargoed you and will not trade with you.")
+        if is_embargoed(db, cId, offeree_int):
+            return error(403, "You have embargoed this nation and cannot trade with them.")
+        col_block = get_coalition_embargo_block(db, cId, offeree_int)
+        if col_block:
+            return error(403, col_block)
 
         currency_id, cur_err = parse_currency_choice(db, request.form.get("currency_id"))
         if cur_err:
@@ -812,6 +842,14 @@ def accept_trade(trade_id):
 
             if offeree != cId:
                 return error(400, "You can't accept that offer")
+
+            if is_embargoed(db, offerer, offeree):
+                return error(403, "This nation has embargoed you and will not trade with you.")
+            if is_embargoed(db, offeree, offerer):
+                return error(403, "You have embargoed this nation and cannot trade with them.")
+            col_block = get_coalition_embargo_block(db, offerer, offeree)
+            if col_block:
+                return error(403, col_block)
 
             if not is_active_resource(db, resource):
                 return error(400, "This resource is not currently tradable")

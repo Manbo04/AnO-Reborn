@@ -68,7 +68,7 @@ every writer listed there can create or destroy value.
 | col_role_names | `app_core/coalitions/routes.py` | -- |
 | colbanks | `app_core/admin/repositories.py`<br>`app_core/coalition_bank/services.py`<br>`app_core/coalitions/routes.py`<br>`app_core/game_ticks/bond_tick.py`<br>`app_core/game_ticks/recurring_bank_trades.py`<br>`repositories/country_repository.py` | -- |
 | colbanksrequests | `app_core/coalitions/routes.py`<br>`repositories/country_repository.py` | -- |
-| colnames | `app_core/coalitions/routes.py`<br>`database.py`<br>`repositories/country_repository.py` | `app.py`<br>`app_core/admin/repositories.py`<br>`app_core/coalition_bank/services.py`<br>`app_core/coalitions/repositories.py`<br>`app_core/game_engine/routes.py`<br>`app_core/game_ticks/taxes.py`<br>`app_core/main/routes.py`<br>`app_core/social_cards/routes.py`<br>`app_core/world_map/repositories.py`<br>`bot_api.py`<br>`countries.py`<br>`province.py`<br>`services/country_service.py`<br>`statistics.py` |
+| colnames | `app_core/coalitions/routes.py`<br>`database.py`<br>`repositories/country_repository.py` | `app.py`<br>`app_core/admin/repositories.py`<br>`app_core/coalition_bank/services.py`<br>`app_core/coalitions/repositories.py`<br>`app_core/game_engine/routes.py`<br>`app_core/game_ticks/taxes.py`<br>`app_core/main/routes.py`<br>`app_core/market/repositories.py`<br>`app_core/social_cards/routes.py`<br>`app_core/world_map/repositories.py`<br>`bot_api.py`<br>`countries.py`<br>`province.py`<br>`services/country_service.py`<br>`statistics.py` |
 | cosmetics | -- | `app_core/chat/repositories.py`<br>`app_core/social_cards/routes.py`<br>`app_core/store/repositories.py`<br>`services/country_service.py`<br>`statistics.py` |
 | **currency_holdings** | `app_core/currency/repositories.py` | `app_core/currency_market/repositories.py` |
 | currency_market_offers | `app_core/currency_market/repositories.py` | `app_core/market/repositories.py` |
@@ -121,7 +121,7 @@ every writer listed there can create or destroy value.
 | nation_revenue_history | `app_core/game_ticks/revenue_history.py` | -- |
 | nation_treaties | `app_core/treaties/repositories.py` | `app_core/intelligence/repositories.py`<br>`app_core/onboarding/service.py`<br>`services/country_service.py`<br>`wars/routes.py` |
 | national_currency_conversions | `app_core/currency/repositories.py` | -- |
-| news | `app_core/admin/services.py`<br>`app_core/coalition_bank/services.py`<br>`app_core/coalitions/routes.py`<br>`app_core/currency_unions/repositories.py`<br>`app_core/game_ticks/assembly_tick.py`<br>`app_core/game_ticks/bond_tick.py`<br>`app_core/game_ticks/disasters.py`<br>`app_core/intelligence/repositories.py`<br>`app_core/main/routes.py`<br>`app_core/market/repositories.py`<br>`bot_api.py`<br>`countries.py`<br>`repositories/country_repository.py`<br>`wars/nuclear.py`<br>`wars/routes.py` | `app.py`<br>`app_core/admin/repositories.py`<br>`services/country_service.py` |
+| news | `app_core/admin/services.py`<br>`app_core/coalition_bank/services.py`<br>`app_core/coalitions/repositories.py`<br>`app_core/coalitions/routes.py`<br>`app_core/currency_unions/repositories.py`<br>`app_core/game_ticks/assembly_tick.py`<br>`app_core/game_ticks/bond_tick.py`<br>`app_core/game_ticks/disasters.py`<br>`app_core/intelligence/repositories.py`<br>`app_core/main/routes.py`<br>`app_core/market/repositories.py`<br>`bot_api.py`<br>`countries.py`<br>`repositories/country_repository.py`<br>`wars/nuclear.py`<br>`wars/routes.py` | `app.py`<br>`app_core/admin/repositories.py`<br>`services/country_service.py` |
 | nodes | `app_core/world_map/repositories.py` | -- |
 | nuclear_strikes | `wars/nuclear.py` | -- |
 | offers | `app_core/game_ticks/market_auto_orders.py`<br>`app_core/market/repositories.py`<br>`countries.py`<br>`repositories/country_repository.py` | `app_core/admin/repositories.py`<br>`app_core/market/auto_orders.py`<br>`services/country_service.py`<br>`statistics.py` |
@@ -279,6 +279,8 @@ Tables no static query touches (dynamic SQL, scripts, or dead): `coalition_membe
 | `/coalition/<int:coalition_id>/bond-insurance` | GET | `app_core.coalition_bank.routes:bond_insurance` |
 | `/coalition/<int:coalition_id>/bond-insurance/set` | POST | `app_core.coalition_bank.routes:set_bond_insurance` |
 | `/coalition/<int:coalition_id>/chat/messages` | GET | `app_core.chat.routes:coalition_chat_history` |
+| `/coalition/<int:coalition_id>/embargo` | POST | `app_core.coalitions.routes:embargo_coalition` |
+| `/coalition/<int:coalition_id>/lift_embargo` | POST | `app_core.coalitions.routes:lift_coalition_embargo` |
 | `/coalition/<int:coalition_id>/member/<int:member_id>/revenue` | GET | `app_core.coalitions.routes:member_revenue` |
 | `/coalition/<int:coalition_id>/role_names` | POST | `app_core.coalitions.routes:update_role_names` |
 | `/coalition/<int:coalition_id>/settings` | POST | `app_core.coalitions.routes:update_coalition_settings` |

@@ -289,3 +289,110 @@ def can_manage_province_builds(db, actor_id, owner_id) -> bool:
 def can_view_member_revenue(db, actor_id, owner_id) -> bool:
     """Same gate as can_manage_province_builds, for the `member_revenue` key."""
     return _can_access_member_info(db, actor_id, owner_id, "member_revenue")
+
+
+def coalition_embargoes_table_exists(db) -> bool:
+    """Graceful degradation: check if coalition_embargoes exists."""
+    try:
+        db.execute("SELECT to_regclass('coalition_embargoes') IS NOT NULL")
+        row = db.fetchone()
+        return bool(row[0] if not isinstance(row, dict) else list(row.values())[0])
+    except Exception:
+        return False
+
+
+def is_coalition_embargoed(db, embargoer_col_id, target_col_id) -> bool:
+    """Check if embargoer_col_id has an active embargo on target_col_id."""
+    if not embargoer_col_id or not target_col_id or embargoer_col_id == target_col_id:
+        return False
+    if not coalition_embargoes_table_exists(db):
+        return False
+    db.execute(
+        "SELECT 1 FROM coalition_embargoes WHERE embargoer_coalition_id=%s AND target_coalition_id=%s",
+        (embargoer_col_id, target_col_id),
+    )
+    return db.fetchone() is not None
+
+
+def are_coalitions_embargoed(db, col_a_id, col_b_id) -> bool:
+    """Check if either coalition has an active embargo on the other."""
+    if not col_a_id or not col_b_id or col_a_id == col_b_id:
+        return False
+    if not coalition_embargoes_table_exists(db):
+        return False
+    db.execute(
+        "SELECT 1 FROM coalition_embargoes WHERE "
+        "(embargoer_coalition_id=%s AND target_coalition_id=%s) OR "
+        "(embargoer_coalition_id=%s AND target_coalition_id=%s)",
+        (col_a_id, col_b_id, col_b_id, col_a_id),
+    )
+    return db.fetchone() is not None
+
+
+def add_coalition_embargo(db, embargoer_col_id, target_col_id, created_by_user_id) -> bool:
+    """Add a coalition-level embargo."""
+    if not coalition_embargoes_table_exists(db):
+        return False
+    db.execute(
+        "INSERT INTO coalition_embargoes (embargoer_coalition_id, target_coalition_id, created_by) "
+        "VALUES (%s, %s, %s) "
+        "ON CONFLICT (embargoer_coalition_id, target_coalition_id) DO NOTHING",
+        (embargoer_col_id, target_col_id, created_by_user_id),
+    )
+    return True
+
+
+def remove_coalition_embargo(db, embargoer_col_id, target_col_id) -> bool:
+    """Lift a coalition-level embargo."""
+    if not coalition_embargoes_table_exists(db):
+        return False
+    db.execute(
+        "DELETE FROM coalition_embargoes WHERE embargoer_coalition_id=%s AND target_coalition_id=%s",
+        (embargoer_col_id, target_col_id),
+    )
+    return True
+
+
+def list_coalition_embargoes(db, coalition_id) -> list:
+    """List of (target_coalition_id, target_coalition_name, created_at) embargoed by coalition_id."""
+    if not coalition_id or not coalition_embargoes_table_exists(db):
+        return []
+    db.execute(
+        "SELECT ce.target_coalition_id, c.name, ce.created_at "
+        "FROM coalition_embargoes ce "
+        "JOIN colNames c ON c.id = ce.target_coalition_id "
+        "WHERE ce.embargoer_coalition_id=%s ORDER BY c.name ASC",
+        (coalition_id,),
+    )
+    return db.fetchall()
+
+
+def list_coalitions_embargoing(db, coalition_id) -> list:
+    """List of (embargoer_coalition_id, embargoer_coalition_name, created_at) embargoing coalition_id."""
+    if not coalition_id or not coalition_embargoes_table_exists(db):
+        return []
+    db.execute(
+        "SELECT ce.embargoer_coalition_id, c.name, ce.created_at "
+        "FROM coalition_embargoes ce "
+        "JOIN colNames c ON c.id = ce.embargoer_coalition_id "
+        "WHERE ce.target_coalition_id=%s ORDER BY c.name ASC",
+        (coalition_id,),
+    )
+    return db.fetchall()
+
+
+def post_coalition_members_news(db, coalition_id, message: str) -> None:
+    """Post news item to every member of coalition_id."""
+    members_tbl = _coalition_members_sql()
+    if not members_tbl or not coalition_id:
+        return
+    db.execute(f"SELECT userid FROM {members_tbl} WHERE colid = %s", (coalition_id,))
+    rows = db.fetchall()
+    if not rows:
+        return
+    uids = [r[0] for r in rows]
+    db.executemany(
+        "INSERT INTO news (destination_id, message) VALUES (%s, %s)",
+        [(uid, message) for uid in uids],
+    )
+

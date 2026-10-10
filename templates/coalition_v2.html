@@ -100,6 +100,9 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                 <h3 class="smallheader">Join</h3>
             </div>
             {% endif %}
+            <div class="templatedivflex2left" id="coalitionactions" onclick="coalitionactions()">
+                <h3 class="smallheader">Actions</h3>
+            </div>
             {% if userInCurCol %}
             <div class="templatedivflex2left" id="coalitionbank" onclick="coalitionbank()">
                 <h3 class="smallheader">Bank</h3>
@@ -1168,7 +1171,146 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
             {% endif %}
         </div>
 
+        <!--ACTIONS-->
+        <div class="actions" id="actions">
+            {% if userInCurCol %}
+            <h2 class="templatecontentheaderleft">Coalition Embargoes</h2>
 
+            <div class="infodiv" style="margin-bottom: 20px;">
+                <h3 class="templatecontentheaderleft" style="margin-top: 0;">Coalitions You Embargo</h3>
+                {% if embargoed_coalitions | length == 0 %}
+                <p class="templatecontentp" style="opacity: 0.8; margin: 8px 0;">Your coalition has not embargoed any other coalitions.</p>
+                {% else %}
+                <div class="templateoutertablediv inverttable">
+                    <table class="templatetable templatetable2">
+                        <thead>
+                            <tr>
+                                <th>Coalition</th>
+                                <th>Embargoed Since</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for target_id, target_name, created_at in embargoed_coalitions %}
+                            <tr>
+                                <td><a href="/coalition/{{ target_id }}">{{ target_name }}</a></td>
+                                <td>{{ created_at.strftime('%Y-%m-%d') if created_at and created_at.strftime else 'Active' }}</td>
+                                <td>
+                                    {% if user_role in ["leader", "deputy_leader", "foreign_ambassador"] %}
+                                    <form method="POST" action="/coalition/{{ target_id }}/lift_embargo" style="display:inline;">
+                                        {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+                                        <button type="submit" class="templatedivbutton" onclick="return confirm('Lift embargo on {{ target_name }}?');">
+                                            <span class="material-icons-outlined" style="font-size:1.1em;vertical-align:middle;">lock_open</span> Lift
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <span class="text-muted">Active</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="infodiv">
+                <h3 class="templatecontentheaderleft" style="margin-top: 0;">Coalitions Embargoing You</h3>
+                {% if embargoing_coalitions | length == 0 %}
+                <p class="templatecontentp" style="opacity: 0.8; margin: 8px 0;">No coalitions are currently embargoing your coalition.</p>
+                {% else %}
+                <div class="templateoutertablediv inverttable">
+                    <table class="templatetable templatetable2">
+                        <thead>
+                            <tr>
+                                <th>Coalition</th>
+                                <th>Embargoed Since</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for embargoer_id, embargoer_name, created_at in embargoing_coalitions %}
+                            <tr>
+                                <td><a href="/coalition/{{ embargoer_id }}">{{ embargoer_name }}</a></td>
+                                <td>{{ created_at.strftime('%Y-%m-%d') if created_at and created_at.strftime else 'Active' }}</td>
+                                <td><span class="game-badge" style="background:var(--colorRed);color:#fff;">Blocked</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+
+            {% else %}
+            <!-- Viewing ANOTHER coalition -->
+            <h2 class="templatecontentheaderleft">Coalition Actions</h2>
+
+            {% if not viewer_coalition_id %}
+            <div class="infodiv">
+                <p class="templatecontentp" style="margin: 8px 0;">You must belong to a coalition to interact at the coalition level.</p>
+            </div>
+            {% else %}
+
+            <div class="infodiv" style="margin-bottom: 20px;">
+                <h3 class="templatecontentheaderleft" style="margin-top: 0;">Trade Embargo</h3>
+                {% if is_embargoed_by_viewer_coalition %}
+                <p class="templatecontentp" style="color:var(--colorRed); margin: 8px 0;">
+                    <span class="material-icons-outlined" style="vertical-align:middle;">block</span>
+                    Your coalition (<strong>{{ viewer_coalition_name }}</strong>) is currently embargoing <strong>{{ name }}</strong>. All trade between members of both coalitions is blocked on the market.
+                </p>
+                {% if viewer_is_leader %}
+                <form method="POST" action="/coalition/{{ colId }}/lift_embargo">
+                    {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+                    <button type="submit" class="templatedivbutton templatecenteredbutton" onclick="return confirm('Lift embargo on {{ name }}? All trade between members will be re-enabled.');">
+                        <span class="material-icons-outlined">lock_open</span> Lift Embargo
+                    </button>
+                </form>
+                {% endif %}
+                {% else %}
+                <p class="templatecontentp" style="margin: 8px 0;">
+                    Embargoing this coalition blocks every member of your coalition (<strong>{{ viewer_coalition_name }}</strong>) from trading with every member of <strong>{{ name }}</strong> on the public market and via direct trade offers.
+                </p>
+                {% if viewer_is_leader %}
+                <form method="POST" action="/coalition/{{ colId }}/embargo">
+                    {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+                    <button type="submit" class="templatedivbutton templatecenteredbutton redactionbutton" onclick="return confirm('Place a trade embargo on {{ name }}? All members of both coalitions will be blocked from trading.');">
+                        <span class="material-icons-outlined">block</span> Embargo This Coalition
+                    </button>
+                </form>
+                {% endif %}
+                {% endif %}
+
+                {% if not viewer_is_leader %}
+                <p class="templatecontentp" style="font-size:0.9em;opacity:0.8;margin-top:10px;">
+                    Only coalition leadership (leaders, deputies, and foreign ambassadors) can enact or lift coalition embargoes.
+                </p>
+                {% endif %}
+
+                {% if target_is_embargoing_viewer %}
+                <div style="margin-top: 12px; padding: 10px 14px; background: rgba(239, 68, 68, 0.1); border-left: 3px solid var(--colorRed); border-radius: 4px;">
+                    <span class="material-icons-outlined" style="vertical-align:middle;color:var(--colorRed);font-size:1.1em;">warning</span>
+                    <strong>Notice:</strong> <strong>{{ name }}</strong> currently has an active embargo on your coalition.
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="infodiv">
+                <h3 class="templatecontentheaderleft" style="margin-top: 0;">Diplomatic & Military Actions</h3>
+                <div class="templatedivflex2 divflex2center" style="gap: 10px; flex-wrap: wrap;">
+                    <a href="/coalition/{{ viewer_coalition_id }}#diplomacy" class="templatedivbutton templatecenteredbutton" style="text-decoration:none;">
+                        <span class="material-icons-outlined">handshake</span> Propose Treaty
+                    </a>
+                    <a href="#members" class="templatedivbutton templatecenteredbutton" style="text-decoration:none;" onclick="if(window.coalitiongeneral){window.coalitiongeneral();}">
+                        <span class="material-icons-outlined">military_tech</span> View Members to Target
+                    </a>
+                </div>
+            </div>
+
+            {% endif %}
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}
