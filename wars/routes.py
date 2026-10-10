@@ -2141,23 +2141,13 @@ def strategic_airstrike():
             
             if strike_target == "silo":
                 # 15 damage points needed to destroy 1 silo
-                db.execute(
-                    "SELECT ub.quantity, ub.building_id FROM user_buildings ub JOIN building_dictionary bd ON ub.building_id = bd.building_id WHERE ub.user_id = %s AND bd.name = 'silos'",
-                    (target_id,)
+                destroyed_silos, had_silos = apply_building_damage(
+                    db, target_id, "silos", bombing_power, 15
                 )
-                s_row = db.fetchone()
-                if s_row and s_row[0] > 0:
-                    silos_count = s_row[0]
-                    silo_building_id = s_row[1]
-                    destroyed_silos = min(silos_count, int(bombing_power // 15))
-                    if destroyed_silos > 0:
-                        db.execute(
-                            "UPDATE user_buildings SET quantity = quantity - %s WHERE user_id = %s AND building_id = %s",
-                            (destroyed_silos, target_id, silo_building_id)
-                        )
-                        damage_report = f"destroyed {destroyed_silos} Missile Silo(s)"
-                    else:
-                        damage_report = "dropped their payload but failed to penetrate the silo's reinforced armor due to poor accuracy or glancing hits"
+                if destroyed_silos > 0:
+                    damage_report = f"destroyed {destroyed_silos} Missile Silo(s)"
+                elif had_silos:
+                    damage_report = "dropped their payload but failed to penetrate the silo's reinforced armor due to poor accuracy or glancing hits"
                 else:
                     damage_report = "found no silos to destroy"
             

@@ -105,7 +105,14 @@ def change_domes(db, user_id, province_id, way, amount):
         update_manpower_and_gold(
             db, user_id, gold_delta=int(DOME_GOLD_COST * SELL_REFUND * amount), manpower_delta=0
         )
-        delta = -amount
+        # A plain UPDATE: the upsert below would first try to INSERT a row
+        # with quantity -amount, which the quantity >= 0 check rejects (500
+        # on every dismantle, celess 2026-10-08).
+        db.execute(
+            "UPDATE province_iron_domes SET quantity = quantity - %s WHERE province_id = %s",
+            (amount, province_id),
+        )
+        return True, "Success"
     else:
         return False, "Invalid action"
 

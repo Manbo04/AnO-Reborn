@@ -169,7 +169,7 @@ def sort_spy_reports(data):
                         if date > fully_sorted[user]["date"]:
                             fully_sorted[user][k] = v
 
-    required_data = variables.RESOURCES + variables.UNITS
+    required_data = ["money"] + variables.RESOURCES + variables.UNITS
     for resource in required_data:
         for user, entry in fully_sorted.items():
             if resource not in entry:
@@ -306,7 +306,7 @@ def resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=False):
     elif spy_type == "units":
         object_list = variables.UNITS + ["iron_domes"]
     else:
-        object_list = variables.RESOURCES
+        object_list = ["money"] + variables.RESOURCES
 
     for obj in object_list:
         if spies - executed_spies > 0:

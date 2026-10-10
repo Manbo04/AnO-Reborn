@@ -47,7 +47,7 @@ number must call the same function. Copies drift (fabricated tax multipliers
 |---|---|---|
 | consumer goods distribution + tax bonus | `app_core/economy/consumer_goods.py` | tax tick, revenue page, province card |
 | building stat effects (pollution/happiness/productivity) | `app_core/economy/province_effects.py` | revenue tick, province breakdown |
-| education graduation (capacity: primary 500, high school 900, university 5000 per building) | `app_core/game_ticks/population.py::calc_education_graduation` | population tick, province page |
+| education graduation (capacity: primary 1000, high school 900, university 5000 per building) | `app_core/game_ticks/population.py::calc_education_graduation` | population tick, province page |
 | building purchase cost | `app_core/economy/building_costs.py`, `building_purchase.py` (from `variables.PROVINCE_UNIT_PRICES`) | buy route, all cost displays |
 | trade fee (5%, 2% inside a currency union; removed from the economy) | `app_core/market/fees.py` | market, trades, Max button |
 | influence (war ranges, nukes) | `influence_formula.py` | find targets, rankings, nukes |
