@@ -73,8 +73,10 @@ def test_growth_scales_with_current_population():
 
 
 def test_growth_frozen_removed_and_starved():
-    # Freeze removed: frozen=True does not halt growth anymore
-    assert pop.calc_nation_growth(1_000_000, 50_000_000, 1.0, frozen=True) > 0
+    # Freeze removed (vote 2026-10-09): there is no frozen flag any more
+    import inspect
+    assert "frozen" not in inspect.signature(pop.calc_nation_growth).parameters
+    assert pop.calc_nation_growth(1_000_000, 50_000_000, 1.0) > 0
     # Starvation still zeroes growth
     assert pop.calc_nation_growth(1_000_000, 50_000_000, 0.0) == 0
 
