@@ -76,13 +76,14 @@
 
             {% endif %}
 
-            {% if leader_name or currency_name or ruling_party or capital_province_name %}
+            {% if leader_name or currency_name or ruling_party or capital_province_name or discord_display_name %}
             <h2 class="templatecontentheaderleft">National Profile</h2>
             <div class="strongpadding">
                 {% if leader_name %}<p>Leader: <strong>{{ leader_name }}</strong></p>{% endif %}
                 {% if ruling_party %}<p>Ruling Party: <strong>{{ ruling_party }}</strong></p>{% endif %}
                 {% if currency_name %}<p>Currency: <strong>{{ currency_name }}</strong></p>{% endif %}
                 {% if capital_province_name %}<p>Capital: <strong>{{ capital_province_name }}</strong></p>{% endif %}
+                {% if discord_display_name %}<p>Discord: <strong>{{ discord_display_name|e }}</strong></p>{% endif %}
             </div>
             {% endif %}
 
@@ -2347,7 +2348,7 @@
         {% if at_war_with_target and (attacker_drones > 0 or attacker_cruise_missiles > 0) and not strike_targets %}
         <div class="infodiv">
             <h2 class="templatecontentheaderleft">Drone &amp; Missile Strikes</h2>
-            <p>This nation has no silos, steel mills, component factories, aluminium refineries or oil refineries, so there's nothing for drones or cruise missiles to hit right now.</p>
+            <p>This nation has no valid strike targets (military, factories, mines, resources, or population centres), so there's nothing for drones or cruise missiles to hit right now.</p>
         </div>
         {% endif %}
 
@@ -2360,9 +2361,19 @@
                     <div class="templatedivflex2left">
                         <label for="drone_strike_target">Target</label>
                         <select class="templateselect" id="drone_strike_target" name="strike_target">
-                            {% for key, label, qty in strike_targets %}
-                            <option value="{{ key }}" class="templateoption">{{ label }} ({{ qty }})</option>
-                            {% endfor %}
+                            {% if strike_target_groups %}
+                                {% for grp_name, grp_items in strike_target_groups %}
+                                <optgroup label="{{ grp_name }}">
+                                    {% for key, label, qty in grp_items %}
+                                    <option value="{{ key }}" class="templateoption">{{ label }} ({{ qty }})</option>
+                                    {% endfor %}
+                                </optgroup>
+                                {% endfor %}
+                            {% else %}
+                                {% for key, label, qty in strike_targets %}
+                                <option value="{{ key }}" class="templateoption">{{ label }} ({{ qty }})</option>
+                                {% endfor %}
+                            {% endif %}
                         </select>
                     </div>
                     <div class="templatedivflex2left">
@@ -2389,9 +2400,19 @@
                     <div class="templatedivflex2left">
                         <label for="missile_strike_target">Target</label>
                         <select class="templateselect" id="missile_strike_target" name="strike_target">
-                            {% for key, label, qty in strike_targets %}
-                            <option value="{{ key }}" class="templateoption">{{ label }} ({{ qty }})</option>
-                            {% endfor %}
+                            {% if strike_target_groups %}
+                                {% for grp_name, grp_items in strike_target_groups %}
+                                <optgroup label="{{ grp_name }}">
+                                    {% for key, label, qty in grp_items %}
+                                    <option value="{{ key }}" class="templateoption">{{ label }} ({{ qty }})</option>
+                                    {% endfor %}
+                                </optgroup>
+                                {% endfor %}
+                            {% else %}
+                                {% for key, label, qty in strike_targets %}
+                                <option value="{{ key }}" class="templateoption">{{ label }} ({{ qty }})</option>
+                                {% endfor %}
+                            {% endif %}
                         </select>
                     </div>
                     <div class="templatedivflex2left">

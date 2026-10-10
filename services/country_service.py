@@ -444,6 +444,7 @@ class CountryService:
             attacker_cruise_missiles = 0
             at_war_with_target = False
             strike_targets = []
+            strike_target_groups = []
         
             uId = session.get("user_id")
         
@@ -485,7 +486,11 @@ class CountryService:
                         if at_war_with_target:
                             # Only offer buildings this nation actually has, so
                             # drones aren't wasted on targets that don't exist.
-                            from wars.routes import STRIKE_TARGET_BUILDINGS, STRIKE_TARGET_LABELS
+                            from wars.routes import (
+                                STRIKE_TARGET_BUILDINGS,
+                                STRIKE_TARGET_LABELS,
+                                STRIKE_TARGET_GROUPS,
+                            )
                             db.execute(
                                 "SELECT bd.name, ub.quantity FROM user_buildings ub "
                                 "JOIN building_dictionary bd ON bd.building_id = ub.building_id "
@@ -498,6 +503,15 @@ class CountryService:
                                 for key, bname in STRIKE_TARGET_BUILDINGS.items()
                                 if owned.get(bname, 0) > 0
                             ]
+                            for group_name, keys in STRIKE_TARGET_GROUPS.items():
+                                group_items = [
+                                    (k, STRIKE_TARGET_LABELS[k], owned[STRIKE_TARGET_BUILDINGS[k]])
+                                    for k in keys
+                                    if owned.get(STRIKE_TARGET_BUILDINGS[k], 0) > 0
+                                ]
+                                if group_items:
+                                    strike_target_groups.append((group_name, group_items))
+
                             from wars.routes import POPULATION_TARGET, POPULATION_TARGET_LABEL
                             db.execute(
                                 "SELECT COALESCE(MAX(population), 0) FROM provinces WHERE userid=%s",
@@ -505,9 +519,9 @@ class CountryService:
                             )
                             top_pop = int(db.fetchone()[0] or 0)
                             if top_pop > 0:
-                                strike_targets.append(
-                                    (POPULATION_TARGET, POPULATION_TARGET_LABEL, f"{top_pop:,} in largest province")
-                                )
+                                pop_item = (POPULATION_TARGET, POPULATION_TARGET_LABEL, f"{top_pop:,} in largest province")
+                                strike_targets.append(pop_item)
+                                strike_target_groups.append(("Population", [pop_item]))
                     except Exception:
                         rollback_db_cursor(db)
 
@@ -780,6 +794,21 @@ class CountryService:
                     rollback_db_cursor(db)
                     recommended_coalitions = []
 
+            discord_display_name = None
+            try:
+                from database import users_table_has_column
+                if users_table_has_column("show_discord") and users_table_has_column("discord_username"):
+                    db.execute(
+                        "SELECT show_discord, discord_username, discord_id FROM users WHERE id = %s",
+                        (cId,),
+                    )
+                    d_row = db.fetchone()
+                    if d_row:
+                        from app_core.community.discord_visibility import get_discord_display_name
+                        discord_display_name = get_discord_display_name(d_row[0], d_row[1], d_row[2])
+            except Exception:
+                rollback_db_cursor(db)
+
         return {
             "recommended_coalitions": recommended_coalitions,
             "username": username,
@@ -810,6 +839,7 @@ class CountryService:
             "attacker_cruise_missiles": attacker_cruise_missiles,
             "at_war_with_target": at_war_with_target,
             "strike_targets": strike_targets,
+            "strike_target_groups": strike_target_groups,
             "target_silos": target_silos,
             "target_has_nuclear_facility": target_has_nuclear_facility,
             "colFlag": colFlag,
@@ -818,6 +848,7 @@ class CountryService:
             "currency_name": currency_name,
             "ruling_party": ruling_party,
             "capital_province_name": capital_province_name,
+            "discord_display_name": discord_display_name,
             "productivity": productivity,
             "revenue": revenue,
             "growth_rate": growth_rate,

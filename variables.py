@@ -62,13 +62,13 @@ POP_GROWTH_CATCHUP_POP = 50_000_000
 # so e.g. 1 food bank (250k people) "fed" a 191M nation. From this moment on
 # only covered people count as fed, and past comfort every distribution
 # building serves sqrt(comfort / population) of its normal amount.
-# ON HOLD (2026-10-05): was set for 2026-10-06 16:00 UTC, but it changes the
-# game for ~45 nations, so it goes to the weekly community vote first. If it
-# passes, set a real date here (with at least 48h notice).
+# Distribution fix (passed 11-1 in community vote 2026-10-10): goes live
+# on 2026-10-12 18:00:00 UTC (48h notice). Past comfort, distribution
+# buildings serve sqrt(comfort / population) of their normal amount.
 import datetime as _dt_rebalance
 
 DISTRIBUTION_FIX_START = _dt_rebalance.datetime(
-    2099, 1, 1, 0, 0, 0, tzinfo=_dt_rebalance.timezone.utc
+    2026, 10, 12, 18, 0, 0, tzinfo=_dt_rebalance.timezone.utc
 )
 
 DEFAULT_PRODUCTIVITY_PRODUCTION_MULTIPLIER = 0.009  # 9%

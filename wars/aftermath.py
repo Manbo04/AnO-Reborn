@@ -1,20 +1,12 @@
-"""Battle aftermath (population/war rebalance, 2026-10-04, agreed with
-The_kaiser in staff-chat).
-
-Before this, a won battle never touched the loser's population (a nation
-with 80 provinces shrugged off everything), and an air attack could only
-ever fight air units, so bombers never killed a single soldier. Now:
+"""Battle aftermath (population/war rebalance).
 
 * **Civilian deaths.** A won ground or bomber attack kills a share of the
-  enemy's WHOLE nation (spread over every province), so spreading people
-  over many provinces doesn't dilute it.
-* **Growth freeze.** Whoever loses a battle gets no population growth for
-  LOSS_FREEZE_HOURS (population_growth_freezes, migration 0106). A nuke
-  freezes the target for NUKE_FREEZE_HOURS.
+  attacked province's population (ground 1%/2%/3%, bombers 2%/4%/6% for
+  close/definite/annihilation victory).
+* **No growth freeze.** Losing a battle or being nuked no longer freezes growth
+  (penalty removed per 2026-10-10 community vote).
 * **Bomber ground strike.** If an air attack with bombers wins, the bombers
-  also hit the defender's soldiers and tanks (the counter table always said
-  bombers beat soldiers/tanks), capped per bomber so one bomber can't wipe
-  out an army.
+  also hit the defender's soldiers and tanks, capped per bomber.
 
 Pure math is at the top (unit-tested); the DB helpers take a cursor and
 never commit, the caller does.
@@ -24,10 +16,10 @@ from __future__ import annotations
 
 WIN_LEVELS = {"close victory": 1, "definite victory": 2, "annihilation": 3}
 
-# Share of the defender's total population killed by a won attack.
+# Share of the attacked province's population killed by a won attack.
 CIVILIAN_DEATHS = {
-    "ground": {1: 0.001, 2: 0.002, 3: 0.003},
-    "bombers": {1: 0.002, 2: 0.004, 3: 0.006},
+    "ground": {1: 0.01, 2: 0.02, 3: 0.03},
+    "bombers": {1: 0.02, 2: 0.04, 3: 0.06},
 }
 
 # Share of the defender's soldiers/tanks destroyed by a won bomber attack,
@@ -35,8 +27,6 @@ CIVILIAN_DEATHS = {
 BOMBER_GROUND_LOSS = {1: 0.05, 2: 0.10, 3: 0.15}
 BOMBER_KILL_CAP = {"soldiers": 25, "tanks": 2}
 
-LOSS_FREEZE_HOURS = 12
-NUKE_FREEZE_HOURS = 24
 NUKE_FALLOUT_DEATHS = 0.01  # whole target nation
 
 
@@ -45,7 +35,7 @@ def win_level(win_condition) -> int:
 
 
 def civilian_death_pct(domain, attacker_units, win_condition) -> float:
-    """Share of the defender's population killed by a WON attack."""
+    """Share of the attacked province's population killed by a WON attack."""
     level = win_level(win_condition)
     if domain == "air":
         if int((attacker_units or {}).get("bombers") or 0) <= 0:
@@ -80,7 +70,8 @@ def bomber_ground_losses(bombers, defender_ground, win_condition) -> dict:
 def kill_civilians(db, user_id, pct) -> int:
     """Kill `pct` of every province's population for this nation. The age
     split is rescaled by the trg_sync_province_population trigger (see
-    wars/nuclear.py), the education split is scaled here. Returns deaths."""
+    wars/nuclear.py), the education split is scaled here. Used by nukes.
+    Returns deaths."""
     if pct <= 0:
         return 0
     survive = 1.0 - pct
@@ -102,23 +93,37 @@ def kill_civilians(db, user_id, pct) -> int:
         """,
         (pct, user_id, survive, survive, survive),
     )
-    return int(db.fetchone()[0] or 0)
+    row = db.fetchone()
+    return int((row[0] if row else 0) or 0)
 
 
-def freeze_growth(db, user_id, hours, reason) -> None:
-    """No population growth for this nation for `hours` (extends, never
-    shortens, an existing freeze)."""
+def kill_civilians_in_province(db, province_id, pct) -> int:
+    """Kill `pct` of the specified province's population. The age split is
+    rescaled by the trg_sync_province_population trigger, the education split
+    is scaled here. Returns deaths."""
+    if not province_id or pct <= 0:
+        return 0
+    survive = 1.0 - pct
     db.execute(
         """
-        INSERT INTO population_growth_freezes (user_id, frozen_until, reason)
-        VALUES (%s, now() + make_interval(hours => %s), %s)
-        ON CONFLICT (user_id) DO UPDATE SET
-            frozen_until = GREATEST(population_growth_freezes.frozen_until,
-                                    EXCLUDED.frozen_until),
-            reason = EXCLUDED.reason
+        WITH d AS (
+            SELECT id, FLOOR(COALESCE(population, 0) * %s)::bigint AS dead
+            FROM provinces WHERE id = %s AND COALESCE(population, 0) > 0
+        ), upd AS (
+            UPDATE provinces p SET
+                population = GREATEST(0, p.population - d.dead),
+                edu_none = FLOOR(COALESCE(p.edu_none, 0) * %s),
+                edu_highschool = FLOOR(COALESCE(p.edu_highschool, 0) * %s),
+                edu_college = FLOOR(COALESCE(p.edu_college, 0) * %s)
+            FROM d WHERE p.id = d.id AND d.dead > 0
+            RETURNING d.dead
+        )
+        SELECT COALESCE(SUM(dead), 0) FROM upd
         """,
-        (user_id, int(hours), reason),
+        (pct, province_id, survive, survive, survive),
     )
+    row = db.fetchone()
+    return int((row[0] if row else 0) or 0)
 
 
 def read_ground_army(db, user_id) -> dict:
@@ -148,18 +153,26 @@ def apply_unit_losses(db, user_id, losses) -> None:
 
 def apply_battle_aftermath(
     db, attacker_id, defender_id, attacker_won, domain, attacker_units,
-    win_condition,
+    win_condition, province_id=None,
 ) -> dict:
     """Everything a resolved battle does to population/ground units on top
     of the normal fight. Returns a summary for the battle report/news."""
-    summary = {"civilian_deaths": 0, "bomber_ground_losses": {}, "frozen": None}
-    loser = defender_id if attacker_won else attacker_id
-    freeze_growth(db, loser, LOSS_FREEZE_HOURS, "lost a battle")
-    summary["frozen"] = loser
+    summary = {
+        "civilian_deaths": 0,
+        "province_id": province_id,
+        "province_name": None,
+        "bomber_ground_losses": {},
+    }
     if not attacker_won:
         return summary
     pct = civilian_death_pct(domain, attacker_units, win_condition)
-    summary["civilian_deaths"] = kill_civilians(db, defender_id, pct)
+    if province_id:
+        summary["civilian_deaths"] = kill_civilians_in_province(db, province_id, pct)
+    if province_id:
+        db.execute("SELECT provincename FROM provinces WHERE id = %s", (province_id,))
+        prow = db.fetchone()
+        if prow:
+            summary["province_name"] = prow["provincename"] if isinstance(prow, dict) else prow[0]
     if domain == "air":
         bombers = int((attacker_units or {}).get("bombers") or 0)
         losses = bomber_ground_losses(

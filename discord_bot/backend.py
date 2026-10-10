@@ -38,12 +38,16 @@ class BotBackendError(Exception):
 class DirectDatabaseBackend:
     """Use game DB directly — only needs DATABASE_URL + DISCORD_BOT_TOKEN on Railway."""
 
-    def register(self, discord_user_id: str, code: str) -> Dict[str, Any]:
+    def register(
+        self, discord_user_id: str, code: str, discord_username: Optional[str] = None
+    ) -> Dict[str, Any]:
         from bot_api import is_coalition_leader, register_discord_with_code
 
         from database import QueryHelper
 
-        ok, message, user_id = register_discord_with_code(discord_user_id, code)
+        ok, message, user_id = register_discord_with_code(
+            discord_user_id, code, discord_username=discord_username
+        )
         if not ok:
             raise BotBackendError(message, 400)
         username = None
@@ -175,8 +179,12 @@ class HttpApiBackend:
         except BotApiError as exc:
             raise BotBackendError(str(exc), exc.status_code) from exc
 
-    def register(self, discord_user_id: str, code: str) -> Dict[str, Any]:
-        return self._wrap(self._client.register, discord_user_id, code)
+    def register(
+        self, discord_user_id: str, code: str, discord_username: Optional[str] = None
+    ) -> Dict[str, Any]:
+        return self._wrap(
+            self._client.register, discord_user_id, code, discord_username=discord_username
+        )
 
     def me(self, discord_user_id: str) -> Dict[str, Any]:
         return self._wrap(self._client.me, discord_user_id)

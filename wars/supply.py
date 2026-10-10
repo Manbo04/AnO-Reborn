@@ -83,25 +83,36 @@ def ration_defenders(
 ) -> Tuple[Dict[str, int], int]:
     """Decide how many of each owned unit type actually defends.
 
-    Units whose upkeep resource is depleted (``unusable``) stay home: they
-    contribute nothing in combat anyway, so they neither cost supply nor
-    take casualties. The rest are fielded in full if the budget covers
-    them, otherwise every type is scaled down by the same factor.
+    Units whose upkeep resource is depleted (``unusable``) are still on the
+    field: they cost no supply and add no combat power (combat_helpers gives
+    unusable units zero strength), but they DO take casualties. Before
+    2026-10-10 they stayed home, so a defender whose only army was unusable
+    fielded nothing, the citizen army fought instead and the real soldiers
+    became immune (Kaiser: "won with tanks, enemy lost 0", news 4257).
+
+    Usable units are fielded in full if the budget covers them, otherwise
+    every type is scaled down by the same factor, but an owned type never
+    drops to 0 (at least 1 always defends).
 
     Returns (fielded, supply_spent).
     """
     costs = costs or unit_supply_costs()
     unusable = set(unusable or ())
-    usable = {
-        u: max(0, int(q or 0)) if u not in unusable else 0 for u, q in owned.items()
-    }
+    owned_clean = {u: max(0, int(q or 0)) for u, q in owned.items()}
+    usable = {u: q for u, q in owned_clean.items() if u not in unusable}
+    idle = {u: q for u, q in owned_clean.items() if u in unusable}
+
     full_cost = sum(q * costs.get(u, 1) for u, q in usable.items())
     if full_cost <= budget:
-        return dict(usable), int(full_cost)
-
-    factor = budget / float(full_cost)
-    fielded = {u: int(math.floor(q * factor)) for u, q in usable.items()}
+        fielded = dict(usable)
+    else:
+        factor = budget / float(full_cost)
+        fielded = {
+            u: (max(1, int(math.floor(q * factor))) if q > 0 else 0)
+            for u, q in usable.items()
+        }
     spent = sum(q * costs.get(u, 1) for u, q in fielded.items())
+    fielded.update(idle)
     return fielded, int(spent)
 
 

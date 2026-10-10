@@ -1122,6 +1122,7 @@ def warResult():
             # Best-effort infra damage — failures here must NOT undo the fight
             # results (morale/loot/casualties) which now commit independently.
             infra_damage_effects = {}
+            random_province = None
             try:
                 db.execute(
                     "SELECT id FROM provinces WHERE userId=(%s) ORDER BY id ASC",
@@ -1144,11 +1145,10 @@ def warResult():
                 )
             defender_result["infra_damage"] = infra_damage_effects
 
-            # Battle aftermath (2026-10-04 rebalance, wars/aftermath.py):
-            # civilian deaths on a won ground/bomber attack, the loser's
-            # growth frozen for 12h, and a won bomber attack also hitting the
-            # defender's soldiers/tanks. Own connection, best effort -- must
-            # never undo the already-committed fight results.
+            # Battle aftermath (wars/aftermath.py):
+            # civilian deaths in the attacked province on a won ground/bomber attack,
+            # and a won bomber attack also hitting the defender's soldiers/tanks.
+            # Own connection, best effort -- must never undo the already-committed fight results.
             aftermath = None
             try:
                 from database import get_db_connection as _am_gdc
@@ -1169,6 +1169,7 @@ def warResult():
                         war_domain,
                         surviving_attackers,
                         win_condition,
+                        province_id=random_province,
                     )
                     _am_conn.commit()
             except Exception:
@@ -1256,19 +1257,16 @@ def warResult():
             am = defender_result.get("aftermath") or {}
             if am.get("civilian_deaths"):
                 d = f"{int(am['civilian_deaths']):,}"
-                def_news += f" {d} civilians were killed."
-                att_news += f" {d} enemy civilians were killed."
+                prov = am.get("province_name")
+                loc = f" in {prov}" if prov else ""
+                def_news += f" {d} civilians were killed{loc}."
+                att_news += f" {d} enemy civilians were killed{loc}."
             if am.get("bomber_ground_losses"):
                 g = ", ".join(
                     f"{q:,} {u}" for u, q in am["bomber_ground_losses"].items()
                 )
                 def_news += f" Bombers also destroyed {g} on the ground."
                 att_news += f" Your bombers also destroyed {g} on the ground."
-            if am.get("frozen") is not None:
-                if am["frozen"] == eId:
-                    def_news += " Your population won't grow for 12 hours."
-                else:
-                    att_news += " Your population won't grow for 12 hours."
             looted = int((attacker_result.get("loot") or {}).get("money") or 0)
             if looted > 0:
                 att_news += f" You looted {looted:,} gold."
@@ -2206,11 +2204,27 @@ def strategic_airstrike():
 # 'silos', same as strategic_airstrike's own convention; everything else
 # maps 1:1.
 STRIKE_TARGET_BUILDINGS = {
+    # Military
     "silo": "silos",
+    # Factories
     "steel_mills": "steel_mills",
     "component_factories": "component_factories",
     "aluminium_refineries": "aluminium_refineries",
     "oil_refineries": "oil_refineries",
+    # Mines & resources
+    "farms": "farms",
+    "pumpjacks": "pumpjacks",
+    "coal_mines": "coal_mines",
+    "bauxite_mines": "bauxite_mines",
+    "copper_mines": "copper_mines",
+    "uranium_mines": "uranium_mines",
+    "lead_mines": "lead_mines",
+    "iron_mines": "iron_mines",
+    "lumber_mills": "lumber_mills",
+    "silver_mines": "silver_mines",
+    "diamond_mines": "diamond_mines",
+    "bullion_mines": "bullion_mines",
+    "fisheries": "fisheries",
 }
 STRIKE_TARGET_LABELS = {
     "silo": "Missile Silos",
@@ -2218,6 +2232,43 @@ STRIKE_TARGET_LABELS = {
     "component_factories": "Component Factories",
     "aluminium_refineries": "Aluminium Refineries",
     "oil_refineries": "Oil Refineries",
+    "farms": "Farms",
+    "pumpjacks": "Pumpjacks",
+    "coal_mines": "Coal Mines",
+    "bauxite_mines": "Bauxite Mines",
+    "copper_mines": "Copper Mines",
+    "uranium_mines": "Uranium Mines",
+    "lead_mines": "Lead Mines",
+    "iron_mines": "Iron Mines",
+    "lumber_mills": "Lumber Mills",
+    "silver_mines": "Silver Mines",
+    "diamond_mines": "Diamond Mines",
+    "bullion_mines": "Bullion Mines",
+    "fisheries": "Fisheries",
+}
+STRIKE_TARGET_GROUPS = {
+    "Military": ["silo"],
+    "Factories": [
+        "steel_mills",
+        "component_factories",
+        "aluminium_refineries",
+        "oil_refineries",
+    ],
+    "Mines & resources": [
+        "farms",
+        "pumpjacks",
+        "coal_mines",
+        "bauxite_mines",
+        "copper_mines",
+        "uranium_mines",
+        "lead_mines",
+        "iron_mines",
+        "lumber_mills",
+        "silver_mines",
+        "diamond_mines",
+        "bullion_mines",
+        "fisheries",
+    ],
 }
 
 
@@ -2263,13 +2314,26 @@ def _target_has_building(db, target_id, strike_target):
 
 # Damage points needed to destroy 1 of the target building. Silos are
 # reinforced military infrastructure (matches strategic_airstrike's existing
-# 15); ordinary economic buildings are softer.
+# 15); ordinary economic buildings are softer (10 for factories, 6 for smaller buildings).
 STRIKE_TARGET_THRESHOLDS = {
     "silo": 15,
     "steel_mills": 10,
     "component_factories": 10,
     "aluminium_refineries": 10,
     "oil_refineries": 10,
+    "farms": 6,
+    "pumpjacks": 6,
+    "coal_mines": 6,
+    "bauxite_mines": 6,
+    "copper_mines": 6,
+    "uranium_mines": 6,
+    "lead_mines": 6,
+    "iron_mines": 6,
+    "lumber_mills": 6,
+    "silver_mines": 6,
+    "diamond_mines": 6,
+    "bullion_mines": 6,
+    "fisheries": 6,
 }
 
 

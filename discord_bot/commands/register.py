@@ -69,7 +69,10 @@ def register_commands(
         await interaction.response.defer(ephemeral=True)
         try:
             data = await asyncio.to_thread(
-                backend.register, str(interaction.user.id), code.strip()
+                backend.register,
+                str(interaction.user.id),
+                code.strip(),
+                discord_username=str(interaction.user.name),
             )
             user_id = data.get("user_id")
             url = f"{GAME_BASE_URL}/country/id={user_id}" if user_id else GAME_BASE_URL

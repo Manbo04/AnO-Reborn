@@ -154,14 +154,13 @@ def distributable_rations(warehouse, dist_cap, nation_population, comfort, now=N
     return min(warehouse, int(covered_people // variables.RATIONS_PER))
 
 
-def calc_nation_growth(nation_population, comfort, rations_ratio, frozen=False):
+def calc_nation_growth(nation_population, comfort, rations_ratio):
     """People added to a whole nation this tick (before starvation).
     Based on the population the nation actually has, so war deaths slow it
     down; slows to POP_GROWTH_DIMINISHING_FLOOR past comfort (no hard cap).
     Small nations well below comfort grow up to 3x (POP_GROWTH_CATCHUP_*).
-    A nation that recently lost a battle / was nuked is frozen (0)."""
-    if frozen:
-        return 0
+    (The 12h/24h growth freeze after losing a battle / being nuked was
+    removed by the 2026-10-09 community vote; only real deaths count.)"""
     rations_ratio = min(1.0, max(0.0, float(rations_ratio or 0)))
     pop = max(0, int(nation_population or 0))
     pop_ratio = pop / comfort if comfort > 0 else 1
@@ -212,25 +211,6 @@ def build_nation_contexts(province_rows):
         pollution = a["poll_w"] / a["pop"] if a["pop"] else 50
         a["comfort"] = nation_comfort(a["cities"], a["land"], happiness, pollution)
     return agg
-
-
-def load_frozen_users(cursor, user_ids):
-    """User ids whose growth is frozen right now (population_growth_freezes,
-    migration 0106). Empty set if the table doesn't exist yet."""
-    cursor.execute("SELECT to_regclass('population_growth_freezes') IS NOT NULL")
-    row = cursor.fetchone()
-    exists = row[0] if not isinstance(row, dict) else list(row.values())[0]
-    if not exists or not user_ids:
-        return set()
-    cursor.execute(
-        "SELECT user_id FROM population_growth_freezes "
-        "WHERE user_id = ANY(%s) AND frozen_until > now()",
-        (list(user_ids),),
-    )
-    out = set()
-    for r in cursor.fetchall():
-        out.add(r["user_id"] if isinstance(r, dict) else r[0])
-    return out
 
 
 def calc_province_population_delta(
@@ -353,9 +333,8 @@ def get_population_growth(cId, db=None):
         rations_ratio = (
             effective_rations / total_needed if total_needed > 0 else 0
         )
-        frozen = cId in load_frozen_users(active_db, [cId])
         nation_growth = calc_nation_growth(
-            nation["pop"], nation["comfort"], rations_ratio, frozen=frozen
+            nation["pop"], nation["comfort"], rations_ratio
         )
 
         total_delta = 0
@@ -388,7 +367,6 @@ def get_population_growth(cId, db=None):
             "current_population": int(current_population),
             "per_province": per_province,
             "comfort": int(nation["comfort"]),
-            "growth_frozen": frozen,
         }
         query_cache.set(cache_key, result)
         return result
@@ -589,7 +567,6 @@ def population_growth():  # Function for growing population
 
             user_rations_to_deduct[uid] = actually_consumed + spoilage
 
-        frozen_users = load_frozen_users(db, all_user_ids)
         nation_growth_map = {}
         for uid, nation in nation_ctx.items():
             total_needed = user_total_rations_needed.get(uid, 1)
@@ -597,7 +574,7 @@ def population_growth():  # Function for growing population
             ratio = effective_rations / total_needed if total_needed > 0 else 0
             nation["rations_ratio"] = ratio
             nation_growth_map[uid] = calc_nation_growth(
-                nation["pop"], nation["comfort"], ratio, frozen=uid in frozen_users
+                nation["pop"], nation["comfort"], ratio
             )
 
         def calc_population_growth(province_row):

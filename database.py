@@ -2293,8 +2293,10 @@ def resolve_user_id_by_discord(discord_user_id: str) -> Optional[int]:
         return None
 
 
-def assign_discord_id_to_user(user_id: int, discord_user_id: str) -> None:
-    """Set discord_id for a user, clearing the same id from any other account."""
+def assign_discord_id_to_user(
+    user_id: int, discord_user_id: str, discord_username: Optional[str] = None
+) -> None:
+    """Set discord_id (and optionally discord_username) for a user, clearing the same id from any other account."""
     if not users_table_has_column("discord_id"):
         return
     discord_user_id = str(discord_user_id).strip()
@@ -2308,10 +2310,17 @@ def assign_discord_id_to_user(user_id: int, discord_user_id: str) -> None:
             """,
             (discord_user_id, user_id),
         )
-        db.execute(
-            "UPDATE users SET discord_id = %s WHERE id = %s",
-            (discord_user_id, user_id),
-        )
+        if discord_username and users_table_has_column("discord_username"):
+            clean_name = str(discord_username).strip()
+            db.execute(
+                "UPDATE users SET discord_id = %s, discord_username = %s WHERE id = %s",
+                (discord_user_id, clean_name, user_id),
+            )
+        else:
+            db.execute(
+                "UPDATE users SET discord_id = %s WHERE id = %s",
+                (discord_user_id, user_id),
+            )
 
 
 def client_ip_from_headers(headers, remote_addr: Optional[str]) -> Optional[str]:

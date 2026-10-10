@@ -413,6 +413,15 @@ def discord_login():
                     )
                 except Exception:
                     pass
+            discord_username = payload.get("username") or payload.get("global_name")
+            if discord_username and users_table_has_column("discord_username"):
+                try:
+                    db.execute(
+                        "UPDATE users SET discord_username = %s WHERE id = %s",
+                        (str(discord_username).strip(), user_id),
+                    )
+                except Exception:
+                    pass
     except Exception as exc:
         logging.getLogger(__name__).warning("discord_login exception for %s: %s", session.get("user_id"), exc)
         flash("Discord login failed unexpectedly. Please try again.")

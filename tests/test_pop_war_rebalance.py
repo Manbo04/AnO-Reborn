@@ -1,6 +1,30 @@
-"""Population/war rebalance (2026-10-04): nation-level comfort, growth based
-on current population, the distribution units bug + overcrowding, battle
-aftermath and steeper province prices. Pure math only, no DB."""
+import pytest
+pytestmark = pytest.mark.no_server
+
+import sys
+from unittest.mock import MagicMock
+for _m in [
+    "flask",
+    "flask_limiter",
+    "flask_limiter.util",
+    "flask_socketio",
+    "flask_login",
+    "flask_wtf",
+    "flask_wtf.csrf",
+    "extensions",
+    "psycopg2",
+    "psycopg2.extras",
+    "psycopg2.pool",
+    "psycopg2.extensions",
+    "celery",
+    "redis",
+    "dotenv",
+]:
+    if _m not in sys.modules:
+        try:
+            __import__(_m)
+        except ImportError:
+            sys.modules[_m] = MagicMock()
 
 import datetime
 
@@ -48,8 +72,10 @@ def test_growth_scales_with_current_population():
     assert big < 1_000_000
 
 
-def test_growth_frozen_and_starved():
-    assert pop.calc_nation_growth(1_000_000, 50_000_000, 1.0, frozen=True) == 0
+def test_growth_frozen_removed_and_starved():
+    # Freeze removed: frozen=True does not halt growth anymore
+    assert pop.calc_nation_growth(1_000_000, 50_000_000, 1.0, frozen=True) > 0
+    # Starvation still zeroes growth
     assert pop.calc_nation_growth(1_000_000, 50_000_000, 0.0) == 0
 
 
@@ -85,9 +111,9 @@ def test_province_delta_starvation():
 
 
 def test_civilian_death_pct():
-    assert aftermath.civilian_death_pct("ground", {}, "annihilation") == 0.003
-    assert aftermath.civilian_death_pct(None, {}, "close victory") == 0.001
-    assert aftermath.civilian_death_pct("air", {"bombers": 5}, "definite victory") == 0.004
+    assert aftermath.civilian_death_pct("ground", {}, "annihilation") == 0.03
+    assert aftermath.civilian_death_pct(None, {}, "close victory") == 0.01
+    assert aftermath.civilian_death_pct("air", {"bombers": 5}, "definite victory") == 0.04
     assert aftermath.civilian_death_pct("air", {"fighters": 5}, "annihilation") == 0.0
     assert aftermath.civilian_death_pct("naval", {}, "annihilation") == 0.0
 
