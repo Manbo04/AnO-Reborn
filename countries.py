@@ -63,6 +63,21 @@ def get_econ_statistics(cId, db=None):
     expenses = {}
     expenses = defaultdict(lambda: defaultdict(lambda: 0), expenses)
 
+    # Industrial Subsidies cuts upkeep of industrial buildings in the real
+    # tick; the expenses breakdown ignored it so the policy looked like it
+    # did nothing (Discord report 2026-10-08).
+    subsidies_active = False
+    try:
+        with reuse_or_new_cursor(db, cursor_factory=RealDictCursor) as pol_db:
+            pol_db.execute("SELECT education FROM policies WHERE user_id=%s", (cId,))
+            pol_row = pol_db.fetchone()
+            pol_val = pol_row["education"] if pol_row else None
+            if isinstance(pol_val, int):
+                pol_val = [pol_val]
+            subsidies_active = variables.POLICY_INDUSTRIAL_SUBSIDIES in (pol_val or [])
+    except Exception:
+        subsidies_active = False
+
     def get_unit_type(unit):
         for type_name, buildings in variables.INFRA_TYPE_BUILDINGS.items():
             if unit in buildings:
@@ -85,6 +100,10 @@ def get_econ_statistics(cId, db=None):
             operating_costs = int(variables.INFRA[f"{unit}_money"]) * amount
         except KeyError:
             return
+        if subsidies_active and unit in variables.POLICY_SUBSIDIES_AFFECTED_BUILDINGS:
+            operating_costs = int(
+                operating_costs * variables.POLICY_SUBSIDIES_UPKEEP_REDUCTION
+            )
         unit_type = get_unit_type(unit)
         if not unit_type:
             return

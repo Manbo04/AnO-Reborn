@@ -8,9 +8,10 @@ ever fight air units, so bombers never killed a single soldier. Now:
 * **Civilian deaths.** A won ground or bomber attack kills a share of the
   enemy's WHOLE nation (spread over every province), so spreading people
   over many provinces doesn't dilute it.
-* **Growth freeze.** Whoever loses a battle gets no population growth for
-  LOSS_FREEZE_HOURS (population_growth_freezes, migration 0106). A nuke
-  freezes the target for NUKE_FREEZE_HOURS.
+* **No growth freeze (removed by weekly vote 2026-10-09).** Losing a battle
+  or being nuked no longer stops population growth; only the people actually
+  killed count. freeze_growth() is kept but nothing calls it; freezes
+  already in population_growth_freezes just expire.
 * **Bomber ground strike.** If an air attack with bombers wins, the bombers
   also hit the defender's soldiers and tanks (the counter table always said
   bombers beat soldiers/tanks), capped per bomber so one bomber can't wipe
@@ -154,8 +155,9 @@ def apply_battle_aftermath(
     of the normal fight. Returns a summary for the battle report/news."""
     summary = {"civilian_deaths": 0, "bomber_ground_losses": {}, "frozen": None}
     loser = defender_id if attacker_won else attacker_id
-    freeze_growth(db, loser, LOSS_FREEZE_HOURS, "lost a battle")
-    summary["frozen"] = loser
+    # Weekly vote 2026-10-09: the growth freeze after a lost battle is gone
+    # (only the people actually killed count). `summary["frozen"]` stays
+    # None so no news line is added.
     if not attacker_won:
         return summary
     pct = civilian_death_pct(domain, attacker_units, win_condition)

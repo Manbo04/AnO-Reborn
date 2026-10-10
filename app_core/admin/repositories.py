@@ -295,7 +295,7 @@ class AdminRepository:
             "INSERT INTO provinces "
             "(userId, provinceName, pop_children, pop_working, pop_elderly, "
             "coordinate_x, coordinate_y) "
-            "VALUES (%s, %s, 300000, 600000, 100000, %s, %s)",
+            "VALUES (%s, %s, 3000, 6000, 1000, %s, %s)",
             (target_user_id, province_name, new_x, new_y),
         )
 
