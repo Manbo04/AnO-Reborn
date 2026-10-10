@@ -42,8 +42,9 @@ def test_ration_defenders():
 
     # Unusable units
     fielded, spent = supply.ration_defenders(owned, 200, costs, unusable=["fighters"])
-    # Only tanks are usable: 20 Tanks -> 200 cost
-    assert fielded == {"tanks": 20, "fighters": 0}
+    # Only tanks are usable: 20 Tanks -> 200 cost. Unusable fighters still
+    # take the field (free, zero strength) so they can take casualties.
+    assert fielded == {"tanks": 20, "fighters": 10}
     assert spent == 200
 
 def test_citizen_army_pct():

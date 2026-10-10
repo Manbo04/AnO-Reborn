@@ -55,11 +55,16 @@ class BotApiClient:
             raise BotApiError(msg or f"HTTP {resp.status_code}", resp.status_code)
         return data if isinstance(data, dict) else {"data": data}
 
-    def register(self, discord_user_id: str, code: str) -> Dict[str, Any]:
+    def register(
+        self, discord_user_id: str, code: str, discord_username: Optional[str] = None
+    ) -> Dict[str, Any]:
+        body = {"discord_user_id": str(discord_user_id), "code": code}
+        if discord_username:
+            body["discord_username"] = str(discord_username)
         return self._request(
             "POST",
             "/api/bot/register",
-            json_body={"discord_user_id": str(discord_user_id), "code": code},
+            json_body=body,
         )
 
     def me(self, discord_user_id: str) -> Dict[str, Any]:

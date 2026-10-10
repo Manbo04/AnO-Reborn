@@ -23,6 +23,10 @@ def account():
                 user_cols += ", recovery_key"
             if users_table_has_column("reset_count"):
                 user_cols += ", reset_count"
+            if users_table_has_column("show_discord"):
+                user_cols += ", show_discord"
+            if users_table_has_column("discord_username"):
+                user_cols += ", discord_username"
             db.execute(f"SELECT {user_cols} FROM users WHERE id=%s", (cId,))
             row = db.fetchone()
             if row:
@@ -44,6 +48,8 @@ def account():
     if not user:
         return error(404, "Account not found")
     user.setdefault("discord_id", None)
+    user.setdefault("discord_username", None)
+    user.setdefault("show_discord", False)
     user.setdefault("auth_type", "normal")
     reset_count = user.pop("reset_count", 0) or 0
 
@@ -226,6 +232,54 @@ def twofa_disable():
         totp.disable_2fa(db, cId)
 
     flash("Two-factor authentication has been disabled.")
+    return redirect("/account")
+
+
+@bp.route("/account/toggle_show_discord", methods=["POST"])
+@login_required
+def toggle_show_discord():
+    cId = session["user_id"]
+    with get_request_cursor() as db:
+        try:
+            db.execute("SELECT discord_id, show_discord FROM users WHERE id=%s", (cId,))
+            row = db.fetchone()
+        except Exception:
+            rollback_db_cursor(db)
+            row = None
+
+        if not row:
+            flash("Account not found.")
+            return redirect("/account")
+
+        discord_id = row[0]
+        current_show = bool(row[1]) if len(row) > 1 and row[1] is not None else False
+        if not discord_id:
+            flash("You must link a Discord account first before displaying your Discord name on your nation page.")
+            return redirect("/account")
+
+        new_val = not current_show
+        if "show_discord" in request.form:
+            form_val = request.form.get("show_discord")
+            if form_val in ("true", "1", "on"):
+                new_val = True
+            elif form_val in ("false", "0", "off"):
+                new_val = False
+        elif request.form.get("form_submitted"):
+            new_val = False
+
+        if users_table_has_column("show_discord"):
+            try:
+                db.execute("UPDATE users SET show_discord=%s WHERE id=%s", (new_val, cId))
+                if new_val:
+                    flash("Your Discord name will now be shown on your nation page.")
+                else:
+                    flash("Your Discord name is now hidden from your nation page.")
+            except Exception:
+                rollback_db_cursor(db)
+                flash("Could not update Discord visibility setting.")
+        else:
+            flash("Discord visibility setting is not available right now.")
+
     return redirect("/account")
 
 

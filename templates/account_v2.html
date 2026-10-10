@@ -173,6 +173,28 @@
                 {% endif %}
                 {{ game_button('Generate Bot Link Code', icon='smart_toy') }}
             </form>
+
+            <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                <h4 style="margin: 0 0 10px; font-size: 1rem;">Discord Display on Nation Page</h4>
+                {% if user.discord_id %}
+                <form action="/account/toggle_show_discord" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <input type="hidden" name="form_submitted" value="1"/>
+                    <p style="margin-bottom: 8px; opacity: 0.85;">
+                        Linked Discord account: <strong>{% if user.discord_username %}{{ user.discord_username }}{% else %}ID {{ user.discord_id }}{% endif %}</strong>
+                    </p>
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 12px;">
+                        <input type="checkbox" name="show_discord" value="1" {% if user.show_discord %}checked{% endif %} style="width: 18px; height: 18px; cursor: pointer;">
+                        <span>Show my Discord name on my nation page</span>
+                    </label>
+                    {{ game_button('Save setting', icon='visibility') }}
+                </form>
+                {% else %}
+                <p style="margin-bottom: 0; opacity: 0.8;">
+                    No Discord account linked. Generate a bot link code above and run <code>/register</code> in Discord, or sign in via Discord, to link your account.
+                </p>
+                {% endif %}
+            </div>
         {% endcall %}
 
         {% call game_glass_panel('Backup Recovery Key', icon='key', style='margin-bottom: var(--game-space-lg, 24px);') %}

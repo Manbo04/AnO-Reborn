@@ -746,6 +746,16 @@ def discord_register():
                     return error(500, "Signup failed: could not create user")
                 user_id = discord_user_row[0]
 
+                discord_username = discord_user.get("username") or discord_user.get("global_name")
+                if discord_username and users_table_has_column("discord_username"):
+                    try:
+                        db.execute(
+                            "UPDATE users SET discord_username = %s WHERE id = %s",
+                            (str(discord_username).strip(), user_id),
+                        )
+                    except Exception:
+                        pass
+
                 # Create all user tables (idempotent)
                 # NOTE: resources and upgrades tables were removed in Economy 2.0
                 # migration; their data now lives in user_economy / user_buildings.

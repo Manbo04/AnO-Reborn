@@ -640,7 +640,9 @@ def get_active_discord_link_code(user_id: int) -> Optional[Dict[str, Any]]:
     return {"code": str(code), "expires_at": expires_at}
 
 
-def register_discord_with_code(discord_user_id: str, code: str) -> Tuple[bool, str, Optional[int]]:
+def register_discord_with_code(
+    discord_user_id: str, code: str, discord_username: Optional[str] = None
+) -> Tuple[bool, str, Optional[int]]:
   """Validate code and link Discord to nation. Returns (ok, message, user_id)."""
   if not discord_link_codes_table_exists():
     return False, "Discord bot registration is not available yet.", None
@@ -682,7 +684,7 @@ def register_discord_with_code(discord_user_id: str, code: str) -> Tuple[bool, s
           None,
       )
 
-    assign_discord_id_to_user(user_id, discord_user_id)
+    assign_discord_id_to_user(user_id, discord_user_id, discord_username=discord_username)
     db.execute(
         "UPDATE discord_link_codes SET used_at = NOW() WHERE code = %s",
         (code_norm,),
@@ -816,10 +818,13 @@ def bot_register():
     return err
   payload = request.get_json(silent=True) or {}
   discord_user_id = str(payload.get("discord_user_id") or "").strip()
+  discord_username = payload.get("discord_username") or payload.get("username")
   code = str(payload.get("code") or "").strip()
   if not discord_user_id:
     return jsonify({"error": "discord_user_id is required"}), 400
-  ok, message, user_id = register_discord_with_code(discord_user_id, code)
+  ok, message, user_id = register_discord_with_code(
+      discord_user_id, code, discord_username=discord_username
+  )
   if not ok:
     return jsonify({"error": message}), 400
   username = None

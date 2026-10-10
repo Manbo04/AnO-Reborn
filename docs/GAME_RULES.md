@@ -80,8 +80,8 @@ Rules:
 ## 3. Population
 
 - Growth toward a **nation-wide** comfort level (`nation_comfort`), not per province.
-- Losing a battle freezes growth for `LOSS_FREEZE_HOURS`; a nuke for
-  `NUKE_FREEZE_HOURS` (`wars/aftermath.py`, table `population_growth_freezes`).
+- Population growth freeze is completely removed (voted 2026-10-10). Losing a battle or being nuked no longer freezes growth; only actual deaths reduce population.
+- New provinces start with 10,000 population (split 60% working / 30% children / 10% elderly: 6,000 working, 3,000 children, 1,000 elderly).
 - The age split (`pop_children/working/elderly`) is rescaled by the DB trigger
   `trg_sync_province_population` when only `population` changes. **Never set both**
   `population` and the age columns in one UPDATE — the trigger then recomputes
@@ -109,8 +109,12 @@ Rules:
   Over-cap nations cannot recruit further until under cap. 🔒 `tests/test_manpower_cap.py`
 - **Supply**: attacker *and* defender pay unit supply from their own pool; a
   defender can only field what its supply covers (`wars/supply.py`).
-- **Aftermath**: won ground/bomber attacks kill civilians nation-wide; bombers also
-  hit soldiers/tanks (`wars/aftermath.py`).
+- **Aftermath**: won ground/bomber attacks kill civilians only in the attacked province
+  (ground 1%/2%/3%, bombers 2%/4%/6% for close/definite/annihilation); bombers also
+  hit soldiers/tanks (`wars/aftermath.py`). Losing a battle no longer freezes growth.
+- **Strikes**: Kamikaze drones and cruise missiles can target missile silos (threshold 15),
+  factories (threshold 10), and smaller resource buildings (mines, farms, pumpjacks,
+  lumber mills, fisheries at threshold 6), as well as population centres (`wars/routes.py`).
 - **Defense composition**: a declared domain (ground/naval/air) decides who defends;
   otherwise the saved `/defense` choice. Note: `stats.default_defense` defaults to
   soldiers,tanks,artillery for everyone, so the "top 3 owned" fallback in
@@ -118,7 +122,7 @@ Rules:
   (Dede, 2026-10-06)**.
 - **Nukes**: plan → review → launch with a one-time token; launch takes an advisory
   lock and decrements only while `quantity > 0`; blast deaths then 1% nation-wide
-  fallout; Iron Domes get one interception roll (`wars/nuclear.py`).
+  fallout; Iron Domes get one interception roll (`wars/nuclear.py`). Nukes no longer freeze growth.
   🔒 `tests/test_nuclear_strike.py` (incl. two concurrent launches, one nuke)
 - **Reparations** (`app_core/game_ticks/taxes.py::war_reparation_tax`, daily, for 7
   days after a truce): loser pays **20% of every resource per day**, **5% for Raze
@@ -130,6 +134,9 @@ Rules:
 - Discord/Google-only accounts store the provider id in `users.hash` (no password).
   Step-up checks use `app_core/auth/passwords.py::confirm_identity`: password if the
   account has one, otherwise the nation name; disabling 2FA needs an authenticator
+  code or nation name.
+- **Discord visibility**: Opt-in setting `show_discord` allows players with a linked
+  Discord account to show their Discord name on their nation profile (`app_core/community/discord_visibility.py`).
   code. 🔒 `tests/test_passwordless_accounts.py`
 - Destructive account actions (delete, reset, reveal email, disable 2FA) always
   need that step-up; a session alone is never enough (2026-09-05 incident).

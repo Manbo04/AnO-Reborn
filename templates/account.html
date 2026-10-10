@@ -183,6 +183,30 @@
                 {% endif %}
                 <button type="submit" class="templatedivbutton templatecenteredbutton"><span class="material-icons-outlined">smart_toy</span>Generate Bot Link Code</button>
             </form>
+
+            <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                <h3 class="templatecontentheaderleft" style="font-size: 1.1rem; margin-top: 0;">Discord Display on Nation Page</h3>
+                {% if user.discord_id %}
+                <form action="/account/toggle_show_discord" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <input type="hidden" name="form_submitted" value="1"/>
+                    <p style="margin-bottom: 8px; opacity: 0.85;">
+                        Linked Discord account: <strong>{% if user.discord_username %}{{ user.discord_username }}{% else %}ID {{ user.discord_id }}{% endif %}</strong>
+                    </p>
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 12px;">
+                        <input type="checkbox" name="show_discord" value="1" {% if user.show_discord %}checked{% endif %} style="width: 18px; height: 18px; cursor: pointer;">
+                        <span>Show my Discord name on my nation page</span>
+                    </label>
+                    <button type="submit" class="templatedivbutton templatecenteredbutton" style="width: auto; padding: 8px 16px;">
+                        <span class="material-icons-outlined">visibility</span>Save setting
+                    </button>
+                </form>
+                {% else %}
+                <p style="margin-bottom: 0; opacity: 0.8;">
+                    No Discord account linked. Generate a bot link code above and run <code>/register</code> in Discord, or sign in via Discord, to link your account.
+                </p>
+                {% endif %}
+            </div>
         </div>
 
         <h2 class="templatecontentheaderleft">Backup Recovery Key</h2>
