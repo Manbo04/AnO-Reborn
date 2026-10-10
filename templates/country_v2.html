@@ -3248,13 +3248,15 @@
                     </div>
         </form>
 
-        <div class="templatedivflex2 divflex2center" style="margin-top: 10px;">
-            <div class="templatedivflex2left">
+        {# Wraps instead of one nowrap row: on phones the long note pushed the
+           button off the right edge (germanicus 2026-10-07). #}
+        <div class="templatedivflex2 divflex2center" style="margin-top: 10px; max-width: 100%;">
+            <div class="templatedivflex2left" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: 100%; min-width: 0;">
                 {% if is_embargoed_by_viewer %}
                 <form method="POST" action="/embargo/{{ cId }}/remove">
                     {{ game_button('Remove Embargo', icon='block', variant='secondary') }}
                 </form>
-                <span class="text-muted" style="margin-left: 8px;">You are currently embargoing this nation - they cannot buy from or sell to you on the market.</span>
+                <span class="text-muted" style="flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere;">You are currently embargoing this nation - they cannot buy from or sell to you on the market.</span>
                 {% else %}
                 <form method="POST" action="/embargo/{{ cId }}">
                     {{ game_button('Embargo This Nation', icon='block', variant='danger') }}
