@@ -166,7 +166,7 @@ def get_blockade_info(
                     "enemy_id": enemy_id,
                     "enemy_name": enemy_name,
                     "until": until_utc,
-                    "formatted_until": until_utc.strftime("%H:%M UTC"),
+                    "formatted_until": until_utc.strftime("%d %b %H:%M UTC"),
                 }
 
     return None
@@ -588,7 +588,7 @@ def get_war_combat_status(db, war_id: int, user_id: int) -> Dict[str, Any]:
         status["enemy_intel"] = dfn_intel
         if atk_block and _ensure_utc(atk_block) > now_utc:
             status["is_blockaded"] = True
-            status["blockade_until"] = _ensure_utc(atk_block).strftime("%H:%M UTC")
+            status["blockade_until"] = _ensure_utc(atk_block).strftime("%d %b %H:%M UTC")
         if dfn_block and _ensure_utc(dfn_block) > now_utc:
             status["enemy_blockaded"] = True
         enemy_id = dfn
@@ -602,7 +602,7 @@ def get_war_combat_status(db, war_id: int, user_id: int) -> Dict[str, Any]:
         status["enemy_intel"] = atk_intel
         if dfn_block and _ensure_utc(dfn_block) > now_utc:
             status["is_blockaded"] = True
-            status["blockade_until"] = _ensure_utc(dfn_block).strftime("%H:%M UTC")
+            status["blockade_until"] = _ensure_utc(dfn_block).strftime("%d %b %H:%M UTC")
         if atk_block and _ensure_utc(atk_block) > now_utc:
             status["enemy_blockaded"] = True
         enemy_id = atk
@@ -654,9 +654,9 @@ def check_user_blockaded_market(db, user_id: int) -> Optional[str]:
         if user_id == atk and atk_block:
             until_utc = _ensure_utc(atk_block)
             if until_utc and until_utc > now_utc:
-                return f"Your ports are blockaded (war with {dfn_name or 'Enemy'}) until {until_utc.strftime('%H:%M UTC')}."
+                return f"Your ports are blockaded (war with {dfn_name or 'Enemy'}) until {until_utc.strftime('%d %b %H:%M UTC')}."
         elif user_id == dfn and dfn_block:
             until_utc = _ensure_utc(dfn_block)
             if until_utc and until_utc > now_utc:
-                return f"Your ports are blockaded (war with {atk_name or 'Enemy'}) until {until_utc.strftime('%H:%M UTC')}."
+                return f"Your ports are blockaded (war with {atk_name or 'Enemy'}) until {until_utc.strftime('%d %b %H:%M UTC')}."
     return None
