@@ -982,11 +982,15 @@ def countries():
     if per_page not in [50, 100, 150]:
         per_page = 50
 
+    min_strength = None
+    max_strength = None
     if sort == "war_range":
         target = target_data(cId)
-        lowerinf = float(target.get("lower", 0))
-        upperinf = float(target.get("upper", 0))
-        province_range = int(target.get("province_range", 0))
+        min_strength = float(target.get("lower", 0))
+        max_strength = float(target.get("upper", 0))
+        lowerinf = None
+        upperinf = None
+        province_range = 0
 
     data = CountryService.get_countries_paginated(
         cId=cId,
@@ -997,7 +1001,9 @@ def countries():
         sort=sort,
         sortway=sortway,
         page=page,
-        per_page=per_page
+        per_page=per_page,
+        min_strength=min_strength,
+        max_strength=max_strength,
     )
 
     template = "countries_v2.html" if is_theme_v2_enabled("countries") else "countries.html"

@@ -145,6 +145,14 @@ def task_market_auto_orders():
 
 @celery.task()
 @leader_only(ttl_seconds=300)
+def task_war_auto_expiry():
+    from app_core.game_ticks.war_expiry import run_war_auto_expiry
+
+    run_once_per_period("war_auto_expiry", 9032, run_war_auto_expiry)
+
+
+@celery.task()
+@leader_only(ttl_seconds=300)
 def task_war_reparation_tax():
     run_once_per_period("war_reparation_tax", 9030, war_reparation_tax)
 

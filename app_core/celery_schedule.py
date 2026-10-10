@@ -45,6 +45,7 @@ TASK_RUN_THRESHOLDS = {
     # whole day.
     "bond_tick": int(os.getenv("BOND_TICK_MIN_INTERVAL", "82800")),
     "assembly_tick": int(os.getenv("ASSEMBLY_TICK_MIN_INTERVAL", "300")),
+    "war_auto_expiry": int(os.getenv("WAR_AUTO_EXPIRY_MIN_INTERVAL", "3300")),
 }
 
 # Ticks that must run AT MOST ONCE PER CALENDAR PERIOD (UTC). These are gated
@@ -65,9 +66,14 @@ TASK_PERIODS = {
     # Value-moving jobs gated via common.run_once_per_period():
     "war_reparation_tax": "day",
     "manpower_increase": "hour",  # scheduled every 4h; hour gate stops duplicates
+    "war_auto_expiry": "hour",
 }
 
 CELERY_BEAT_SCHEDULE = {
+    "war_auto_expiry": {
+        "task": "tasks.task_war_auto_expiry",
+        "schedule": get_crontab_env("WAR_AUTO_EXPIRY_CRON", crontab(minute="50")),
+    },
     "check_achievements": {
         "task": "tasks.task_check_achievements",
         "schedule": get_crontab_env("ACHIEVEMENTS_CRON", crontab(minute="*/30")),

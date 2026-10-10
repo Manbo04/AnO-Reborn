@@ -5,6 +5,11 @@
         <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">
             military_tech
             </span>{{ attacker_name }} vs {{ defender_name }}</h1>
+        {% if auto_end_text %}
+        <div style="text-align: center; font-size: 0.9rem; color: #a0aec0; margin-top: 4px;">
+            <span class="material-icons-outlined" style="vertical-align: middle; font-size: 1rem; margin-right: 4px;">schedule</span>{{ auto_end_text }}
+        </div>
+        {% endif %}
     </div>
 
     <div class="templatedivcontent">

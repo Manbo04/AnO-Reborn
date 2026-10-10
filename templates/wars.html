@@ -121,6 +121,9 @@
 
             <div class="min templatedivflex2left">
                 <h2 class="templatecontentheadercenter">VS</h2>
+                {% if war_info[war_id].get("auto_end_text") %}
+                <div style="font-size: 0.8rem; color: #a0aec0; text-align: center; white-space: nowrap; margin-top: 2px;">{{ war_info[war_id]["auto_end_text"] }}</div>
+                {% endif %}
             </div>
 
             <!-- AGGRESSOR -->

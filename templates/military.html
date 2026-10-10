@@ -162,8 +162,8 @@
     <div class="templatedivcontent">
 
         <div class="infodiv">
-            <p class="templatecontentpleft">Current Manpower: {{ manpower | fmt }}</p>
-            <p class="templatecontentpleft">Manpower is used to maintain your military units. Each unit requires manpower to function. Manpower regenerates over time.</p>
+            <p class="templatecontentpleft"><strong>Manpower:</strong> {{ manpower | fmt }} &middot; <strong>Army size:</strong> {{ (manpower_used or 0) | fmt }} / {{ (manpower_cap or 0) | fmt }} (cap = 10% of working population)</p>
+            <p class="templatecontentpleft">Army size is capped at 10% of your working-age population. Each unit requires crew to recruit.</p>
         </div>
 
         <div class="templatedivflex2 menuflex2">

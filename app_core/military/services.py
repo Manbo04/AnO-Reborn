@@ -177,6 +177,19 @@ def process_buy_units(db, cId, units, wantedUnits, mildict):
     if totalPrice > gold:
         return False, f"Not enough money ({gold}/{totalPrice})"
 
+    from app_core.military.manpower import (
+        get_user_manpower_data,
+        can_recruit,
+        format_manpower_error,
+    )
+
+    mp_data = get_user_manpower_data(db, cId)
+    allowed, needed_crew, free_crew = can_recruit(
+        units, wantedUnits, mp_data["used"], mp_data["cap"]
+    )
+    if not allowed:
+        return False, format_manpower_error(needed_crew, free_crew)
+
     manpower_per_unit = unit_costs["manpower_cost"]
     needed_manpower = wantedUnits * manpower_per_unit
     if needed_manpower > manpower_available:
@@ -229,6 +242,19 @@ def process_activate_units(db, cId, units, wantedUnits, mildict):
     _, gold = get_manpower_and_gold(db, cId)
     if totalPrice > gold:
         return False, f"Not enough money ({gold}/{totalPrice})"
+
+    from app_core.military.manpower import (
+        get_user_manpower_data,
+        can_recruit,
+        format_manpower_error,
+    )
+
+    mp_data = get_user_manpower_data(db, cId)
+    allowed, needed_crew, free_crew = can_recruit(
+        units, wantedUnits, mp_data["used"], mp_data["cap"]
+    )
+    if not allowed:
+        return False, format_manpower_error(needed_crew, free_crew)
 
     move_stockpile_to_military(db, cId, unit_id, wantedUnits)
     update_manpower_and_gold(db, cId, gold_delta=-totalPrice, manpower_delta=0)

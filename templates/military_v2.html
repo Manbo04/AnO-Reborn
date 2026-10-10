@@ -117,7 +117,7 @@
 
 <div class="templatediv">
 
-    {{ game_hero('Military', badge_icon='groups', badge_text='Manpower ' ~ (manpower | fmt), subtitle='Recruit and maintain your forces. Most units need manpower, which regenerates over time; how many you can field depends on your buildings. A unit whose upkeep resource runs out deals no damage in battle until you restock it.') }}
+    {{ game_hero('Military', badge_icon='groups', badge_text='Manpower ' ~ (manpower | fmt), subtitle='Recruit and maintain your forces. Most units need manpower, which regenerates over time. Army size is capped: all your units together may use at most 10% of your working-age population (' ~ ((manpower_used or 0) | fmt) ~ ' / ' ~ ((manpower_cap or 0) | fmt) ~ ' used). How many you can field also depends on your buildings. A unit whose upkeep resource runs out deals no damage in battle until you restock it.') }}
 
     <div class="templatedivcontent">
 

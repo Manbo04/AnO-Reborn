@@ -3,17 +3,17 @@ from database import get_request_cursor
 
 
 def target_data(cId):
+    from wars.war_range import get_user_war_strength, war_range_bounds
+
     with get_request_cursor() as db:
-        influence = get_influence(cId)
-        db.execute("SELECT COUNT(id) FROM provinces WHERE userid=(%s)", (cId,))
-        prov_row = db.fetchone()
-        province_range = prov_row[0] if prov_row else 0
-    data = {
-        "upper": influence * 2,
-        "lower": influence * 0.9,
-        "province_range": province_range,
+        strength = get_user_war_strength(db, cId)
+    lower, upper = war_range_bounds(strength)
+    return {
+        "strength": strength,
+        "lower": lower,
+        "upper": upper,
+        "province_range": 0,
     }
-    return data
 
 
 def apply_building_damage(db, target_id, building_name, damage_points, threshold):
