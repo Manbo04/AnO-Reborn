@@ -88,8 +88,12 @@ class CountryRepository:
             
             offset = (page - 1) * per_page
             
+            # Explicit columns: templates unpack exactly these 11 (strength is
+            # only used for filtering/sorting).
             final_query = f"""
-                SELECT * FROM ({filter_sql} {range_filter}) AS subquery
+                SELECT id, username, date, flag, province_population, colid, name,
+                       provinces_count, join_number, influence, unix
+                FROM ({filter_sql} {range_filter}) AS subquery
                 ORDER BY {sort_column} {sort_direction}, id {sort_direction}
                 LIMIT %s OFFSET %s
             """
