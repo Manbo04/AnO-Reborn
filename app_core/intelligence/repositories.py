@@ -136,7 +136,13 @@ def get_revealed_values(db, eId, object_names, spy_type):
             """,
             (eId, object_names),
         )
-    return {name: amount for name, amount in db.fetchall()}
+    revealed = {name: amount for name, amount in db.fetchall()}
+    if spy_type != "units" and "money" in object_names:
+        # Gold lives in stats, not user_economy; spyinfo stores it as money.
+        db.execute("SELECT COALESCE(gold, 0) FROM stats WHERE id = %s", (eId,))
+        row = db.fetchone()
+        revealed["money"] = int(row[0]) if row else 0
+    return revealed
 
 
 def update_revealed_spyinfo(db, operation_id, uncovered_objects, revealed_map):
@@ -145,7 +151,7 @@ def update_revealed_spyinfo(db, operation_id, uncovered_objects, revealed_map):
     input, but the whitelist check stays fused with the SQL construction
     right here (rather than split into a separate "validate" step) so the
     two can never drift apart and reopen an injection path."""
-    safe_columns = set(variables.RESOURCES + variables.UNITS + ["iron_domes"])
+    safe_columns = set(variables.RESOURCES + variables.UNITS + ["iron_domes", "money"])
     set_clauses = []
     set_values = []
     for obj in uncovered_objects:

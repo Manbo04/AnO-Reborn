@@ -295,7 +295,7 @@ def test_resolve_spy_operation_own_side_dominant_reveals_with_no_losses(monkeypa
     assert (ok, code) == (True, 200)
     assert revealed_calls, "get_revealed_values should have been called"
     assert revealed_calls[0][0] == 2  # eId
-    assert set(revealed_calls[0][1]) == set(variables.RESOURCES)
+    assert set(revealed_calls[0][1]) == set(variables.RESOURCES) | {"money"}
     assert update_calls and update_calls[0][0] == 777
     assert decrease_calls == [(1, "spies", 0)]
     assert entry is not None

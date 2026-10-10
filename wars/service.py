@@ -27,26 +27,45 @@ def apply_building_damage(db, target_id, building_name, damage_points, threshold
     where had_any is False if the defender owns none of building_name at all
     (distinguishes "nothing to destroy" from "destroyed 0, missed").
     """
+    # user_buildings has one row per (user, building, province). Spread the
+    # destruction over those rows, biggest stack first; a single unfiltered
+    # UPDATE would subtract from every province and trip the quantity >= 0
+    # check (the 500 Kaiser hit launching drones/missiles 2026-10-08).
     db.execute(
         """
-        SELECT ub.quantity, ub.building_id
+        SELECT ub.province_id, ub.quantity, ub.building_id
         FROM user_buildings ub
         JOIN building_dictionary bd ON bd.building_id = ub.building_id
-        WHERE ub.user_id = %s AND bd.name = %s
+        WHERE ub.user_id = %s AND bd.name = %s AND ub.quantity > 0
+        ORDER BY ub.quantity DESC, ub.province_id
+        FOR UPDATE OF ub
         """,
         (target_id, building_name),
     )
-    row = db.fetchone()
-    if not row or row[0] <= 0:
+    rows = db.fetchall()
+    total = sum(int(r[1]) for r in rows)
+    if total <= 0:
         return 0, False
 
-    count, building_id = row
-    destroyed = min(count, int(damage_points // threshold))
-    if destroyed > 0:
-        db.execute(
-            "UPDATE user_buildings SET quantity = quantity - %s WHERE user_id = %s AND building_id = %s",
-            (destroyed, target_id, building_id),
-        )
+    destroyed = min(total, int(damage_points // threshold))
+    left = destroyed
+    for province_id, quantity, building_id in rows:
+        if left <= 0:
+            break
+        take = min(int(quantity), left)
+        if province_id is None:
+            db.execute(
+                "UPDATE user_buildings SET quantity = quantity - %s "
+                "WHERE user_id = %s AND building_id = %s AND province_id IS NULL",
+                (take, target_id, building_id),
+            )
+        else:
+            db.execute(
+                "UPDATE user_buildings SET quantity = quantity - %s "
+                "WHERE user_id = %s AND building_id = %s AND province_id = %s",
+                (take, target_id, building_id, province_id),
+            )
+        left -= take
     return destroyed, True
 
 

@@ -73,7 +73,7 @@
 
             {% call game_panel('Resources', icon='article', style='margin-top: 0;') %}
 <div class="stat-grid">
-    {% for label, key in [('Rations','rations'), ('Oil','oil'), ('Coal','coal'), ('Uranium','uranium'), ('Iron','iron'), ('Lead','lead'), ('Bauxite','bauxite'), ('Copper','copper'), ('Lumber','lumber'), ('Silver','silver'), ('Diamonds','diamonds'), ('Bullion','bullion'), ('Components','components'), ('Steel','steel'), ('Consumer goods','consumer_goods'), ('Aluminium','aluminium'), ('Gasoline','gasoline'), ('Ammunition','ammunition')] %}
+    {% for label, key in [('Money','money'), ('Rations','rations'), ('Oil','oil'), ('Coal','coal'), ('Uranium','uranium'), ('Iron','iron'), ('Lead','lead'), ('Bauxite','bauxite'), ('Copper','copper'), ('Lumber','lumber'), ('Silver','silver'), ('Diamonds','diamonds'), ('Bullion','bullion'), ('Components','components'), ('Steel','steel'), ('Consumer goods','consumer_goods'), ('Aluminium','aluminium'), ('Gasoline','gasoline'), ('Ammunition','ammunition')] %}
     {{ stat_card(label, data[key]) }}
     {% endfor %}
 </div>
