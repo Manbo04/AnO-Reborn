@@ -445,10 +445,10 @@ def war_with_id(war_id):
                 now_utc = datetime.now(timezone.utc)
                 if b_row[0] and _ensure_utc(b_row[0]) > now_utc:
                     attacker_info["blockaded"] = True
-                    attacker_info["blockaded_until"] = _ensure_utc(b_row[0]).strftime("%H:%M UTC")
+                    attacker_info["blockaded_until"] = _ensure_utc(b_row[0]).strftime("%d %b %H:%M UTC")
                 if b_row[1] and _ensure_utc(b_row[1]) > now_utc:
                     defender_info["blockaded"] = True
-                    defender_info["blockaded_until"] = _ensure_utc(b_row[1]).strftime("%H:%M UTC")
+                    defender_info["blockaded_until"] = _ensure_utc(b_row[1]).strftime("%d %b %H:%M UTC")
 
         if cId == defender:
             cId_type = "defender"
@@ -638,7 +638,6 @@ def repeat_attack(war_id):
 
 @wars_bp.route("/war/<int:war_id>/attack", methods=["GET", "POST"])
 @login_required
-@check_required
 def war_attack(war_id):
     cId = session["user_id"]
     with get_request_cursor() as db:

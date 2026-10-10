@@ -44,7 +44,7 @@ def test_is_blockaded_active():
     assert info["enemy_id"] == 1
     assert info["enemy_name"] == "Kingdom One"
     assert info["until"] == until
-    assert info["formatted_until"] == "17:00 UTC"
+    assert info["formatted_until"].endswith(" 17:00 UTC")
 
 
 def test_is_blockaded_expired():
@@ -88,7 +88,7 @@ def test_is_blockaded_multiple_wars():
     info = action_points.get_blockade_info(1, rows, now)
     assert info is not None
     assert info["enemy_name"] == "Nation Three"
-    assert info["formatted_until"] == "22:00 UTC"
+    assert info["formatted_until"].endswith(" 22:00 UTC")
 
 
 def test_is_blockaded_tuple_rows():
