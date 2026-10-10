@@ -44,7 +44,7 @@
 <div class="ec-row {{ tone }}">
     <div class="ec-main">
         {% if mine %}<a href="/country/id={{ a[4] }}" title="{{ a[16] }}">{{ a[16] }}</a>{% else %}<a href="/country/id={{ a[1] }}" title="{{ a[15] }}">{{ a[15] }}</a>{% endif %}
-        <span class="ec-sub"><span class="ec-tag">{{ tag }}</span> {{ interval_label(a[7]) }}{% if a[12] == 'active' and a[8] %} · next {{ a[8].strftime('%b %d %H:%M') }}{% endif %}</span>
+        <span class="ec-sub"><span class="ec-tag">{{ tag }}</span> {{ interval_label(a[7]) }}{% if a[12] == 'active' and a[8] %} · next {{ a[8].strftime('%b %d %H:%M') }} UTC{% endif %}</span>
     </div>
     <div class="ec-swap" aria-label="You give, you get">
         {% if mine %}{{ res_chip(a[2], a[3], 'tone-bad') }}{% else %}{{ res_chip(a[5], a[6], 'tone-bad') }}{% endif %}
