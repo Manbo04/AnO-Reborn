@@ -56,6 +56,13 @@
     </div>
     {% endcall %}
 
+    {% if blockade_msg %}
+    <div style="background: rgba(224, 90, 77, 0.15); border: 1px solid var(--danger, #e05a4d); border-radius: var(--game-radius-md); padding: 12px 16px; margin: 0 16px 16px; display: flex; align-items: center; gap: 10px; color: var(--colorOne);">
+        <span style="background: var(--danger, #e05a4d); color: #fff; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.5px;">Blockaded</span>
+        <span style="font-size: 0.95em;">{{ blockade_msg }}</span>
+    </div>
+    {% endif %}
+
     <div class="templatedivcontent mb-wrap">
 
         <section class="game-glass mb-toolbar" aria-label="Choose what to trade">

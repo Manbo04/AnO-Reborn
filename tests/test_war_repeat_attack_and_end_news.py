@@ -73,7 +73,7 @@ def test_war_result_has_attack_again_button(app):
     assert 'action="/war/77/repeat_attack"' in html
     assert "Attack again" in html
     assert "5 icbms at their tanks" in html
-    assert 'href="/war/77"' in html
+    assert 'href="/war/77/attack"' in html
 
 
 def test_last_attack_is_stored_per_war_and_capped(app):

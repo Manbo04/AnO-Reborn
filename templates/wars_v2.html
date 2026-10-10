@@ -197,12 +197,24 @@
 
             <div class="wars-mechanics-grid">
                 <div class="wars-mechanics-item">
-                    <h3>How Morale Loss Is Calculated</h3>
-                    <p>Morale impact depends on unit weights (e.g., tanks count more than infantry), relative strength of forces, and win intensity. The losing side takes a scaled morale delta, ensuring wars last multiple engagements.</p>
+                    <h3>Branch Action Points (AP)</h3>
+                    <p>Ground, air, and naval attacks cost 3 AP of their respective branch (start 6, max 12, regens +1 every hour). Drone strikes cost 2 air AP, cruise missiles cost 2 naval AP. Nukes and strategic airstrikes require no AP.</p>
                 </div>
                 <div class="wars-mechanics-item">
-                    <h3>Damage &amp; Loot</h3>
-                    <p>Both sides lose units in every battle; the loser loses more, scaled by how decisive the win was, and no side can lose more of a unit type than it sent. If the war type is Loot and the attacker wins, they may seize up to 10% of the defender's gold.</p>
+                    <h3>Entrenchment (Dig In)</h3>
+                    <p>Spend 2 ground AP to Dig In (+1 level, max 3). Each level grants +10% defensive strength to your ground forces when attacked. Launching your own ground attack leaves the trenches and resets entrenchment to 0.</p>
+                </div>
+                <div class="wars-mechanics-item">
+                    <h3>War Intel &amp; Recon</h3>
+                    <p>Fly Recon Flights (2 air AP, requires fighters/bombers) for +25 intel, or succeed in spy operations for +20 (max 100). Having 50+ intel reveals enemy troop counts. Attacks gain up to +10% combat strength bonus (+intel/10 %) and consume 25 intel.</p>
+                </div>
+                <div class="wars-mechanics-item">
+                    <h3>Naval Blockade</h3>
+                    <p>Winning a naval battle with definite victory or annihilation blockades the loser's ports for 24 hours, stopping them from creating or accepting market offers and trades. Winning any naval battle lifts the blockade early.</p>
+                </div>
+                <div class="wars-mechanics-item">
+                    <h3>Morale &amp; Casualties</h3>
+                    <p>Morale impact depends on unit weights, force ratios, and battle intensity. Defenders lose morale on defeat; attackers suffer 0 morale loss on failed attacks. Defending units require supply, scaled down proportionally if supply is low.</p>
                 </div>
             </div>
         </div>

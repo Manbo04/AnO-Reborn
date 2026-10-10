@@ -25,6 +25,7 @@ from .currency_pricing import (
 from app_core.currency.repositories import take_currency, give_currency
 from .auto_orders import cancel_offer_with_refund
 from app_core.world_affairs.services import log_event
+from wars.action_points import check_user_blockaded_market
 
 # trades.amount/price/offeree/offer_id are Postgres INTEGER columns.
 MAX_TRADE_INT = 2_147_483_647
@@ -177,6 +178,8 @@ def market():
             key=lambda pair: pair[1].lower(),
         )
 
+        blockade_msg = check_user_blockaded_market(db, cId)
+
         return render_template(
             "market_v2.html",
             resource=resource,
@@ -197,7 +200,9 @@ def market():
             gold_per_unit=variables.CURRENCY_GOLD_PER_UNIT,
             tag_labels=TAG_LABELS,
             cId=cId,
+            blockade_msg=blockade_msg,
         )
+
 
 
 @market_bp.route("/market/preferences", methods=["POST"])
@@ -261,6 +266,10 @@ def buy_market_offer(offer_id):
         # "from" a buy offer used to hand out bank resources nobody had put up.
         if offer_type != "sell":
             return error(400, "That is a buy offer; use Sell to fill it.")
+
+        blockade_err = check_user_blockaded_market(db, cId)
+        if blockade_err:
+            return error(403, blockade_err)
 
         if is_embargoed(db, seller_id, cId):
             return error(403, "This nation has embargoed you and will not sell to you.")
@@ -389,6 +398,10 @@ def sell_market_offer(offer_id):
         # a sell offer used to pay the seller bank gold nobody had put up.
         if offer_type != "buy":
             return error(400, "That is a sell offer; use Buy to fill it.")
+
+        blockade_err = check_user_blockaded_market(db, seller_id)
+        if blockade_err:
+            return error(403, blockade_err)
 
         if is_embargoed(db, buyer_id, seller_id):
             return error(403, "This nation has embargoed you and will not buy from you.")
@@ -561,6 +574,10 @@ def post_offer(offer_type):
     cId = session["user_id"]
 
     with get_request_cursor() as db:
+        blockade_err = check_user_blockaded_market(db, cId)
+        if blockade_err:
+            return error(403, blockade_err)
+
         resource = request.form.get("resource")
         amount, err = get_valid_int("amount", error_invalid="Amount must be a valid number")
         if err: return err
@@ -709,7 +726,9 @@ def post_trade_offer(offer_type, offeree_id):
         # on INSERT -- another 500 after escrow.
         if offeree_int > MAX_TRADE_INT or not user_exists(db, offeree_int):
             return error(404, "That nation does not exist")
-        offeree_id = str(offeree_int)
+        blockade_err = check_user_blockaded_market(db, cId)
+        if blockade_err:
+            return error(403, blockade_err)
 
         if is_embargoed(db, offeree_int, cId):
             return error(403, "This nation has embargoed you and will not trade with you.")
@@ -842,6 +861,10 @@ def accept_trade(trade_id):
 
             if offeree != cId:
                 return error(400, "You can't accept that offer")
+
+            blockade_err = check_user_blockaded_market(db, cId)
+            if blockade_err:
+                return error(403, blockade_err)
 
             if is_embargoed(db, offerer, offeree):
                 return error(403, "This nation has embargoed you and will not trade with you.")

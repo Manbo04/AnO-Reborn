@@ -15,6 +15,7 @@
             <div class="war-combatant">
                 <div class="war-combatant-header">
                     <span class="war-role-badge war-role-badge--def">Defender{% if cId_type == "defender" %} <span class="war-role-you">(You)</span>{% endif %}</span>
+                    {% if defender_info.get("blockaded") %}<span class="war-role-badge" style="background: rgba(224, 90, 77, 0.2); color: #e05a4d; border: 1px solid #e05a4d;">Blockaded</span>{% endif %}
                     <h2 class="war-combatant-name"><a href="/country/id={{ defender }}">{{ defender_name }}</a></h2>
                 </div>
                 <div class="war-flag-wrap">
@@ -41,6 +42,7 @@
             <div class="war-combatant">
                 <div class="war-combatant-header">
                     <span class="war-role-badge war-role-badge--atk">Attacker{% if cId_type == "attacker" %} <span class="war-role-you">(You)</span>{% endif %}</span>
+                    {% if attacker_info.get("blockaded") %}<span class="war-role-badge" style="background: rgba(224, 90, 77, 0.2); color: #e05a4d; border: 1px solid #e05a4d;">Blockaded</span>{% endif %}
                     <h2 class="war-combatant-name"><a href="/country/id={{ attacker }}">{{ attacker_name }}</a></h2>
                 </div>
                 <div class="war-flag-wrap">
@@ -72,7 +74,7 @@
         {% else %}
         <!-- ACTION BUTTON -->
         <div class="war-action-wrap">
-            <a class="game-btn game-btn-primary game-btn-lg" href="/warchoose/{{ war_id }}">
+            <a class="game-btn game-btn-primary game-btn-lg" href="/war/{{ war_id }}/attack">
                 <span class="material-icons-outlined">arrow_forward</span>Attack
             </a>
             {% if repeat_attack %}

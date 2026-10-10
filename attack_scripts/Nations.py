@@ -2,6 +2,7 @@
 # linting after full refactor is done.
 import random
 import time
+from typing import Optional
 from dotenv import load_dotenv
 from database import fetchone_first, get_db_connection
 
@@ -777,7 +778,14 @@ class Military(Nation):
 
     @staticmethod
     # attacker, defender means the attacker and the defender user JUST in this particular fight not in the whole war
-    def fight(attacker, defender, citizen_army_pct=None):  # Units, Units -> int
+    def fight(
+        attacker,
+        defender,
+        citizen_army_pct=None,
+        entrenchment_level: int = 0,
+        attacker_intel: int = 0,
+        domain: Optional[str] = None,
+    ):  # Units, Units -> int
         # citizen_army_pct: when given (see wars/supply.py) and the defender
         # fields no combat-capable units, a citizen militia inflicts that
         # share of casualties on every attacking unit type sent. The
@@ -798,7 +806,7 @@ class Military(Nation):
 
         # Delegate inner engagement calculations to a helper so this file
         # can be progressively refactored into smaller, testable units.
-        from attack_scripts.combat_helpers import compute_engagement_metrics
+        from attack_scripts.combat_helpers import compute_engagement_metrics, apply_combat_modifiers
 
         (
             attacker_unit_amount_bonuses,
@@ -807,6 +815,26 @@ class Military(Nation):
             defender_bonus,
             dealt_infra_damage,
         ) = compute_engagement_metrics(attacker, defender)
+
+        # Apply entrenchment (+10% per level to ground defense) and intel (+intel/10 % to attack strength)
+        is_ground = domain == "ground" or (
+            domain is None
+            and any(u in Military.UNIT_DOMAINS["ground"] for u in getattr(attacker, "selected_units_list", []))
+        )
+        (
+            attacker_unit_amount_bonuses,
+            attacker_bonus,
+            defender_unit_amount_bonuses,
+            defender_bonus,
+        ) = apply_combat_modifiers(
+            attacker_unit_amount_bonuses,
+            attacker_bonus,
+            defender_unit_amount_bonuses,
+            defender_bonus,
+            entrenchment_level=entrenchment_level,
+            attacker_intel=attacker_intel,
+            is_ground=is_ground,
+        )
 
         # used to be: attacker_chance += attacker_roll+attacker_unit_amount_bonuses+attacker_bonus
         #             defender_chance += defender_roll+defender_unit_amount_bonuses+defender_bonus
@@ -953,6 +981,26 @@ class Military(Nation):
             win_type,
             attacker_lost=winner_is_defender,
         )
+
+        # Naval blockade (JOB C4):
+        # When attacker wins naval battle with definite victory or annihilation, loser is blockaded for 24h.
+        # Lifted early if the blockaded side wins any naval battle in that war.
+        is_naval = domain == "naval" or (
+            domain is None
+            and any(u in Military.UNIT_DOMAINS["naval"] for u in getattr(attacker, "selected_units_list", []))
+        )
+        if is_naval and war_id is not None:
+            try:
+                from wars.action_points import apply_naval_blockade, lift_naval_blockade
+                with get_db_connection() as conn:
+                    with conn.cursor() as cur:
+                        if winner is attacker and win_condition in ("definite victory", "annihilation"):
+                            apply_naval_blockade(cur, war_id, defender.user_id)
+                        lift_naval_blockade(cur, war_id, winner.user_id)
+                        conn.commit()
+            except Exception:
+                pass
+
 
         # infrastructure damage (code commented out - connection removed)
         # db = connection.cursor()

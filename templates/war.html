@@ -19,7 +19,7 @@
         <div class="templatedivflex2 menuflex warflexparentcolors">
             <div class="templatedivflex2left">
 
-                <h2 class="templatecontentheadercenter templatelink"><a class="templatelink" href="/country/id={{ defender }}">{{ defender_name }}</a></h2>
+                <h2 class="templatecontentheadercenter templatelink"><a class="templatelink" href="/country/id={{ defender }}">{{ defender_name }}</a>{% if defender_info.get("blockaded") %} <span style="background: rgba(224, 90, 77, 0.2); color: #e05a4d; border: 1px solid #e05a4d; font-size: 0.6em; padding: 2px 6px; border-radius: 4px; vertical-align: middle;">Blockaded</span>{% endif %}</h2>
 
                 <!-- cId is the Flask value for your country's Id-->
                 <!--defender nation flag-->
@@ -43,7 +43,7 @@
             </div>
             <div class="templatedivflex2left">
 
-                <h2 class="templatecontentheadercenter templatelink"><a class="templatelink" href="/country/id={{ attacker }}">{{ attacker_name }}</a></h2>
+                <h2 class="templatecontentheadercenter templatelink"><a class="templatelink" href="/country/id={{ attacker }}">{{ attacker_name }}</a>{% if attacker_info.get("blockaded") %} <span style="background: rgba(224, 90, 77, 0.2); color: #e05a4d; border: 1px solid #e05a4d; font-size: 0.6em; padding: 2px 6px; border-radius: 4px; vertical-align: middle;">Blockaded</span>{% endif %}</h2>
                 <!--aggressor nation flag-->
                 <img alt="Image" tabindex="0" class="unitimage" src="/flag/country/{{ attacker }}" />
 
@@ -120,7 +120,7 @@
             </div>
             -->
             <div class="templatedivflex2left">
-                <a class="templatedivbutton templatecenteredbutton" href="/warchoose/{{ war_id }}"><span class="material-icons-outlined">
+                <a class="templatedivbutton templatecenteredbutton" href="/war/{{ war_id }}/attack"><span class="material-icons-outlined">
                     arrow_forward
                     </span>Attack</a>
             </div>

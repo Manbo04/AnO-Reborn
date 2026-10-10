@@ -433,4 +433,12 @@ def resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=False):
 
     decrease_unit_quantity(db, cId, "spies", executed_spies)
 
+    if uncovered_objects:
+        try:
+            from wars.action_points import add_spy_intel_on_success
+            add_spy_intel_on_success(db, cId, eId, amount=20)
+        except Exception:
+            pass
+
     return True, 200, None, spy_entry
+

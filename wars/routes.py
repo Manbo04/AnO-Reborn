@@ -1,4 +1,4 @@
-from flask import Blueprint, session, request, redirect, render_template
+from flask import Blueprint, session, request, redirect, render_template, flash
 from influence_formula import influence_subquery_sql
 from helpers import (
     login_required,
@@ -17,7 +17,7 @@ from attack_scripts.Nations import (
 )
 from attack_scripts import Nation
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 from units import Units
 import math
@@ -434,8 +434,21 @@ def war_with_id(war_id):
         attacker_name = usernames.get(attacker, "Unknown")
         defender_name = usernames.get(defender, "Unknown")
 
-        defender_info = {"morale": defender_morale, "supplies": defender_supplies}
-        attacker_info = {"morale": attacker_morale, "supplies": attacker_supplies}
+        defender_info = {"morale": defender_morale, "supplies": defender_supplies, "blockaded": False, "blockaded_until": None}
+        attacker_info = {"morale": attacker_morale, "supplies": attacker_supplies, "blockaded": False, "blockaded_until": None}
+
+        from wars.action_points import war_combat_columns_exist, _ensure_utc
+        if war_combat_columns_exist(db):
+            db.execute("SELECT attacker_blockaded, defender_blockaded FROM wars WHERE id = %s", (war_id,))
+            b_row = db.fetchone()
+            if b_row:
+                now_utc = datetime.now(timezone.utc)
+                if b_row[0] and _ensure_utc(b_row[0]) > now_utc:
+                    attacker_info["blockaded"] = True
+                    attacker_info["blockaded_until"] = _ensure_utc(b_row[0]).strftime("%H:%M UTC")
+                if b_row[1] and _ensure_utc(b_row[1]) > now_utc:
+                    defender_info["blockaded"] = True
+                    defender_info["blockaded_until"] = _ensure_utc(b_row[1]).strftime("%H:%M UTC")
 
         if cId == defender:
             cId_type = "defender"
@@ -609,10 +622,163 @@ def repeat_attack(war_id):
     err = attack_units.attach_units(units, 3)
     if err:
         return error(400, err)
+
+    from wars.action_points import spend_action_points
+    with get_request_cursor() as db:
+        ok_ap, ap_err = spend_action_points(db, war_id, cId, domain, 3)
+        if not ok_ap:
+            return error(400, ap_err)
+
     session["enemy_id"] = eId
     session["war_domain"] = domain
     session["attack_units"] = attack_units.__dict__
     return redirect("/warResult")
+
+
+
+@wars_bp.route("/war/<int:war_id>/attack", methods=["GET", "POST"])
+@login_required
+@check_required
+def war_attack(war_id):
+    cId = session["user_id"]
+    with get_request_cursor() as db:
+        db.execute(
+            "SELECT id, attacker, defender, war_type, peace_date FROM wars WHERE id = %s",
+            (war_id,),
+        )
+        war_row = db.fetchone()
+        if not war_row:
+            return error(404, "This war doesn't exist")
+        w_id, attacker_id, defender_id, war_type, peace_date = war_row
+        if peace_date:
+            return error(400, "This war already ended")
+        if cId not in (attacker_id, defender_id):
+            return error(403, "You are not a participant in this war.")
+
+        eId = defender_id if cId == attacker_id else attacker_id
+        session["enemy_id"] = eId
+
+        from wars.action_points import (
+            get_war_combat_status,
+            spend_action_points,
+            dig_in,
+            recon_flight,
+        )
+        from wars import supply as war_supply
+
+        def _render_attack_page(error_msg=None, form_vals=None, active_tab="ground"):
+            db.execute("SELECT username FROM users WHERE id = %s", (eId,))
+            u_row = db.fetchone()
+            enemy_name = u_row[0] if u_row else "Unknown"
+
+            normal_units = Military.get_military(cId)
+            special_units = Military.get_special(cId)
+            owned = normal_units.copy()
+            owned.update(special_units)
+
+            status = get_war_combat_status(db, war_id, cId)
+            available_supplies = war_supply.read_supply_pool(db, war_id, cId)
+            costs = war_supply.unit_supply_costs()
+
+            return render_template(
+                "war_attack.html",
+                war_id=war_id,
+                enemy_name=enemy_name,
+                owned=owned,
+                status=status,
+                available_supplies=available_supplies,
+                unit_costs=costs,
+                active_tab=active_tab,
+                error_message=error_msg,
+                form_values=form_vals or {},
+            )
+
+        if request.method == "GET":
+            return _render_attack_page()
+
+        action = request.form.get("action", "attack")
+        if action == "dig_in":
+            ok, msg, new_lvl = dig_in(db, war_id, cId)
+            if not ok:
+                return _render_attack_page(error_msg=msg, form_vals=request.form)
+            flash(msg)
+            return redirect(f"/war/{war_id}/attack")
+
+        if action == "recon_flight":
+            ok, msg, new_intel = recon_flight(db, war_id, cId)
+            if not ok:
+                return _render_attack_page(error_msg=msg, form_vals=request.form)
+            flash(msg)
+            return redirect(f"/war/{war_id}/attack")
+
+        attack_type = request.form.get("attack_type") or "ground"
+
+        if attack_type == "special":
+            special_unit = request.form.get("special_unit") or "icbms"
+            if special_unit == "nukes":
+                return redirect(f"/nuclear_strike/{war_id}")
+            if special_unit != "icbms":
+                return _render_attack_page(error_msg="Invalid special unit selected", form_vals=request.form, active_tab="special")
+
+            amount_str = request.form.get("amount") or request.form.get(special_unit)
+            try:
+                amount = int(amount_str or 0)
+            except (ValueError, TypeError):
+                return _render_attack_page(error_msg="Unit amount must be a valid number", form_vals=request.form, active_tab="special")
+
+            if amount <= 0:
+                return _render_attack_page(error_msg="Can't attack because you haven't sent any units", form_vals=request.form, active_tab="special")
+
+            normal_units = Military.get_military(cId)
+            special_units = Military.get_special(cId)
+            owned = normal_units.copy()
+            owned.update(special_units)
+            if amount > owned.get("icbms", 0):
+                return _render_attack_page(error_msg=f"You only own {owned.get('icbms', 0)} ballistic missiles", form_vals=request.form, active_tab="special")
+
+            target = request.form.get("targeted_unit")
+            if not target or target not in Military.allUnits:
+                return _render_attack_page(error_msg="Please select a target unit type", form_vals=request.form, active_tab="special")
+
+            attack_units = Units(cId, war_id=war_id)
+            err_valid = attack_units.attach_units({special_unit: amount}, 1)
+            if err_valid:
+                return _render_attack_page(error_msg=err_valid, form_vals=request.form, active_tab="special")
+
+            session["enemy_id"] = eId
+            session["war_domain"] = None
+            session["attack_units"] = attack_units.__dict__
+            return _resolve_special_attack(attack_units, eId, target)
+
+        if attack_type not in Military.UNIT_DOMAINS:
+            return _render_attack_page(error_msg="Please select an attack type (Ground, Naval, or Air)", form_vals=request.form, active_tab=attack_type)
+
+        domain = attack_type
+        domain_units = Military.UNIT_DOMAINS[domain]
+        selected_units = {}
+        for u in domain_units:
+            raw_amt = request.form.get(u)
+            try:
+                selected_units[u] = int(raw_amt or 0)
+            except (ValueError, TypeError):
+                return _render_attack_page(error_msg="Unit amount entered was not a number", form_vals=request.form, active_tab=domain)
+
+        if not sum(selected_units.values()):
+            return _render_attack_page(error_msg="Can't attack because you haven't sent any units", form_vals=request.form, active_tab=domain)
+
+        attack_units = Units(cId, war_id=war_id)
+        err_valid = attack_units.attach_units(selected_units, 3)
+        if err_valid:
+            return _render_attack_page(error_msg=err_valid, form_vals=request.form, active_tab=domain)
+
+        ok_ap, ap_err = spend_action_points(db, war_id, cId, domain, 3)
+        if not ok_ap:
+            return _render_attack_page(error_msg=ap_err, form_vals=request.form, active_tab=domain)
+
+        session["enemy_id"] = eId
+        session["war_domain"] = domain
+        session["attack_units"] = attack_units.__dict__
+        return redirect("/warResult")
 
 
 @wars_bp.route("/warchoose/<int:war_id>", methods=["GET", "POST"])
@@ -621,15 +787,11 @@ def repeat_attack(war_id):
 def warChoose(war_id):
     cId = session["user_id"]
     if request.method == "GET":
-        normal_units = Military.get_military(cId)
-        special_units = Military.get_special(cId)
-        units = normal_units.copy()
-        units.update(special_units)
-        template = "warchoose_v2.html" if is_theme_v2_enabled("wars") else "warchoose.html"
-        return render_template(template, units=units, war_id=war_id)
+        return redirect(f"/war/{war_id}/attack")
     elif request.method == "POST":
         selected_units = {}
         special_unit = request.form.get("special_unit")
+
         if special_unit == "nukes":
             # Nukes hit one chosen province via the nuclear strike planner
             # (two-step confirm + influence cost), never the unit-fight path.
@@ -714,6 +876,15 @@ def warAmount():
             err_valid = attack_units.attach_units(selected_units, 3)
             if err_valid:
                 return error(400, err_valid)
+            # If war_id is present, spend AP atomically
+            if attack_units.war_id and session.get("war_domain"):
+                from wars.action_points import spend_action_points
+                with get_request_cursor() as db:
+                    ok_ap, ap_err = spend_action_points(
+                        db, attack_units.war_id, cId, session["war_domain"], 3
+                    )
+                    if not ok_ap:
+                        return error(400, ap_err)
             session["attack_units"] = attack_units.__dict__
             return redirect("/warResult")
         elif len(units_name) == 1:
@@ -787,6 +958,13 @@ def _resolve_special_attack(attack_units, eId, target):
     )
     if isinstance(special_fight_result, str):
         return special_fight_result
+
+    if attack_units.war_id is not None:
+        from wars.action_points import consume_intel_on_attack
+        with get_request_cursor() as db:
+            consume_intel_on_attack(db, attack_units.war_id, session["user_id"])
+            db.connection.commit()
+
     _remember_last_attack(
         attack_units.war_id, {"special": True, "units": requested, "target": target}
     )
@@ -1018,6 +1196,15 @@ def warResult():
                     400,
                     "This attack was already resolved. Please start a new attack.",
                 )
+            from wars.action_points import (
+                get_war_combat_status,
+                reset_entrenchment_on_ground_attack,
+                consume_intel_on_attack,
+            )
+            combat_status = get_war_combat_status(db, war_id_for_guard, session["user_id"])
+            defender_entrench = combat_status.get("enemy_entrench", 0)
+            attacker_intel = combat_status.get("my_intel", 0)
+
             # FIXED 2026-09-26: commit the guard before fighting. Military.fight()
             # -> persist_fight_results() updates this same wars row (morale) on
             # its own connection; leaving the guard's row lock uncommitted here
@@ -1029,11 +1216,20 @@ def warResult():
             try:
                 if citizen_pct is not None:
                     winner, win_condition, attack_effects = Military.fight(
-                        attacker, defender, citizen_army_pct=citizen_pct
+                        attacker,
+                        defender,
+                        citizen_army_pct=citizen_pct,
+                        entrenchment_level=defender_entrench,
+                        attacker_intel=attacker_intel,
+                        domain=war_domain,
                     )
                 else:
                     winner, win_condition, attack_effects = Military.fight(
-                        attacker, defender
+                        attacker,
+                        defender,
+                        entrenchment_level=defender_entrench,
+                        attacker_intel=attacker_intel,
+                        domain=war_domain,
                     )
             except Exception:
                 rollback_db_cursor(db)
@@ -1051,6 +1247,19 @@ def warResult():
             _remember_last_attack(
                 war_id_for_guard, {"domain": war_domain, "units": prev_attacker}
             )
+            # Reset entrenchment if we launched our own ground attack
+            is_ground_attack = war_domain == "ground" or (
+                war_domain is None
+                and any(
+                    u in Military.UNIT_DOMAINS["ground"]
+                    for u in getattr(attacker, "selected_units_list", [])
+                )
+            )
+            if is_ground_attack:
+                reset_entrenchment_on_ground_attack(db, war_id_for_guard, session["user_id"])
+
+            # Every attack consumes 25 intel (floor 0)
+            consume_intel_on_attack(db, war_id_for_guard, session["user_id"])
             # Charge the defense AFTER the fight: persist_fight_results()
             # updates this same wars row on its own connection, so locking it
             # here first would stall that update (see the 2026-09-26 note).
@@ -2347,7 +2556,8 @@ def _require_active_war(db, attacker_id, target_id):
         ),
         (attacker_id, target_id, target_id, attacker_id),
     )
-    return db.fetchone() is not None
+    row = db.fetchone()
+    return row[0] if row else None
 
 
 def _spend_gasoline(db, user_id, amount):
@@ -2430,8 +2640,16 @@ def drone_strike():
         # attacker's own account.
         db.execute("SELECT pg_advisory_xact_lock(%s)", (attacker_id,))
 
-        if not _require_active_war(db, attacker_id, target_id):
+        active_war_id = _require_active_war(db, attacker_id, target_id)
+        if not active_war_id:
             return error(403, "You are not at war with this nation.")
+
+        # JOB C1: drone strike costs 2 air AP
+        from wars.action_points import spend_action_points
+        ok_ap, ap_err = spend_action_points(db, active_war_id, attacker_id, "air", 2)
+        if not ok_ap:
+            return error(400, ap_err)
+
         if not _target_has_building(db, target_id, strike_target):
             return error(
                 400,
@@ -2594,8 +2812,16 @@ def cruise_missile_strike():
         # Same race as drone_strike above -- see the comment there.
         db.execute("SELECT pg_advisory_xact_lock(%s)", (attacker_id,))
 
-        if not _require_active_war(db, attacker_id, target_id):
+        active_war_id = _require_active_war(db, attacker_id, target_id)
+        if not active_war_id:
             return error(403, "You are not at war with this nation.")
+
+        # JOB C1: cruise missile strike costs 2 naval AP
+        from wars.action_points import spend_action_points
+        ok_ap, ap_err = spend_action_points(db, active_war_id, attacker_id, "naval", 2)
+        if not ok_ap:
+            return error(400, ap_err)
+
         if not _target_has_building(db, target_id, strike_target):
             return error(
                 400,

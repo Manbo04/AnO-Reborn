@@ -111,6 +111,37 @@ def compute_engagement_metrics(
     )
 
 
+def apply_combat_modifiers(
+    attacker_unit_amount_bonuses: float,
+    attacker_bonus: float,
+    defender_unit_amount_bonuses: float,
+    defender_bonus: float,
+    entrenchment_level: int = 0,
+    attacker_intel: int = 0,
+    is_ground: bool = True,
+) -> Tuple[float, float, float, float]:
+    """Apply entrenchment (+10% per level to ground defense) and intel (+intel/10 % to attack strength)."""
+    from wars.action_points import entrenchment_defense_multiplier, intel_attack_multiplier
+
+    if is_ground and entrenchment_level:
+        e_mult = entrenchment_defense_multiplier(entrenchment_level)
+        defender_unit_amount_bonuses *= e_mult
+        defender_bonus *= e_mult
+
+    if attacker_intel:
+        i_mult = intel_attack_multiplier(attacker_intel)
+        attacker_unit_amount_bonuses *= i_mult
+        attacker_bonus *= i_mult
+
+    return (
+        attacker_unit_amount_bonuses,
+        attacker_bonus,
+        defender_unit_amount_bonuses,
+        defender_bonus,
+    )
+
+
+
 # Morale/strength helpers extracted from Nations.fight to keep the combat
 # computations pure and testable.
 def compute_strength(units: dict) -> float:
