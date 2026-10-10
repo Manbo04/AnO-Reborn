@@ -2,6 +2,7 @@
 # linting after full refactor is done.
 import random
 import time
+from typing import Optional
 from dotenv import load_dotenv
 from database import fetchone_first, get_db_connection
 
