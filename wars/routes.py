@@ -1146,7 +1146,7 @@ def warResult():
 
             # Battle aftermath (2026-10-04 rebalance, wars/aftermath.py):
             # civilian deaths on a won ground/bomber attack, the loser's
-            # growth frozen for 12h, and a won bomber attack also hitting the
+            # and a won bomber attack also hitting the
             # defender's soldiers/tanks. Own connection, best effort -- must
             # never undo the already-committed fight results.
             aftermath = None
@@ -1264,11 +1264,6 @@ def warResult():
                 )
                 def_news += f" Bombers also destroyed {g} on the ground."
                 att_news += f" Your bombers also destroyed {g} on the ground."
-            if am.get("frozen") is not None:
-                if am["frozen"] == eId:
-                    def_news += " Your population won't grow for 12 hours."
-                else:
-                    att_news += " Your population won't grow for 12 hours."
             looted = int((attacker_result.get("loot") or {}).get("money") or 0)
             if looted > 0:
                 att_news += f" You looted {looted:,} gold."

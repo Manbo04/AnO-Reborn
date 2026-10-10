@@ -1588,7 +1588,7 @@ def create_province_record(db, user_id: int, name: str) -> int:
         if not found:
             new_x, new_y = 0, 0 # Fallback
 
-    # Split the starting 1,000,000 population across age brackets
+    # Split the starting 10,000 population (weekly vote 2026-10-09) across age brackets
     # (60% working / 30% children / 10% elderly) instead of
     # dumping it all into pop_children -- a new nation used to
     # start 100% "children," which zeroed its tax income under
@@ -1598,7 +1598,7 @@ def create_province_record(db, user_id: int, name: str) -> int:
             "INSERT INTO provinces "
             "(userId, provinceName, pop_children, pop_working, pop_elderly, "
             "coordinate_x, coordinate_y) "
-            "VALUES (%s, %s, 300000, 600000, 100000, %s, %s) RETURNING id"
+            "VALUES (%s, %s, 3000, 6000, 1000, %s, %s) RETURNING id"
         ),
         (user_id, name, new_x, new_y),
     )
