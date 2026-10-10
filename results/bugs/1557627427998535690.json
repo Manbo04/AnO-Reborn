@@ -1,0 +1,8 @@
+{
+ "status": "not_a_bug",
+ "reply": "looked at the battle code. when the defender has none of their units in their defense lineup (the 3 unit types set as defense), only a citizen militia fights: you still win, but the militia kills a few of your units and the enemy loses no units or morale. so if his 2k infantry weren't in his defense setup, that's what you saw. attack again and check the report. if you think the lineup did include infantry, tell me the exact battle report text",
+ "nonce": "438c386aa7764f30a655b1a4f6455883",
+ "updated_at": "2026-10-10T16:26:36Z",
+ "branch": null,
+ "summary": "ground win no enemy losses: citizen-militia path when defender lineup has no units; by design"
+}

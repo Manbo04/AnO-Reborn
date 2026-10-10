@@ -1,0 +1,8 @@
+{
+ "status": "fixed",
+ "reply": "found it, small building stacks could go negative when a strike hit them and that crashed the launch. fixed, should be live within the hour. try launching again after that",
+ "nonce": "bb3a4fbee5204ab69cea437969739023",
+ "updated_at": "2026-10-10T16:26:36Z",
+ "branch": null,
+ "summary": "drone/missile strike 500 fixed in 704ef7c (apply_building_damage spread over province rows)"
+}

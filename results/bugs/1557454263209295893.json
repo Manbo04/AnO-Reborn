@@ -1,8 +1,8 @@
 {
-  "status": "needs_info",
-  "reply": "checked the bank code: members with no banking role can only take out their own deposited balance, and only leaders/deputies/bankers can pull from the shared pot (by design). which role did the person have who took out more than they put in, and was it with the 'withdraw' button or by a request being approved?",
-  "nonce": "8159c886282348c7bdad0cbe3919c557",
-  "updated_at": "2026-10-07T22:19:03Z",
-  "branch": null,
-  "summary": "coalition bank over-withdraw: asked reporter for role/path"
+ "status": "not_a_bug",
+ "reply": "checked the bank code: members with no banking role can only take out their own deposited balance, and only leaders/deputies/bankers can pull from the shared pot (by design). which role did the person have who took out more than they put in, and was it with the 'withdraw' button or by a request being approved?",
+ "nonce": "8159c886282348c7bdad0cbe3919c557",
+ "updated_at": "2026-10-10T16:26:36Z",
+ "branch": null,
+ "summary": "reporter withdrew the report ('disregard, new info')"
 }

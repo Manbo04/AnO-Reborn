@@ -1,0 +1,8 @@
+{
+ "status": "built",
+ "reply": "the population growth freeze after losing a battle or getting nuked is gone, only the people actually killed count. should be live within the hour",
+ "nonce": "cc8a1509ab3d4a1ca5756ae1faf10a0c",
+ "updated_at": "2026-10-10T16:26:36Z",
+ "branch": "claude/robot-20261010-fixes",
+ "summary": "growth freeze removed"
+}

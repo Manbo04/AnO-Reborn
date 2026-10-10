@@ -1,0 +1,8 @@
+{
+ "status": "fixed",
+ "reply": "found it, the upkeep discount was applied in the real hourly charge but the expenses breakdown didn't show it, so it looked like nothing changed. the expenses page now shows the -30% on industrial buildings too. should be live within the hour",
+ "nonce": "47b612cc1a2944548386e232069efa79",
+ "updated_at": "2026-10-10T16:26:36Z",
+ "branch": "claude/robot-20261010-fixes",
+ "summary": "Industrial Subsidies discount missing in get_econ_statistics expenses display; fixed"
+}

@@ -1,0 +1,8 @@
+{
+ "status": "fixed",
+ "reply": "found it, dismantling domes crashed because of a database check, so it never refunded anything. fixed (dismantling 1 or more works now), should be live within the hour. the gasoline you lost to the extra dome is a staff thing, they said they'd sort it",
+ "nonce": "199d207e73694276b8e9978a6ecacc1a",
+ "updated_at": "2026-10-10T16:26:36Z",
+ "branch": null,
+ "summary": "iron dome dismantle 500 fixed in 704ef7c; gas reimbursement left to staff"
+}

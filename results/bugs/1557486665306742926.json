@@ -1,0 +1,8 @@
+{
+ "status": "fixed",
+ "reply": "money now shows up in spy reports (fixed, should be live within the hour). the small lumber/cg differences are just because the report is a snapshot of the moment the op ran, production and consumption keep moving after that",
+ "nonce": "f43b0069f12f428ba6a087162650ed11",
+ "updated_at": "2026-10-10T16:26:36Z",
+ "branch": null,
+ "summary": "spy report: gold added (already on master); lumber/cg drift is snapshot timing"
+}

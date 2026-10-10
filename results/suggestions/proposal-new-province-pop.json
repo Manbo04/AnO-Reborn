@@ -1,0 +1,8 @@
+{
+ "status": "built",
+ "reply": "new provinces now start with about 10,000 people instead of 1 million. existing provinces are unchanged. should be live within the hour",
+ "nonce": "3fe3dd4fa83f435fa1fd1a2839dd5314",
+ "updated_at": "2026-10-10T16:26:36Z",
+ "branch": "claude/robot-20261010-fixes",
+ "summary": "new province pop 10k"
+}

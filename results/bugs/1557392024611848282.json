@@ -1,8 +1,8 @@
 {
-  "status": "not_a_bug",
-  "reply": "thanks. that's how attacks work now: when you pick ground, naval or air, your whole stack of that domain's units is sent automatically, so there's no amount field anymore (it only shows for single special units). if you'd like to choose how many units to send, post it in #suggestions and it'll go on the next ballot",
-  "nonce": "a3f5c6727f774d0a926ad1f432fbabe1",
-  "updated_at": "2026-10-07T16:28:12Z",
-  "branch": null,
-  "summary": "attack amount field missing: by design (domain attacks send full domain); suggest via vote"
+ "status": "not_a_bug",
+ "reply": "yeah, right now an attack sends your whole stack of that domain, so a very big army can run into the supply limit. choosing how many units to send isn't a bug fix, it's a change to how attacks work, so post it in #suggestions and it'll go on the next ballot",
+ "nonce": "d2e542106c124ad0a8970c5193b2fde3",
+ "updated_at": "2026-10-10T16:26:36Z",
+ "branch": null,
+ "summary": "attack amount: by design; player noted supply limit with big armies, directed to suggestions"
 }

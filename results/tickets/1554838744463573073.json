@@ -1,7 +1,8 @@
 {
  "status": "needs_staff",
- "reply": null,
- "updated_at": "2026-10-05T08:19:01Z",
+ "reply": "i checked the city/land buy and sell prices and the refund is 75% of what you'd pay, so i can't see a way to get back more than you spent from the normal buttons. a staff member will go through the purchase audit log for this and the cherry blossom page",
+ "updated_at": "2026-10-10T16:26:36Z",
  "branch": null,
- "summary": "ieb (ticket-0035) waiting on Dede for custom nation page; Dede said he'd do it on Saturday"
+ "summary": "ieb ticket-0035: reports a buy/sell city/land money exploit (below the 200 cap) possibly abused; pricing code shows no arbitrage on the single-province route, staff to review purchase_audit. Also still waiting on custom nation page",
+ "nonce": "ff0d3f108cf04eaab062a2136540463e"
 }
