@@ -3,8 +3,8 @@
   "ballot_id": "2026-10-09",
   "created_at": "2026-10-06T13:38:38Z",
   "kind": "suggestion",
-  "last_message_id": "1558148266716168203",
-  "last_player_message_at": "2026-10-06T18:22:05Z",
+  "last_message_id": "1558279393443323977",
+  "last_player_message_at": "2026-10-10T00:45:58Z",
   "messages": [
     {
       "at": "2026-10-06T13:38:38Z",
@@ -88,6 +88,16 @@
       "id": "1558148266716168203",
       "staff": false,
       "text": "<@1180720719060029500> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1558148265365602366\nVoting closes <t:1792166400:F>. If Yes wins, it gets built."
+    },
+    {
+      "at": "2026-10-10T00:45:58Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1558279393443323977",
+      "staff": false,
+      "text": "WAH\nInvestments are BONDS by the way"
     }
   ],
   "poll_message_id": "1558148265365602366",
