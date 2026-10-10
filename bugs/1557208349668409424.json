@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-07T10:19:51Z",
   "delivered_nonce": "9b5e648b03bc48b982ad6658bb41165f",
   "kind": "bug",
-  "last_message_id": "1557336652211552279",
+  "last_message_id": "1558501482247102555",
   "last_player_message_at": "2026-10-07T01:50:15Z",
   "messages": [
     {
@@ -38,6 +38,16 @@
       "id": "1557336652211552279",
       "staff": false,
       "text": "<@519965006867988490> found it, the embargo button and its long note were squeezed side by side so the button got pushed off the edge on phones. they stack and wrap now. fixed, should be live within the hour"
+    },
+    {
+      "at": "2026-10-10T15:28:28Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558501482247102555",
+      "staff": false,
+      "text": "<@519965006867988490> the earlier \"live within the hour\" was wrong, that fix got stuck and never shipped, sorry. it's actually live now: the remove embargo button and its note wrap onto separate lines on phones. send a screenshot if it still looks off"
     }
   ],
   "thread_id": "1557208349668409424",

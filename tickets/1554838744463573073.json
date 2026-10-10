@@ -2,7 +2,7 @@
   "author_id": "204961091892019200",
   "created_at": "2026-09-30T12:54:04Z",
   "kind": "ticket",
-  "last_message_id": "1557777049853100063",
+  "last_message_id": "1558501474861056252",
   "last_player_message_at": "2026-10-08T15:29:50Z",
   "messages": [
     {
@@ -79,6 +79,16 @@
       "id": "1557777049853100063",
       "staff": false,
       "text": "Also works on land as far as I can see"
+    },
+    {
+      "at": "2026-10-10T15:28:27Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558501474861056252",
+      "staff": false,
+      "text": "<@204961091892019200> thanks for the report. the city/land sell exploit was fixed on 10-08: selling now refunds 75% of what those exact units cost, so buy-then-sell always loses money. i tested it on the live game today"
     }
   ],
   "thread_id": "1554838744463573073",

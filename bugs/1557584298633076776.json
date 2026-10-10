@@ -1,9 +1,11 @@
 {
   "author_id": "249007223454433292",
   "created_at": "2026-10-08T02:43:55Z",
+  "delivered_at": "2026-10-10T18:25:03Z",
+  "delivered_nonce": "199d207e73694276b8e9978a6ecacc1a",
   "kind": "bug",
-  "last_message_id": "1558105581968035973",
-  "last_player_message_at": "2026-10-09T13:15:18Z",
+  "last_message_id": "1558544517135859753",
+  "last_player_message_at": "2026-10-10T18:19:29Z",
   "messages": [
     {
       "at": "2026-10-08T02:43:55Z",
@@ -162,6 +164,56 @@
       "id": "1558105581968035973",
       "staff": true,
       "text": "Yeah apologies it will take me a bit"
+    },
+    {
+      "at": "2026-10-10T15:28:15Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558501427742253088",
+      "staff": false,
+      "text": "<@249007223454433292> sorry, the earlier \"fixed\" message was wrong. it wasn't actually live. it is now: dismantling an iron dome works (you get half the gold back). i also refunded the gas it burned since 10-08, +1,300 gasoline is in your account"
+    },
+    {
+      "at": "2026-10-10T16:26:54Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558516186499784906",
+      "staff": false,
+      "text": "<@249007223454433292> found it, dismantling domes crashed because of a database check, so it never refunded anything. fixed (dismantling 1 or more works now), should be live within the hour. the gasoline you lost to the extra dome is a staff thing, they said they'd sort it"
+    },
+    {
+      "at": "2026-10-10T16:47:42Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1558521422220107789",
+      "staff": false,
+      "text": "thank you! just to feedback that it seems to work now! I didn't screenshot, but visual display doesn't change. I had to refresh for it to show the 0/10."
+    },
+    {
+      "at": "2026-10-10T18:18:59Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558544391151419594",
+      "staff": false,
+      "text": "<@249007223454433292> found it, dismantling domes crashed because of a database check, so it never refunded anything. fixed (dismantling 1 or more works now), should be live within the hour. the gasoline you lost to the extra dome is a staff thing, they said they'd sort it"
+    },
+    {
+      "at": "2026-10-10T18:19:29Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1558544517135859753",
+      "staff": true,
+      "text": "Sorry for the double ping"
     }
   ],
   "thread_id": "1557584298633076776",

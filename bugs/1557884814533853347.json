@@ -1,9 +1,11 @@
 {
   "author_id": "465912833352138768",
   "created_at": "2026-10-08T22:38:03Z",
+  "delivered_at": "2026-10-10T18:25:05Z",
+  "delivered_nonce": "47b612cc1a2944548386e232069efa79",
   "kind": "bug",
-  "last_message_id": "1557884814533853347",
-  "last_player_message_at": "2026-10-08T22:38:03Z",
+  "last_message_id": "1558544398717952051",
+  "last_player_message_at": "2026-10-10T15:33:45Z",
   "messages": [
     {
       "at": "2026-10-08T22:38:03Z",
@@ -14,6 +16,46 @@
       "id": "1557884814533853347",
       "staff": false,
       "text": "the industrial subsidies policy is not actually having any impact on my nation"
+    },
+    {
+      "at": "2026-10-10T15:28:25Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558501467160314029",
+      "staff": false,
+      "text": "<@465912833352138768> checked it: industrial subsidies only cut the gold upkeep of factories, steel mills, industrial districts and power plants by 30% (and they pollute 30% more). it doesn't raise production. both the hourly charge and the upkeep shown in game use it. what were you expecting it to change? if you have a number that didn't drop, send a screenshot and i'll dig in"
+    },
+    {
+      "at": "2026-10-10T15:33:45Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1558502812130877532",
+      "staff": false,
+      "text": "I think the wording needs to change as industry is categorized as lumber mills, mines, farms etc where as factories are under processing"
+    },
+    {
+      "at": "2026-10-10T16:26:56Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558516194540134411",
+      "staff": false,
+      "text": "<@465912833352138768> found it, the upkeep discount was applied in the real hourly charge but the expenses breakdown didn't show it, so it looked like nothing changed. the expenses page now shows the -30% on industrial buildings too. should be live within the hour"
+    },
+    {
+      "at": "2026-10-10T18:19:01Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558544398717952051",
+      "staff": false,
+      "text": "<@465912833352138768> found it, the upkeep discount was applied in the real hourly charge but the expenses breakdown didn't show it, so it looked like nothing changed. the expenses page now shows the -30% on industrial buildings too. should be live within the hour"
     }
   ],
   "thread_id": "1557884814533853347",

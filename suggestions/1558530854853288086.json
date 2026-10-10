@@ -1,0 +1,43 @@
+{
+  "author_id": "519965006867988490",
+  "created_at": "2026-10-10T17:25:11Z",
+  "kind": "suggestion",
+  "last_message_id": "1558543564756095078",
+  "last_player_message_at": "2026-10-10T18:15:42Z",
+  "messages": [
+    {
+      "at": "2026-10-10T17:25:11Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1558530854853288086",
+      "staff": true,
+      "text": "This is based on an urban American school district. Europe or else where in the world might be different. I averaged the numbers. \n\nPrimary schools typically holds 2-3,000 students. \nHigh schools around 4-5,000 students\nUniversities around 40,000."
+    },
+    {
+      "at": "2026-10-10T17:47:16Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1558536410770833524",
+      "staff": true,
+      "text": "Multiples of 5000 would work best for the purposes of the game imo"
+    },
+    {
+      "at": "2026-10-10T18:15:42Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1558543564756095078",
+      "staff": true,
+      "text": "No we need to build more primary schools per high-school. There are usually 2 or 3 primary schools feeding into a middle/high school."
+    }
+  ],
+  "status": "new",
+  "thread_id": "1558530854853288086",
+  "title": "Change school numbers to reflect real world numbers",
+  "url": "https://discord.com/channels/708006319658893385/1558530854853288086"
+}

@@ -1,9 +1,11 @@
 {
   "author_id": "1166065212537970722",
   "created_at": "2026-10-08T05:29:47Z",
+  "delivered_at": "2026-10-10T18:25:03Z",
+  "delivered_nonce": "bb3a4fbee5204ab69cea437969739023",
   "kind": "bug",
-  "last_message_id": "1557626040229298226",
-  "last_player_message_at": "2026-10-08T05:29:47Z",
+  "last_message_id": "1558544877904728156",
+  "last_player_message_at": "2026-10-10T18:20:55Z",
   "messages": [
     {
       "at": "2026-10-08T05:29:47Z",
@@ -16,6 +18,46 @@
       "id": "1557626040229298226",
       "staff": true,
       "text": "When I try to launch them this happens"
+    },
+    {
+      "at": "2026-10-10T15:28:17Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558501436147630093",
+      "staff": false,
+      "text": "<@1166065212537970722> found the real cause, and the earlier \"fixed\" message was wrong, sorry. strikes were taking buildings off every province at once, which crashed whenever a small province went below 0. that's fixed and live now: drones and missiles launch, and they destroy exactly the number shown in the report"
+    },
+    {
+      "at": "2026-10-10T16:26:55Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558516188063993928",
+      "staff": false,
+      "text": "<@1166065212537970722> found it, small building stacks could go negative when a strike hit them and that crashed the launch. fixed, should be live within the hour. try launching again after that"
+    },
+    {
+      "at": "2026-10-10T18:18:59Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558544393000980602",
+      "staff": false,
+      "text": "<@1166065212537970722> found it, small building stacks could go negative when a strike hit them and that crashed the launch. fixed, should be live within the hour. try launching again after that"
+    },
+    {
+      "at": "2026-10-10T18:20:55Z",
+      "attachments": [],
+      "author": "𝕿𝖍𝖊_𝖐𝖆𝖎𝖘𝖊𝖗",
+      "author_id": "1166065212537970722",
+      "bot": false,
+      "id": "1558544877904728156",
+      "staff": true,
+      "text": "Hermano🙏"
     }
   ],
   "thread_id": "1557626040229298226",

@@ -1,9 +1,11 @@
 {
   "author_id": "1002628734932762755",
   "created_at": "2026-10-08T18:11:46Z",
+  "delivered_at": "2026-10-10T18:25:04Z",
+  "delivered_nonce": "58247b4f24634d96b80a90e0c1018b06",
   "kind": "bug",
-  "last_message_id": "1557850112519045182",
-  "last_player_message_at": "2026-10-08T18:11:46Z",
+  "last_message_id": "1558544396582916147",
+  "last_player_message_at": "2026-10-10T17:22:28Z",
   "messages": [
     {
       "at": "2026-10-08T18:11:46Z",
@@ -24,6 +26,68 @@
       "id": "1557850112519045182",
       "staff": false,
       "text": "Hello! We've investigated this issue and found that the bottleneck wasn't the High Schools themselves, but the step right before them. Primary Schools had a hard capacity of 500, meaning a 1:1 building ratio was capping your education pipeline before students could even reach High School. To fix this, we've doubled the Primary School capacity to 1,000! You should now be able to smoothly utilize your 900 High School capacity with a 1:1 ratio. This fix will be live in the next update!"
+    },
+    {
+      "at": "2026-10-10T15:28:23Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558501457970470933",
+      "staff": false,
+      "text": "<@1002628734932762755> live now: primary schools seat 1,000 (was 500), so 1 primary + 1 high school fills the high school's 900 seats. takes effect from the next population tick"
+    },
+    {
+      "at": "2026-10-10T16:26:56Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558516193134907413",
+      "staff": false,
+      "text": "<@1002628734932762755> primary schools were the real bottleneck, they only seated 500 each. they seat 1000 now so 1 primary : 1 high school fills the high school's 900. should be live within the hour"
+    },
+    {
+      "at": "2026-10-10T17:19:49Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1557817801064849570/1558529504467493024/Screenshot_20261010_111745_Chrome.jpg?ex=6acbc535&is=6aca73b5&hm=74147dbc1cc059846bbd147ca7322726897c4f6406650607bf72ef446fae63ee&"
+      ],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1558529504572604520",
+      "staff": true,
+      "text": "<@710359818329915443> why is used not meeting capacity? I have enough schools to fill it with 44,000 high schoolers but only 1,000 are being used."
+    },
+    {
+      "at": "2026-10-10T17:20:38Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1558529706578677803",
+      "staff": true,
+      "text": "Is the primary school being a bottleneck again?"
+    },
+    {
+      "at": "2026-10-10T17:22:28Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1558530170816696332",
+      "staff": true,
+      "text": "I mean it makes sense, real world, you go to primary first then high school then university. \n\nBut the UI needs to make it clear thats what is happening. \n\nAlso it would help if you used real world numbers too. I will add it to the suggestions for voting."
+    },
+    {
+      "at": "2026-10-10T18:19:00Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558544396582916147",
+      "staff": false,
+      "text": "<@1002628734932762755> primary schools were the real bottleneck, they only seated 500 each. they seat 1000 now so 1 primary : 1 high school fills the high school's 900. should be live within the hour"
     }
   ],
   "thread_id": "1557817801064849570",

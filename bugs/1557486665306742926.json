@@ -1,8 +1,10 @@
 {
   "author_id": "204961091892019200",
   "created_at": "2026-10-07T20:15:57Z",
+  "delivered_at": "2026-10-10T18:25:02Z",
+  "delivered_nonce": "f43b0069f12f428ba6a087162650ed11",
   "kind": "bug",
-  "last_message_id": "1557850109834698855",
+  "last_message_id": "1558544389863772201",
   "last_player_message_at": "2026-10-07T20:15:57Z",
   "messages": [
     {
@@ -27,6 +29,36 @@
       "id": "1557850109834698855",
       "staff": false,
       "text": "Hello! Thanks for the report. We've fixed the missing resource, and Money (Gold) will correctly appear in your spy reports alongside all other resources starting in the next update! \n\nRegarding the slight inaccuracies in Lumber and Consumer Goods: this is actually working as intended. Spy reports take a static 'snapshot' of the nation at the exact split-second the operation executes. Because the game is constantly running (buildings continuously consuming lumber, hourly production ticks, market trades, etc.), your live UI will always slowly drift from the numbers captured in the historical static report. Let us know if you have any other questions!"
+    },
+    {
+      "at": "2026-10-10T15:28:21Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558501451163111565",
+      "staff": false,
+      "text": "<@204961091892019200> money now actually shows in resource spy reports, live now (the earlier message said next update, it's in now)"
+    },
+    {
+      "at": "2026-10-10T16:26:54Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558516185191026689",
+      "staff": false,
+      "text": "<@204961091892019200> money now shows up in spy reports (fixed, should be live within the hour). the small lumber/cg differences are just because the report is a snapshot of the moment the op ran, production and consumption keep moving after that"
+    },
+    {
+      "at": "2026-10-10T18:18:58Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558544389863772201",
+      "staff": false,
+      "text": "<@204961091892019200> money now shows up in spy reports (fixed, should be live within the hour). the small lumber/cg differences are just because the report is a snapshot of the moment the op ran, production and consumption keep moving after that"
     }
   ],
   "thread_id": "1557486665306742926",

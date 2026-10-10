@@ -1,9 +1,11 @@
 {
   "author_id": "1166065212537970722",
   "created_at": "2026-10-08T05:35:18Z",
+  "delivered_at": "2026-10-10T18:25:04Z",
+  "delivered_nonce": "438c386aa7764f30a655b1a4f6455883",
   "kind": "bug",
-  "last_message_id": "1557693270514212865",
-  "last_player_message_at": "2026-10-08T09:56:56Z",
+  "last_message_id": "1558544822934053054",
+  "last_player_message_at": "2026-10-10T18:20:42Z",
   "messages": [
     {
       "at": "2026-10-08T05:35:18Z",
@@ -64,6 +66,56 @@
       "id": "1557693270514212865",
       "staff": true,
       "text": "Still zero losses for you btw"
+    },
+    {
+      "at": "2026-10-10T15:28:19Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558501443781001231",
+      "staff": false,
+      "text": "<@1166065212537970722> confirmed, this is a real bug. when the defender's units couldn't be fielded (supply/upkeep), a citizen militia fought instead, so their actual soldiers never took losses or morale damage. the fix is going in with this weekend's war update. about loot: in a Loot war the winner takes 0-10% of the loser's gold per battle, so hitting a nation that has almost no gold gets almost nothing"
+    },
+    {
+      "at": "2026-10-10T16:26:55Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558516190966452235",
+      "staff": false,
+      "text": "<@1166065212537970722> looked at the battle code. when the defender has none of their units in their defense lineup (the 3 unit types set as defense), only a citizen militia fights: you still win, but the militia kills a few of your units and the enemy loses no units or morale. so if his 2k infantry weren't in his defense setup, that's what you saw. attack again and check the report. if you think the lineup did include infantry, tell me the exact battle report text"
+    },
+    {
+      "at": "2026-10-10T18:19:00Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558544394989080659",
+      "staff": false,
+      "text": "<@1166065212537970722> looked at the battle code. when the defender has none of their units in their defense lineup (the 3 unit types set as defense), only a citizen militia fights: you still win, but the militia kills a few of your units and the enemy loses no units or morale. so if his 2k infantry weren't in his defense setup, that's what you saw. attack again and check the report. if you think the lineup did include infantry, tell me the exact battle report text"
+    },
+    {
+      "at": "2026-10-10T18:20:33Z",
+      "attachments": [],
+      "author": "𝕿𝖍𝖊_𝖐𝖆𝖎𝖘𝖊𝖗",
+      "author_id": "1166065212537970722",
+      "bot": false,
+      "id": "1558544788087636039",
+      "staff": true,
+      "text": "BRO, STOP🙏"
+    },
+    {
+      "at": "2026-10-10T18:20:42Z",
+      "attachments": [],
+      "author": "𝕿𝖍𝖊_𝖐𝖆𝖎𝖘𝖊𝖗",
+      "author_id": "1166065212537970722",
+      "bot": false,
+      "id": "1558544822934053054",
+      "staff": true,
+      "text": "I already readed that the first time"
     }
   ],
   "thread_id": "1557627427998535690",
