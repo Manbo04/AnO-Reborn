@@ -1,0 +1,563 @@
+{% extends "layout.html"%}
+{% block title %} Attack — {{ enemy_name }} {% endblock %}
+{% block body_class %} page-war page-war-attack game-page-v2 {% endblock %}
+{% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/war.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<style>
+/* One-screen attack styling: mobile-first (~390px phone first), v2 theme tokens */
+.war-attack-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.war-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+}
+.war-stat-box {
+    background: var(--game-glass-bg-strong, rgba(28, 32, 41, 0.85));
+    border: 1px solid var(--game-glass-border, rgba(255, 255, 255, 0.08));
+    border-radius: var(--game-radius-md, 12px);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.war-stat-title {
+    font-size: 0.85em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary, #a0aec0);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.ap-bars-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+.ap-bar-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
+}
+.ap-label {
+    font-size: 0.75em;
+    font-weight: 600;
+    color: var(--text-secondary, #a0aec0);
+}
+.ap-pill {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--border, #333);
+    border-radius: 6px;
+    padding: 6px 4px;
+    font-weight: 700;
+    font-size: 0.9em;
+}
+.ap-ground { color: #48bb78; border-color: rgba(72, 187, 120, 0.3); }
+.ap-air { color: #4299e1; border-color: rgba(66, 153, 225, 0.3); }
+.ap-naval { color: #9f7aea; border-color: rgba(159, 122, 234, 0.3); }
+
+.quick-actions-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    background: var(--game-glass-bg-strong, rgba(28, 32, 41, 0.85));
+    border: 1px solid var(--game-glass-border, rgba(255, 255, 255, 0.08));
+    border-radius: var(--game-radius-md, 12px);
+    padding: 12px 14px;
+    align-items: center;
+    justify-content: space-between;
+}
+.quick-action-btn-form {
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+/* Segmented Control / Tabs */
+.attack-segmented {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--game-glass-border, rgba(255, 255, 255, 0.08));
+    border-radius: var(--game-radius-md, 12px);
+    padding: 4px;
+    gap: 4px;
+}
+.seg-tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary, #a0aec0);
+    padding: 10px 8px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.9em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+.seg-tab-btn.is-active {
+    background: var(--accent, #00a7e1);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 167, 225, 0.35);
+}
+.seg-tab-btn:hover:not(.is-active) {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--colorOne, #fff);
+}
+
+.attack-tab-panel {
+    display: none;
+    flex-direction: column;
+    gap: 14px;
+}
+.attack-tab-panel.is-active {
+    display: flex;
+}
+
+.unit-row-card {
+    background: var(--game-glass-bg-strong, rgba(28, 32, 41, 0.85));
+    border: 1px solid var(--game-glass-border, rgba(255, 255, 255, 0.08));
+    border-radius: var(--game-radius-md, 12px);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.unit-thumb {
+    width: 52px;
+    height: 52px;
+    border-radius: 10px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.unit-meta {
+    flex: 1;
+    min-width: 0;
+}
+.unit-name {
+    font-weight: 700;
+    font-size: 1.05em;
+    color: var(--colorOne, #fff);
+    text-transform: capitalize;
+}
+.unit-counts {
+    font-size: 0.85em;
+    color: var(--text-secondary, #a0aec0);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 2px;
+}
+.unit-intel-revealed {
+    color: #ecc94b;
+    font-weight: 600;
+}
+.unit-input-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.unit-amount-input {
+    width: 90px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border, #4a5568);
+    color: #fff;
+    font-weight: 700;
+    text-align: right;
+}
+.unit-amount-input:focus {
+    border-color: var(--accent, #00a7e1);
+    outline: none;
+}
+.btn-max {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border, #4a5568);
+    color: var(--colorOne, #fff);
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-size: 0.8em;
+    font-weight: 700;
+    cursor: pointer;
+}
+.btn-max:hover {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.attack-footer-panel {
+    background: var(--game-glass-bg-strong, rgba(28, 32, 41, 0.85));
+    border: 1px solid var(--game-glass-border, rgba(255, 255, 255, 0.08));
+    border-radius: var(--game-radius-md, 12px);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.cost-breakdown {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 0.95em;
+}
+
+@media (max-width: 600px) {
+    .attack-segmented {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .unit-row-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .unit-input-group {
+        justify-content: flex-end;
+    }
+    .unit-amount-input {
+        width: 100%;
+    }
+}
+</style>
+
+<div class="templatediv">
+    {{ game_hero('Attack ' ~ enemy_name, badge_icon='military_tech', subtitle='One-screen combat operations') }}
+
+    <div class="templatedivcontent war-attack-wrap">
+
+        {% if error_message %}
+        <div style="background: rgba(224, 90, 77, 0.2); border: 1px solid var(--danger, #e05a4d); border-radius: var(--game-radius-md, 12px); padding: 12px 16px; color: var(--danger, #e05a4d); display: flex; align-items: center; gap: 8px; font-weight: 600;">
+            <span class="material-icons-outlined">error</span>
+            {{ error_message }}
+        </div>
+        {% endif %}
+
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        {% for msg in messages %}
+        <div style="background: rgba(72, 187, 120, 0.2); border: 1px solid #48bb78; border-radius: var(--game-radius-md, 12px); padding: 12px 16px; color: #48bb78; display: flex; align-items: center; gap: 8px; font-weight: 600;">
+            <span class="material-icons-outlined">check_circle</span>
+            {{ msg }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% if status.is_blockaded %}
+        <div style="background: rgba(224, 90, 77, 0.15); border: 1px solid var(--danger, #e05a4d); border-radius: var(--game-radius-md, 12px); padding: 12px 16px; display: flex; align-items: center; gap: 10px; color: var(--colorOne, #fff);">
+            <span style="background: var(--danger, #e05a4d); color: #fff; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 0.8em; text-transform: uppercase;">Blockaded</span>
+            <span>Your ports are blockaded until {{ status.blockade_until }} (Global Market &amp; trades blocked). Win a naval battle to break it!</span>
+        </div>
+        {% endif %}
+
+        <!-- COMBAT STATUS (AP, ENTRENCHMENT, INTEL, SUPPLY) -->
+        <div class="war-status-grid">
+            <!-- AP BOX -->
+            <div class="war-stat-box">
+                <div class="war-stat-title">
+                    <span>Action Points (AP)</span>
+                    <span style="font-size:0.75em; color:#48bb78;">+1/hr each</span>
+                </div>
+                <div class="ap-bars-row">
+                    <div class="ap-bar-col">
+                        <span class="ap-label">Ground</span>
+                        <div class="ap-pill ap-ground">{{ status.ground_ap }}/{{ status.ap_max }}</div>
+                    </div>
+                    <div class="ap-bar-col">
+                        <span class="ap-label">Air</span>
+                        <div class="ap-pill ap-air">{{ status.air_ap }}/{{ status.ap_max }}</div>
+                    </div>
+                    <div class="ap-bar-col">
+                        <span class="ap-label">Naval</span>
+                        <div class="ap-pill ap-naval">{{ status.naval_ap }}/{{ status.ap_max }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INTEL & ENTRENCHMENT BOX -->
+            <div class="war-stat-box">
+                <div class="war-stat-title">
+                    <span>Tactical Intel &amp; Trenches</span>
+                    {% if status.enemy_units_revealed %}
+                    <span style="color:#ecc94b; font-size:0.75em;">&#128065; Enemy Intel Active</span>
+                    {% endif %}
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:0.9em;">
+                    <div>
+                        <div style="color:var(--text-secondary);">Your Intel: <b style="color:#4299e1;">{{ status.my_intel }}/100</b></div>
+                        <div style="font-size:0.8em; color:var(--text-secondary);">+{{ (status.my_intel / 10)|round(1) }}% Atk Bonus</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="color:var(--text-secondary);">Entrenchment: <b style="color:#48bb78;">Lvl {{ status.my_entrench }}/3</b></div>
+                        <div style="font-size:0.8em; color:var(--text-secondary);">+{{ status.my_entrench * 10 }}% Ground Def (Theirs: Lvl {{ status.enemy_entrench }})</div>
+                    </div>
+                </div>
+                <div style="font-size:0.8em; color:var(--text-secondary); margin-top:2px;">
+                    Supply Pool: <b>{{ available_supplies }}</b> / 2000
+                </div>
+            </div>
+        </div>
+
+        <!-- QUICK ACTIONS: DIG IN & RECON FLIGHT -->
+        <div class="quick-actions-bar">
+            <div>
+                <b style="font-size:0.95em;">Tactical Preparation</b>
+                <div style="font-size:0.8em; color:var(--text-secondary);">Spend AP on tactical advantages before engaging</div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <form action="/war/{{ war_id }}/attack" method="POST" class="quick-action-btn-form">
+                    <input type="hidden" name="action" value="dig_in">
+                    <button type="submit" class="game-btn game-btn-secondary game-btn-sm" {% if status.ground_ap < 2 or status.my_entrench >= 3 %}disabled{% endif %} title="Costs 2 Ground AP. Gives +10% ground defensive strength (max 3). Resets when you launch a ground attack.">
+                        <span class="material-icons-outlined">shield</span> Dig In (2 Ground AP)
+                    </button>
+                </form>
+
+                <form action="/war/{{ war_id }}/attack" method="POST" class="quick-action-btn-form">
+                    <input type="hidden" name="action" value="recon_flight">
+                    <button type="submit" class="game-btn game-btn-secondary game-btn-sm" {% if status.air_ap < 2 %}disabled{% endif %} title="Costs 2 Air AP. Requires >= 1 Fighter or Bomber. Gives +25 Intel. At 50+ Intel enemy units are revealed!">
+                        <span class="material-icons-outlined">flight_takeoff</span> Recon Flight (2 Air AP)
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- SEGMENTED DOMAIN CONTROL -->
+        <div class="attack-segmented" role="tablist">
+            <button type="button" class="seg-tab-btn {% if active_tab == 'ground' or not active_tab %}is-active{% endif %}" onclick="switchTab('ground')">
+                <span class="material-icons-outlined">landscape</span> Ground
+            </button>
+            <button type="button" class="seg-tab-btn {% if active_tab == 'air' %}is-active{% endif %}" onclick="switchTab('air')">
+                <span class="material-icons-outlined">flight</span> Air
+            </button>
+            <button type="button" class="seg-tab-btn {% if active_tab == 'naval' %}is-active{% endif %}" onclick="switchTab('naval')">
+                <span class="material-icons-outlined">directions_boat</span> Naval
+            </button>
+            <button type="button" class="seg-tab-btn {% if active_tab == 'special' %}is-active{% endif %}" onclick="switchTab('special')">
+                <span class="material-icons-outlined">gps_fixed</span> Special
+            </button>
+        </div>
+
+        <!-- MAIN ATTACK FORM -->
+        <form id="attack-form" action="/war/{{ war_id }}/attack" method="POST">
+            <input type="hidden" name="action" value="attack">
+            <input type="hidden" id="attack_type_input" name="attack_type" value="{{ active_tab or 'ground' }}">
+
+            <!-- GROUND TAB PANEL -->
+            <div id="panel-ground" class="attack-tab-panel {% if active_tab == 'ground' or not active_tab %}is-active{% endif %}">
+                {% for u in ['soldiers', 'tanks', 'artillery'] %}
+                <div class="unit-row-card">
+                    <img src="{{ url_for('static', filename=game_asset_path('units', u)) }}?v=2" alt="{{ u }}" class="unit-thumb">
+                    <div class="unit-meta">
+                        <div class="unit-name">{{ u }}</div>
+                        <div class="unit-counts">
+                            <span>Owned: <b id="owned-{{ u }}">{{ owned.get(u, 0) }}</b></span>
+                            <span>Supply: {{ unit_costs.get(u, 1) }}/ea</span>
+                            {% if status.enemy_units_revealed %}
+                            <span class="unit-intel-revealed">&#128065; Enemy: {{ status.enemy_units.get(u, 0) }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="unit-input-group">
+                        <button type="button" class="btn-max" onclick="setMax('{{ u }}')">Max</button>
+                        <input type="number" id="input-{{ u }}" name="{{ u }}" class="unit-amount-input count-input" data-unit="{{ u }}" data-cost="{{ unit_costs.get(u, 1) }}" min="0" max="{{ owned.get(u, 0) }}" value="{{ form_values.get(u, 0) if form_values else 0 }}">
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- AIR TAB PANEL -->
+            <div id="panel-air" class="attack-tab-panel {% if active_tab == 'air' %}is-active{% endif %}">
+                {% for u in ['fighters', 'bombers', 'apaches'] %}
+                <div class="unit-row-card">
+                    <img src="{{ url_for('static', filename=game_asset_path('units', u)) }}?v=2" alt="{{ u }}" class="unit-thumb">
+                    <div class="unit-meta">
+                        <div class="unit-name">{{ u }}</div>
+                        <div class="unit-counts">
+                            <span>Owned: <b id="owned-{{ u }}">{{ owned.get(u, 0) }}</b></span>
+                            <span>Supply: {{ unit_costs.get(u, 1) }}/ea</span>
+                            {% if status.enemy_units_revealed %}
+                            <span class="unit-intel-revealed">&#128065; Enemy: {{ status.enemy_units.get(u, 0) }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="unit-input-group">
+                        <button type="button" class="btn-max" onclick="setMax('{{ u }}')">Max</button>
+                        <input type="number" id="input-{{ u }}" name="{{ u }}" class="unit-amount-input count-input" data-unit="{{ u }}" data-cost="{{ unit_costs.get(u, 1) }}" min="0" max="{{ owned.get(u, 0) }}" value="{{ form_values.get(u, 0) if form_values else 0 }}">
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- NAVAL TAB PANEL -->
+            <div id="panel-naval" class="attack-tab-panel {% if active_tab == 'naval' %}is-active{% endif %}">
+                {% for u in ['destroyers', 'cruisers', 'submarines'] %}
+                <div class="unit-row-card">
+                    <img src="{{ url_for('static', filename=game_asset_path('units', u)) }}?v=2" alt="{{ u }}" class="unit-thumb">
+                    <div class="unit-meta">
+                        <div class="unit-name">{{ u }}</div>
+                        <div class="unit-counts">
+                            <span>Owned: <b id="owned-{{ u }}">{{ owned.get(u, 0) }}</b></span>
+                            <span>Supply: {{ unit_costs.get(u, 1) }}/ea</span>
+                            {% if status.enemy_units_revealed %}
+                            <span class="unit-intel-revealed">&#128065; Enemy: {{ status.enemy_units.get(u, 0) }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="unit-input-group">
+                        <button type="button" class="btn-max" onclick="setMax('{{ u }}')">Max</button>
+                        <input type="number" id="input-{{ u }}" name="{{ u }}" class="unit-amount-input count-input" data-unit="{{ u }}" data-cost="{{ unit_costs.get(u, 1) }}" min="0" max="{{ owned.get(u, 0) }}" value="{{ form_values.get(u, 0) if form_values else 0 }}">
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- SPECIAL TAB PANEL (ICBMS & NUKES) -->
+            <div id="panel-special" class="attack-tab-panel {% if active_tab == 'special' %}is-active{% endif %}">
+                <div class="unit-row-card">
+                    <img src="{{ url_for('static', filename=game_asset_path('units', 'icbms')) }}?v=2" alt="Ballistic Missiles" class="unit-thumb">
+                    <div class="unit-meta">
+                        <div class="unit-name">Ballistic Missiles (ICBMs)</div>
+                        <div class="unit-counts">
+                            <span>Owned: <b id="owned-icbms">{{ owned.get('icbms', 0) }}</b></span>
+                            <span>Supply: 20/ea</span>
+                        </div>
+                    </div>
+                    <div class="unit-input-group">
+                        <input type="hidden" name="special_unit" value="icbms">
+                        <button type="button" class="btn-max" onclick="setMax('icbms')">Max</button>
+                        <input type="number" id="input-icbms" name="amount" class="unit-amount-input count-input" data-unit="icbms" data-cost="20" min="0" max="{{ owned.get('icbms', 0) }}" value="{{ form_values.get('amount', 0) if form_values else 0 }}">
+                    </div>
+                </div>
+
+                <div class="unit-row-card" style="flex-direction:column; align-items:flex-start;">
+                    <label for="targeted_unit" style="font-weight:700; font-size:0.95em;">Select Target Unit Type</label>
+                    <select id="targeted_unit" name="targeted_unit" class="game-select" style="width:100%; padding:10px; border-radius:8px; background:rgba(0,0,0,0.3); color:#fff; border:1px solid var(--border, #4a5568);">
+                        <option value="">-- Choose enemy unit to strike --</option>
+                        {% for t in ['soldiers', 'tanks', 'artillery', 'fighters', 'bombers', 'apaches', 'destroyers', 'cruisers', 'submarines'] %}
+                        <option value="{{ t }}" {% if form_values and form_values.get('targeted_unit') == t %}selected{% endif %}>
+                            {{ t|capitalize }} {% if status.enemy_units_revealed %}(Enemy has: {{ status.enemy_units.get(t, 0) }}){% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="unit-row-card" style="justify-content:space-between; background:rgba(224, 90, 77, 0.08); border-color:rgba(224, 90, 77, 0.25);">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <img src="{{ url_for('static', filename=game_asset_path('units', 'nukes')) }}?v=2" alt="Nukes" style="width:40px; height:40px; border-radius:8px;">
+                        <div>
+                            <div style="font-weight:700;">Nuclear Strike Planner</div>
+                            <div style="font-size:0.8em; color:var(--text-secondary);">Owned nukes: {{ owned.get('nukes', 0) }}</div>
+                        </div>
+                    </div>
+                    <a href="/nuclear_strike/{{ war_id }}" class="game-btn game-btn-secondary game-btn-sm" style="border-color:#e05a4d; color:#e05a4d;">
+                        <span class="material-icons-outlined">warning</span> Open Nuclear Strike
+                    </a>
+                </div>
+            </div>
+
+            <!-- FOOTER ESTIMATES & LAUNCH BUTTON -->
+            <div class="attack-footer-panel">
+                <div class="cost-breakdown">
+                    <div>
+                        Supply Cost: <b id="display-supply-cost" style="color:var(--accent, #00a7e1);">0</b> / {{ available_supplies }}
+                    </div>
+                    <div>
+                        AP Cost: <b id="display-ap-cost" style="color:#48bb78;">3 Ground AP</b>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center;">
+                    <a href="/war/{{ war_id }}" class="game-btn game-btn-secondary game-btn-lg">
+                        <span class="material-icons-outlined">arrow_back</span> War Room
+                    </a>
+                    <button type="submit" id="btn-launch-attack" class="game-btn game-btn-primary game-btn-lg" style="flex:1; justify-content:center;">
+                        <span class="material-icons-outlined">sports_kabaddi</span> Launch Attack
+                    </button>
+                </div>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<script>
+let currentTab = '{{ active_tab or "ground" }}';
+
+const apCosts = {
+    'ground': '3 Ground AP',
+    'air': '3 Air AP',
+    'naval': '3 Naval AP',
+    'special': '0 AP (ICBM)'
+};
+
+function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('attack_type_input').value = tab;
+
+    // Switch buttons
+    document.querySelectorAll('.seg-tab-btn').forEach(btn => btn.classList.remove('is-active'));
+    event.currentTarget.classList.add('is-active');
+
+    // Switch panels
+    document.querySelectorAll('.attack-tab-panel').forEach(p => p.classList.remove('is-active'));
+    const targetPanel = document.getElementById('panel-' + tab);
+    if (targetPanel) {
+        targetPanel.classList.add('is-active');
+    }
+
+    // Update AP cost label
+    document.getElementById('display-ap-cost').textContent = apCosts[tab] || '3 AP';
+
+    updateSupplyCost();
+}
+
+function setMax(unit) {
+    const ownedElem = document.getElementById('owned-' + unit);
+    const inputElem = document.getElementById('input-' + unit);
+    if (ownedElem && inputElem) {
+        inputElem.value = ownedElem.innerText.replace(/,/g, '');
+        updateSupplyCost();
+    }
+}
+
+function updateSupplyCost() {
+    let totalSupply = 0;
+    const activePanel = document.getElementById('panel-' + currentTab);
+    if (activePanel) {
+        const inputs = activePanel.querySelectorAll('.count-input');
+        inputs.forEach(inp => {
+            const qty = parseInt(inp.value, 10) || 0;
+            const cost = parseInt(inp.getAttribute('data-cost'), 10) || 1;
+            totalSupply += qty * cost;
+        });
+    }
+    const display = document.getElementById('display-supply-cost');
+    if (display) {
+        display.innerText = totalSupply.toLocaleString();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.count-input').forEach(inp => {
+        inp.addEventListener('input', updateSupplyCost);
+    });
+    updateSupplyCost();
+});
+</script>
+{% endblock %}

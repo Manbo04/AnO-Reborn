@@ -763,6 +763,35 @@ def global_tick():
                             page_size=500,
                         )
 
+                # Separate ground/air/naval action points regen (JOB C1)
+                from wars.action_points import AP_MAX, AP_REGEN_PER_HOUR, war_combat_columns_exist
+
+                if war_combat_columns_exist(db):
+                    db.execute(
+                        """
+                        UPDATE wars
+                        SET attacker_ground_ap = LEAST(%s, attacker_ground_ap + %s),
+                            attacker_air_ap = LEAST(%s, attacker_air_ap + %s),
+                            attacker_naval_ap = LEAST(%s, attacker_naval_ap + %s),
+                            defender_ground_ap = LEAST(%s, defender_ground_ap + %s),
+                            defender_air_ap = LEAST(%s, defender_air_ap + %s),
+                            defender_naval_ap = LEAST(%s, defender_naval_ap + %s)
+                        WHERE status = 'active' AND peace_date IS NULL
+                          AND (attacker_ground_ap < %s OR attacker_air_ap < %s OR attacker_naval_ap < %s
+                               OR defender_ground_ap < %s OR defender_air_ap < %s OR defender_naval_ap < %s)
+                        """,
+                        (
+                            AP_MAX, AP_REGEN_PER_HOUR,
+                            AP_MAX, AP_REGEN_PER_HOUR,
+                            AP_MAX, AP_REGEN_PER_HOUR,
+                            AP_MAX, AP_REGEN_PER_HOUR,
+                            AP_MAX, AP_REGEN_PER_HOUR,
+                            AP_MAX, AP_REGEN_PER_HOUR,
+                            AP_MAX, AP_MAX, AP_MAX,
+                            AP_MAX, AP_MAX, AP_MAX,
+                        ),
+                    )
+
             supply_phase_ms = int((time.time() - supply_start) * 1000)
             if supply_phase_ms > 30000:
                 logger.warning(f"War supply regen phase exceeded 30s: {supply_phase_ms}ms")

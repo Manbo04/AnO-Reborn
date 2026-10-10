@@ -107,6 +107,35 @@ Rules:
   Units require crew (soldiers 1, tanks 4, artillery 3, fighters 2, bombers 3,
   apaches 2, destroyers 100, cruisers 300, submarines 60; missiles/nukes/spies 0).
   Over-cap nations cannot recruit further until under cap. 🔒 `tests/test_manpower_cap.py`
+- **Action points (Diplomacy & Strife-style)** (`wars/action_points.py`):
+  Each side in each war has separate ground, air, and naval action points. Starts at
+  6, max 12, regenerates +1 per hour for each branch during the hourly maintenance tick.
+  Costs: ground attack 3 ground AP, air attack 3 air AP, naval attack 3 naval AP, drone
+  strike 2 air AP, cruise missile strike 2 naval AP, Dig In 2 ground AP, Recon Flight
+  2 air AP. Nukes and strategic airstrikes use no AP. Spent atomically with
+  `UPDATE ... WHERE x >= cost RETURNING`. 🔒 `tests/test_action_points.py`
+- **Entrenchment (Dig In)** (`wars/action_points.py`):
+  Nations can spend 2 ground AP to "Dig In" (+1 level, max 3). Each entrenchment level
+  grants +10% defensive strength to ground units when defending against ground attacks
+  in that war (+30% at level 3). Launching your own ground attack in that war resets
+  your entrenchment to 0 (leaving the trenches). 🔒 `tests/test_action_points.py`
+- **Intel & Recon** (`wars/action_points.py`):
+  Each side tracks 0–100 intel against the enemy in that war. Earned via "Recon Flight"
+  (+25 intel, costs 2 air AP, requires >= 1 fighter or bomber) and successful spy
+  operations (+20 intel). Having >= 50 intel reveals the enemy's current unit counts
+  on the attack screen. Every attack gains +intel/10 % attack strength (up to +10%)
+  and consumes 25 intel (floor 0). 🔒 `tests/test_action_points.py`
+- **Naval Blockade** (`wars/action_points.py`):
+  Winning a naval battle with "definite victory" or "annihilation" places the loser
+  under a 24-hour naval blockade in that war. Lifted early if the blockaded side wins
+  any naval battle in that war, and ends when the war ends. While blockaded, the nation
+  cannot create or accept Global Market offers or direct trades. Displays a red
+  "Blockaded" badge on war and market pages. 🔒 `tests/test_naval_blockade.py`
+- **One-screen attack page** (`/war/<war_id>/attack`):
+  Unified attack interface replacing the old multi-step flow. Includes segmented tabs
+  (Ground / Air / Naval / Special), live supply and AP cost estimates, Max buttons,
+  instant Dig In and Recon Flight actions, entrenchment, intel, and blockade indicators.
+  Old `/warchoose/<war_id>` GET route redirects here automatically.
 - **Supply**: attacker *and* defender pay unit supply from their own pool; a
   defender can only field what its supply covers (`wars/supply.py`).
 - **Aftermath**: won ground/bomber attacks kill civilians only in the attacked province
