@@ -10,7 +10,7 @@
 {% set branches = [
     {'id': 'land', 'tab': 'militaryland', 'label': 'Army', 'icon': 'shield', 'units': [
         {'key': 'soldiers', 'name': 'Soldiers', 'img': 'soldiers',
-         'desc': 'Cheap and expendable. Counter artillery and attack helicopters.'},
+         'desc': 'Cheap and expendable. Counter artillery.'},
         {'key': 'artillery', 'name': 'Artillery', 'img': 'artillery',
          'desc': 'Expensive, but devastating against tanks.'},
         {'key': 'tanks', 'name': 'Tanks', 'img': 'tanks',
@@ -20,15 +20,15 @@
         {'key': 'fighters', 'name': 'Fighter Jets', 'img': 'fighter_jets',
          'desc': 'Dominant in the air. Strong against bombers and attack helicopters.'},
         {'key': 'bombers', 'name': 'Bombers', 'img': 'bombers',
-         'desc': 'Deal massive damage to units below. Strong against soldiers, tanks, destroyers and submarines.'},
+         'desc': 'Heavy hitters of the air war, but fighters counter them. Air attacks only meet enemy aircraft, never ground or naval units.'},
         {'key': 'apaches', 'name': 'Attack Helicopters', 'img': 'attack_helicopters',
-         'desc': 'Take on both land and air. Counter tanks and soldiers.'},
+         'desc': 'Air-war unit: they only fight enemy aircraft, they cannot attack ground troops. Fighters counter them.'},
     ]},
     {'id': 'water', 'tab': 'militarywater', 'label': 'Navy', 'icon': 'directions_boat', 'units': [
         {'key': 'submarines', 'name': 'Submarines', 'img': 'submarines',
          'desc': 'Hide beneath the surface to counter cruisers.'},
         {'key': 'cruisers', 'name': 'Cruisers', 'img': 'cruisers',
-         'desc': 'The powerhouse of the ocean, and very expensive. Counter destroyers, fighter jets and attack helicopters.'},
+         'desc': 'The powerhouse of the ocean, and very expensive. Counter destroyers.'},
         {'key': 'destroyers', 'name': 'Destroyers', 'img': 'destroyers',
          'desc': 'Advanced radar lets them find and counter submarines.'},
         {'key': 'aircraft_carriers', 'name': 'Aircraft Carriers', 'img': 'aircraft_carriers',

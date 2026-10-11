@@ -113,6 +113,19 @@ def compute_display_limits(cId, db, units_row=None, stockpile_row=None):
         "cruise_missiles": cruise_missiles,
     }
 
+PROPAGANDA_SOLDIER_PRICE_FACTOR = 0.65  # Widespread Propaganda: soldiers cost 35% less
+
+
+def _unit_gold_price(cId, units, price, db):
+    """Gold price per unit for this player. Widespread Propaganda discounts
+    soldiers (the military page already showed the discounted price but the
+    purchase charged full). Buy and sell share this so there is no
+    buy-cheap/sell-full arbitrage."""
+    if units == "soldiers" and get_upgrades(cId, db=db).get("widespreadpropaganda"):
+        return int(price * PROPAGANDA_SOLDIER_PRICE_FACTOR)
+    return price
+
+
 def process_sell_units(db, cId, units, wantedUnits, mildict):
     # Serializes all buy/sell/activate calls for this user (same lock key
     # and pattern as action_loop.py's build_structure/demolish_structure).
@@ -134,7 +147,7 @@ def process_sell_units(db, cId, units, wantedUnits, mildict):
     if wantedUnits > currentUnits:
         return False, f"Not enough {units} (have {currentUnits})"
     
-    price = unit_costs["gold_cost"]
+    price = _unit_gold_price(cId, units, unit_costs["gold_cost"], db)
     resources = unit_costs["resource_costs"]
     manpower_per_unit = unit_costs["manpower_cost"]
     totalPrice = wantedUnits * price
@@ -171,7 +184,7 @@ def process_buy_units(db, cId, units, wantedUnits, mildict):
         return False, f"Unit buy limit exceeded (allowed {limits[units]})"
 
     manpower_available, gold = get_manpower_and_gold(db, cId)
-    price = unit_costs["gold_cost"]
+    price = _unit_gold_price(cId, units, unit_costs["gold_cost"], db)
     totalPrice = wantedUnits * price
 
     if totalPrice > gold:
