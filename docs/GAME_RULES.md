@@ -202,3 +202,4 @@ task in `common.run_once_per_period(name, lock_id, fn)` (unused lock id).
 
 **Any change** — branch → PR → CI (`prod-shaped`) → auto-merge. Regenerate the map:
 `python scripts/generate_system_map.py`.
+
