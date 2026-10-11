@@ -141,17 +141,32 @@ def bot_ids(cur) -> set:
 # --------------------------------------------------------------------------
 
 
-def _write_stock(cur, user_id: int, stock: Dict[str, int]) -> None:
-    if not stock:
-        return
-    names, qty = zip(*stock.items())
+def _current_balances(cur, user_id: int):
+    cur.execute("SELECT COALESCE(gold, 0) FROM stats WHERE id = %s", (user_id,))
+    row = cur.fetchone()
+    gold = int(row[0]) if row else 0
     cur.execute(
-        """
-        UPDATE user_economy ue SET quantity = v.q
-        FROM resource_dictionary rd, unnest(%s::text[], %s::bigint[]) AS v(name, q)
-        WHERE ue.user_id = %s AND ue.resource_id = rd.resource_id AND rd.name = v.name
-        """,
-        (list(names), [int(q) for q in qty], user_id),
+        "SELECT rd.name, ue.quantity FROM user_economy ue "
+        "JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id WHERE ue.user_id = %s",
+        (user_id,),
+    )
+    return gold, {n: int(q or 0) for n, q in cur.fetchall()}
+
+
+def _set_balances(
+    cur, user_id: int, gold: int, stock: Dict[str, int], current=None
+) -> None:
+    """Move gold/stock to the targets as ledger credits and takes (never raw sets)."""
+    from app_core.economy import ledger
+
+    cur_gold, cur_stock = current or _current_balances(cur, user_id)
+    delta = int(gold) - cur_gold
+    if delta > 0:
+        ledger.credit_gold(cur, user_id, delta)
+    elif delta < 0:
+        ledger.take_gold(cur, user_id, -delta)
+    ledger.adjust_resources(
+        cur, user_id, {r: int(q) - cur_stock.get(r, 0) for r, q in stock.items()}
     )
 
 
@@ -267,9 +282,8 @@ def create_bot(
     for n in range(2, provinces + 1):
         create_province_record(cur, user_id, f"{short} Province {n}"[:40])
 
-    cur.execute("UPDATE stats SET gold = %s WHERE id = %s", (size["gold"], user_id))
     _write_population(cur, user_id, pop_pp, only_if_below=False)
-    _write_stock(cur, user_id, size["stock"])
+    _set_balances(cur, user_id, size["gold"], size["stock"])
     _write_units(cur, user_id, size["units"])
     cur.execute(
         "INSERT INTO bot_nations (user_id, archetype, tier, provinces, "
@@ -400,7 +414,6 @@ def maintain_bots(conn, cur) -> int:
                 if g_now < target["gold"]
                 else int(cap(g_now, target["gold"]))
             )
-            cur.execute("UPDATE stats SET gold = %s WHERE id = %s", (new_gold, uid))
 
             new_stock = {}
             for res, tgt in target["stock"].items():
@@ -409,7 +422,16 @@ def maintain_bots(conn, cur) -> int:
                     profiles.regen_toward(now, tgt) if now < tgt else int(cap(now, tgt))
                 )
                 new_stock[res] = max(grown, int(profiles.upkeep_floor(res, tgt)))
-            _write_stock(cur, uid, new_stock)
+            _set_balances(
+                cur,
+                uid,
+                new_gold,
+                new_stock,
+                (
+                    int(gold.get(uid, 0)),
+                    {k: int(v) for k, v in stock.get(uid, {}).items()},
+                ),
+            )
 
             new_units = {}
             for unit, tgt in target["units"].items():
