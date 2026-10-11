@@ -1,3 +1,4 @@
+from app_core.economy import ledger
 from database import get_request_cursor
 
 class WorldMapRepository:
@@ -50,7 +51,7 @@ class WorldMapRepository:
     @staticmethod
     def apply_capture(user_id, node_id, coalition_id, cost_gold, cost_soldiers, shield_hours):
         with get_request_cursor() as db:
-            db.execute("UPDATE stats SET gold = gold - %s WHERE id = %s", (cost_gold, user_id))
+            ledger.spend_gold(db, user_id, cost_gold)  # row locked + checked by the caller
             db.execute("UPDATE military SET soldiers = soldiers - %s WHERE id = %s", (cost_soldiers, user_id))
             db.execute(
                 "UPDATE nodes SET controlling_coalition_id = %s, shield_expires_at = CURRENT_TIMESTAMP + %s * INTERVAL '1 hour' WHERE id = %s",
