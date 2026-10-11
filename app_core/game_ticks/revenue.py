@@ -1,3 +1,4 @@
+from app_core.economy import ledger
 from celery import Celery
 import psycopg2
 import os
@@ -1106,12 +1107,7 @@ def generate_province_revenue():  # Runs each hour
                         if amount > 0
                     ]
                     if gold_updates:
-                        execute_batch(
-                            db,
-                            "UPDATE stats SET gold = GREATEST(gold - %s, 0) WHERE id = %s",
-                            gold_updates,
-                            page_size=100,
-                        )
+                        ledger.take_gold_batch(db, gold_updates)
                         log_verbose(f"Batch updated gold for {len(gold_updates)} users")
                         # Revenue history ledger: one batched INSERT per
                         # chunk in its own savepoint (never fails the tick).

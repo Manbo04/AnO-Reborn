@@ -13,7 +13,7 @@ Three kinds of change:
   credit_*  add.
 """
 
-from psycopg2.extras import execute_batch
+from psycopg2 import extras
 
 
 class InsufficientFunds(Exception):
@@ -126,7 +126,7 @@ def take_resources(db, user_id, amounts):
     items = [(name, _amount(q)) for name, q in amounts.items() if int(q)]
     if not items:
         return
-    execute_batch(
+    extras.execute_batch(
         db,
         """
         UPDATE user_economy ue SET quantity = GREATEST(0, ue.quantity - %s)
@@ -141,3 +141,42 @@ def adjust_resources(db, user_id, deltas):
     """Signed deltas: positives are credited, negatives taken (clamped at zero)."""
     credit_resources(db, user_id, {n: d for n, d in deltas.items() if d > 0})
     take_resources(db, user_id, {n: -d for n, d in deltas.items() if d < 0})
+
+
+# --- batch forms for the hourly/daily ticks ---------------------------------
+# rows are (amount, user_id) / (amount, user_id, resource_id), the order the
+# ticks already build. Amounts must be non-negative.
+
+def _rows(rows):
+    out = []
+    for r in rows:
+        amt = _amount(r[0])
+        if amt:
+            out.append((amt,) + tuple(r[1:]))
+    return out
+
+
+def credit_gold_batch(db, rows, page_size=100):
+    rows = _rows(rows)
+    if rows:
+        extras.execute_batch(db, "UPDATE stats SET gold=gold+%s WHERE id=%s", rows, page_size=page_size)
+
+
+def take_gold_batch(db, rows, page_size=100):
+    rows = _rows(rows)
+    if rows:
+        extras.execute_batch(
+            db, "UPDATE stats SET gold = GREATEST(gold - %s, 0) WHERE id = %s", rows, page_size=page_size
+        )
+
+
+def take_resource_batch(db, rows, page_size=100):
+    """rows: (amount, user_id, resource_id); clamped at zero."""
+    rows = _rows(rows)
+    if rows:
+        extras.execute_batch(
+            db,
+            "UPDATE user_economy SET quantity=GREATEST(quantity-%s, 0) WHERE user_id=%s AND resource_id=%s",
+            rows,
+            page_size=page_size,
+        )

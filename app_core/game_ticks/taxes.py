@@ -1,3 +1,4 @@
+from app_core.economy import ledger
 from celery import Celery
 import psycopg2
 import os
@@ -518,12 +519,7 @@ def tax_income():
                     cg_updates.append((abs(removed_consumer_goods), user_id))
             # Execute batch updates
             if money_updates:
-                execute_batch(
-                    db,
-                    "UPDATE stats SET gold=gold+%s WHERE id=%s",
-                    money_updates,
-                    page_size=100,
-                )
+                ledger.credit_gold_batch(db, money_updates)
             # Deposit alliance taxes into coalition banks
             if coalition_bank_deposits:
                 tax_updates = [
@@ -576,14 +572,10 @@ def tax_income():
                     cg_resource_id = db.fetchone()[0]
 
                     # Batch update user_economy
-                    cg_sql = (
-                        "UPDATE user_economy SET quantity=GREATEST("
-                        "quantity-%s, 0) WHERE user_id=%s AND resource_id=%s"
-                    )
                     cg_updates_with_resource = [
                         (qty, uid, cg_resource_id) for qty, uid in cg_updates
                     ]
-                    execute_batch(db, cg_sql, cg_updates_with_resource, page_size=100)
+                    ledger.take_resource_batch(db, cg_updates_with_resource)
                 except AttributeError:
                     # DB cursor in tests may not support psycopg2 extras
                     # fall back to individual updates
@@ -594,7 +586,7 @@ def tax_income():
                     cg_resource_id = db.fetchone()[0]
                     for qty, uid in cg_updates:
                         db.execute(
-                            "UPDATE user_economy SET quantity=GREATEST("
+                            "UPDATE user_economy SET quantity=GREATEST("  # ledger-exempt: test-cursor fallback
                             "quantity-%s, 0) WHERE user_id=%s AND resource_id=%s",
                             (qty, uid, cg_resource_id),
                         )
