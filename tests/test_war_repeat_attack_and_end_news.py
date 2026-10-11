@@ -20,8 +20,8 @@ PARTICIPANT_CTX = dict(
     war_id=77,
     war_type="Raze",
     agressor_message="",
-    attacker_info={"morale": 90, "supplies": 1500},
-    defender_info={"morale": 35, "supplies": 400},
+    attacker_info={"morale": 90},
+    defender_info={"morale": 35},
     peace_to_send=20,
     spyCount=12,
 )
