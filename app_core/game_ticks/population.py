@@ -51,12 +51,17 @@ celery.conf.update(
 from app_core.game_ticks.common import should_skip_task, handle_exception, log_verbose
 from app_core.game_ticks.locks import try_pg_advisory_lock, release_pg_advisory_lock
 from app_core.game_ticks.food import rations_needed
+from app_core.game_ticks import population2
 
-def calc_education_graduation(pop_children, policies, primary_buildings, hs_buildings, uni_buildings, now=None):
+def calc_education_graduation(pop_children, policies, primary_buildings, hs_buildings, uni_buildings, now=None, base_rate=None):
     """Computes tier-chained education graduation for a province. Shared between tick and display."""
     from datetime import datetime, timezone
     
-    graduation_rate = variables.DEMO_AGING_RATES["children_to_working"]
+    graduation_rate = (
+        base_rate
+        if base_rate is not None
+        else variables.DEMO_AGING_RATES["children_to_working"]
+    )
     if variables.POLICY_MANDATORY_SCHOOLING in policies:
         graduation_rate *= variables.POLICY_SCHOOLING_GRADUATION_MULTIPLIER
 
@@ -259,7 +264,9 @@ def get_population_growth(cId, db=None):
     with reuse_or_new_cursor(db, read_only=True) as active_db:
         active_db.execute(
             """
-            SELECT population, citycount, land, happiness, pollution, id
+            SELECT population, citycount, land, happiness, pollution, id,
+                   COALESCE(pop_children, 0), COALESCE(pop_working, 0),
+                   COALESCE(pop_elderly, 0)
             FROM provinces WHERE userId = %s
             """,
             (cId,),
@@ -285,11 +292,15 @@ def get_population_growth(cId, db=None):
                 "happiness": r[3] or 0,
                 "pollution": r[4] or 0,
                 "id": r[5],
+                "pop_children": r[6],
+                "pop_working": r[7],
+                "pop_elderly": r[8],
             }
             for r in province_rows
         ]
         nation = build_nation_contexts(rows)[cId]
         grace_period = (nation["provinces"] <= 1) and (nation["land"] <= 20)
+        pop2_on = population2.pop2_active()
 
         # Same (non-demographic-weighted) rations need as population_growth().
         total_needed = 0
@@ -340,7 +351,23 @@ def get_population_growth(cId, db=None):
 
         total_delta = 0
         per_province = {}
-        for row in rows:
+        if pop2_on:
+            hc = population2.fetch_healthcare_users(active_db, [cId])
+            sim = population2.simulate_nation(
+                rows,
+                population2.fetch_province_buildings(
+                    active_db, [r["id"] for r in rows]
+                ),
+                min(1.0, rations_ratio),
+                cId in hc,
+                grace_period,
+            )
+            for row in rows:
+                n_c, n_w, n_e = sim[row["id"]]
+                d = (n_c + n_w + n_e) - row["population"]
+                per_province[str(row["id"])] = int(d)
+                total_delta += d
+        for row in ([] if pop2_on else rows):
             share = (
                 province_capacity_weight(row["citycount"], row["land"])
                 / nation["weight"]
@@ -570,6 +597,32 @@ def population_growth():  # Function for growing population
                 nation["pop"], nation["comfort"], ratio
             )
 
+        # Population 2.0: per-province homes/births/deaths/migration/settlers.
+        pop2_new = None
+        if population2.pop2_active():
+            pop2_new = {}
+            hc_users = population2.fetch_healthcare_users(db, all_user_ids)
+            b_map = population2.fetch_province_buildings(
+                db, [r["id"] for r in all_provinces]
+            )
+            by_user = {}
+            for r in all_provinces:
+                by_user.setdefault(r["userid"], []).append(r)
+            for uid, rows in by_user.items():
+                sg = (user_total_provinces.get(uid, 1) <= 1) and (
+                    user_total_land.get(uid, 1) <= 20
+                )
+                pop2_new.update(
+                    population2.simulate_nation(
+                        rows,
+                        b_map,
+                        nation_ctx[uid].get("rations_ratio", 0),
+                        uid in hc_users,
+                        sg,
+                    )
+                )
+            conn.commit()
+
         def calc_population_growth(province_row):
             """New population for one province: its capacity-weighted share
             of the nation's growth minus starvation (same math as the
@@ -608,6 +661,12 @@ def population_growth():  # Function for growing population
             population_updates = []
             for province_row in chunk:
                 try:
+                    if pop2_new is not None and province_row["id"] in pop2_new:
+                        n_c, n_w, n_e = pop2_new[province_row["id"]]
+                        population_updates.append(
+                            (n_c + n_w + n_e, n_c, n_w, n_e, province_row["id"])
+                        )
+                        continue
                     old_population = province_row["population"] or 0
                     new_population = calc_population_growth(province_row)
                     population_growth_amount = new_population - old_population
