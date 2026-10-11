@@ -45,6 +45,15 @@ PR into master, not by `railway up`.
 
 ## 🚦 How changes ship (enforced by GitHub, not optional)
 
+**Guard (required check):** a PR that touches CI, `scripts/check_*`, the schema snapshot
+(`db/`), test config, deletes/skips tests, or raises `scripts/economy_write_baseline.json`
+fails the `guard` check until Dede adds `guard-approve: <code>` from his authenticator to
+the PR description (`scripts/guard_check.py`). Never try to get around it: do not ask for
+the TOTP secret, do not move tests, do not fake statuses. If a check blocks a correct change,
+explain why to Dede and let him approve. Money/resource writes go through
+`app_core/economy/ledger.py`; lower the baseline with `check_economy_writes.py --update`
+only after removing raw writes.
+
 `master` is protected. **Direct pushes are rejected — for every session, the robot, and admins.**
 Everything lands through a pull request, and GitHub only merges it once the CI job
 `prod-shaped` passes on that exact commit. That job:

@@ -1,0 +1,29 @@
+name: Guard
+
+# Holds PRs that loosen the safety checks until Dede approves with an
+# authenticator code. pull_request_target runs master's copy of this
+# workflow and of scripts/guard_check.py, so a PR can't edit them to pass.
+# The PR's code is never checked out or run here.
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for changes to the safety checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          GUARD_TOTP_SECRET: ${{ secrets.GUARD_TOTP_SECRET }}
+        run: python3 scripts/guard_check.py
