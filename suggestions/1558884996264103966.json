@@ -1,0 +1,73 @@
+{
+  "author_id": "176063647880052737",
+  "created_at": "2026-10-11T16:52:25Z",
+  "kind": "suggestion",
+  "last_message_id": "1558919275547463823",
+  "last_player_message_at": "2026-10-11T19:08:38Z",
+  "messages": [
+    {
+      "at": "2026-10-11T16:52:25Z",
+      "attachments": [],
+      "author": "Malinok",
+      "author_id": "176063647880052737",
+      "bot": false,
+      "id": "1558884996264103966",
+      "staff": false,
+      "text": "How do less then 2k soldiers defeat 12k.  I could only send 1 soldier per support.  I lost a lot of shit that I can't replace by someone that failed on their first two attacks.  Then procced to kick my ass and drop my moral from 100 to 0 while I slept.  I'm ready to say fook this game until they fix this.  The war guide gives jack shit on combat details."
+    },
+    {
+      "at": "2026-10-11T17:07:56Z",
+      "attachments": [],
+      "author": "Malinok",
+      "author_id": "176063647880052737",
+      "bot": false,
+      "id": "1558888900733444157",
+      "staff": false,
+      "text": "If this was changed just so I could sleep and wake up Fooked, you may want to consider how you are implementing changes."
+    },
+    {
+      "at": "2026-10-11T18:11:15Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558904833409425424",
+      "staff": false,
+      "text": "<@176063647880052737> went through war 557 battle by battle (all times UTC):\n- Oct 10 17:19, 18:33, 21:48 and Oct 11 03:29: you won all four fights as defender\n- Oct 11 08:31: we removed the old war supply limit. attacks now cost action points only, and defenders field their whole army (that limit is what made \"1 soldier per support\" a thing before)\n- 09:00:21, 09:00:50, 09:01:16, 09:01:42: Lerslen won four ground fights in about 80 seconds, each a decisive win. your morale dropped 15 per fight (100 -> 40)\n- 09:32 and 09:33: two air strikes took 20 morale each. you had no fighters to answer them, so morale hit 0 and the war ended\n\nthe maths: a soldier fight is decided by army size. your ~12k soldiers score about 83, and a decisive win needs about 3x that, so roughly 37k+ soldiers. Lerslen has about 46k, so it was around 4 to 1, not 2k vs 12k. the fights only look small because the losses logged were tiny (you lost about 140 soldiers in total and still have 11,861).\n\nsorry it landed mid-war. what helps next time: dig in (+10% defence per level), keep some fighters so air strikes cost you less, and keep soldier numbers up. if the 2k number came from something you saw on screen, send a screenshot and i will look at it."
+    },
+    {
+      "at": "2026-10-11T18:13:29Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1558905395777638441",
+      "staff": true,
+      "text": "and most importantly <#1448838653173563533> is where you can vent out all your ideas for a better war system, which I desperately am thinking how to do too"
+    },
+    {
+      "at": "2026-10-11T19:08:02Z",
+      "attachments": [],
+      "author": "Malinok",
+      "author_id": "176063647880052737",
+      "bot": false,
+      "id": "1558919124124434635",
+      "staff": false,
+      "text": "In the future a buffer for the change would be nice.  I didn't know the strengths.  I only know I had 2 defensive wins and two offensive wins, really don't know how given the numbers.  To waking up to utter defeat.  \nI would suggest that wars should need 24 hours for a victory., if the one side is continuously victorious.   This is coming from someone that is usually the raider in these games."
+    },
+    {
+      "at": "2026-10-11T19:08:38Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1558919275547463823",
+      "staff": true,
+      "text": "okey, noted."
+    }
+  ],
+  "status": "new",
+  "thread_id": "1558884996264103966",
+  "title": "War",
+  "url": "https://discord.com/channels/708006319658893385/1558884996264103966"
+}

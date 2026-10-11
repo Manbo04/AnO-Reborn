@@ -1,0 +1,23 @@
+{
+  "author_id": "297362383226142720",
+  "created_at": "2026-10-11T17:39:53Z",
+  "kind": "suggestion",
+  "last_message_id": "1558896941574651974",
+  "last_player_message_at": "2026-10-11T17:39:53Z",
+  "messages": [
+    {
+      "at": "2026-10-11T17:39:53Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1558896941574651974",
+      "staff": true,
+      "text": "Right now there's no way to stop letting coalition members with banking perms withdraw over one's personal deposit. The credited balance stays, but if theres not enough in the shared pot, it cannot be withdrawn.\n\nPlease add another button besides the \"province visibility\" one to opt out of the shared pot and keep deposits fully separate, or add a separate place to deposit. If possible, make the numbers private too."
+    }
+  ],
+  "status": "new",
+  "thread_id": "1558896941574651974",
+  "title": "Safe Personal Deposit opt-out",
+  "url": "https://discord.com/channels/708006319658893385/1558896941574651974"
+}

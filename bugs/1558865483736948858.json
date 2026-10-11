@@ -1,0 +1,106 @@
+{
+  "author_id": "249007223454433292",
+  "created_at": "2026-10-11T15:34:53Z",
+  "kind": "bug",
+  "last_message_id": "1558918178673926276",
+  "last_player_message_at": "2026-10-11T18:58:29Z",
+  "messages": [
+    {
+      "at": "2026-10-11T15:34:53Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1558865483736948858",
+      "staff": false,
+      "text": "I only have Farms (no Fisheries).\n\nHourly Revenue report is FAR from my inventory change"
+    },
+    {
+      "at": "2026-10-11T15:35:31Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1558865483736948858/1558865643384610986/image.png?ex=6accfe43&is=6acbacc3&hm=aa79dc0482e73b8f66b821762dae5bd59d05f48c5e0f75905e8f49e93c993b50&"
+      ],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1558865643736928336",
+      "staff": false,
+      "text": "before"
+    },
+    {
+      "at": "2026-10-11T15:35:50Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1558865483736948858/1558865722682245120/image.png?ex=6accfe56&is=6acbacd6&hm=73d606d2fe295f87b951d3dfa65d7177c245bce106189c65dc71d50c88ab23c3&"
+      ],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1558865722975985704",
+      "staff": false,
+      "text": "after"
+    },
+    {
+      "at": "2026-10-11T15:36:34Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1558865906065743904",
+      "staff": false,
+      "text": "can confirm, my rations production is also way too optimistic"
+    },
+    {
+      "at": "2026-10-11T15:39:55Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1558866749095682092",
+      "staff": false,
+      "text": "captured before and after the :25 tick"
+    },
+    {
+      "at": "2026-10-11T15:44:29Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1558867899094138953",
+      "staff": false,
+      "text": "kulaks hiding the grain"
+    },
+    {
+      "at": "2026-10-11T18:39:30Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558911942368956498",
+      "staff": false,
+      "text": "<@249007223454433292> <@616524068987863060> you too. found it, it is a display bug, your farms are not broken.\nthe Hourly Revenue page added the farm land bonus (land x 3) once per FARM instead of once per province. the real tick adds it once per province. so the more farms you stack in one province, the more the report overstates. \n\nceless example (all UTC, today):\n- 15:35 report showed about 1.68M gross rations/hour, stockpile about 1.42M-1.51M\n- 18:10 report still showed about 1.73M gross/hour, stockpile 1,689,598\n- 18:27 (after the :25 tick) stockpile 1,796,449 = only +106,851 for the hour\n600 farms on one 605-land province meant the bonus was counted 600 times. real production is around 118K/hour, the page was claiming about 15x that.\nspoilage is not the cause here: you have 156 distribution centers so nothing is spoiling.\n\nwhat is real: your actual rations balance and the tick are correct, only the revenue/projection numbers on the page were inflated. the fix is in review right now (PR #164) and will show the true numbers once it goes live."
+    },
+    {
+      "at": "2026-10-11T18:58:29Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1558916720838582323",
+      "staff": false,
+      "text": "dekulakization successful"
+    },
+    {
+      "at": "2026-10-11T19:04:17Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558918178673926276",
+      "staff": false,
+      "text": "<@249007223454433292> <@616524068987863060> the fix is live now. timeline (UTC, today):\n- 19:02 fix merged, 19:03 deployed\n- the Hourly Revenue page now adds the farm land bonus once per province, same as the real tick, so the gross/net rations numbers should now match what your stockpile actually does across the :25 tick\n- it also subtracts spoilage on big stockpiles (2%/hour of what is above a 14-day buffer plus your distribution storage), which the page was leaving out\nceless, with your 600 farms on one province the old page overstated production about 15x, so expect a much smaller (and now correct) number. refresh the page and compare it with your stockpile after the next :25 tick. if it still looks off, send before/after screenshots like you did and i will dig further."
+    }
+  ],
+  "thread_id": "1558865483736948858",
+  "title": "Farm Production Bug?",
+  "url": "https://discord.com/channels/708006319658893385/1558865483736948858"
+}

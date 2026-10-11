@@ -1,0 +1,54 @@
+{
+  "author_id": "1326884862346657803",
+  "created_at": "2026-10-11T18:01:39Z",
+  "kind": "bug",
+  "last_message_id": "1558904556182708297",
+  "last_player_message_at": "2026-10-11T18:10:09Z",
+  "messages": [
+    {
+      "at": "2026-10-11T18:01:39Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1558902418559733862/1558902419272896622/Screenshot_20261011_232920_Chrome.jpg?ex=6acd2083&is=6acbcf03&hm=81891585abd406491e31e1ae871c56da46a816418a01f4bb6e6ce281f04e2e94&"
+      ],
+      "author": "L4",
+      "author_id": "1326884862346657803",
+      "bot": false,
+      "id": "1558902418559733862",
+      "staff": false,
+      "text": ""
+    },
+    {
+      "at": "2026-10-11T18:08:47Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1558904211876483145",
+      "staff": true,
+      "text": "On the achievements, I dont have the coalition achievement either. And I know a few of us dont have it either. Is there a way for achievements to retroactively check if you achieved something before it was implemented? <@710359818329915443>"
+    },
+    {
+      "at": "2026-10-11T18:09:55Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1558904499073060917",
+      "staff": true,
+      "text": "oh yeah slipped my mind"
+    },
+    {
+      "at": "2026-10-11T18:10:09Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1558904556182708297",
+      "staff": true,
+      "text": "I will give them myself"
+    }
+  ],
+  "thread_id": "1558902418559733862",
+  "title": "'The First blood' achievement didn't get updated after wins",
+  "url": "https://discord.com/channels/708006319658893385/1558902418559733862"
+}

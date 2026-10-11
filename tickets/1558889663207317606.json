@@ -1,0 +1,94 @@
+{
+  "author_id": "297362383226142720",
+  "created_at": "2026-10-11T17:10:58Z",
+  "kind": "ticket",
+  "last_message_id": "1558903079125127340",
+  "last_player_message_at": null,
+  "messages": [
+    {
+      "at": "2026-10-11T17:10:58Z",
+      "attachments": [],
+      "author": "Ticket Tool",
+      "author_id": "557628352828014614",
+      "bot": true,
+      "id": "1558889665212190792",
+      "staff": false,
+      "text": "<@297362383226142720> Welcome"
+    },
+    {
+      "at": "2026-10-11T17:11:27Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1558889784049664042",
+      "staff": true,
+      "text": "my nation's workforce efficiency suddenly fell by like 60% and now i can't even power stuff"
+    },
+    {
+      "at": "2026-10-11T17:11:29Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1558889663207317606/1558889794183102554/image.png?ex=6acd14c1&is=6acbc341&hm=0be4c29740aee74065453b8ec4b8ebc4c915c67141cd2295386a2a24dbf84ff9&"
+      ],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1558889794489159760",
+      "staff": true,
+      "text": ""
+    },
+    {
+      "at": "2026-10-11T17:16:32Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1558891064620875877",
+      "staff": true,
+      "text": "<@710359818329915443>"
+    },
+    {
+      "at": "2026-10-11T17:16:45Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1558891117251137549",
+      "staff": true,
+      "text": "my people should have enough education to fill stuff"
+    },
+    {
+      "at": "2026-10-11T17:16:56Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1558891166760566877",
+      "staff": true,
+      "text": "it's only after todays update that this happened"
+    },
+    {
+      "at": "2026-10-11T17:40:48Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1558897172613832746",
+      "staff": true,
+      "text": "Take a look when you're free. I have no clue"
+    },
+    {
+      "at": "2026-10-11T18:04:17Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558903079125127340",
+      "staff": false,
+      "text": "<@297362383226142720> it wasn't today's update, it was the farm swap. timeline (UTC, today):\n17:07 you sold 8,000 iron mines (they need 0 workers) and bought 8,000 farms\n8,000 farms x 50,000 workers each = about 400M extra jobs\n17:08-17:09 you swapped some power plants (oil burners/wind farms)\n17:10 efficiency shows 31% and the energy deficit hits\n\nyou have about 191M workers and your buildings now need about 606M jobs. 191 / 606 = 31%. before the swap you needed roughly 200M, so you were fine. production and power scale with that %.\nfix: sell farms or add workers. selling 4,000 farms gets you to about 47%, selling most of them puts you back near 90%+. farms are the job hog here, schools are not the problem."
+    }
+  ],
+  "thread_id": "1558889663207317606",
+  "title": "ticket-0038",
+  "url": "https://discord.com/channels/708006319658893385/1558889663207317606"
+}
