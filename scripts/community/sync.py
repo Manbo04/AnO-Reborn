@@ -299,16 +299,27 @@ def deliver_results(q, kind, asked=None):
             continue
         if rec.get("delivered_nonce") == res["nonce"]:
             continue
+        if not str(tid).isdigit():
+            # not a Discord snowflake (e.g. a stray "proposal-*" result): send() would 400
+            print(f"deliver: skipping non-snowflake id {tid!r}")
+            continue
         author = rec.get("author_id")
         text = (f"<@{author}> " if author else "") + res["reply"].strip()
         roles = []
         if kind == "ticket" and res.get("status") == "needs_staff":
             roles = [MODERATOR_ROLE, ADMIN_ROLE]
             text += f"\n<@&{MODERATOR_ROLE}> <@&{ADMIN_ROLE}> this one needs a staff member."
-        send(tid, text, ping_users=[author] if author else [], ping_roles=roles)
+        # Record + push the nonce BEFORE sending: if anything later crashes, this reply
+        # is never posted twice (a failed send is not retried automatically).
         rec["delivered_nonce"] = res["nonce"]
         rec["delivered_at"] = iso(now())
         q.save(rec, folder, tid + ".json")
+        push_queue(q, f"delivered {folder}/{tid}")
+        try:
+            send(tid, text, ping_users=[author] if author else [], ping_roles=roles)
+        except Exception as e:  # one bad record must not abort the whole run
+            print(f"deliver: send failed for {folder}/{tid}: {e}")
+            continue
         posted += 1
         if asked is not None and res.get("status") == "needs_info":
             asked.append((folder, tid))
