@@ -3,8 +3,8 @@
   "ballot_id": "2026-10-09",
   "created_at": "2026-10-05T13:56:50Z",
   "kind": "suggestion",
-  "last_message_id": "1558597197954809950",
-  "last_player_message_at": "2026-10-10T21:48:49Z",
+  "last_message_id": "1558752885393727539",
+  "last_player_message_at": "2026-10-11T08:07:28Z",
   "messages": [
     {
       "at": "2026-10-05T13:56:50Z",
@@ -65,6 +65,16 @@
       "id": "1558597197954809950",
       "staff": false,
       "text": "Or just plain old ordinary numbers."
+    },
+    {
+      "at": "2026-10-11T08:07:28Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1558752885393727539",
+      "staff": true,
+      "text": "I will make a post asking to vote on this too later"
     }
   ],
   "poll_message_id": "1558148254959534258",

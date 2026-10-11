@@ -1,0 +1,144 @@
+{
+  "author_id": "616524068987863060",
+  "created_at": "2026-10-11T07:58:56Z",
+  "kind": "bug",
+  "last_message_id": "1558754370794029119",
+  "last_player_message_at": "2026-10-11T08:13:22Z",
+  "messages": [
+    {
+      "at": "2026-10-11T07:58:56Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1558750739113975938/1558750739386343555/IMG_4411.png?ex=6acc9340&is=6acb41c0&hm=7735312ad05bdf9d4c167e901fff342e8434cfe23a7015ad55b63cff00317119&"
+      ],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1558750739113975938",
+      "staff": false,
+      "text": "???"
+    },
+    {
+      "at": "2026-10-11T08:01:50Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1558751469618864169",
+      "staff": true,
+      "text": "Looks like you are just out of range."
+    },
+    {
+      "at": "2026-10-11T08:01:53Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1558751481384145022",
+      "staff": true,
+      "text": "280,586.85"
+    },
+    {
+      "at": "2026-10-11T08:02:05Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1558751532847996970",
+      "staff": true,
+      "text": "By .5"
+    },
+    {
+      "at": "2026-10-11T08:02:29Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1558751632060190721",
+      "staff": true,
+      "text": "Discharge some troops and hire them back after declaring war."
+    },
+    {
+      "at": "2026-10-11T08:02:39Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1558751675630620704",
+      "staff": false,
+      "text": "ive already discharged all my troops"
+    },
+    {
+      "at": "2026-10-11T08:03:40Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1558751930690576417",
+      "staff": true,
+      "text": "Kill off some people then? I mean war range works, you are just out of range."
+    },
+    {
+      "at": "2026-10-11T08:04:32Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1558752148349784075",
+      "staff": false,
+      "text": "i got rid of every single troop and now have less than what that says"
+    },
+    {
+      "at": "2026-10-11T08:04:38Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1558752172093735065",
+      "staff": false,
+      "text": "still doesnt work"
+    },
+    {
+      "at": "2026-10-11T08:05:01Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1558752271855001682",
+      "staff": true,
+      "text": "Ah, then I will let <@710359818329915443> check then. 👍"
+    },
+    {
+      "at": "2026-10-11T08:05:24Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1558752366592008195",
+      "staff": true,
+      "text": "I will check later"
+    },
+    {
+      "at": "2026-10-11T08:12:56Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1558754262601826397",
+      "staff": true,
+      "text": "Just thought of something, might need to wait for the hourly tick for it to see the new war range."
+    },
+    {
+      "at": "2026-10-11T08:13:22Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1558754370794029119",
+      "staff": false,
+      "text": "maybe"
+    }
+  ],
+  "thread_id": "1558750739113975938",
+  "title": "War range not working properly",
+  "url": "https://discord.com/channels/708006319658893385/1558750739113975938"
+}
