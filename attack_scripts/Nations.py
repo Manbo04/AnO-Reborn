@@ -431,6 +431,16 @@ class Military(Nation):
         "air": ["fighters", "bombers", "apaches"],
     }
 
+    # Units an attacker can SEND per domain. Same as UNIT_DOMAINS except attack
+    # helicopters can also join a Ground Invasion (they hit ground troops;
+    # soldiers counter them). Defenders still field only UNIT_DOMAINS, so a
+    # helicopter never defends a land invasion.
+    ATTACK_UNITS = {
+        "ground": ["soldiers", "tanks", "artillery", "apaches"],
+        "naval": ["destroyers", "cruisers", "submarines"],
+        "air": ["fighters", "bombers", "apaches"],
+    }
+
     # description of the function: deal damage to random buildings based on particular_infra
     # particular_infra parameter example: for public_works -> {"libraries": 3, "hospitals": x, etc.}
     # note: also could use this for population damage when attack happens

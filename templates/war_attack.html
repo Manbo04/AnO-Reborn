@@ -357,21 +357,23 @@
 
             <!-- GROUND TAB PANEL -->
             <div id="panel-ground" class="attack-tab-panel {% if active_tab == 'ground' or not active_tab %}is-active{% endif %}">
-                {% for u in ['soldiers', 'tanks', 'artillery'] %}
+                {% for u in ['soldiers', 'tanks', 'artillery', 'apaches'] %}
+                {#- helicopters appear in both the Ground and Air panels: give the ground copy its own form field/ids -#}
+                {% set fid = 'ground_apaches' if u == 'apaches' else u %}
                 <div class="unit-row-card">
                     <img src="{{ url_for('static', filename=game_asset_path('units', u)) }}?v=2" alt="{{ u }}" class="unit-thumb">
                     <div class="unit-meta">
                         <div class="unit-name">{{ u }}</div>
                         <div class="unit-counts">
-                            <span>Owned: <b id="owned-{{ u }}">{{ owned.get(u, 0) }}</b></span>
+                            <span>Owned: <b id="owned-{{ fid }}">{{ owned.get(u, 0) }}</b></span>
                             {% if status.enemy_units_revealed %}
                             <span class="unit-intel-revealed">&#128065; Enemy: {{ status.enemy_units.get(u, 0) }}</span>
                             {% endif %}
                         </div>
                     </div>
                     <div class="unit-input-group">
-                        <button type="button" class="btn-max" onclick="setMax('{{ u }}')">Max</button>
-                        <input type="number" id="input-{{ u }}" name="{{ u }}" class="unit-amount-input count-input" data-unit="{{ u }}" min="0" max="{{ owned.get(u, 0) }}" value="{{ form_values.get(u, 0) if form_values else 0 }}">
+                        <button type="button" class="btn-max" onclick="setMax('{{ fid }}')">Max</button>
+                        <input type="number" id="input-{{ fid }}" name="{{ fid }}" class="unit-amount-input count-input" data-unit="{{ u }}" min="0" max="{{ owned.get(u, 0) }}" value="{{ form_values.get(fid, 0) if form_values else 0 }}">
                     </div>
                 </div>
                 {% endfor %}
