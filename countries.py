@@ -383,8 +383,8 @@ def get_revenue(cId, db=None):
 
                 plus = infra[building].get("plus", {})
                 for resource, amount in plus.items():
-                    # Farm land bonus is a flat per-province amount added once
-                    # (revenue.py: amount*units + land*bonus), NOT per farm.
+                    # Farm land bonus is added to EVERY farm
+                    # (revenue.py: (amount + land*bonus) * units).
                     flat_bonus = 0
                     if building == "farms":
                         flat_bonus = int(
@@ -403,7 +403,7 @@ def get_revenue(cId, db=None):
                         amount += 6
 
                     # Compute theoretical production (no productivity multiplier)
-                    theoretical_total = build_count * amount + flat_bonus
+                    theoretical_total = build_count * (amount + flat_bonus)
 
                     # Apply productivity multiplier to match actual generation behavior
                     productivity = prod_by_id.get(province, 50)
@@ -435,7 +435,7 @@ def get_revenue(cId, db=None):
                     # efficiency_multiplier.
                     multiplier *= efficiency_multiplier
 
-                    adjusted_total = (build_count * amount + flat_bonus) * multiplier
+                    adjusted_total = build_count * (amount + flat_bonus) * multiplier
                     # Normalize to integer to mirror production rounding
                     adjusted_total = math.ceil(adjusted_total)
 
