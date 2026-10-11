@@ -138,5 +138,24 @@ def test_compute_unit_casualties_caps_at_sent_amount():
         loser_units={"soldiers": 3},
         rng=rng,
     )
-    assert winner_pairs == [("tanks", 5)]
-    assert loser_pairs == [("soldiers", 3)]
+    assert 1 <= winner_pairs[0][1] <= 5
+    assert 1 <= loser_pairs[0][1] <= 3
+
+
+def test_compute_unit_casualties_scale_with_army_size():
+    # 75k attackers crushing 9.5k defenders must cost the defender thousands,
+    # not a flat handful (regression: it used to be ~85 regardless of size).
+    import random
+
+    winner_pairs, loser_pairs = compute_unit_casualties(
+        winner_casulties=0.13,
+        win_type=8.0,
+        winner_units_list=["soldiers"],
+        loser_units_list=["soldiers"],
+        winner_units={"soldiers": 75000},
+        loser_units={"soldiers": 9500},
+        rng=random.Random(0),
+    )
+    assert loser_pairs[0][1] >= 3000
+    assert loser_pairs[0][1] <= 4750
+    assert winner_pairs[0][1] < loser_pairs[0][1]
