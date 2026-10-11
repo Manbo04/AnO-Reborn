@@ -21,7 +21,7 @@
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">checklist</span> Requirements</h3>
                 <table class="templatetable">
                     <tr><td><strong>No Active Truce</strong></td><td>Cannot attack nations you have truce with</td></tr>
-                    <tr><td><strong>Score Range</strong></td><td>Target must be within war range</td></tr>
+                    <tr><td><strong>War Range</strong></td><td>Target's strength (population + military) must be 75&ndash;133% of yours</td></tr>
                     <tr><td><strong>Not Already at War</strong></td><td>Limited active wars allowed</td></tr>
                 </table>
             </div>
@@ -91,18 +91,18 @@
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">groups</span> Ground Forces</h3>
                 <p class="templatecontentpleft"><strong>Requires:</strong> Army Bases</p>
                 <table class="templatetable">
-                    <tr><td><strong>Soldiers</strong></td><td>Basic infantry, 100 per army base</td></tr>
-                    <tr><td><strong>Tanks</strong></td><td>Heavy armor, 8 per army base</td></tr>
-                    <tr><td><strong>Artillery</strong></td><td>Long-range, 8 per army base</td></tr>
+                    <tr><td><strong>Soldiers</strong></td><td>Basic infantry, 5,000 per army base</td></tr>
+                    <tr><td><strong>Tanks</strong></td><td>Heavy armor, 200 per army base</td></tr>
+                    <tr><td><strong>Artillery</strong></td><td>Long-range, 200 per army base</td></tr>
                 </table>
             </div>
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">flight</span> Air Forces</h3>
                 <p class="templatecontentpleft"><strong>Requires:</strong> Aerodromes</p>
                 <table class="templatetable">
-                    <tr><td><strong>Fighters</strong></td><td>Air superiority, 5 per aerodrome (shared)</td></tr>
-                    <tr><td><strong>Bombers</strong></td><td>Strategic strikes, 5 per aerodrome (shared)</td></tr>
-                    <tr><td><strong>Apaches</strong></td><td>Attack helicopters, 5 per aerodrome (shared)</td></tr>
+                    <tr><td><strong>Fighters</strong></td><td>Air superiority, 100 per aerodrome (shared, +500 per aircraft carrier)</td></tr>
+                    <tr><td><strong>Bombers</strong></td><td>Heavy air strikes, 100 per aerodrome (shared, +500 per aircraft carrier)</td></tr>
+                    <tr><td><strong>Apaches</strong></td><td>Attack helicopters, 100 per aerodrome (shared, +500 per aircraft carrier)</td></tr>
                 </table>
             </div>
         </div>
@@ -112,9 +112,9 @@
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">sailing</span> Naval Forces</h3>
                 <p class="templatecontentpleft"><strong>Requires:</strong> Harbours</p>
                 <table class="templatetable">
-                    <tr><td><strong>Destroyers</strong></td><td>Fast naval, 3 per harbour (shared)</td></tr>
-                    <tr><td><strong>Submarines</strong></td><td>Stealth attacks, 3 per harbour (shared)</td></tr>
-                    <tr><td><strong>Cruisers</strong></td><td>Heavy firepower, 2 per harbour</td></tr>
+                    <tr><td><strong>Destroyers</strong></td><td>Fast naval, 20 per harbour (shared)</td></tr>
+                    <tr><td><strong>Submarines</strong></td><td>Stealth attacks, 20 per harbour (shared)</td></tr>
+                    <tr><td><strong>Cruisers</strong></td><td>Heavy firepower, 10 per harbour</td></tr>
                 </table>
             </div>
             <div class="templatedivflex2left">
@@ -141,18 +141,18 @@
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">rocket</span> Ballistic Missiles (ICBMs)</h3>
                 <p class="templatecontentpleft">Long-range missiles that devastate enemy infrastructure and military units.</p>
                 <table class="templatetable">
-                    <tr><td><strong>Cost</strong></td><td>$16M + 550 Steel</td></tr>
+                    <tr><td><strong>Cost</strong></td><td>$16M + 80 t aluminium + 50 t components + 15 t gasoline</td></tr>
                     <tr><td><strong>Build Limit</strong></td><td>Silos + 1 (can build 1 without silos)</td></tr>
                     <tr><td><strong>Launch Requirement</strong></td><td>Need at least 1 Silo to launch</td></tr>
                     <tr><td><strong>Target</strong></td><td>Enemy military units + random province damage</td></tr>
                 </table>
-                <p class="templatecontentpleft" style="margin-top: 10px;"><em>Note: You can purchase 1 ICBM from the Military page without any silos, but you need silos to store more and to actually launch them in war.</em></p>
+                <p class="templatecontentpleft" style="margin-top: 10px;"><em>Note: You need the ICBM Silo technology to buy ICBMs. With it you can hold 1 ICBM without any silos; silos let you store more and are needed to launch them in war.</em></p>
             </div>
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">dangerous</span> Nuclear Weapons (Nukes)</h3>
                 <p class="templatecontentpleft">The ultimate weapon. A nuke hits <strong>one province you choose</strong> and can't be intercepted. You review the expected damage and cost, then confirm, before it launches.</p>
                 <table class="templatetable">
-                    <tr><td><strong>Cost</strong></td><td>$80M + 1,200 Uranium + 900 Steel</td></tr>
+                    <tr><td><strong>Cost</strong></td><td>$80M + 120 t aluminium + 100 t components + 25 t gasoline + 20 t uranium</td></tr>
                     <tr><td><strong>Build Limit</strong></td><td>1 per Silo (requires silos)</td></tr>
                     <tr><td><strong>How to launch</strong></td><td>Wars &rarr; Attack &rarr; Nukes, or "Plan nuclear strike" on the enemy's country page (needs an active war)</td></tr>
                     <tr><td><strong>Deaths</strong></td><td>Depend on density: the blast covers ~1,413 km&sup2;, hitting the cities first. Many cities on little land = heavy losses; big spread-out provinces lose only a small share</td></tr>
@@ -170,18 +170,18 @@
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">construction</span> Building Silos</h3>
                 <p class="templatecontentpleft">Silos are military infrastructure built in your provinces.</p>
                 <table class="templatetable">
-                    <tr><td><strong>Build Cost</strong></td><td>$21M + 540 Steel + 240 Aluminium</td></tr>
+                    <tr><td><strong>Build Cost</strong></td><td>$350M + 1.08 kt steel + 480 t aluminium</td></tr>
                     <tr><td><strong>Location</strong></td><td>Province → Infrastructure → Military tab</td></tr>
                     <tr><td><strong>Provides</strong></td><td>+1 ICBM capacity, +1 Nuke capacity</td></tr>
                 </table>
             </div>
             <div class="templatedivflex2left">
-                <h3 class="templatecontentheader"><span class="material-icons-outlined">tips_and_updates</span> WMD Projects</h3>
-                <p class="templatecontentpleft">National projects enhance your WMD capabilities.</p>
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">tips_and_updates</span> WMD Technologies</h3>
+                <p class="templatecontentpleft">Researched on the Upgrades page (cost in components). Chain: Better Engineering, Nuclear Testing Facility, Ballistic Missile Silo, ICBM Silo.</p>
                 <table class="templatetable">
-                    <tr><td><strong>Ballistic Missile Silo</strong></td><td>$280M - Required before building any ICBMs</td></tr>
-                    <tr><td><strong>ICBM Silo</strong></td><td>$355M - Increases ICBM effectiveness</td></tr>
-                    <tr><td><strong>Nuclear Testing Facility</strong></td><td>$575M - Required before building nukes</td></tr>
+                    <tr><td><strong>Ballistic Missile Silo</strong></td><td>40 t components - Prerequisite for the ICBM Silo</td></tr>
+                    <tr><td><strong>ICBM Silo</strong></td><td>50 t components - Required before you can buy ICBMs</td></tr>
+                    <tr><td><strong>Nuclear Testing Facility</strong></td><td>60 t components - Required before building nukes</td></tr>
                 </table>
             </div>
         </div>
