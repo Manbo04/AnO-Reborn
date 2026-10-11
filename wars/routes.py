@@ -616,9 +616,11 @@ def repeat_attack(war_id):
         return _resolve_special_attack(attack_units, eId, target)
 
     domain = entry.get("domain")
-    if domain not in Military.UNIT_DOMAINS or len(units) != 3:
+    if domain not in Military.ATTACK_UNITS or any(
+        u not in Military.ATTACK_UNITS[domain] for u in units
+    ) or not units:
         return error(400, "Invalid attack request. Please start again.")
-    err = attack_units.attach_units(units, 3)
+    err = attack_units.attach_units(units, len(units))
     if err:
         return error(400, err)
 
@@ -743,14 +745,16 @@ def war_attack(war_id):
             session["attack_units"] = attack_units.__dict__
             return _resolve_special_attack(attack_units, eId, target)
 
-        if attack_type not in Military.UNIT_DOMAINS:
+        if attack_type not in Military.ATTACK_UNITS:
             return _render_attack_page(error_msg="Please select an attack type (Ground, Naval, or Air)", form_vals=request.form, active_tab=attack_type)
 
         domain = attack_type
-        domain_units = Military.UNIT_DOMAINS[domain]
+        domain_units = Military.ATTACK_UNITS[domain]
         selected_units = {}
         for u in domain_units:
-            raw_amt = request.form.get(u)
+            # helicopters sit in both the Ground and Air panels of the form;
+            # the Ground copy is posted as ground_apaches
+            raw_amt = request.form.get("ground_apaches" if (domain == "ground" and u == "apaches") else u)
             try:
                 selected_units[u] = int(raw_amt or 0)
             except (ValueError, TypeError):
@@ -760,7 +764,7 @@ def war_attack(war_id):
             return _render_attack_page(error_msg="Can't attack because you haven't sent any units", form_vals=request.form, active_tab=domain)
 
         attack_units = Units(cId, war_id=war_id)
-        err_valid = attack_units.attach_units(selected_units, 3)
+        err_valid = attack_units.attach_units(selected_units, len(selected_units))
         if err_valid:
             return _render_attack_page(error_msg=err_valid, form_vals=request.form, active_tab=domain)
 
@@ -800,13 +804,13 @@ def warChoose(war_id):
             # reach, so there's nothing left to hand-pick once the domain is
             # chosen.
             domain = request.form.get("domain")
-            if domain not in Military.UNIT_DOMAINS:
+            if domain not in Military.ATTACK_UNITS:
                 return error(
                     400, "Please select an attack type (Ground, Naval, or Air)"
                 )
-            for unit in Military.UNIT_DOMAINS[domain]:
+            for unit in Military.ATTACK_UNITS[domain]:
                 selected_units[unit] = 0
-            unit_amount = 3
+            unit_amount = len(selected_units)
             session["war_domain"] = domain
         attack_units = Units(cId, war_id=war_id)
         return_error = attack_units.attach_units(selected_units, unit_amount)

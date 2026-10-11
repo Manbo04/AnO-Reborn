@@ -107,10 +107,10 @@
 
         <div class="game-glass game-panel wc-panel">
             <h2 class="templatecontentheaderleft">Attack type</h2>
-            <p class="wc-lead">Only units from the chosen domain fight, on both sides. A destroyer can't defend against tanks it will never see. That also means Air War (fighters, bombers, helicopters) only meets enemy aircraft; to hit ground troops, pick Ground Invasion.</p>
+            <p class="wc-lead">Only units from the chosen domain fight, on both sides. A destroyer can't defend against tanks it will never see. Attack helicopters can join either an Air War (against enemy aircraft) or a Ground Invasion (against ground troops; soldiers counter them).</p>
 
             <div class="wc-grid">
-                {{ domain_card('ground', 'Ground Invasion', 'landscape', [('Soldiers', units['soldiers']), ('Tanks', units['tanks']), ('Artillery', units['artillery'])]) }}
+                {{ domain_card('ground', 'Ground Invasion', 'landscape', [('Soldiers', units['soldiers']), ('Tanks', units['tanks']), ('Artillery', units['artillery']), ('Attack Helicopters', units['apaches'])]) }}
                 {{ domain_card('naval', 'Naval Attack', 'directions_boat', [('Destroyers', units['destroyers']), ('Cruisers', units['cruisers']), ('Submarines', units['submarines'])]) }}
                 {{ domain_card('air', 'Air War', 'flight', [('Fighter Jets', units['fighters']), ('Bombers', units['bombers']), ('Attack Helicopters', units['apaches'])]) }}
             </div>

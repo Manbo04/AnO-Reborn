@@ -278,9 +278,13 @@ def compute_unit_casualties(
     winner_pairs = []
     loser_pairs = []
 
-    for w_unit, l_unit in zip(winner_units_list, loser_units_list):
-        w_sent = winner_units.get(w_unit, 0) or 0
-        l_sent = loser_units.get(l_unit, 0) or 0
+    from itertools import zip_longest
+
+    # zip_longest: a ground attack can send 4 unit types (helicopters join)
+    # against a 3-unit defence; plain zip would drop the extra unit's losses.
+    for w_unit, l_unit in zip_longest(winner_units_list, loser_units_list):
+        w_sent = (winner_units.get(w_unit, 0) or 0) if w_unit is not None else 0
+        l_sent = (loser_units.get(l_unit, 0) or 0) if l_unit is not None else 0
 
         if w_sent > 0:
             w_cas = min(w_sent, winner_casulties * _rng.uniform(2, 10) * 2)

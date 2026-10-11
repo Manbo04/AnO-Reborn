@@ -77,7 +77,7 @@ def test_parse_one_screen_attack_domain():
     assert err is None
     assert payload is not None
     assert payload["domain"] == "ground"
-    assert payload["units"] == {"soldiers": 50, "tanks": 10, "artillery": 5}
+    assert payload["units"] == {"soldiers": 50, "tanks": 10, "artillery": 5, "apaches": 0}
     assert payload["ap_branch"] == "ground"
     assert payload["ap_cost"] == 3
 

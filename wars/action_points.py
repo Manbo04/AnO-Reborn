@@ -184,7 +184,7 @@ def parse_one_screen_attack(
     """
     if unit_domain_map is None:
         unit_domain_map = {
-            "ground": ["soldiers", "tanks", "artillery"],
+            "ground": ["soldiers", "tanks", "artillery", "apaches"],
             "air": ["fighters", "bombers", "apaches"],
             "naval": ["destroyers", "cruisers", "submarines"],
         }
@@ -234,6 +234,10 @@ def parse_one_screen_attack(
 
     for u in domain_units:
         raw_val = form_data.get(u, 0)
+        if attack_type == "ground" and u == "apaches":
+            # helicopters are in both the Ground and Air panels of the form;
+            # the Ground copy posts as ground_apaches
+            raw_val = form_data.get("ground_apaches", raw_val)
         try:
             amt = int(raw_val or 0)
         except (ValueError, TypeError):
