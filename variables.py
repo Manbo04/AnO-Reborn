@@ -1207,6 +1207,7 @@ LOAN_COOLDOWN_HOURS = 24  # can't take a new loan until this long after fully re
 # app_core/loans/services.py::score_loan_history. Points are percent of cap.
 LOAN_TERM_DAYS = 7  # a loan repaid within this many days counts as "on time"
 LOAN_DEFAULT_DAYS = 21  # outstanding longer than this = in default
+LOAN_OVERDUE_GARNISH_PCT = 0.25  # share of the borrower's gold seized each hourly run once a loan is past LOAN_TERM_DAYS
 LOAN_CREDIT_WINDOW = 10  # only the most recent N loans count
 LOAN_CREDIT_ON_TIME_POINTS = 5  # per full-size on-time loan
 LOAN_CREDIT_FULL_SIZE_SHARE = 0.25  # loan must be >= 25% of cap to earn full on-time points

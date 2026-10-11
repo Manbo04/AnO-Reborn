@@ -1132,6 +1132,12 @@ def declare_war():
             )
             if attacker.id == defender.id:
                 return error(400, "Can't declare war on yourself")
+            from app_core.security.alt_guard import accounts_linked
+            if accounts_linked(db, attacker.id, defender.id):
+                return error(
+                    403,
+                    "You can't declare war on an account that shares your network/device.",
+                )
 
             # FIXED 2026-09-23: found live while auditing wars/ during the
             # account cross-contamination investigation -- unrelated bug,

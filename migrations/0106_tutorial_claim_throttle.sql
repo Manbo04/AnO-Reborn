@@ -1,0 +1,1 @@
+ALTER TABLE stats ADD COLUMN IF NOT EXISTS tutorial_last_claim_at TIMESTAMPTZ;

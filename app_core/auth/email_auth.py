@@ -50,7 +50,7 @@ def _complete_email_login(user_id, is_verified, has_verification, email):
 @email_auth_bp.route("/register/email", methods=["POST"])
 def register_email():
     username = request.form.get("username", "").strip()
-    email = request.form.get("email", "").strip()
+    email = request.form.get("email", "").strip().lower()
     password = request.form.get("password")
     confirmation = request.form.get("confirmation")
 
@@ -61,6 +61,13 @@ def register_email():
     import re
     if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
         flash("Invalid email format.")
+        return redirect("/signup")
+
+    from app_core.security.email_norm import (
+        CANONICAL_SQL, canonical_email, is_disposable,
+    )
+    if is_disposable(email):
+        flash("Disposable email addresses aren't allowed. Please use a real email.")
         return redirect("/signup")
 
     if password != confirmation:
@@ -79,7 +86,11 @@ def register_email():
     verification_token = None
     try:
         with get_request_cursor() as db:
-            db.execute("SELECT id FROM users WHERE username=%s OR email=%s", (username, email))
+            db.execute(
+                "SELECT id FROM users WHERE lower(username)=lower(%s) OR lower(email)=%s "
+                f"OR ({CANONICAL_SQL}) = %s",
+                (username, email, canonical_email(email)),
+            )
             if db.fetchone():
                 flash("Username or email already taken.")
                 return redirect("/signup")

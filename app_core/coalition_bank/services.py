@@ -226,6 +226,8 @@ def accept_trade(db, actor_id, trade_id):
         return False, "Only the leader, deputies or bankers can accept bank trades.", coalition_id
     if status != "pending":
         return False, "That trade was already handled.", coalition_id
+    if actor_id == user_id:
+        return False, "You can't approve your own bank trade — another officer must.", coalition_id
     if give_res not in BANK_RESOURCES or want_res not in BANK_RESOURCES:
         return False, "Invalid trade.", coalition_id
 
@@ -523,6 +525,8 @@ def accept_recurring_trade(db, actor_id, rec_id):
         return False, "Only the leader, deputies or bankers can approve recurring trades.", coalition_id
     if status != "pending":
         return False, "That recurring trade was already handled.", coalition_id
+    if actor_id == user_id:
+        return False, "You can't approve your own recurring trade — another officer must.", coalition_id
     if not get_role(db, user_id, coalition_id):
         db.execute(
             "UPDATE col_bank_recurring_trades SET status='cancelled', ended_at=NOW(), ended_by=%s WHERE id=%s",

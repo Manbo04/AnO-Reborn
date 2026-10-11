@@ -222,8 +222,12 @@ def stripe_webhook():
 
     with get_request_cursor() as db:
         try:
-            if event_type in ("checkout.session.completed",):
+            if event_type in ("checkout.session.completed", "checkout.session.async_payment_succeeded"):
                 obj = event["data"]["object"]
+                # Async methods (SEPA, etc.) fire "completed" while still
+                # unpaid; only credit Gems once Stripe says the money landed.
+                if getattr(obj, "payment_status", None) != "paid":
+                    return "", 200
                 # event["data"]["object"] is a stripe.StripeObject, not a plain
                 # dict — it doesn't support .get(), only attribute/bracket access.
                 result = handle_checkout_completed(db, obj["id"], getattr(obj, "payment_intent", None))

@@ -23,6 +23,10 @@ from app_core.world_affairs.services import log_event
 # trades.amount/price/offeree/offer_id are Postgres INTEGER columns.
 MAX_TRADE_INT = 2_147_483_647
 
+from app_core.security.alt_guard import (
+    accounts_linked, is_new_account, new_account_overpay,
+    LINKED_MESSAGE, NEW_ACCOUNT_MESSAGE, PRICE_MESSAGE,
+)
 market_bp = Blueprint("market_bp", __name__)
 logger = logging.getLogger(__name__)
 
@@ -130,6 +134,10 @@ def buy_market_offer(offer_id):
 
         if is_embargoed(db, seller_id, cId):
             return error(403, "This nation has embargoed you and will not sell to you.")
+        if seller_id == cId or accounts_linked(db, cId, seller_id):
+            return error(403, LINKED_MESSAGE)
+        if not currency_id and new_account_overpay(db, cId, resource, price_for_one, amount_wanted):
+            return error(403, PRICE_MESSAGE)
 
         db.execute(
             "SELECT 1 FROM assembly_effects WHERE target_nation_id IN (%s, %s)"
@@ -249,6 +257,8 @@ def sell_market_offer(offer_id):
 
         if is_embargoed(db, buyer_id, seller_id):
             return error(403, "This nation has embargoed you and will not buy from you.")
+        if buyer_id == seller_id or accounts_linked(db, seller_id, buyer_id):
+            return error(403, LINKED_MESSAGE)
 
         db.execute(
             "SELECT 1 FROM assembly_effects WHERE target_nation_id IN (%s, %s)"
@@ -439,6 +449,9 @@ def post_offer(offer_type):
         if db.fetchone():
             return error(403, "You cannot post market offers while under World Assembly sanctions.")
 
+        if offer_type == "buy" and not currency_id and new_account_overpay(db, cId, resource, price, amount):
+            return error(403, PRICE_MESSAGE)
+
         if offer_type == "sell":
             realAmount = get_user_resource_quantity(db, cId, resource)
             if realAmount is None:
@@ -539,7 +552,11 @@ def post_trade_offer(offer_type, offeree_id):
 
         if not offeree_id.isnumeric():
             return error(400, "Offeree id must be numeric")
-        
+        if int(offeree_id) == cId or accounts_linked(db, cId, int(offeree_id)):
+            return error(403, LINKED_MESSAGE)
+        if offer_type == "buy" and new_account_overpay(db, cId, resource, price, amount):
+            return error(403, PRICE_MESSAGE)
+
         if offer_type not in ["buy", "sell"]:
             return error(400, "Offer type must be 'buy' or 'sell'")
 
@@ -689,6 +706,9 @@ def accept_trade(trade_id):
 
             if offeree != cId:
                 return error(400, "You can't accept that offer")
+
+            if trade_type == "sell" and not currency_id and new_account_overpay(db, cId, resource, price, amount):
+                return error(403, PRICE_MESSAGE)
 
             if not is_active_resource(db, resource):
                 return error(400, "This resource is not currently tradable")
@@ -852,6 +872,10 @@ def transfer(transferee):
     with get_request_cursor() as db:
         if not user_exists(db, transferee_id):
             return error(404, "That nation does not exist")
+        if accounts_linked(db, cId, transferee_id):
+            return error(403, LINKED_MESSAGE)
+        if is_new_account(db, cId):
+            return error(403, NEW_ACCOUNT_MESSAGE)
 
         # Bulk aid support (player-requested: send multiple resource kinds in
         # one package instead of one gift per resource). The form repeats

@@ -122,11 +122,73 @@ def _apply_rewards(db, user_id: int, rewards: dict[str, int]) -> dict[str, int]:
     return granted
 
 
+def _shares_identity(db, user_a: int, user_b: int) -> bool:
+    """True if two accounts have ever logged in from the same IP or device
+    fingerprint (login_events). Used to block self-referral farming with alts.
+    Fails closed on a real match, open if the table is unavailable."""
+    try:
+        db.execute("SAVEPOINT referral_identity_check")
+        db.execute(
+            """
+            SELECT 1 FROM login_events a
+            JOIN login_events b
+              ON (a.ip IS NOT NULL AND a.ip = b.ip)
+              OR (a.fingerprint IS NOT NULL AND a.fingerprint = b.fingerprint
+                  AND a.ip = b.ip)
+            WHERE a.user_id = %s AND b.user_id = %s
+            LIMIT 1
+            """,
+            (user_a, user_b),
+        )
+        hit = db.fetchone() is not None
+        db.execute("RELEASE SAVEPOINT referral_identity_check")
+        return hit
+    except Exception:
+        logger.exception("referral identity check failed")
+        try:
+            db.execute("ROLLBACK TO SAVEPOINT referral_identity_check")
+        except Exception:
+            pass
+        return False
+
+
+def _request_ip_matches_referrer(db, referrer_id: int) -> bool:
+    try:
+        ip = request.remote_addr
+    except RuntimeError:
+        return False
+    if not ip:
+        return False
+    try:
+        db.execute("SAVEPOINT referral_ip_check")
+        db.execute(
+            "SELECT 1 FROM login_events WHERE user_id = %s AND ip = %s LIMIT 1",
+            (referrer_id, ip),
+        )
+        hit = db.fetchone() is not None
+        db.execute("RELEASE SAVEPOINT referral_ip_check")
+        return hit
+    except Exception:
+        try:
+            db.execute("ROLLBACK TO SAVEPOINT referral_ip_check")
+        except Exception:
+            pass
+        return False
+
+
 def link_referrer_on_signup(db, new_user_id: int, referral_code: str | None = None) -> int | None:
     """Attach referred_by_user_id if code is valid and not self-referral."""
     ensure_referral_schema(db)
     referrer_id = resolve_referrer_id(db, referral_code)
     if not referrer_id or referrer_id == new_user_id:
+        return None
+    if _request_ip_matches_referrer(db, referrer_id) or _shares_identity(
+        db, referrer_id, new_user_id
+    ):
+        logger.warning(
+            "Referral blocked (same IP/device): referrer=%s new_user=%s",
+            referrer_id, new_user_id,
+        )
         return None
     db.execute(
         "UPDATE users SET referred_by_user_id = %s "
@@ -216,6 +278,8 @@ def try_grant_milestones(db, referred_user_id: int) -> list[dict[str, Any]]:
         return []
     referrer_id = int(row[0])
     if not _user_is_verified(db, referred_user_id):
+        return []
+    if _shares_identity(db, referrer_id, referred_user_id):
         return []
 
     active_days = record_active_day(db, referred_user_id)

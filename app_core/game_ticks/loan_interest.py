@@ -10,6 +10,7 @@ take-loan/repay-loan user-facing flow this tick backs.
 Standalone tick with its own advisory lock and task_runs row, same pattern
 as unit_production.py / disasters.py.
 """
+import variables
 from app_core.game_ticks.common import should_skip_task, handle_exception, log_verbose
 from app_core.game_ticks.locks import try_pg_advisory_lock, release_pg_advisory_lock
 
@@ -63,15 +64,17 @@ def run_loan_interest():
 
             db.execute(
                 """
-                SELECT ul.id, ul.user_id, ul.balance, ul.interest_rate, s.gold
+                SELECT ul.id, ul.user_id, ul.balance, ul.interest_rate, s.gold,
+                       (ul.taken_at < NOW() - make_interval(days => %s)) AS overdue
                 FROM user_loans ul
                 JOIN stats s ON s.id = ul.user_id
                 WHERE ul.status = 'active'
-                """
+                """,
+                (variables.LOAN_TERM_DAYS,),
             )
             loans = db.fetchall()
 
-            for loan_id, user_id, balance, interest_rate, gold in loans:
+            for loan_id, user_id, balance, interest_rate, gold, overdue in loans:
                 balance = float(balance)
                 interest_rate = float(interest_rate)
                 gold = float(gold) if gold is not None else 0.0
@@ -85,7 +88,24 @@ def run_loan_interest():
                         "UPDATE stats SET gold = GREATEST(0, gold - %s) WHERE id = %s",
                         (garnished, user_id),
                     )
-                if new_balance != balance:
+                # Anti-abuse: loans carry no interest, so without this an
+                # unpaid loan is free money forever. Past the term, seize a
+                # share of the treasury every run until it's cleared.
+                if overdue and new_balance > 0:
+                    seize = min(new_balance, max(0.0, (gold - garnished)) * variables.LOAN_OVERDUE_GARNISH_PCT)
+                    if seize > 0:
+                        db.execute(
+                            "UPDATE stats SET gold = GREATEST(0, gold - %s) WHERE id = %s",
+                            (seize, user_id),
+                        )
+                        new_balance -= seize
+                if new_balance <= 0.005:
+                    db.execute(
+                        "UPDATE user_loans SET status = 'repaid', balance = 0, "
+                        "repaid_at = NOW() WHERE id = %s",
+                        (loan_id,),
+                    )
+                elif new_balance != balance:
                     db.execute(
                         "UPDATE user_loans SET balance = %s WHERE id = %s",
                         (new_balance, loan_id),

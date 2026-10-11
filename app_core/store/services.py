@@ -9,6 +9,7 @@ from .repositories import (
     get_user_gems_for_update,
     decrement_gems,
     increment_gems,
+    clawback_gems,
     user_owns_cosmetic,
     grant_cosmetic_ownership,
     insert_pending_gem_purchase,
@@ -155,10 +156,11 @@ def handle_charge_refunded(db, payment_intent_id):
         )
         return None
     _id, user_id, gems_granted = refunded
+    removed = clawback_gems(db, user_id, gems_granted)
     logger.warning(
-        "store webhook: purchase for payment_intent %s (user %s, %s gems) marked refunded; "
-        "no automatic clawback is implemented",
-        payment_intent_id, user_id, gems_granted,
+        "store webhook: purchase for payment_intent %s (user %s, %s gems) refunded; "
+        "clawed back %s gems",
+        payment_intent_id, user_id, gems_granted, removed,
     )
     return user_id, gems_granted
 
@@ -188,7 +190,7 @@ def handle_bmc_extra_purchase(db, event_data):
             # Not a Gem-package Extra (some other shop item) -- not ours to handle.
             continue
         gem_package_id, _name, gems_per_unit, _price_cents, _currency = gem_package
-        quantity = line.get("quantity") or 1
+        quantity = max(1, int(line.get("quantity") or 1))
         gems_granted = gems_per_unit * quantity
 
         answers = line.get("question_answers") or []
@@ -244,10 +246,11 @@ def handle_bmc_extra_refund(db, event_data):
         if not result:
             continue
         _id, user_id, gems_granted = result
+        removed = clawback_gems(db, user_id, gems_granted)
         logger.warning(
-            "bmc webhook: transaction %s extra %s (user %s, %s gems) marked refunded; "
-            "no automatic clawback is implemented",
-            transaction_id, line.get("id"), user_id, gems_granted,
+            "bmc webhook: transaction %s extra %s (user %s, %s gems) refunded; "
+            "clawed back %s gems",
+            transaction_id, line.get("id"), user_id, gems_granted, removed,
         )
         refunded.append((user_id, gems_granted))
     return refunded

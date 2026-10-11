@@ -12,6 +12,8 @@ from helpers import login_required
 
 bp = Blueprint("tutorial_api", __name__)
 
+CLAIM_MIN_GAP_SECONDS = 90
+
 def _claim_chapter(db, user_id: int, idx: int) -> dict[str, int] | None:
     """Atomically mark chapter `idx` claimed for user_id. Returns the
     chapter's reward dict if this call actually won the claim, or None if
@@ -138,9 +140,31 @@ def claim_tutorial_reward():
             return jsonify({"ok": False, "error": "chapter_index out of range"}), 400
 
     with get_request_cursor() as db:
-        db.execute("SELECT 1 FROM stats WHERE id = %s", (user_id,))
-        if not db.fetchone():
+        # Anti-abuse (2026-10-11): chapter completion is client-side, so
+        # without this a fresh account could POST chapters 0-8 + graduate
+        # back to back and collect ~20M gold instantly. Throttle claims,
+        # require a verified email, and require the four building chapters
+        # (real in-game actions) before graduating.
+        db.execute(
+            """
+            SELECT tutorial_chapters_claimed,
+                   EXTRACT(EPOCH FROM (NOW() - tutorial_last_claim_at))
+            FROM stats WHERE id = %s FOR UPDATE
+            """,
+            (user_id,),
+        )
+        row = db.fetchone()
+        if not row:
             return jsonify({"ok": False, "error": "Nation not found"}), 404
+        from app_core.referrals.service import _user_is_verified
+        if not _user_is_verified(db, user_id):
+            return jsonify({"ok": False, "error": "Verify your email to claim tutorial rewards."}), 403
+        already = {int(x) for x in (row[0] or [])}
+        since_last = row[1]
+        if since_last is not None and float(since_last) < CLAIM_MIN_GAP_SECONDS:
+            return jsonify({"ok": False, "error": "You're claiming too fast — finish the chapter first."}), 429
+        if graduate and not {0, 1, 2, 3}.issubset(already):
+            return jsonify({"ok": False, "error": "Complete the building chapters before graduating."}), 403
 
         rewards_to_grant: dict[str, int] = {}
         messages = []
@@ -179,6 +203,9 @@ def claim_tutorial_reward():
             granted = _apply_rewards(db, user_id, rewards_to_grant)
         except RuntimeError as exc:
             return jsonify({"ok": False, "error": str(exc)}), 500
+        db.execute(
+            "UPDATE stats SET tutorial_last_claim_at = NOW() WHERE id = %s", (user_id,)
+        )
 
     try:
         from database import invalidate_user_cache

@@ -83,6 +83,21 @@ def increment_gems(db, user_id, amount):
     return db.fetchone() is not None
 
 
+def clawback_gems(db, user_id, amount):
+    """Remove up to `amount` Gems (never below 0) after a refund/chargeback.
+    Returns the number actually removed."""
+    db.execute("SELECT gems FROM stats WHERE id = %s FOR UPDATE", (user_id,))
+    row = db.fetchone()
+    if not row:
+        return 0
+    removed = min(int(row[0] or 0), int(amount))
+    if removed > 0:
+        db.execute(
+            "UPDATE stats SET gems = gems - %s WHERE id = %s", (removed, user_id)
+        )
+    return removed
+
+
 def get_user_owned_cosmetic_ids(db, user_id):
     db.execute(
         "SELECT cosmetic_id FROM user_cosmetics WHERE user_id = %s",
