@@ -1,5 +1,6 @@
 # flake8: noqa -- legacy module with many historical style issues; enable
 # linting after full refactor is done.
+from app_core.economy import ledger
 import random
 import time
 from typing import Optional
@@ -154,17 +155,8 @@ class Economy:
         with get_db_connection() as connection:
             db = connection.cursor()
 
-            db.execute(
-                """
-                UPDATE user_economy ue
-                SET quantity = quantity + %s
-                FROM resource_dictionary rd
-                WHERE ue.resource_id = rd.resource_id
-                  AND ue.user_id = %s
-                  AND LOWER(rd.name) = LOWER(%s)
-                """,
-                (amount, getattr(self, "id", getattr(self, "nationID", getattr(self, "user_id", 0))), resource)
-            )
+            uid = getattr(self, "id", getattr(self, "nationID", getattr(self, "user_id", 0)))
+            ledger.adjust_resources(db, uid, {resource.lower(): int(amount)})
 
             connection.commit()
 
@@ -200,35 +192,10 @@ class Economy:
             if not src_row:
                 return "Resource not found"
 
-            resource_id = src_row[0]
 
-            # Deduct from source
-            db.execute(
-                """INSERT INTO user_economy (user_id, resource_id, quantity)
-                   VALUES (%s, %s, 0)
-                   ON CONFLICT (user_id, resource_id) DO NOTHING""",
-                (self.nationID, resource_id),
-            )
-            db.execute(
-                """UPDATE user_economy
-                   SET quantity = GREATEST(0, quantity - %s)
-                   WHERE user_id = %s AND resource_id = %s""",
-                (int(amount), self.nationID, resource_id),
-            )
-
-            # Add to destination
-            db.execute(
-                """INSERT INTO user_economy (user_id, resource_id, quantity)
-                   VALUES (%s, %s, 0)
-                   ON CONFLICT (user_id, resource_id) DO NOTHING""",
-                (destinationID, resource_id),
-            )
-            db.execute(
-                """UPDATE user_economy
-                   SET quantity = quantity + %s
-                   WHERE user_id = %s AND resource_id = %s""",
-                (int(amount), destinationID, resource_id),
-            )
+            # Destination receives only what the source actually had.
+            taken = ledger.take_resource(db, self.nationID, resource, int(amount))
+            ledger.credit_resources(db, destinationID, {resource: taken})
 
             connection.commit()
 

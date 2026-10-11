@@ -137,6 +137,28 @@ def take_resources(db, user_id, amounts):
     )
 
 
+def take_resource(db, user_id, name, amount):
+    """Take up to amount of one resource (never below zero); returns how much was taken."""
+    amount = _amount(amount)
+    if not amount:
+        return 0
+    db.execute(
+        """
+        SELECT ue.quantity FROM user_economy ue
+        JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id
+        WHERE ue.user_id = %s AND rd.name = %s
+        FOR UPDATE OF ue
+        """,
+        (user_id, name),
+    )
+    row = db.fetchone()
+    have = int((row[0] if not isinstance(row, dict) else row["quantity"]) or 0) if row else 0
+    taken = min(have, amount)
+    if taken:
+        take_resources(db, user_id, {name: taken})
+    return taken
+
+
 def adjust_resources(db, user_id, deltas):
     """Signed deltas: positives are credited, negatives taken (clamped at zero)."""
     credit_resources(db, user_id, {n: d for n, d in deltas.items() if d > 0})
