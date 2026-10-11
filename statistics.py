@@ -119,6 +119,7 @@ def statistics():
                     FROM user_economy
                     GROUP BY user_id
                 ) r ON r.user_id = u.id
+                WHERE u.auth_type IS DISTINCT FROM 'bot'
             ) as nation_stats
         """
         )
@@ -154,6 +155,7 @@ def rankings():
                 LEFT JOIN cosmetics nc ON nc.id = s.equipped_name_color_cosmetic_id AND nc.is_active = TRUE
                 LEFT JOIN cosmetics bd ON bd.id = s.equipped_badge_cosmetic_id      AND bd.is_active = TRUE
                 LEFT JOIN cosmetics tt ON tt.id = s.equipped_title_cosmetic_id      AND tt.is_active = TRUE
+                WHERE u.auth_type IS DISTINCT FROM 'bot'
                 GROUP BY u.id, u.username, nc.value, bd.value, bd.name, tt.name
                 ORDER BY total_pop DESC
                 LIMIT 10
@@ -177,6 +179,7 @@ def rankings():
                 LEFT JOIN cosmetics nc ON nc.id = s.equipped_name_color_cosmetic_id AND nc.is_active = TRUE
                 LEFT JOIN cosmetics bd ON bd.id = s.equipped_badge_cosmetic_id      AND bd.is_active = TRUE
                 LEFT JOIN cosmetics tt ON tt.id = s.equipped_title_cosmetic_id      AND tt.is_active = TRUE
+                WHERE u.auth_type IS DISTINCT FROM 'bot'
                 GROUP BY u.id, u.username, nc.value, bd.value, bd.name, tt.name
                 ORDER BY army_size DESC
                 LIMIT 10
@@ -199,6 +202,7 @@ def rankings():
                 LEFT JOIN cosmetics nc ON nc.id = s.equipped_name_color_cosmetic_id AND nc.is_active = TRUE
                 LEFT JOIN cosmetics bd ON bd.id = s.equipped_badge_cosmetic_id      AND bd.is_active = TRUE
                 LEFT JOIN cosmetics tt ON tt.id = s.equipped_title_cosmetic_id      AND tt.is_active = TRUE
+                WHERE u.auth_type IS DISTINCT FROM 'bot'
                 ORDER BY total_money DESC
                 LIMIT 10
                 """

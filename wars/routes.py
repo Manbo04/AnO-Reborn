@@ -2004,7 +2004,8 @@ def find_targets():
                 ) mil ON true
                 WHERE u.id != %s
                   AND (COALESCE(p.province_population, 0) / 1000.0 + COALESCE(mil.mil_strength, 0)) BETWEEN %s AND %s
-                ORDER BY u.username
+                -- AI nations first, so every player always sees their bot targets
+                ORDER BY (u.auth_type = 'bot') DESC, u.username
                 LIMIT 50
             """
             db.execute(query, (cId, min_strength, max_strength))
