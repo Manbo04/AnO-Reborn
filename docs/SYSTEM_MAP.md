@@ -468,6 +468,7 @@ Tables no static query touches (dynamic SQL, scripts, or dead): `coalition_membe
 | `/verification_pending` | GET | `signup:verification_pending` |
 | `/verify` | GET | `signup:verify_email` |
 | `/war` | GET | `app_core.game_engine.routes:war` |
+| `/war-board` | GET | `app_core.main.routes:war_board` |
 | `/war/<int:war_id>` | GET | `wars.routes:war_with_id` |
 | `/war/<int:war_id>/attack` | GET,POST | `wars.routes:war_attack` |
 | `/war/<int:war_id>/repeat_attack` | POST | `wars.routes:repeat_attack` |
