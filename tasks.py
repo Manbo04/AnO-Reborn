@@ -433,3 +433,34 @@ def task_assembly_tick():
 def task_check_achievements():
     from app_core.game_ticks.achievements import check_achievements
     _run_with_deadlock_retries(check_achievements, "check_achievements")
+
+
+@celery.task(name="tasks.task_bot_nations")
+@leader_only(ttl_seconds=900)
+def task_bot_nations():
+    """Hourly: give every active player 3 in-range bot nations and refill them."""
+    from database import get_db_connection
+    from app_core.bots import service
+
+    if os.getenv("BOT_NATIONS_DISABLED") == "1":  # kill switch
+        return {"disabled": True}
+    with get_db_connection() as conn:
+        result = service.run_hourly(conn)
+    logger.info("task_bot_nations: %s", result)
+    return result
+
+
+@celery.task(name="tasks.task_bot_war_ai")
+@leader_only(ttl_seconds=240)
+def task_bot_war_ai():
+    """Every 5 min: bots in active wars top up supply, answer peace, counter-attack."""
+    from database import get_db_connection
+    from app_core.bots import war_ai
+
+    if os.getenv("BOT_NATIONS_DISABLED") == "1":  # kill switch
+        return {"disabled": True}
+    with get_db_connection() as conn:
+        result = war_ai.run_war_ai(conn)
+    if result.get("wars"):
+        logger.info("task_bot_war_ai: %s", result)
+    return result

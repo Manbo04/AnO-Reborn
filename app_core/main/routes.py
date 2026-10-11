@@ -40,7 +40,7 @@ def _hub_context():
         )
         nations_online = db.fetchone()[0]
 
-        db.execute("SELECT COUNT(*) FROM users")
+        db.execute("SELECT COUNT(*) FROM users WHERE auth_type IS DISTINCT FROM 'bot'")
         total_nations = db.fetchone()[0]
 
         db.execute("SELECT COUNT(*) FROM wars WHERE peace_date IS NULL")

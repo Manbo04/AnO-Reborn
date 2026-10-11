@@ -920,7 +920,7 @@ def bot_world_stats():
   members_tbl = get_coalition_members_table() or "coalitions_legacy"
   member_influence_sql = influence_subquery_sql(f"SELECT userid FROM {members_tbl}")
   return jsonify({
-      "nation_count": _count("SELECT COUNT(*) FROM users"),
+      "nation_count": _count("SELECT COUNT(*) FROM users WHERE auth_type IS DISTINCT FROM 'bot'"),
       "province_count": _count("SELECT COUNT(*) FROM provinces"),
       "coalition_count": _count("SELECT COUNT(*) FROM colNames"),
       "active_war_count": _count("SELECT COUNT(*) FROM wars WHERE peace_date IS NULL"),
