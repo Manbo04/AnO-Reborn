@@ -562,13 +562,22 @@ def generate_province_revenue():  # Runs each hour
                                 variables.POLICY_HEALTHCARE_ELDERLY_DEATH_REDUCTION
                             )
 
+                        from app_core.game_ticks import population2 as _p2
+                        _pop2 = _p2.pop2_active()
+                        if _pop2:
+                            # Population 2.0: deaths happen in population_growth()
+                            elderly_death_rate = 0
                         elderly_deaths = int(round(pop_elderly * elderly_death_rate))
                         pop_elderly = max(0, pop_elderly - elderly_deaths)
 
                         working_to_elderly = int(
                             round(
                                 pop_working
-                                * variables.DEMO_AGING_RATES["working_to_elderly"]
+                                * (
+                                    1 / (_p2.WORKING_DAYS * 24)
+                                    if _pop2
+                                    else variables.DEMO_AGING_RATES["working_to_elderly"]
+                                )
                             )
                         )
                         pop_elderly += working_to_elderly
@@ -580,7 +589,8 @@ def generate_province_revenue():  # Runs each hour
                             policies,
                             int(province_buildings.get("primary_school", 0) or 0),
                             int(province_buildings.get("high_school", 0) or 0),
-                            int(province_buildings.get("universities", 0) or 0)
+                            int(province_buildings.get("universities", 0) or 0),
+                            base_rate=(1 / (_p2.CHILD_DAYS * 24)) if _pop2 else None,
                         )
                         can_graduate = edu_stats["can_graduate"]
 
