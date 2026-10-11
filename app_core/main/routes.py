@@ -219,6 +219,12 @@ def _load_tutorial_chapters() -> list:
     return _TUTORIAL_CHAPTERS_CACHE
 
 
+@bp.route("/war-board")
+def war_board():
+    # Playable prototype of the proposed hex-board war system (community vote).
+    return send_from_directory(os.path.join(current_app.static_folder, "war-board"), "index.html")
+
+
 @bp.route("/tutorial", methods=["GET"])
 def tutorial():
     # Logged-in players get the hands-on Command Briefing (in-game guided tour,
