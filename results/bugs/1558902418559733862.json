@@ -1,0 +1,8 @@
+{
+ "status": "fixed",
+ "reply": "found it, the first blood check looked for a 'winner' field on wars that the game never actually fills in, so nobody could ever unlock it. it now works out the winner from morale (whoever dropped the other side to 0), and it checks every tick, so you should get it automatically once this is live, within the hour. only wars still on record (finished ones are wiped a week after peace) can count, so if yours is older, staff can hand it out",
+ "branch": "claude/robot-2026-10-11-first-blood",
+ "summary": "First Blood achievement never unlocked: wars.winner_id is never written; query now infers winner from morale",
+ "nonce": "22784cf9718d",
+ "updated_at": "2026-10-11T20:19:05Z"
+}
