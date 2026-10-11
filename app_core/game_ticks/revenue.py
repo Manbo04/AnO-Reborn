@@ -918,8 +918,11 @@ def generate_province_revenue():  # Runs each hour
 
                         # Function for _plus
                         for resource, amount in plus.items():
-                            amount *= affordable_units
+                            # Per-unit flat bonus (farm land bonus) is added
+                            # BEFORE scaling by units: land bonus applies to
+                            # every farm. Vote pending on the final system.
                             amount += plus_amount
+                            amount *= affordable_units
                             amount *= plus_amount_multiplier
                             # Normalize production to integer units so we don't
                             # persist fractional resources (e.g., 0.5 rations).

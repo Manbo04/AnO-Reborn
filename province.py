@@ -588,7 +588,7 @@ def province(pId):
                 else 0
             )
             entry["unit_outputs"] = [
-                (res, round((amt * qty + flat) * mult / qty, 1))
+                (res, round((amt + flat) * mult, 1))
                 for res, amt in (new_infra.get(bname, {}).get("plus") or {}).items()
             ]
 
