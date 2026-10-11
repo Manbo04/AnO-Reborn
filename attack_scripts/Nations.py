@@ -364,6 +364,21 @@ class Nation:
 
     # Get public works buildings for a province's owner using user_buildings
     @classmethod
+    def get_province_buildings(cls, province_id):
+        """All buildings (name -> quantity) standing in a province."""
+        from database import get_db_cursor
+
+        with get_db_cursor() as db:
+            db.execute(
+                """SELECT bd.name, ub.quantity
+                   FROM user_buildings ub
+                   JOIN building_dictionary bd ON bd.building_id = ub.building_id
+                   WHERE ub.province_id = %s AND ub.quantity > 0""",
+                (province_id,),
+            )
+            return {r[0]: int(r[1]) for r in db.fetchall()}
+
+    @classmethod
     def get_public_works(cls, province_id):
         from database import get_db_cursor
 
@@ -467,7 +482,9 @@ class Military(Nation):
     # particular_infra parameter example: for public_works -> {"libraries": 3, "hospitals": x, etc.}
     # note: also could use this for population damage when attack happens
     @staticmethod
-    def infrastructure_damage(damage, particular_infra, province_id):
+    def infrastructure_damage(
+        damage, particular_infra, province_id, max_destroy_frac=1.0
+    ):
         from database import get_db_connection
 
         available_buildings = []
@@ -495,8 +512,12 @@ class Military(Nation):
 
             damage_effects = {}
 
+            # Cap how much of the province one attack can level (at least 1)
+            max_destroy = max(1, int(len(available_buildings) * max_destroy_frac))
+            destroyed_total = 0
+
             while damage > 0:
-                if not len(available_buildings):
+                if not len(available_buildings) or destroyed_total >= max_destroy:
                     break
 
                 max_range = len(available_buildings) - 1
@@ -522,6 +543,7 @@ class Military(Nation):
                     )
 
                     available_buildings.pop(random_building)
+                    destroyed_total += 1
 
                     if damage_effects.get(target, 0):
                         damage_effects[target][1] += 1
