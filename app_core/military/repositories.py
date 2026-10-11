@@ -159,36 +159,11 @@ def get_resource_balances(db, cId, resource_names):
     return {row[0]: int(row[1] or 0) for row in db.fetchall()}
 
 def adjust_resources_batch(db, cId, resource_deltas):
-    """Batch adjust multiple resources in 2 queries instead of 2*N."""
-    if not resource_deltas:
-        return
-    names = list(resource_deltas.keys())
-    # Ensure rows exist
-    execute_batch(
-        db,
-        """
-        INSERT INTO user_economy (user_id, resource_id, quantity)
-        SELECT %s, rd.resource_id, 0
-        FROM resource_dictionary rd
-        WHERE rd.name=%s AND rd.is_active=TRUE
-        ON CONFLICT (user_id, resource_id) DO NOTHING
-        """,
-        [(cId, name) for name in names],
-    )
-    # Apply deltas
-    execute_batch(
-        db,
-        """
-        UPDATE user_economy ue
-        SET quantity = GREATEST(0, ue.quantity + %s)
-        FROM resource_dictionary rd
-        WHERE ue.user_id=%s
-          AND ue.resource_id = rd.resource_id
-          AND rd.name=%s
-          AND rd.is_active=TRUE
-        """,
-        [(delta, cId, name) for name, delta in resource_deltas.items()],
-    )
+    """Signed deltas; negatives are clamped at zero (see ledger.adjust_resources)."""
+    from app_core.economy import ledger
+
+    ledger.adjust_resources(db, cId, resource_deltas or {})
+
 
 def get_building_counts(db, cId):
     db.execute(

@@ -35,6 +35,9 @@ jobs:
       - name: Check no runtime schema changes in app code
         run: python3 scripts/check_no_runtime_ddl.py
 
+      - name: No new raw gold/resource writes outside the ledger
+        run: python3 scripts/check_economy_writes.py
+
       - name: System map is up to date (docs/SYSTEM_MAP.md)
         run: python scripts/generate_system_map.py --check
 
