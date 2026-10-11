@@ -396,8 +396,8 @@ def war_with_id(war_id):
         db.execute(
             (
                 "SELECT id, attacker, defender, war_type, agressor_message, "
-                "peace_date, attacker_supplies, attacker_morale, "
-                "defender_supplies, defender_morale, start_date FROM wars WHERE id=(%s)"
+                "peace_date, attacker_morale, "
+                "defender_morale, start_date FROM wars WHERE id=(%s)"
             ),
             (war_id,),
         )
@@ -413,9 +413,7 @@ def war_with_id(war_id):
             war_type,
             agressor_message,
             peace_date,
-            attacker_supplies,
             attacker_morale,
-            defender_supplies,
             defender_morale,
             start_date,
         ) = war
@@ -434,8 +432,8 @@ def war_with_id(war_id):
         attacker_name = usernames.get(attacker, "Unknown")
         defender_name = usernames.get(defender, "Unknown")
 
-        defender_info = {"morale": defender_morale, "supplies": defender_supplies, "blockaded": False, "blockaded_until": None}
-        attacker_info = {"morale": attacker_morale, "supplies": attacker_supplies, "blockaded": False, "blockaded_until": None}
+        defender_info = {"morale": defender_morale, "blockaded": False, "blockaded_until": None}
+        attacker_info = {"morale": attacker_morale, "blockaded": False, "blockaded_until": None}
 
         from wars.action_points import war_combat_columns_exist, _ensure_utc
         if war_combat_columns_exist(db):
@@ -663,7 +661,6 @@ def war_attack(war_id):
             dig_in,
             recon_flight,
         )
-        from wars import supply as war_supply
 
         def _render_attack_page(error_msg=None, form_vals=None, active_tab="ground"):
             db.execute("SELECT username FROM users WHERE id = %s", (eId,))
@@ -676,8 +673,6 @@ def war_attack(war_id):
             owned.update(special_units)
 
             status = get_war_combat_status(db, war_id, cId)
-            available_supplies = war_supply.read_supply_pool(db, war_id, cId)
-            costs = war_supply.unit_supply_costs()
 
             return render_template(
                 "war_attack.html",
@@ -685,8 +680,6 @@ def war_attack(war_id):
                 enemy_name=enemy_name,
                 owned=owned,
                 status=status,
-                available_supplies=available_supplies,
-                unit_costs=costs,
                 active_tab=active_tab,
                 error_message=error_msg,
                 form_values=form_vals or {},
@@ -852,7 +845,6 @@ def warAmount():
         template = "waramount_v2.html" if is_theme_v2_enabled("wars") else "waramount.html"
         return render_template(
             template,
-            available_supplies=attack_units.available_supplies,
             selected_units=attack_units.selected_units_list,
             unit_range=len(unitamounts),
             unitamounts=unitamounts,
@@ -1104,19 +1096,13 @@ def warResult():
                 return error(500, "Something went wrong")
             war_id_for_guard, war_type = war_rows[-1]
 
-            # War supply asymmetry fix (wars/supply.py): the defender now
-            # pays supply for the units it fields, from its own pool on this
-            # war, with a flat 200 floor. If the full army costs more than
-            # that, every unit type defends at the same reduced share. With
-            # nothing combat-capable left in this domain, a Citizen Army
-            # (no supply) fights instead and bleeds the attacker.
+            # The defender fields its whole standing army (supply was removed;
+            # only action points limit attacks). With nothing combat-capable
+            # left in this domain, a Citizen Army fights instead and bleeds
+            # the attacker.
             from wars import supply as war_supply
 
-            defense_pool = war_supply.read_supply_pool(db, war_id_for_guard, eId)
-            defense_budget = war_supply.defense_supply_budget(defense_pool)
-            fielded_units, defense_spend = war_supply.ration_defenders(
-                defenseunits, defense_budget, unusable=defender.unusable_units
-            )
+            fielded_units = {u: max(0, int(q or 0)) for u, q in defenseunits.items()}
             defender.selected_units = fielded_units
             prev_defender = dict(fielded_units)
             citizen_pct = None
@@ -1127,17 +1113,6 @@ def warResult():
                     db, eId
                 )
                 citizen_pct = war_supply.citizen_army_pct(pop_total, prov_count)
-            defender_result["supply"] = {
-                "pool_before": defense_pool,
-                "budget": defense_budget,
-                "spent": defense_spend,
-                "pool_after": war_supply.pool_after_defense(
-                    defense_pool, defense_spend
-                ),
-                "owned": sum(int(v or 0) for v in defenseunits.values()),
-                "fielded": sum(fielded_units.values()),
-                "floor": war_supply.DEFENDER_SUPPLY_FLOOR,
-            }
 
             # FIXED 2026-09-23: found live while auditing wars/ during the
             # account cross-contamination investigation -- unrelated bug,
@@ -1259,21 +1234,6 @@ def warResult():
 
             # Every attack consumes 25 intel (floor 0)
             consume_intel_on_attack(db, war_id_for_guard, session["user_id"])
-            # Charge the defense AFTER the fight: persist_fight_results()
-            # updates this same wars row on its own connection, so locking it
-            # here first would stall that update (see the 2026-09-26 note).
-            try:
-                new_pool = war_supply.spend_defense_supplies(
-                    db, war_id_for_guard, eId, defense_spend
-                )
-                if new_pool is not None:
-                    defender_result["supply"]["pool_after"] = new_pool
-            except Exception:
-                logger.exception(
-                    "defense supply spend failed war=%s defender=%s",
-                    war_id_for_guard,
-                    eId,
-                )
             citizen_losses = getattr(attacker, "_citizen_army_losses", None)
             if citizen_pct is not None:
                 defender_result["citizen_army"] = {
@@ -1846,8 +1806,7 @@ def wars():
                     war_placeholders = ",".join(["%s"] * len(war_ids))
                     db.execute(
                         (
-                            "SELECT id, attacker_morale, attacker_supplies, "
-                            "defender_morale, defender_supplies, start_date "
+                            "SELECT id, attacker_morale, defender_morale, start_date "
                             "FROM wars WHERE id IN (" + war_placeholders + ")"
                         ),
                         tuple(war_ids),
@@ -1871,8 +1830,6 @@ def wars():
                     from app_core.game_ticks.war_expiry import format_war_auto_end
 
                     for war_id, defender, attacker in war_attacker_defender_ids:
-                        # NOTE: supply regen now happens in global_tick's war_supply_regen
-                        # phase (app_core/game_ticks/maintenance.py); skip here
                         attacker_info = {}
                         defender_info = {}
 
@@ -1887,17 +1844,15 @@ def wars():
                         attacker_info["id"] = attacker
                         attacker_info["flag"] = att_data["flag"]
 
-                        details = war_details.get(war_id, (100, 0, 100, 0, 0))
+                        details = war_details.get(war_id, (100, 100, None))
                         attacker_info["morale"] = details[0]
-                        attacker_info["supplies"] = details[1]
 
                         defender_info["name"] = def_data["name"]
                         defender_info["id"] = defender
                         defender_info["flag"] = def_data["flag"]
-                        defender_info["morale"] = details[2]
-                        defender_info["supplies"] = details[3]
+                        defender_info["morale"] = details[1]
 
-                        start_d = details[4] if len(details) > 4 else None
+                        start_d = details[2] if len(details) > 2 else None
                         auto_end_text = format_war_auto_end(start_d)
 
                         war_info[war_id] = {

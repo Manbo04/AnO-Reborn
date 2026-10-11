@@ -24,17 +24,6 @@ import config  # Parse Railway environment variables  # noqa: E402
 # Toggle noisy per-building revenue logs (default off in production)
 VERBOSE_REVENUE_LOGS = os.getenv("VERBOSE_REVENUE_LOGS") == "1"
 
-# War supplies started at a fixed 200 per side and nothing ever refilled them
-# (Discord report: "no matter how many troops I send, it keeps telling me I
-# have no supplies" — once spent, attacks were permanently blocked for that
-# war). Organized Supply Lines has always been described as "further
-# increasing war supplies production by 15%", implying base regen that was
-# never implemented. Add a modest hourly trickle, capped so a dormant war
-# doesn't stockpile indefinitely.
-WAR_SUPPLY_REGEN_PER_HOUR = int(os.getenv("WAR_SUPPLY_REGEN_PER_HOUR", "20"))
-WAR_SUPPLY_CAP = int(os.getenv("WAR_SUPPLY_CAP", "2000"))
-WAR_SUPPLY_LINES_BONUS = 1.15
-
 from app_core.celery_schedule import CELERY_BEAT_SCHEDULE, TASK_RUN_THRESHOLDS
 
 # Mapping from normalized building names to produced resource names.
@@ -686,7 +675,9 @@ def global_tick():
             # via Units.unusable_units in units.py. Resources bottom out at 0.
 
             # -----------------------------------------------------------------
-            # War supply regeneration phase (hourly, see WAR_SUPPLY_* above)
+            # War action-point regeneration phase (hourly). The task name stays
+            # 'war_supply_regen' (schedule/task_runs key) from when supply regen
+            # shared this gate; the supply system itself was removed.
             # -----------------------------------------------------------------
             supply_start = time.time()
             db.execute(
@@ -704,65 +695,6 @@ def global_tick():
                     "UPDATE task_runs SET last_run = now() WHERE task_name = %s",
                     ("war_supply_regen",),
                 )
-                dbdict.execute(
-                    """
-                    SELECT id, attacker, defender, attacker_supplies, defender_supplies
-                    FROM wars
-                    WHERE status = 'active'
-                      AND (attacker_supplies < %s OR defender_supplies < %s)
-                    """,
-                    (WAR_SUPPLY_CAP, WAR_SUPPLY_CAP),
-                )
-                active_wars = dbdict.fetchall()
-                if active_wars:
-                    combatant_ids = sorted(
-                        {w["attacker"] for w in active_wars}
-                        | {w["defender"] for w in active_wars}
-                    )
-                    dbdict.execute(
-                        """
-                        SELECT ut.user_id FROM user_tech ut
-                        JOIN tech_dictionary td ON td.tech_id = ut.tech_id
-                        WHERE ut.user_id = ANY(%s) AND ut.is_unlocked = TRUE
-                          AND td.name = 'organized_supply_lines'
-                        """,
-                        (combatant_ids,),
-                    )
-                    supply_lines_users = {row["user_id"] for row in dbdict.fetchall()}
-
-                    supply_updates = []
-                    for w in active_wars:
-                        atk_rate = WAR_SUPPLY_REGEN_PER_HOUR * (
-                            WAR_SUPPLY_LINES_BONUS
-                            if w["attacker"] in supply_lines_users
-                            else 1.0
-                        )
-                        def_rate = WAR_SUPPLY_REGEN_PER_HOUR * (
-                            WAR_SUPPLY_LINES_BONUS
-                            if w["defender"] in supply_lines_users
-                            else 1.0
-                        )
-                        new_attacker = min(
-                            WAR_SUPPLY_CAP, w["attacker_supplies"] + round(atk_rate)
-                        )
-                        new_defender = min(
-                            WAR_SUPPLY_CAP, w["defender_supplies"] + round(def_rate)
-                        )
-                        if (
-                            new_attacker != w["attacker_supplies"]
-                            or new_defender != w["defender_supplies"]
-                        ):
-                            supply_updates.append((new_attacker, new_defender, w["id"]))
-
-                    if supply_updates:
-                        execute_batch(
-                            db,
-                            "UPDATE wars SET attacker_supplies=%s, "
-                            "defender_supplies=%s WHERE id=%s",
-                            supply_updates,
-                            page_size=500,
-                        )
-
                 # Separate ground/air/naval action points regen (JOB C1)
                 from wars.action_points import AP_MAX, AP_REGEN_PER_HOUR, war_combat_columns_exist
 

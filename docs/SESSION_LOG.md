@@ -931,3 +931,20 @@ never applied, and CI running only 17 of 199 test files while the robot auto-mer
 **What to watch**: military maintenance currently bills at :50 (it last ran 12:50); after deploy the
 first global tick in a new hour claims it, so it moves to ~:00/:10 once -- no double, no gap.
 
+
+## 2026-10-11 — War supply system removed (attacks cost AP only)
+
+**Why**: Chelovka/Dede in #chat: wars should only cost AP to attack, no supply.
+
+**What was done**:
+- Attacks: `Units.attach_units`/`attack_cost`/`save` and `parse_one_screen_attack` no longer check or deduct supply (no 200 minimum, no per-unit cost, no `wars.*_supplies` writes). `supply_cost` removed from unit classes.
+- Defense: `warResult` fields the whole standing army (no rationing, no pool spend, no 200 floor). Citizen Army kept (`wars/supply.py` now only holds it; module name kept for imports).
+- Tick: supply regen block removed from `global_tick`; the `war_supply_regen` task_runs/period key is kept because it also gates hourly AP regen.
+- UI/text: supply bars/costs removed from war, wars, wars_v2, war_attack, waramount(_v2), warResult, defense, mechanics, tutorial (chapter 6 now teaches AP; quiz answer = 3 AP; supply planner widget + `min_attack_supplies` removed).
+- Tests: replay tests count `Military.fight()` calls instead of reading `attacker_supplies`; `test_war_supply.py` -> `test_citizen_army.py`; ration tests removed; new no-supply-limit test for `parse_one_screen_attack`. Old session cookies carrying `supply_costs`/`available_supplies` are tolerated by `Units.rebuild_from_dict`.
+
+**What to watch / next steps**:
+- DB columns `wars.attacker_supplies/defender_supplies` are left in place (no DDL); drop in a later migration once nothing reads them.
+- Supply-only upgrades (Looting Teams, Organized Supply Lines, Large Storehouses) now do nothing; decide whether to remove/rework them and refund players.
+- Seed data still lists the supply upgrades in `db/reference_data.sql` / tech descriptions.
+- Tests needing Postgres were not runnable in this sandbox; rely on the `prod-shaped` CI job.

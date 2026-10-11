@@ -386,7 +386,7 @@
                 <article class="tutorial-chapter-panel" data-chapter-index="5">
                     <div class="tutorial-chapter-banner">
                         <div class="tutorial-chapter-banner-inner">
-                            <h2 class="tutorial-chapter-title">Military &amp; Supplies</h2>
+                            <h2 class="tutorial-chapter-title">Military &amp; Action Points</h2>
                             <span class="tutorial-xp-badge">+100 XP</span>
                         </div>
                     </div>
@@ -394,19 +394,7 @@
                     <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
                         <div>
-                            <p class="templatecontentpleft">Units cost manpower and resources to recruit. <strong>Attacks require supplies</strong> — you need at least {{ tutorial_constants.min_attack_supplies }} supplies for an offensive. Infantry costs 1 supply each; many armored/air units cost 5; capital ships cost far more.</p>
-                            <div class="tutorial-widget" data-widget="supply-calc">
-                                <h4><span class="material-icons-outlined">calculate</span> Attack supply planner</h4>
-                                <div class="tutorial-slider-row">
-                                    <label>Infantry attacking: <strong data-sup-infantry-label>100</strong></label>
-                                    <input type="range" data-sup-infantry min="0" max="500" value="100" />
-                                </div>
-                                <div class="tutorial-slider-row">
-                                    <label>Tanks attacking: <strong data-sup-tanks-label>20</strong></label>
-                                    <input type="range" data-sup-tanks min="0" max="100" value="20" />
-                                </div>
-                                <div class="tutorial-result-box" data-sup-result></div>
-                            </div>
+                            <p class="templatecontentpleft">Units cost manpower and resources to recruit. <strong>Attacks are limited by action points (AP)</strong> — each war has separate Ground, Air and Naval AP pools. A ground, air or naval attack costs 3 AP of its branch, and you regain 1 AP per hour (max 12). There is no supply cost, so how many units you send is up to you.</p>
                         </div>
                     </div>
                     {{ chapter_follow_block(tutorial_chapters[5]) }}
@@ -414,11 +402,11 @@
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
                         <p class="tutorial-quiz-intro">Click one answer, then press <strong>Check my answer</strong>.</p>
                         <div class="tutorial-quiz-question">
-                            <p class="tutorial-quiz-q">Minimum supplies required to launch an attack:</p>
+                            <p class="tutorial-quiz-q">How many action points does one ground, air or naval attack cost?</p>
                             <div class="tutorial-quiz-options">
-                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">50</span></label>
-                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio"><span class="tutorial-option-label">{{ tutorial_constants.min_attack_supplies }}</span></label>
-                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">1000</span></label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">1</span></label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio"><span class="tutorial-option-label">3</span></label>
+                                <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">12</span></label>
                             </div>
                         </div>
                         <div class="tutorial-quiz-feedback" role="status" aria-live="polite"></div>
@@ -479,7 +467,7 @@
                     <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
                         <div>
-                            <p class="templatecontentpleft">Upgrades permanently improve your nation — military attack/defense, supply regen, economic boosts, and infrastructure caps. Each costs resources and time; plan around your coalition wars and growth targets.</p>
+                            <p class="templatecontentpleft">Upgrades permanently improve your nation — military attack/defense, economic boosts, and infrastructure caps. Each costs resources and time; plan around your coalition wars and growth targets.</p>
                         </div>
                     </div>
                     {{ chapter_follow_block(tutorial_chapters[7]) }}
@@ -487,10 +475,10 @@
                         <h3 class="smallheader"><span class="material-icons-outlined">quiz</span> Knowledge check</h3>
                         <p class="tutorial-quiz-intro">Click one answer, then press <strong>Check my answer</strong>.</p>
                         <div class="tutorial-quiz-question">
-                            <p class="tutorial-quiz-q">Supply-related upgrades are especially valuable because:</p>
+                            <p class="tutorial-quiz-q">Military upgrades are especially valuable because:</p>
                             <div class="tutorial-quiz-options">
                                 <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">They replace the need for armies</span></label>
-                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio"><span class="tutorial-option-label">They help sustain repeated offensives (200+ supply threshold)</span></label>
+                                <label class="tutorial-quiz-option" data-correct="true"><input type="radio"><span class="tutorial-option-label">They make your units stronger in every battle</span></label>
                                 <label class="tutorial-quiz-option"><input type="radio"><span class="tutorial-option-label">They disable coalition tax</span></label>
                             </div>
                         </div>
@@ -516,7 +504,7 @@
                     <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
                         <div>
-                            <p class="templatecontentpleft">Combat calculates morale loss and damage <strong>per unit</strong>, scaled to opposing forces — matched fights won't instantly zero morale. Choose unit mixes, respect supply costs, and coordinate with coalition mates.</p>
+                            <p class="templatecontentpleft">Combat calculates morale loss and damage <strong>per unit</strong>, scaled to opposing forces — matched fights won't instantly zero morale. Choose unit mixes, watch your action points, and coordinate with coalition mates.</p>
                             <ul class="templatecontentpleft">
                                 <li>Declare war from the wars page; select targets and unit counts.</li>
                                 <li>War reparations can transfer resources when wars end.</li>
@@ -650,8 +638,6 @@
     document.querySelectorAll('[data-tax-pop]').forEach(function (i) { bindSliderLabel(i, 'data-tax-pop-label'); });
     document.querySelectorAll('[data-tax-land]').forEach(function (i) { bindSliderLabel(i, 'data-tax-land-label'); });
     document.querySelectorAll('[data-prov-count]').forEach(function (i) { bindSliderLabel(i, 'data-prov-count-label'); });
-    document.querySelectorAll('[data-sup-infantry]').forEach(function (i) { bindSliderLabel(i, 'data-sup-infantry-label'); });
-    document.querySelectorAll('[data-sup-tanks]').forEach(function (i) { bindSliderLabel(i, 'data-sup-tanks-label'); });
 })();
 </script>
 {% endblock %}

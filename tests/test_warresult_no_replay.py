@@ -31,8 +31,7 @@ standing them up with a fully realistic combat setup (buildings, tech,
 upgrades) would only add fragility to a test that's really about the
 session-replay race, not combat balance. It still calls the real,
 unmodified warResult() view function directly and checks the guard's
-actual observable effect: wars.attacker_supplies, which the real
-(unpatched) Units.save() decrements once per successful resolution.
+actual observable effect: how many times Military.fight() resolves a battle.
 
 Uses real concurrency (two threads, each with its own real Flask request
 context sharing the same session state, a barrier forcing overlap)
@@ -51,8 +50,6 @@ import pytest
 from database import get_db_connection
 
 TEST_PASSWORD = bcrypt.hashpw(b"correct-horse-battery", bcrypt.gensalt()).decode()
-ATTACKER_SUPPLIES = 200
-SUPPLY_COST = 50
 
 
 def _create_user(db, suffix):
@@ -82,11 +79,11 @@ def war_pair():
             """
             INSERT INTO wars
                 (attacker, defender, war_type, agressor_message,
-                 start_date, last_visited, attacker_supplies, defender_supplies)
-            VALUES (%s, %s, 'Sustained', 'test war', %s, %s, %s, 200)
+                 start_date, last_visited)
+            VALUES (%s, %s, 'Sustained', 'test war', %s, %s)
             RETURNING id
             """,
-            (attacker_id, defender_id, now, now, ATTACKER_SUPPLIES),
+            (attacker_id, defender_id, now, now),
         )
         war_id = db.fetchone()[0]
         conn.commit()
@@ -114,13 +111,14 @@ def test_two_concurrent_warresult_calls_resolve_only_once(war_pair):
         "user_id": attacker_id,
         "selected_units": {"soldiers": 1, "tanks": 0, "artillery": 0},
         "bonuses": None,
-        "supply_costs": SUPPLY_COST,
-        "available_supplies": ATTACKER_SUPPLIES,
         "war_id": war_id,
         "selected_units_list": ["soldiers", "tanks", "artillery"],
     }
 
+    fight_calls = {"n": 0}
+
     def _fake_fight(attacker, defender, **_kwargs):
+        fight_calls["n"] += 1
         return attacker.user_id, "skirmish", [0]
 
     def _fake_resolve_defender_composition(defender_id_arg, domain):
@@ -157,14 +155,8 @@ def test_two_concurrent_warresult_calls_resolve_only_once(war_pair):
 
     assert not errors, f"racer thread(s) raised: {errors}"
 
-    with get_db_connection() as conn:
-        db = conn.cursor()
-        db.execute("SELECT attacker_supplies FROM wars WHERE id = %s", (war_id,))
-        remaining_supplies = db.fetchone()[0]
-
-    assert remaining_supplies == ATTACKER_SUPPLIES - SUPPLY_COST, (
-        f"attacker_supplies is {remaining_supplies}, expected exactly "
-        f"{ATTACKER_SUPPLIES - SUPPLY_COST} (one resolution's worth deducted) -- "
-        f"a lower value means the same stale attack_units session data "
+    assert fight_calls["n"] == 1, (
+        f"Military.fight() resolved {fight_calls['n']} times, expected exactly 1 -- "
+        f"more than one means the same stale attack_units session data "
         f"resolved the fight twice"
     )
