@@ -729,68 +729,6 @@
                 <div class="templatedivflex2 menuflex warflexparentcolors">
                     <div class="templatedivflex2left">
 
-                        <h3 class="templatecontentheadercenter">Organized Supply Lines</h3>
-
-                        <p class="templatecontentpleft">No effect right now: war supplies were replaced by action points, so this technology currently does nothing. A replacement effect will go to the community vote.
-                        </p>
-
-                        <ul>Costs {{ tech_costs.get("organizedsupplylines", 0) | weight_fmt }} {{ research_cost_resource }}</ul>
-                        <div class="purchasemilitarydiv">
-                            {% if not upgrades["organizedsupplylines"] %}
-                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/organizedSupplyLines">
-                                        <span class="material-icons-outlined">
-                                            add_circle_outline
-                                        </span>Research</button> {% endif %} {% if upgrades["organizedsupplylines"] %}
-                            <p class="templatecontentpleft text-success researched-badge"><span class="material-icons-outlined">check_circle</span> Researched</p>
-                            {% endif %}
-
-                        </div>
-
-                    </div>
-                    <div class="templatedivflex2left">
-
-                        <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename='images/organizedsupplylines.jpg') }}?v=2" />
-                    </div>
-                </div>
-
-            </div>
-            <div class="menudiv">
-
-                <div class="templatedivflex2 menuflex warflexparentcolors">
-                    <div class="templatedivflex2left">
-
-                        <h3 class="templatecontentheadercenter">Larger Storehouses</h3>
-
-                        <p class="templatecontentpleft">No effect right now: war supplies were replaced by action points, so this technology currently does nothing. A replacement effect will go to the community vote.
-                        </p>
-
-                        <ul>Costs {{ tech_costs.get("largestorehouses", 0) | weight_fmt }} {{ research_cost_resource }}</ul>
-                        <div class="purchasemilitarydiv">
-                            {% if not upgrades["largestorehouses"] %}
-                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/largeStoreHouses">
-                                        <span class="material-icons-outlined">
-                                            add_circle_outline
-                                        </span>Research</button> {% endif %} {% if upgrades["largestorehouses"] %}
-                            <p class="templatecontentpleft text-success researched-badge"><span class="material-icons-outlined">check_circle</span> Researched</p>
-                            {% endif %}
-
-                        </div>
-
-                    </div>
-                    <div class="templatedivflex2left">
-
-
-
-                        <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename='images/largestorehouses.jpg') }}?v=2" />
-                    </div>
-                </div>
-
-            </div>
-            <div class="menudiv">
-
-                <div class="templatedivflex2 menuflex warflexparentcolors">
-                    <div class="templatedivflex2left">
-
                         <h3 class="templatecontentheadercenter">Ballistic Missile Silos</h3>
 
                         <p class="templatecontentpleft">Ballistic missile research lays the groundwork for inter-continental ballistic missiles. It has no effect on its own
