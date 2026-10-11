@@ -176,6 +176,37 @@ def _record_war_end_news(db, winner_id, loser_id, spoils):
     )
 
 
+def _fight_details(
+    winner,
+    loser,
+    attacker_lost,
+    win_type,
+    winner_strength_before,
+    winner_strength_after,
+    loser_strength_before,
+    loser_strength_after,
+) -> dict:
+    """What each side brought to a fight, stored on war_events.details so a
+    result can be explained afterwards (casualty rows alone don't say how big
+    the armies were)."""
+
+    def _units(side):
+        raw = getattr(side, "selected_units", None) or {}
+        try:
+            return {str(u): int(q or 0) for u, q in dict(raw).items()}
+        except Exception:
+            return {}
+
+    return {
+        "attacker_won": not attacker_lost,
+        "win_type": win_type,
+        "winner_units": _units(winner),
+        "loser_units": _units(loser),
+        "winner_strength": [winner_strength_before, winner_strength_after],
+        "loser_strength": [loser_strength_before, loser_strength_after],
+    }
+
+
 def persist_fight_results(
     winner,
     loser,
@@ -349,6 +380,16 @@ def persist_fight_results(
                     new_morale,
                     win_label,
                     concluded,
+                    details=_fight_details(
+                        winner,
+                        loser,
+                        is_attacker_loss,
+                        win_type,
+                        winner_strength_before,
+                        winner_strength_after,
+                        loser_strength_before,
+                        loser_strength_after,
+                    ),
                 )
             except Exception:
                 pass
