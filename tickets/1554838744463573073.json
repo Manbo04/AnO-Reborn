@@ -1,6 +1,8 @@
 {
   "author_id": "204961091892019200",
   "created_at": "2026-09-30T12:54:04Z",
+  "delivered_at": "2026-10-11T20:19:19Z",
+  "delivered_nonce": "ff0d3f108cf04eaab062a2136540463e",
   "kind": "ticket",
   "last_message_id": "1558501474861056252",
   "last_player_message_at": "2026-10-08T15:29:50Z",
