@@ -134,7 +134,11 @@ def format_econ_statistics(statistics):
 
 def get_revenue(cId, db=None):
     from database import query_cache
-    from app_core.game_ticks.population import find_unit_category
+    from app_core.game_ticks.population import (
+        find_unit_category,
+        rations_spoilage,
+        rations_storage_buffer,
+    )
 
     # Check cache first - expensive calculation
     cache_key = f"revenue_{cId}"
@@ -379,9 +383,14 @@ def get_revenue(cId, db=None):
 
                 plus = infra[building].get("plus", {})
                 for resource, amount in plus.items():
+                    # Farm land bonus is a flat per-province amount added once
+                    # (revenue.py: amount*units + land*bonus), NOT per farm.
+                    flat_bonus = 0
                     if building == "farms":
-                        land = land_by_id.get(province, 0)
-                        amount += land * variables.LAND_FARM_PRODUCTION_ADDITION
+                        flat_bonus = int(
+                            land_by_id.get(province, 0)
+                            * variables.LAND_FARM_PRODUCTION_ADDITION
+                        )
 
                     # BETTER ENGINEERING (mirrors revenue.py's flat +6
                     # energy/reactor -- another gap found sweeping for
@@ -394,7 +403,7 @@ def get_revenue(cId, db=None):
                         amount += 6
 
                     # Compute theoretical production (no productivity multiplier)
-                    theoretical_total = build_count * amount
+                    theoretical_total = build_count * amount + flat_bonus
 
                     # Apply productivity multiplier to match actual generation behavior
                     productivity = prod_by_id.get(province, 50)
@@ -426,7 +435,7 @@ def get_revenue(cId, db=None):
                     # efficiency_multiplier.
                     multiplier *= efficiency_multiplier
 
-                    adjusted_total = build_count * amount * multiplier
+                    adjusted_total = (build_count * amount + flat_bonus) * multiplier
                     # Normalize to integer to mirror production rounding
                     adjusted_total = math.ceil(adjusted_total)
 
@@ -627,6 +636,18 @@ def get_revenue(cId, db=None):
             total_rations_needed = 1
         total_rations_needed += military_upkeep.get("rations", 0)
         new_rations = max(0, current_rations_for_calc - total_rations_needed)
+        # Same spoilage the hourly tick applies to the banked surplus.
+        db.execute(
+            "SELECT bd.name, COALESCE(SUM(ub.quantity), 0) "
+            "FROM user_buildings ub JOIN building_dictionary bd "
+            "ON bd.building_id = ub.building_id "
+            "WHERE ub.user_id = %s AND bd.name = ANY(%s) GROUP BY bd.name",
+            (cId, variables.RATIONS_DISTRIBUTION_BUILDINGS),
+        )
+        storage_buffer = rations_storage_buffer(db.fetchall() or [])
+        new_rations -= rations_spoilage(
+            new_rations, total_rations_needed, storage_buffer
+        )
         revenue["net"]["rations"] = new_rations - current_rations
 
         # Filter to only show resources with positive gross production

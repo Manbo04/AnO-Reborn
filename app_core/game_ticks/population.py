@@ -138,6 +138,29 @@ def overcrowding_efficiency(nation_population, comfort):
     return math.sqrt(comfort / pop)
 
 
+def rations_storage_buffer(building_rows):
+    """Extra rations buffer from distribution buildings.
+    building_rows: iterable of (building_name, quantity)."""
+    total = 0
+    for bname, qty in building_rows:
+        cap = variables.RATIONS_STORAGE_PER_BUILDING.get(
+            bname, variables.RATIONS_STORAGE_PER_BUILDING_DEFAULT
+        )
+        total += (qty or 0) * cap
+    return total
+
+
+def rations_spoilage(remaining_after_consumption, needed, storage_buffer):
+    """Rations that spoil this hour: RATIONS_EXCESS_DECAY_RATE of the stockpile
+    above (baseline days of hourly need + storage buffer). Shared by the tick
+    and the revenue display. Grace-period check stays with the caller."""
+    buffer = needed * 24 * variables.RATIONS_BASELINE_BUFFER_DAYS + storage_buffer
+    if remaining_after_consumption > buffer:
+        excess = remaining_after_consumption - buffer
+        return int(round(excess * variables.RATIONS_EXCESS_DECAY_RATE))
+    return 0
+
+
 def distribution_fix_active(now=None):
     now = now or datetime.datetime.now(datetime.timezone.utc)
     return now >= variables.DISTRIBUTION_FIX_START
@@ -603,14 +626,11 @@ def population_growth():  # Function for growing population
             # buildings they've built.
             spoilage = 0
             if not in_spoilage_grace_period:
-                buffer = (
-                    needed * 24 * variables.RATIONS_BASELINE_BUFFER_DAYS
-                    + storage_buffer_map.get(uid, 0)
+                spoilage = rations_spoilage(
+                    warehouse - actually_consumed,
+                    needed,
+                    storage_buffer_map.get(uid, 0),
                 )
-                remaining_after_consumption = warehouse - actually_consumed
-                if remaining_after_consumption > buffer:
-                    excess = remaining_after_consumption - buffer
-                    spoilage = int(round(excess * variables.RATIONS_EXCESS_DECAY_RATE))
 
             user_rations_to_deduct[uid] = actually_consumed + spoilage
 
