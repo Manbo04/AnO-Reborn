@@ -11,12 +11,8 @@ from app_core.policies.services import get_user_policies
 from app_core.economy.industry_bonuses import production_bonuses
 from app_core.economy.tick_order import upkeep_budget
 from app_core.economy.project_bonuses import project_output_bonus
-from app_core.economy.consumer_goods import (
-    allocate_consumer_goods,
-    cg_tax_multiplier,
-    load_province_cg_capacities,
-    province_cg_need,
-)
+from app_core.economy.consumer_goods import load_province_cg_capacities
+from app_core.economy.tax_formula import compute_tax_income
 from wars.service import target_data
 import math
 from database import (
@@ -99,23 +95,11 @@ def get_econ_statistics(cId, db=None):
     # deducts this every hour from user_economy, but it was missing from the
     # revenue display — so a nation feeding a large army saw a net-positive
     # food number while actually running a deficit. Mirror the tick's query.
+    from app_core.economy.military_upkeep import military_upkeep_rows
+
     with reuse_or_new_cursor(db, cursor_factory=RealDictCursor) as mil_db:
-        mil_db.execute(
-            """
-            SELECT rd.name AS resource, SUM(um.quantity * ud.maintenance_cost_amount) AS required
-            FROM user_military um
-            JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
-            JOIN resource_dictionary rd ON rd.resource_id = ud.maintenance_cost_resource_id
-            WHERE um.user_id = %s
-              AND um.quantity > 0
-              AND ud.maintenance_cost_resource_id IS NOT NULL
-              AND ud.maintenance_cost_amount > 0
-            GROUP BY rd.name
-            """,
-            (cId,),
-        )
-        for row in mil_db.fetchall() or []:
-            required = int(row.get("required") or 0)
+        for row in military_upkeep_rows(mil_db, cId):
+            required = int(row["required_amount"] or 0)
             if required:
                 expenses["military"][row["resource"]] += required
 
@@ -482,95 +466,9 @@ def get_revenue(cId, db=None):
             (row[3], row[1], row[4], row[5], row[6]) for row in province_rows
         ]  # (pop, land, pc, pw, pe)
 
-        # Mirror app_core/game_ticks/taxes.py's has_demographic_data gate:
-        # only use the age-weighted formula once every province actually has
-        # a demographic split, else fall back to flat population exactly
-        # like the real tick does.
-        has_demographic_data = all(
-            pc is not None and pw is not None and pe is not None
-            for _, _, pc, pw, pe in ti_provinces
-        )
-
         ti_money = 0
         total_cg_need = 0.0
-        ti_province_incomes = []
         if ti_provinces:
-            for population, land, pc, pw, pe in ti_provinces:
-                land_multiplier = (land - 1) * variables.DEFAULT_LAND_TAX_MULTIPLIER
-                if land_multiplier > 1:
-                    land_multiplier = 1
-                # No policy adjusts base_multiplier in the real tick
-                # (app_core/game_ticks/taxes.py) -- policies 1/4/6 are
-                # Universal Healthcare/Rationing Program/University Grants,
-                # none of which are documented or coded to touch tax income.
-                # This display used to apply a fabricated +1%/-2%/-2% tax
-                # bonus for having them selected, silently showing players a
-                # tax projection that didn't match what the tick actually
-                # paid out (found 2026-09-15 during an architecture audit).
-                base_multiplier = variables.DEFAULT_TAX_INCOME
-                multiplier = base_multiplier + (base_multiplier * land_multiplier)
-                # Children pay no tax and elderly pay a reduced rate --
-                # same DEMO_TAX_MULTIPLIER weighting the tax_income tick
-                # actually applies. Previously this projection always used
-                # raw population, so it silently never reflected the Aug 30
-                # tax rebalance even though the real tick did (player-reported).
-                if variables.FEATURE_DEMOGRAPHIC_TAX and has_demographic_data:
-                    taxable_population = (
-                        (pw or 0) * variables.DEMO_TAX_MULTIPLIER["pop_working"]
-                        + (pc or 0) * variables.DEMO_TAX_MULTIPLIER["pop_children"]
-                        + (pe or 0) * variables.DEMO_TAX_MULTIPLIER["pop_elderly"]
-                    )
-                else:
-                    taxable_population = population
-                ti_money += multiplier * taxable_population
-                ti_province_incomes.append(multiplier * taxable_population)
-
-            # CG tax multiplier -- the same per-province allocation the
-            # tax_income tick uses (app_core/economy/consumer_goods.py), so
-            # this projection can't drift from what the tick pays out.
-            if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
-                healthcare = variables.POLICY_UNIVERSAL_HEALTHCARE in policies
-                cg_needs = [
-                    province_cg_need(
-                        population, pc, pw, pe, healthcare, has_demographic_data
-                    )
-                    for population, land, pc, pw, pe in ti_provinces
-                ]
-                cg_caps_by_id = load_province_cg_capacities(
-                    db, [row[0] for row in province_rows]
-                )
-                cg_alloc = allocate_consumer_goods(
-                    cg_needs,
-                    [cg_caps_by_id.get(row[0], 0.0) for row in province_rows],
-                    consumer_goods,
-                )
-                ti_money = sum(
-                    inc * cg_tax_multiplier(cov)
-                    for inc, cov in zip(ti_province_incomes, cg_alloc["coverage"])
-                )
-                # CG the tick will pull from the stockpile when it isn't the
-                # bottleneck: everything retail can deliver (local + remote).
-                total_cg_need = sum(cg_alloc["local"]) + sum(cg_alloc["remote"])
-            else:
-                total_pop_ti = sum(p for p, *_ in ti_provinces)
-                max_cg = math.ceil(total_pop_ti / variables.CONSUMER_GOODS_PER)
-                if consumer_goods != 0 and max_cg != 0:
-                    if max_cg <= consumer_goods:
-                        ti_money *= variables.CONSUMER_GOODS_TAX_MULTIPLIER
-                    else:
-                        cg_multiplier = consumer_goods / max_cg
-                        ti_money *= 1 + (0.5 * cg_multiplier)
-
-            # Rations (food) shortage tax penalty -- mirrors
-            # app_core/game_ticks/taxes.py's tax_income() exactly. Missing
-            # here meant this projection always showed the full, undiscounted
-            # tax income even for a nation short on rations, while the real
-            # hourly tick was quietly paying out as little as 70% of that
-            # (player-reported: displayed "Net Raw" far exceeded actual
-            # treasury growth). Same bug shape as the other duplicated-tick-
-            # formula gaps fixed above.
-            total_pop_food = sum(p for p, *_ in ti_provinces)
-            needed_rations = max(int(total_pop_food // variables.RATIONS_PER), 1)
             if variables.FEATURE_RATIONS_DISTRIBUTION:
                 db.execute(
                     "SELECT bd.name, COALESCE(SUM(ub.quantity), 0) AS qty "
@@ -590,18 +488,23 @@ def get_revenue(cId, db=None):
                 effective_rations = min(current_rations, r_dist_cap)
             else:
                 effective_rations = current_rations
-
-            rcp = min(0.0, (effective_rations / needed_rations) - 1.0)
-            grace_period = (len(ti_provinces) <= 1) and (
-                sum(land for _, land, *_ in ti_provinces) <= 20
+            healthcare = variables.POLICY_UNIVERSAL_HEALTHCARE in policies
+            cg_caps_by_id = load_province_cg_capacities(
+                db, [row[0] for row in province_rows]
             )
-            if grace_period:
-                food_tax_multiplier = 1.0
-            else:
-                food_tax_multiplier = 1.0 + (
-                    rcp * (1.0 - variables.NO_FOOD_TAX_MULTIPLIER)
-                )
-            ti_money *= food_tax_multiplier
+            # Same function the tax_income tick pays out with
+            # (app_core/economy/tax_formula.py), so this can't drift.
+            ti = compute_tax_income(
+                ti_provinces,
+                consumer_goods,
+                [cg_caps_by_id.get(row[0], 0.0) for row in province_rows],
+                healthcare,
+                effective_rations,
+            )
+            ti_money = ti["income"]
+            # CG the tick will pull from the stockpile when it isn't the
+            # bottleneck: everything retail can deliver (local + remote).
+            total_cg_need = ti["cg_delivered"]
 
         ti_money = math.floor(ti_money)
 

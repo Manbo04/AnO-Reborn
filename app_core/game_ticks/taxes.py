@@ -50,11 +50,9 @@ from app_core.game_ticks.common import should_skip_task, handle_exception
 from app_core.game_ticks.locks import try_pg_advisory_lock, release_pg_advisory_lock
 from app_core.game_ticks.food import consumer_goods_distribution_capacity
 from app_core.economy.consumer_goods import (
-    allocate_consumer_goods,
-    cg_tax_multiplier,
     load_province_cg_capacities,
-    province_cg_need,
 )
+from app_core.economy.tax_formula import compute_tax_income
 
 
 
@@ -100,80 +98,22 @@ def calc_ti(user_id):
         if not provinces:  # User doesn't have any provinces
             return False, False
 
-        has_demographic_data = all(
-            len(p) >= 5 and p[2] is not None and p[3] is not None and p[4] is not None
-            for p in provinces
-        )
         healthcare = variables.POLICY_UNIVERSAL_HEALTHCARE in (policies or [])
-
-        province_incomes = []
-        province_needs = []
-        province_ids = []
-        for province_row in provinces:
-            population = province_row[0]
-            land = province_row[1]
-            pc = province_row[2] if len(province_row) > 2 else None
-            pw = province_row[3] if len(province_row) > 3 else None
-            pe = province_row[4] if len(province_row) > 4 else None
-            province_ids.append(province_row[5] if len(province_row) > 5 else None)
-
-            land_multiplier = (land - 1) * variables.DEFAULT_LAND_TAX_MULTIPLIER
-            if land_multiplier > 1:
-                land_multiplier = 1  # Cap 100%
-
-            base_multiplier = variables.DEFAULT_TAX_INCOME
-
-            multiplier = base_multiplier + (base_multiplier * land_multiplier)
-            if variables.FEATURE_DEMOGRAPHIC_TAX and has_demographic_data:
-                taxable_population = (
-                    (pw or 0) * variables.DEMO_TAX_MULTIPLIER["pop_working"]
-                    + (pc or 0) * variables.DEMO_TAX_MULTIPLIER["pop_children"]
-                    + (pe or 0) * variables.DEMO_TAX_MULTIPLIER["pop_elderly"]
-                )
-            else:
-                taxable_population = population
-            province_incomes.append(multiplier * taxable_population)
-            province_needs.append(
-                province_cg_need(population, pc, pw, pe, healthcare, has_demographic_data)
-            )
-
-        removed_consumer_goods = 0
-        if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
-            # Per-province distribution, same allocation as tax_income().
-            try:
-                caps_by_id = load_province_cg_capacities(
-                    db, [pid for pid in province_ids if pid is not None]
-                )
-            except Exception:
-                caps_by_id = {}
-            alloc = allocate_consumer_goods(
-                province_needs,
-                [caps_by_id.get(pid, 0.0) for pid in province_ids],
-                consumer_goods,
-            )
-            income = sum(
-                inc * cg_tax_multiplier(cov)
-                for inc, cov in zip(province_incomes, alloc["coverage"])
-            )
-            removed_consumer_goods = alloc["consumed"]
-        else:
-            # Old logic (fallback)
-            income = sum(province_incomes)
-            max_cg = math.ceil(sum(province_needs))
-            if consumer_goods != 0 and max_cg != 0:
-                if max_cg <= consumer_goods:
-                    # Enough CG to fully cover consumption
-                    removed_consumer_goods = max_cg
-                    income *= variables.CONSUMER_GOODS_TAX_MULTIPLIER
-                else:
-                    # Not enough goods; apply partial multiplier
-                    multiplier = consumer_goods / max_cg
-                    income *= 1 + (0.5 * multiplier)
-                    removed_consumer_goods = consumer_goods
-
+        provinces = [tuple(p) + (None,) * (6 - len(p)) for p in provinces]
+        province_ids = [p[5] for p in provinces]
+        try:
+            caps_by_id = load_province_cg_capacities(db, province_ids)
+        except Exception:
+            caps_by_id = {}
+        ti = compute_tax_income(
+            [tuple(p[:5]) for p in provinces],
+            consumer_goods,
+            [caps_by_id.get(pid, 0.0) for pid in province_ids],
+            healthcare,
+        )
         # Return (income, removed_consumer_goods) where
         # removed_consumer_goods is a positive count
-        return math.floor(income), removed_consumer_goods
+        return ti["income"], ti["removed_consumer_goods"]
 
 
 
@@ -513,85 +453,27 @@ def tax_income():
                 consumer_goods = int(cg_map.get(user_id, 0) or 0)
                 policies = policies_map.get(user_id, []) or []
 
-                has_demographic_data = all(
-                    len(p) >= 5
-                    and p[2] is not None
-                    and p[3] is not None
-                    and p[4] is not None
-                    for p in provinces
-                )
                 healthcare = variables.POLICY_UNIVERSAL_HEALTHCARE in policies
 
-                province_incomes = []
-                province_needs = []
-                province_caps = []
-                for population, land, pc, pw, pe, prov_id in provinces:
-                    land_multiplier = (land - 1) * variables.DEFAULT_LAND_TAX_MULTIPLIER
-                    if land_multiplier > 1:
-                        land_multiplier = 1
-
-                    base_multiplier = variables.DEFAULT_TAX_INCOME
-                    multiplier = base_multiplier + (base_multiplier * land_multiplier)
-                    if variables.FEATURE_DEMOGRAPHIC_TAX and has_demographic_data:
-                        taxable_population = (
-                            (pw or 0) * variables.DEMO_TAX_MULTIPLIER["pop_working"]
-                            + (pc or 0) * variables.DEMO_TAX_MULTIPLIER["pop_children"]
-                            + (pe or 0) * variables.DEMO_TAX_MULTIPLIER["pop_elderly"]
-                        )
-                    else:
-                        taxable_population = population
-                    province_incomes.append(multiplier * taxable_population)
-                    province_needs.append(
-                        province_cg_need(
-                            population, pc, pw, pe, healthcare, has_demographic_data
-                        )
-                    )
-                    province_caps.append(cg_prov_cap_map.get(prov_id, 0.0))
-
-                removed_consumer_goods = 0
-                if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION:
-                    # Each province's tax gets its own CG multiplier, based
-                    # on how well that province was supplied.
-                    alloc = allocate_consumer_goods(
-                        province_needs, province_caps, consumer_goods
-                    )
-                    income = sum(
-                        inc * cg_tax_multiplier(cov)
-                        for inc, cov in zip(province_incomes, alloc["coverage"])
-                    )
-                    removed_consumer_goods = alloc["consumed"]
-                else:
-                    income = sum(province_incomes)
-                    max_cg = math.ceil(sum(province_needs))
-                    if consumer_goods != 0 and max_cg != 0:
-                        if max_cg <= consumer_goods:
-                            removed_consumer_goods = max_cg
-                            income *= variables.CONSUMER_GOODS_TAX_MULTIPLIER
-                        else:
-                            cg_multiplier = consumer_goods / max_cg
-                            income *= 1 + (0.5 * cg_multiplier)
-                            removed_consumer_goods = int(consumer_goods)
-
-                # APPLY RATIONS (FOOD) TAX PENALTY
                 current_rations = rations_map.get(user_id, 0)
-                total_population = sum(p[0] for p in provinces)
-                needed_rations = max(int(total_population // variables.RATIONS_PER), 1)
-                
                 if variables.FEATURE_RATIONS_DISTRIBUTION:
-                    r_dist_cap = rations_dist_cap_map.get(user_id, 0)
-                    effective_rations = min(current_rations, r_dist_cap)
+                    effective_rations = min(
+                        current_rations, rations_dist_cap_map.get(user_id, 0)
+                    )
                 else:
                     effective_rations = current_rations
-                
-                rcp = min(0.0, (effective_rations / needed_rations) - 1.0)
-                grace_period = (len(provinces) <= 1) and (sum(p[1] for p in provinces) <= 20)
-                if grace_period:
-                    food_tax_multiplier = 1.0
-                else:
-                    food_tax_multiplier = 1.0 + (rcp * (1.0 - variables.NO_FOOD_TAX_MULTIPLIER))
-                income *= food_tax_multiplier
 
-                money = int(math.floor(income))
+                # The formula lives in app_core/economy/tax_formula.py; the
+                # revenue page calls the same function.
+                ti = compute_tax_income(
+                    [tuple(p[:5]) for p in provinces],
+                    consumer_goods,
+                    [cg_prov_cap_map.get(p[5], 0.0) for p in provinces],
+                    healthcare,
+                    effective_rations,
+                )
+                removed_consumer_goods = ti["removed_consumer_goods"]
+                money = ti["income"]
 
                 if not money:
                     continue
