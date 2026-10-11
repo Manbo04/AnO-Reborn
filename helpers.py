@@ -601,6 +601,7 @@ def record_war_event(
     new_morale,
     win_label,
     concluded: bool,
+    details=None,
 ):
     """Record a detailed war/fight event for auditing purposes.
 
@@ -620,6 +621,9 @@ def record_war_event(
         new_morale: resulting morale value after subtraction
         win_label: human-readable label returned by persist_fight_results
         concluded: whether this fight ended the war (peace declared)
+        details: optional dict stored as JSON (units each side sent/fielded,
+            army strength before/after, who attacked) so a fight can be
+            explained later without guessing
     """
     global _war_events_table_ready
     try:
@@ -656,12 +660,17 @@ def record_war_event(
                 wtext = str(list(winner_losses))
                 ltext = str(list(loser_losses))
 
+            try:
+                details_text = json.dumps(details, default=str) if details else None
+            except Exception:
+                details_text = None
+
             db.execute(
                 (
                     "INSERT INTO war_events (war_id, winner, loser, winner_losses, "
                     "loser_losses, morale_column, morale_delta, new_morale, "
-                    "win_label, concluded) "
-                    "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+                    "win_label, concluded, details) "
+                    "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
                 ),
                 (
                     war_id,
@@ -674,6 +683,7 @@ def record_war_event(
                     new_morale,
                     win_label,
                     concluded,
+                    details_text,
                 ),
             )
     except Exception:
