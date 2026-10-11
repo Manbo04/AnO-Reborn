@@ -11,6 +11,7 @@ Standalone tick with its own advisory lock and task_runs row, same pattern
 as unit_production.py / disasters.py.
 """
 from app_core.game_ticks.common import should_skip_task, handle_exception, log_verbose
+from app_core.economy import ledger
 from app_core.game_ticks.locks import try_pg_advisory_lock, release_pg_advisory_lock
 
 TASK_NAME = "loan_interest"
@@ -81,10 +82,7 @@ def run_loan_interest():
                 )
 
                 if garnished > 0:
-                    db.execute(
-                        "UPDATE stats SET gold = GREATEST(0, gold - %s) WHERE id = %s",
-                        (garnished, user_id),
-                    )
+                    ledger.take_gold(db, user_id, garnished)
                 if new_balance != balance:
                     db.execute(
                         "UPDATE user_loans SET balance = %s WHERE id = %s",

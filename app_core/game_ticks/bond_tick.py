@@ -18,6 +18,7 @@ the defaulter into the bank.
 Same standalone-tick shape as loan_interest.py / disasters.py: its own
 advisory lock and task_runs row.
 """
+from app_core.economy import ledger
 from datetime import datetime, timezone
 
 import variables
@@ -162,7 +163,7 @@ def _apply_coalition_insurance(db, bond_id, issuer_id, lender_id, shortfall):
     if paid <= 0:
         return coalition_id, 0
     db.execute("UPDATE colBanks SET money = money - %s WHERE colId=%s", (paid, coalition_id))
-    db.execute("UPDATE stats SET gold = gold + %s WHERE id = %s", (paid, lender_id))
+    ledger.credit_gold(db, lender_id, paid)
     log_verbose(
         f"BOND_INSURANCE | bond={bond_id} coalition={coalition_id} issuer={issuer_id} "
         f"lender={lender_id} paid={paid}"
@@ -253,15 +254,9 @@ def _process_active_bonds(db, notes):
         spent[issuer_id] = spent.get(issuer_id, 0.0) + total_garnished
 
         if total_garnished > 0:
-            db.execute(
-                "UPDATE stats SET gold = GREATEST(0, gold - %s) WHERE id = %s",
-                (total_garnished, issuer_id),
-            )
+            ledger.take_gold(db, issuer_id, total_garnished)
         if interest_garnished > 0:
-            db.execute(
-                "UPDATE stats SET gold = gold + %s WHERE id = %s",
-                (interest_garnished, lender_id),
-            )
+            ledger.credit_gold(db, lender_id, interest_garnished)
         notes.add(lender_id, "received", interest_garnished)
         notes.add(issuer_id, "paid", interest_garnished)
 
@@ -298,17 +293,11 @@ def _process_active_bonds(db, notes):
         lump_garnished, shortfall = compute_maturity_settlement(principal, new_escrowed, remaining_gold)
 
         if lump_garnished > 0:
-            db.execute(
-                "UPDATE stats SET gold = GREATEST(0, gold - %s) WHERE id = %s",
-                (lump_garnished, issuer_id),
-            )
+            ledger.take_gold(db, issuer_id, lump_garnished)
             spent[issuer_id] = spent.get(issuer_id, 0.0) + lump_garnished
         payout_to_lender = new_escrowed + lump_garnished
         if payout_to_lender > 0:
-            db.execute(
-                "UPDATE stats SET gold = gold + %s WHERE id = %s",
-                (payout_to_lender, lender_id),
-            )
+            ledger.credit_gold(db, lender_id, payout_to_lender)
 
         if shortfall > 0:
             # Force-defaulted (too many missed interest payments) or
@@ -449,14 +438,8 @@ def _process_defaulted_shortfalls(db, notes):
 
         to_lender = min(garnishment_owed, gold)
         if to_lender > 0:
-            db.execute(
-                "UPDATE stats SET gold = GREATEST(0, gold - %s) WHERE id = %s",
-                (to_lender, issuer_id),
-            )
-            db.execute(
-                "UPDATE stats SET gold = gold + %s WHERE id = %s",
-                (to_lender, lender_id),
-            )
+            ledger.take_gold(db, issuer_id, to_lender)
+            ledger.credit_gold(db, lender_id, to_lender)
             db.execute(
                 "UPDATE bonds SET garnishment_owed = garnishment_owed - %s, last_tick_at = NOW() WHERE id = %s",
                 (to_lender, bond_id),
@@ -477,10 +460,7 @@ def _process_defaulted_shortfalls(db, notes):
                 (to_bank, insurer_id),
             )
             if db.fetchone():
-                db.execute(
-                    "UPDATE stats SET gold = GREATEST(0, gold - %s) WHERE id = %s",
-                    (to_bank, issuer_id),
-                )
+                ledger.take_gold(db, issuer_id, to_bank)
                 remaining = insurer_owed - to_bank
                 db.execute(
                     "UPDATE bonds SET insurer_owed = %s, last_tick_at = NOW() WHERE id = %s",

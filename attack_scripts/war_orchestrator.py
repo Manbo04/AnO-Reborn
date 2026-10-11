@@ -19,6 +19,7 @@ Implementation notes:
 - Uses `get_db_connection()` and `fetchone_first` from `database` for parity.
 """
 
+from app_core.economy import ledger
 from typing import Iterable, Tuple, Optional
 from database import get_db_connection, get_request_cursor, fetchone_first
 from helpers import record_war_event
@@ -296,62 +297,15 @@ def persist_fight_results(
                     if transfer_amount > 0:
                         war_spoils[resource] = transfer_amount
 
-                    db.execute(
-                        """
-                        INSERT INTO user_economy (user_id, resource_id, quantity)
-                        SELECT %s, rd.resource_id, 0
-                        FROM resource_dictionary rd
-                        WHERE rd.name=%s AND rd.is_active=TRUE
-                        ON CONFLICT (user_id, resource_id) DO NOTHING
-                        """,
-                        (loser.user_id, resource),
-                    )
-                    db.execute(
-                        """
-                        INSERT INTO user_economy (user_id, resource_id, quantity)
-                        SELECT %s, rd.resource_id, 0
-                        FROM resource_dictionary rd
-                        WHERE rd.name=%s AND rd.is_active=TRUE
-                        ON CONFLICT (user_id, resource_id) DO NOTHING
-                        """,
-                        (winner.user_id, resource),
-                    )
-
-                    db.execute(
-                        """
-                        UPDATE user_economy ue
-                        SET quantity = %s
-                        FROM resource_dictionary rd
-                        WHERE ue.user_id=%s
-                          AND ue.resource_id = rd.resource_id
-                          AND rd.name=%s
-                          AND rd.is_active=TRUE
-                        """,
-                        (resource_amount - transfer_amount, loser.user_id, resource),
-                    )
-                    db.execute(
-                        """
-                        SELECT COALESCE(ue.quantity, 0)
-                        FROM resource_dictionary rd
-                        LEFT JOIN user_economy ue
-                            ON ue.resource_id = rd.resource_id AND ue.user_id=%s
-                        WHERE rd.name=%s AND rd.is_active=TRUE
-                        """,
-                        (winner.user_id, resource),
-                    )
-                    winner_amount = fetchone_first(db, 0) or 0
-                    db.execute(
-                        """
-                        UPDATE user_economy ue
-                        SET quantity = %s
-                        FROM resource_dictionary rd
-                        WHERE ue.user_id=%s
-                          AND ue.resource_id = rd.resource_id
-                          AND rd.name=%s
-                          AND rd.is_active=TRUE
-                        """,
-                        (winner_amount + transfer_amount, winner.user_id, resource),
-                    )
+                    # Relative take/credit (was an absolute SET from a stale
+                    # read, which overwrote any change made in between).
+                    taken = ledger.take_resource(db, loser.user_id, resource, transfer_amount)
+                    ledger.credit_resources(db, winner.user_id, {resource: taken})
+                    if taken != transfer_amount:
+                        if taken > 0:
+                            war_spoils[resource] = taken
+                        else:
+                            war_spoils.pop(resource, None)
 
                 # Pay out any open bounties on the defeated nation - this is
                 # the one unambiguous "nation X was defeated" moment in the

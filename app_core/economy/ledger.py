@@ -13,7 +13,7 @@ Three kinds of change:
   credit_*  add.
 """
 
-from psycopg2.extras import execute_batch
+from psycopg2 import extras
 
 
 class InsufficientFunds(Exception):
@@ -126,7 +126,7 @@ def take_resources(db, user_id, amounts):
     items = [(name, _amount(q)) for name, q in amounts.items() if int(q)]
     if not items:
         return
-    execute_batch(
+    extras.execute_batch(
         db,
         """
         UPDATE user_economy ue SET quantity = GREATEST(0, ue.quantity - %s)
@@ -137,7 +137,121 @@ def take_resources(db, user_id, amounts):
     )
 
 
+def take_resource(db, user_id, name, amount):
+    """Take up to amount of one resource (never below zero); returns how much was taken."""
+    amount = _amount(amount)
+    if not amount:
+        return 0
+    db.execute(
+        """
+        SELECT ue.quantity FROM user_economy ue
+        JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id
+        WHERE ue.user_id = %s AND rd.name = %s
+        FOR UPDATE OF ue
+        """,
+        (user_id, name),
+    )
+    row = db.fetchone()
+    have = int((row[0] if not isinstance(row, dict) else row["quantity"]) or 0) if row else 0
+    taken = min(have, amount)
+    if taken:
+        take_resources(db, user_id, {name: taken})
+    return taken
+
+
 def adjust_resources(db, user_id, deltas):
     """Signed deltas: positives are credited, negatives taken (clamped at zero)."""
     credit_resources(db, user_id, {n: d for n, d in deltas.items() if d > 0})
     take_resources(db, user_id, {n: -d for n, d in deltas.items() if d < 0})
+
+
+# --- batch forms for the hourly/daily ticks ---------------------------------
+# rows are (amount, user_id) / (amount, user_id, resource_id), the order the
+# ticks already build. Amounts must be non-negative.
+
+def _rows(rows):
+    out = []
+    for r in rows:
+        amt = _amount(r[0])
+        if amt:
+            out.append((amt,) + tuple(r[1:]))
+    return out
+
+
+def credit_gold_batch(db, rows, page_size=100):
+    rows = _rows(rows)
+    if rows:
+        extras.execute_batch(db, "UPDATE stats SET gold=gold+%s WHERE id=%s", rows, page_size=page_size)
+
+
+def take_gold_batch(db, rows, page_size=100):
+    rows = _rows(rows)
+    if rows:
+        extras.execute_batch(
+            db, "UPDATE stats SET gold = GREATEST(gold - %s, 0) WHERE id = %s", rows, page_size=page_size
+        )
+
+
+def take_resource_batch(db, rows, page_size=100):
+    """rows: (amount, user_id, resource_id); clamped at zero."""
+    rows = _rows(rows)
+    if rows:
+        extras.execute_batch(
+            db,
+            "UPDATE user_economy SET quantity=GREATEST(quantity-%s, 0), updated_at=now() "
+            "WHERE user_id=%s AND resource_id=%s",
+            rows,
+            page_size=page_size,
+        )
+
+
+def ensure_resource_rows_batch(db, rows, page_size=100):
+    """rows: (user_id, resource_id); creates zero rows that don't exist yet."""
+    rows = list(rows)
+    if rows:
+        extras.execute_batch(
+            db,
+            "INSERT INTO user_economy (user_id, resource_id, quantity) VALUES (%s, %s, 0) "
+            "ON CONFLICT (user_id, resource_id) DO NOTHING",
+            rows,
+            page_size=page_size,
+        )
+
+
+def ensure_all_resource_rows(db):
+    """Zero rows for every (user, resource) pair; returns how many were created."""
+    db.execute(
+        "INSERT INTO user_economy (user_id, resource_id, quantity) "
+        "SELECT u.id, rd.resource_id, 0 FROM users u CROSS JOIN resource_dictionary rd "
+        "ON CONFLICT DO NOTHING"
+    )
+    return db.rowcount
+
+
+def credit_resource_batch(db, rows, page_size=100):
+    """rows: (user_id, resource_id, amount >= 0); creates missing rows."""
+    rows = [(u, r, _amount(q)) for u, r, q in rows]
+    rows = [row for row in rows if row[2]]
+    if rows:
+        extras.execute_batch(
+            db,
+            "INSERT INTO user_economy (user_id, resource_id, quantity, updated_at) "
+            "VALUES (%s, %s, %s, now()) ON CONFLICT (user_id, resource_id) DO UPDATE SET "
+            "quantity = user_economy.quantity + EXCLUDED.quantity, updated_at = now()",
+            rows,
+            page_size=page_size,
+        )
+
+
+def adjust_resource_batch(db, rows, page_size=100):
+    """rows: (user_id, resource_id, signed delta); result clamped at zero, missing rows created."""
+    rows = [(u, r, max(0, int(round(d))), int(round(d))) for u, r, d in rows if int(round(d))]
+    if rows:
+        extras.execute_batch(
+            db,
+            "INSERT INTO user_economy (user_id, resource_id, quantity, updated_at) "
+            "VALUES (%s, %s, %s, now()) ON CONFLICT (user_id, resource_id) DO UPDATE SET "
+            "quantity = GREATEST(0, user_economy.quantity + %s), updated_at = now()",
+            rows,
+            page_size=page_size,
+        )

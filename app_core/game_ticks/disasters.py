@@ -11,6 +11,7 @@ Standalone tick with its own advisory lock and task_runs row, same pattern
 as app_core/game_ticks/unit_production.py -- keeps this rare, self-contained
 side effect out of the shared revenue-tick code path.
 """
+from app_core.economy import ledger
 import random as rand
 
 from app_core.game_ticks.common import should_skip_task, handle_exception, log_verbose
@@ -206,16 +207,7 @@ def run_natural_disasters():
                 if loss <= 0:
                     continue
 
-                db.execute(
-                    """
-                    UPDATE user_economy ue
-                    SET quantity = GREATEST(0, ue.quantity - %s)
-                    FROM resource_dictionary rd
-                    WHERE ue.resource_id = rd.resource_id
-                      AND rd.name = %s AND ue.user_id = %s
-                    """,
-                    (loss, resource_name, user_id),
-                )
+                ledger.take_resources(db, user_id, {resource_name: loss})
                 db.execute(
                     "INSERT INTO news (destination_id, message) VALUES (%s, %s)",
                     (user_id, f"{label}: " + template.format(amt=f"{loss:,}")),
