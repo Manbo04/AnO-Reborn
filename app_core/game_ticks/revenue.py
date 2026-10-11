@@ -1290,20 +1290,9 @@ def generate_province_revenue():  # Runs each hour
                             ]
 
                             if batch_values:
-                                execute_batch(
+                                ledger.adjust_resource_batch(
                                     db,
-                                    """
-                                    INSERT INTO user_economy
-                                        (user_id, resource_id, quantity, updated_at)
-                                    VALUES (%s, %s, %s, now())
-                                    ON CONFLICT (user_id, resource_id)
-                                    DO UPDATE SET
-                                        quantity = GREATEST(
-                                            0, user_economy.quantity + %s
-                                        ),
-                                        updated_at = now()
-                                    """,
-                                    batch_values,
+                                    [(u, r, d) for u, r, _, d in batch_values],
                                     page_size=200,
                                 )
                                 log_verbose(

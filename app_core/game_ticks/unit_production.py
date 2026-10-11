@@ -10,6 +10,7 @@ through its ~1200 lines of shared state was a lot more risk for this feature
 than a small dedicated pass. See variables.UNIT_STOCKPILE_BUILDINGS for the
 per-building unit/cap/resource-cost config this reads.
 """
+from app_core.economy import ledger
 from psycopg2.extras import execute_batch
 
 import variables
@@ -192,22 +193,6 @@ def _produce_for_building(db, building_name, spec):
                 apply_deltas.append((delta, user_id, rid))
 
         if ensure_rows:
-            execute_batch(
-                db,
-                """
-                INSERT INTO user_economy (user_id, resource_id, quantity)
-                VALUES (%s, %s, 0)
-                ON CONFLICT (user_id, resource_id) DO NOTHING
-                """,
-                ensure_rows,
-            )
+            ledger.ensure_resource_rows_batch(db, ensure_rows)
         if apply_deltas:
-            execute_batch(
-                db,
-                """
-                UPDATE user_economy
-                SET quantity = GREATEST(0, quantity + %s), updated_at = now()
-                WHERE user_id=%s AND resource_id=%s
-                """,
-                apply_deltas,
-            )
+            ledger.adjust_resource_batch(db, [(u, r, d) for d, u, r in apply_deltas])

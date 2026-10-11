@@ -1,3 +1,4 @@
+from app_core.economy import ledger
 from celery import Celery
 import psycopg2
 import os
@@ -455,15 +456,7 @@ def population_growth():  # Function for growing population
         rations_resource_id = db.fetchone()[0]
 
         # Ensure user_economy rows exist for rations (batch, all users)
-        execute_batch(
-            db,
-            """
-            INSERT INTO user_economy (user_id, resource_id, quantity)
-            VALUES (%s, %s, 0)
-            ON CONFLICT (user_id, resource_id) DO NOTHING
-            """,
-            [(uid, rations_resource_id) for uid in all_user_ids],
-        )
+        ledger.ensure_resource_rows_batch(db, [(uid, rations_resource_id) for uid in all_user_ids])
 
         # Preload rations for all users (one query)
         dbdict.execute(
@@ -675,15 +668,7 @@ def population_growth():  # Function for growing population
 
             # Write this chunk's updates
             if rations_updates:
-                execute_batch(
-                    db,
-                    """
-                    UPDATE user_economy
-                    SET quantity = GREATEST(0, quantity - %s)
-                    WHERE user_id=%s AND resource_id=%s
-                    """,
-                    rations_updates,
-                )
+                ledger.take_resource_batch(db, rations_updates)
                 total_rations_deducted += len(rations_updates)
 
             if population_updates:

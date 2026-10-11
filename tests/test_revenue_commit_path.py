@@ -17,8 +17,11 @@ def test_revenue_upsert_sql_sets_updated_at():
     """Upsert batch must touch updated_at (progression health signal)."""
     import inspect
 
+    from app_core.economy import ledger
+
     source = inspect.getsource(tasks.generate_province_revenue)
-    assert "updated_at = now()" in source
+    assert "ledger.adjust_resource_batch(" in source
+    assert "updated_at = now()" in inspect.getsource(ledger.adjust_resource_batch)
     assert "SAVEPOINT revenue_education_batch" in source
     assert "ROLLBACK TO SAVEPOINT revenue_education_batch" in source
     # last_run only after successful commit
@@ -36,6 +39,6 @@ def test_resource_upsert_before_education_in_source_order():
     import inspect
 
     source = inspect.getsource(tasks.generate_province_revenue)
-    res = source.find("INSERT INTO user_economy")
+    res = source.find("ledger.adjust_resource_batch(")
     edu = source.find("SAVEPOINT revenue_education_batch")
     assert res > 0 and edu > res

@@ -1,3 +1,4 @@
+from app_core.economy import ledger
 from celery import Celery
 import psycopg2
 import os
@@ -101,16 +102,7 @@ def backfill_missing_resources():
         military_inserted = db.rowcount
 
         # 4. Backfill user_economy
-        db.execute(
-            """
-            INSERT INTO user_economy (user_id, resource_id, quantity)
-            SELECT u.id, rd.resource_id, 0
-            FROM users u
-            CROSS JOIN resource_dictionary rd
-            ON CONFLICT DO NOTHING
-            """
-        )
-        economy_inserted = db.rowcount
+        economy_inserted = ledger.ensure_all_resource_rows(db)
         
         if stats_inserted or policies_inserted or military_inserted or economy_inserted:
             print(f"Backfill complete: stats={stats_inserted}, policies={policies_inserted}, military={military_inserted}, economy={economy_inserted}")
@@ -517,20 +509,7 @@ def global_tick():
                 total_production += produced_amount
 
             if prod_updates:
-                execute_batch(
-                    db,
-                    """
-                    INSERT INTO user_economy
-                        (user_id, resource_id, quantity, updated_at)
-                    VALUES (%s, %s, %s, now())
-                    ON CONFLICT (user_id, resource_id)
-                    DO UPDATE SET
-                        quantity = user_economy.quantity + EXCLUDED.quantity,
-                        updated_at = now()
-                    """,
-                    prod_updates,
-                    page_size=500,
-                )
+                ledger.credit_resource_batch(db, prod_updates, page_size=500)
 
             production_phase_ms = int((time.time() - production_start) * 1000)
             if production_phase_ms > 30000:
@@ -620,17 +599,7 @@ def global_tick():
                         }
 
                 if deductions:
-                    execute_batch(
-                        db,
-                        """
-                        UPDATE user_economy
-                        SET quantity = GREATEST(quantity - %s, 0),
-                            updated_at = now()
-                        WHERE user_id = %s AND resource_id = %s
-                        """,
-                        deductions,
-                        page_size=500,
-                    )
+                    ledger.take_resource_batch(db, deductions, page_size=500)
 
                 consumption_phase_ms = int((time.time() - consumption_start) * 1000)
                 if consumption_phase_ms > 30000:

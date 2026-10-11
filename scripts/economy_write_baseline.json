@@ -1,12 +1,7 @@
 {
   "action_loop.py": 3,
   "app_core/admin/repositories.py": 6,
-  "app_core/game_ticks/disasters.py": 1,
-  "app_core/game_ticks/maintenance.py": 3,
-  "app_core/game_ticks/population.py": 2,
-  "app_core/game_ticks/revenue.py": 1,
   "app_core/game_ticks/taxes.py": 2,
-  "app_core/game_ticks/unit_production.py": 2,
   "attack_scripts/Nations.py": 5,
   "attack_scripts/war_orchestrator.py": 4,
   "countries.py": 1,

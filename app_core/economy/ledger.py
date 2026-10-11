@@ -176,7 +176,60 @@ def take_resource_batch(db, rows, page_size=100):
     if rows:
         extras.execute_batch(
             db,
-            "UPDATE user_economy SET quantity=GREATEST(quantity-%s, 0) WHERE user_id=%s AND resource_id=%s",
+            "UPDATE user_economy SET quantity=GREATEST(quantity-%s, 0), updated_at=now() "
+            "WHERE user_id=%s AND resource_id=%s",
+            rows,
+            page_size=page_size,
+        )
+
+
+def ensure_resource_rows_batch(db, rows, page_size=100):
+    """rows: (user_id, resource_id); creates zero rows that don't exist yet."""
+    rows = list(rows)
+    if rows:
+        extras.execute_batch(
+            db,
+            "INSERT INTO user_economy (user_id, resource_id, quantity) VALUES (%s, %s, 0) "
+            "ON CONFLICT (user_id, resource_id) DO NOTHING",
+            rows,
+            page_size=page_size,
+        )
+
+
+def ensure_all_resource_rows(db):
+    """Zero rows for every (user, resource) pair; returns how many were created."""
+    db.execute(
+        "INSERT INTO user_economy (user_id, resource_id, quantity) "
+        "SELECT u.id, rd.resource_id, 0 FROM users u CROSS JOIN resource_dictionary rd "
+        "ON CONFLICT DO NOTHING"
+    )
+    return db.rowcount
+
+
+def credit_resource_batch(db, rows, page_size=100):
+    """rows: (user_id, resource_id, amount >= 0); creates missing rows."""
+    rows = [(u, r, _amount(q)) for u, r, q in rows]
+    rows = [row for row in rows if row[2]]
+    if rows:
+        extras.execute_batch(
+            db,
+            "INSERT INTO user_economy (user_id, resource_id, quantity, updated_at) "
+            "VALUES (%s, %s, %s, now()) ON CONFLICT (user_id, resource_id) DO UPDATE SET "
+            "quantity = user_economy.quantity + EXCLUDED.quantity, updated_at = now()",
+            rows,
+            page_size=page_size,
+        )
+
+
+def adjust_resource_batch(db, rows, page_size=100):
+    """rows: (user_id, resource_id, signed delta); result clamped at zero, missing rows created."""
+    rows = [(u, r, max(0, int(round(d))), int(round(d))) for u, r, d in rows if int(round(d))]
+    if rows:
+        extras.execute_batch(
+            db,
+            "INSERT INTO user_economy (user_id, resource_id, quantity, updated_at) "
+            "VALUES (%s, %s, %s, now()) ON CONFLICT (user_id, resource_id) DO UPDATE SET "
+            "quantity = GREATEST(0, user_economy.quantity + %s), updated_at = now()",
             rows,
             page_size=page_size,
         )
