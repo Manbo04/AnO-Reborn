@@ -42,7 +42,16 @@ ACHIEVEMENT_QUERIES = [
 
     # Military — wars table (wars_normalized does not exist); winner_id is set on concluded wars.
     # user_military uses quantity (not amount).
-    ("mil_war_won", "SELECT winner_id FROM wars WHERE winner_id IS NOT NULL GROUP BY winner_id"),
+    # Nothing ever writes wars.winner_id, so also infer the winner from morale:
+    # the side that drove the other's morale to 0 won. Finished wars are
+    # deleted a week after peace, so this must keep running every tick.
+    ("mil_war_won", """
+        SELECT winner_id FROM wars WHERE winner_id IS NOT NULL
+        UNION
+        SELECT attacker FROM wars WHERE defender_morale <= 0 AND attacker_morale > 0
+        UNION
+        SELECT defender FROM wars WHERE attacker_morale <= 0 AND defender_morale > 0
+    """),
     ("mil_spy_op",  "SELECT spyer FROM spyinfo GROUP BY spyer"),
     ("mil_carrier", """
         SELECT um.user_id
