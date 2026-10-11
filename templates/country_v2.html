@@ -207,6 +207,15 @@
                             <div class="game-stat-value {{ 'text-success' if growth_rate.percent > 0 else ('text-danger' if growth_rate.percent < 0 else '') }}" style="font-size: 15px;">{{ '%+.2f'|format(growth_rate.percent) }}%/hr <span class="game-faint" style="font-size: 11px;">({{ '%+d'|format(growth_rate.delta) }})</span></div>
                         </div>
                     </div>
+                    {% if growth_rate.pop2 %}
+                    <div class="game-stat">
+                        <div class="game-stat-icon"><span class="material-icons-outlined">home</span></div>
+                        <div>
+                            <div class="game-stat-label" data-tippy-content="Population 2.0: homes come from districts, land and transit. Past 100% full births slow down, at 120% they stop. Hospitals cut deaths: 1 hospital covers 1M people.">Homes / hospitals</div>
+                            <div class="game-stat-value {{ 'text-danger' if growth_rate.pop2.housing_pct > 100 else '' }}" style="font-size: 15px;">{{ '%.0f'|format(growth_rate.pop2.housing_pct) }}% full <span class="game-faint" style="font-size: 11px;">({{ growth_rate.pop2.homes | fmt }} homes, {{ growth_rate.pop2.hospitals }} hospitals, {{ '%.0f'|format(growth_rate.pop2.hospital_cover_pct) }}% covered)</span></div>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 

@@ -156,6 +156,12 @@
                                 </span>Growth rate:</td>
                             <td class="{{ 'text-success' if growth_rate.percent > 0 else ('text-danger' if growth_rate.percent < 0 else '') }}" title="Projected population change next tick, based on your current rations distribution and population cap.">{{ '%+.2f'|format(growth_rate.percent) }}%/hr ({{ '%+d'|format(growth_rate.delta) }})</td>
                         </tr>
+                        {% if growth_rate.pop2 %}
+                        <tr>
+                            <td><span class="material-icons-outlined">home</span>Homes:</td>
+                            <td class="{{ 'text-danger' if growth_rate.pop2.housing_pct > 100 else '' }}">{{ '%.0f'|format(growth_rate.pop2.housing_pct) }}% full ({{ growth_rate.pop2.homes | fmt }} homes, {{ growth_rate.pop2.hospitals }} hospitals, {{ '%.0f'|format(growth_rate.pop2.hospital_cover_pct) }}% covered)</td>
+                        </tr>
+                        {% endif %}
                         {% endif %}
                         <tr>
                             <td><span class="material-icons-outlined">
