@@ -119,6 +119,7 @@ td canvas{display:block}
 .steps b{display:block;font:700 15px var(--f-d);margin-bottom:4px;color:var(--accent)}
 .note{background:var(--accent-sub);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:12px 16px;font-size:14px;max-width:none}
 .note b{color:var(--accent)}
+.tag{display:inline-block;font:700 9px var(--f-b);letter-spacing:.06em;background:var(--accent);color:#fff;padding:1px 5px;border-radius:999px;vertical-align:1px}
 .heat1{background:color-mix(in srgb,var(--ok) 22%,transparent)}
 .heat2{background:color-mix(in srgb,var(--gold) 24%,transparent)}
 .heat3{background:color-mix(in srgb,var(--bad) 24%,transparent)}
@@ -148,18 +149,22 @@ if(t==='theme-dark')h.setAttribute('data-theme','dark');else if(t||game)h.setAtt
 <header class="hero">
   <div class="eyebrow">War system proposal · Affairs and Order</div>
   <h1>The War Board</h1>
-  <p>Every war is played on a 25 by 25 hex board built from the two nations' biomes. Your real provinces become territories, your real units become pieces, and every piece moves once per hour.</p>
-  <div class="chips"><span class="chip"><b>625</b> hexes</span><span class="chip"><b>1 turn</b> = 1 hour</span><span class="chip"><b>14</b> in-game units + ICBMs and nukes</span><span class="chip"><b>8</b> terrains with own effects</span><span class="chip"><b>7</b> weather types · day and night</span><span class="chip">reserves · training · org · rout · veterans · mines · SAM cover</span></div>
+  <p>Every war is played on a hex board built from the two nations' biomes, from a tight 11 by 11 skirmish up to 25 by 25, or on open sea for full naval battles. Your real provinces become territories, your real units become pieces, and every piece moves once per hour.</p>
+  <div class="chips"><span class="chip"><b>4</b> board sizes</span><span class="chip">land or naval wars</span><span class="chip"><b>1 turn</b> = 1 hour</span><span class="chip"><b>14</b> in-game units + 5 proposed</span><span class="chip"><b>8</b> terrains with own effects</span><span class="chip"><b>7</b> weather types · day and night</span><span class="chip">reserves · training · org · rout · veterans · mines · SAM cover</span></div>
 </header>
 
 <section id="play">
   <div><div class="eyebrow">Playable prototype</div><h2>Try a war</h2></div>
-  <p class="hint">You command Aurelia (blue, west). Click a piece, click a tinted hex to move it, click a red-ringed enemy to attack, or pick an order. Deploy pieces from your reserves with production points, or train more. Skip an hour lets Kharzun answer and moves the clock on. Take their capital to win.</p>
+  <p class="hint">You command Aurelia (blue, west). Click a piece, click a tinted hex to move it, click a red-ringed enemy to attack, or pick an order. Deploy pieces from your reserves with production points, or train more. Skip an hour lets Kharzun answer and moves the clock on. Take their capital to win. Select a piece to see how many real units it stands for, or give its type your own picture. Red hexes show where the selected piece can fire from where it stands.</p>
   <div class="note"><b>How turns work in the real game:</b> a turn is one real hour, on the clock. Every hour you get fresh moves whether or not the other player has moved, so you never wait for anyone and nobody can stall a war by not playing. The <b>Skip an hour</b> button exists only in this demo so you can test without waiting a real hour between moves.</div>
   <div class="bar">
     <label>Aurelia biome<select id="selA"></select></label>
     <label>Kharzun biome<select id="selB"></select></label>
     <button id="btnNew">New map</button>
+    <label>Map size<select id="selSize"><option value="11">Skirmish 11x11</option><option value="15">Small 15x15</option><option value="19" selected>Medium 19x19</option><option value="25">Large 25x25</option><option value="35">Huge 35x35 (strong devices)</option></select></label>
+    <label>Battlefield<select id="selStyle"><option value="random">Random (sometimes all sea)</option><option value="land">Land and coast</option><option value="naval">Naval war (open sea)</option></select></label>
+    <label>Field limit<select id="selCap"><option value="0">Auto</option><option value="16">16</option><option value="24">24</option><option value="32">32</option><option value="48">48</option><option value="64">64</option><option value="96">96</option><option value="128">128</option></select></label>
+    <label class="tog"><input type="checkbox" id="chkFair" checked> Fair terrain</label>
     <label class="tog"><input type="checkbox" id="chkFog" checked> Fog of war</label>
     <label class="tog"><input type="checkbox" id="chkSup"> Supply range</label>
     <label>Animation<select id="selQ"><option value="auto">Auto</option><option value="full">Full</option><option value="lite">Lite</option><option value="off">Off</option></select></label>
@@ -186,14 +191,14 @@ if(t==='theme-dark')h.setAttribute('data-theme','dark');else if(t||game)h.setAtt
 
 <section>
   <div><div class="eyebrow">Your army</div><h2>The units you already own</h2></div>
-  <p>Every piece on the board is a unit that exists in the game today: soldiers, tanks, artillery, bombers, fighters, apaches, destroyers, cruisers, submarines, aircraft carriers and spies, plus the newer kamikaze drones, cruise missiles and SAM batteries. ICBMs and nukes are strategic strikes you launch from a stockpile. The counters use the game's own combat rules, so a player who knows the game already knows the board.</p>
+  <p>Every piece on the board is a unit that exists in the game today: soldiers, tanks, artillery, bombers, fighters, apaches, destroyers, cruisers, submarines, aircraft carriers and spies, plus the newer kamikaze drones, cruise missiles and SAM batteries. ICBMs and nukes are strategic strikes you launch from a stockpile. The counters use the game's own combat rules, so a player who knows the game already knows the board. Five more unit types are marked <b>NEW</b>: engineers, marines, mechanized infantry, rocket artillery and supply convoys. They are proposals the vote can add or drop.</p>
   <div class="tw"><table id="unitTbl"></table></div>
   <h3 style="margin-top:18px">Who beats who</h3>
   <div class="tw"><table id="counterTbl"></table></div>
   <p class="hint">Counters come from the existing rules: tanks beat soldiers, artillery beats tanks, soldiers beat artillery and apaches, fighters beat bombers and apaches, bombers beat tanks, soldiers and ships, apaches beat soldiers and tanks, destroyers beat submarines, cruisers beat destroyers and shoot down air, submarines beat cruisers. Carriers extend air range.</p>
   <h3 style="margin-top:18px">What terrain costs to cross</h3>
   <div class="tw"><table id="moveTbl"></table></div>
-  <p class="hint">Terrain decides how far ground pieces go. Every hex costs movement points, so tanks cross 5 plains hexes but only 1 forest hex, and artillery crawls. Ships and aircraft ignore land and simply move a fixed number of hexes. A dash means the piece can never enter that terrain. Rain, storms and snow lower movement, so this table is the clear-weather baseline.</p>
+  <p class="hint">Terrain decides how far ground pieces go. Every hex costs movement points, so tanks cross 5 plains hexes but only 1 forest hex, and artillery crawls. Ships and aircraft ignore land and simply move a fixed number of hexes. A dash means the piece can never enter that terrain. Rain, storms and snow lower movement, so this table is the clear-weather baseline. A piece with full movement can always make at least one step onto terrain it can enter.</p>
 </section>
 
 <section>
@@ -201,8 +206,21 @@ if(t==='theme-dark')h.setAttribute('data-theme','dark');else if(t||game)h.setAtt
   <div class="cols">
     <div class="card"><h3>The reserve</h3><p>Your reserve is the army your nation actually owns. At the start of a war each side has a set of units waiting off the board. In the real game these would be your real unit counts, scaled to fit.</p></div>
     <div class="card"><h3>Deploying</h3><p>Putting a piece on the field costs production points and can only draw from the reserve. No reserve, no deployment, however many points you have. Deployed pieces arrive at your territory or a port and can act next hour.</p></div>
+    <div class="card"><h3>Choose where to deploy</h3><p>Press Deploy and every legal hex lights up green: near your towns, or beside any forward base you have built. Pushing deep into enemy land? Build a forward base on the front line and reinforce from there, instead of walking units across the whole map.</p></div>
+    <div class="card"><h3>Forward bases are objectives</h3><p>A forward base is a supply source and a deployment point, and enemy land pieces can capture it. Taking the enemy base nearest the front cuts their supply and stops them replacing losses there.</p></div>
     <div class="card"><h3>Training</h3><p>New units are bought with production points and arrive in the reserve after a delay: 1 turn for drones, 2 to 3 for ground units, 4 for most aircraft and ships, 6 for a carrier. ICBMs take 3 turns and nukes 5.</p></div>
     <div class="card"><h3>Losses are permanent</h3><p>A destroyed piece does not return to the reserve. Wars drain what you own, so a long war is decided by who can train faster than they lose pieces.</p></div>
+  </div>
+</section>
+
+<section>
+  <div><div class="eyebrow">Army size</div><h2>How a big army fits on the board</h2></div>
+  <div class="cols">
+    <div class="card"><h3>One piece, many units</h3><p>The board never shows 16 million soldiers. A piece stands for an equal share of what you own. With 16 million soldiers and 16 pieces, each piece is 1 million men and its strength bar is scaled to match. Select a piece in the demo to see what it represents and how much of it is left.</p></div>
+    <div class="card"><h3>Casualties in real numbers</h3><p>The bar is a percentage, but losses are reported in real units. A hit that takes 18% off a million-man piece reads as about 180,000 soldiers lost in the battle log, and your army totals drop with it.</p></div>
+    <div class="card"><h3>Bigger army, bigger pieces</h3><p>Pieces from a larger army represent more units, so they last longer and hit harder than pieces from a small army, with diminishing returns so size matters without deciding everything. Small nations get small pieces, not fewer of them.</p></div>
+    <div class="card"><h3>Pick your battlefield</h3><p>Choose the board size that suits you: Skirmish 11x11 (12 pieces a side), Small 15x15 (16), Medium 19x19 (24) or Large 25x25 (32), and override the field limit up to 64. Smaller boards put the armies in contact fast, so you get a real front line instead of scattered forts. The real game would size the board from the armies involved.</p></div>
+    <div class="card"><h3>Your own pictures</h3><p>Pieces would use the unit pictures you picked in the game instead of the default symbols. In the demo, select a piece and press "Use my own picture" to try it. The image stays in your browser and is never uploaded.</p></div>
   </div>
 </section>
 
@@ -213,6 +231,8 @@ if(t==='theme-dark')h.setAttribute('data-theme','dark');else if(t||game)h.setAtt
     <div class="card"><h3>Submarines and the deep</h3><p>Submarines are invisible unless an enemy destroyer is within 3 hexes, a cruiser or aircraft within 2, or a spy within 3. Destroyers hit them 60% harder, and bombers also find them. A hidden submarine hits cruisers and carriers hard.</p></div>
     <div class="card"><h3>Drones, missiles and SAMs</h3><p>Kamikaze drones and cruise missiles fly in, hit once and are used up. Each SAM battery within range gives a chance to shoot them down, and SAMs shield nearby friends from all air attacks by 35%. Fighters and cruisers can also hit aircraft in the air.</p></div>
     <div class="card"><h3>ICBMs and nukes</h3><p>Buy them from production points and launch at any hex, even one you cannot see. An ICBM hits a hex and its 6 neighbors, a nuke 19 hexes, leaving fallout for 6 turns. SAM batteries near the target can intercept, and friendly pieces in the blast are hit too. This is where the Iron Dome and Star Wars projects plug in.</p></div>
+  <div class="card"><h3>Fair terrain</h3><p>With Fair terrain on (the default) the generator evens out how hard each half of the board is to march across, so neither side gets an easy desert while the other fights through forest and hills. The battle log shows the average march cost for each side.</p></div>
+    <div class="card"><h3>Naval wars</h3><p>Some boards, or any board you pick, are open sea with island ports, for full naval battles. Ships and aircraft carry the war. Park a surface ship beside an enemy port with none of their pieces next to it for 3 turns and the port is blockaded and taken. Tiny ponds never appear, so ships are never stranded.</p></div>
   </div>
 </section>
 
@@ -226,7 +246,7 @@ if(t==='theme-dark')h.setAttribute('data-theme','dark');else if(t||game)h.setAtt
 <section>
   <div><div class="eyebrow">Provinces</div><h2>Your provinces are the map</h2></div>
   <div class="cols">
-    <div class="card"><h3>Real names</h3><p>Each province you own becomes a territory of about 20 to 25 hexes with its own name and a settlement at its heart. A Nordvik province in an arctic nation is named Nordvik on the board, and its border is drawn on the map.</p></div>
+    <div class="card"><h3>Real names</h3><p>Each province you own becomes a territory with its own name and a settlement at its heart. A Nordvik province in an arctic nation is named Nordvik on the board, and its border is drawn on the map.</p></div>
     <div class="card"><h3>Capture</h3><p>End a turn with a piece on an enemy settlement and the whole province flips to you. The capital is the last settlement standing. Take it and the war is won on the board.</p></div>
     <div class="card"><h3>Income</h3><p>Every province you hold pays production points each turn, so a flipped province moves income from one side to the other. Production points pay to deploy units from your reserves and to train new ones.</p></div>
   </div>
@@ -273,18 +293,19 @@ Org hit  = Damage × 1.25  (×1.3 if flanked, ×1.4 from artillery, bombers, shi
   <div><div class="eyebrow">Orders</div><h2>Actions and build times</h2></div>
   <div class="tw"><table>
     <tr><th>Action</th><th>Who</th><th>Time</th><th>Effect</th></tr>
-    <tr><td>Move</td><td>All</td><td>Instant</td><td>Up to the piece's movement points. Ground and sea pieces stop next to enemies and cannot pass through pieces.</td></tr>
+    <tr><td>Move</td><td>All</td><td>Instant</td><td>Up to the piece's movement points. Ground and sea pieces stop next to enemies and cannot pass through pieces. A piece with all its movement left can always step one hex onto any terrain it can enter, so nothing gets stuck.</td></tr>
     <tr><td>Attack</td><td>All armed units</td><td>Instant</td><td>Once per turn, ends the piece's turn. The target may hit back. Drones and missiles are used up.</td></tr>
     <tr><td>Dig in</td><td>Soldiers, tanks, artillery, SAMs</td><td>1 turn per level</td><td>+10% cover per level, up to 3 (2 on frozen tundra). Lost when the piece moves.</td></tr>
     <tr><td>Build fort</td><td>Soldiers</td><td>2 turns</td><td>Levels 1 to 3 on that hex, +18% cover each, for its owner only.</td></tr>
-    <tr><td>Build depot</td><td>Soldiers</td><td>3 turns</td><td>New supply source with range 6. Lost if the province is captured.</td></tr>
+    <tr><td>Build forward base</td><td>Soldiers, engineers</td><td>3 turns (engineers 2)</td><td>New supply source with range 6 and a deployment point: reserves can be deployed within 1 hex. Enemy land pieces can capture it, so it is also an objective. Lost if the province is captured.</td></tr>
     <tr><td>Lay mines</td><td>Soldiers</td><td>2 turns</td><td>Hidden from the enemy. The first enemy ground piece to step on it takes 25 damage and loses 30 Org.</td></tr>
     <tr><td>Spy sweep</td><td>Spies</td><td>1 turn</td><td>Vision +2 for the turn. Spots hidden pieces.</td></tr>
     <tr><td>Sabotage</td><td>Spies</td><td>Instant</td><td>60% to destroy an adjacent enemy fort level, depot or mine, or to cut a piece's Org by 30. On failure the spy may be caught.</td></tr>
-    <tr><td>Deploy</td><td>Any unit in reserve</td><td>Arrives next hour</td><td>Spend production points to put a piece from your reserve on the field. You can never deploy more than you own.</td></tr>
+    <tr><td>Deploy</td><td>Any unit in reserve</td><td>Arrives next hour</td><td>Spend production points to put a piece from your reserve on the field. You choose the hex: next to your towns or within 1 hex of a forward base. You can never deploy more than you own.</td></tr>
     <tr><td>Train</td><td>Any unit</td><td>1 to 6 turns</td><td>Spend production points to add a new piece to your reserve after a delay.</td></tr>
     <tr><td>Launch ICBM or nuke</td><td>Stockpile</td><td>Instant</td><td>Strike any hex. SAM batteries near it can intercept.</td></tr>
-    <tr><td>Build causeway</td><td>Soldiers</td><td>3 turns</td><td>Turns a sea hex beside land into a road. Full version.</td></tr>
+    <tr><td>Build causeway</td><td>Engineers</td><td>2 turns</td><td>Turns a sea hex beside the engineers into a road. New unit, in the demo.</td></tr>
+    <tr><td>Clear mines</td><td>Engineers</td><td>Instant</td><td>Removes enemy mines on or beside the engineers.</td></tr>
   </table></div>
 </section>
 
@@ -326,7 +347,7 @@ Org hit  = Damage × 1.25  (×1.3 if flanked, ×1.4 from artillery, bombers, shi
 <script>
 (function(){
 'use strict';
-var W=25,H=25,N=W*H,SQ3=Math.sqrt(3);
+var W=19,H=19,N=W*H,SQ3=Math.sqrt(3);
 var $=function(id){return document.getElementById(id)};
 var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -337,10 +358,10 @@ var TERR={
   plains:{name:'Plains',move:1,def:0,fx:'Open ground: tanks hit 10% harder. Grass sways in the wind.'},
   forest:{name:'Forest',move:2,def:.25,fx:'Hides land pieces unless an enemy is adjacent. Ambush +10%.'},
   hills:{name:'Hills',move:2,def:.30,fx:'High ground: pieces see 1 hex further.'},
-  mountain:{name:'Mountain',move:3,def:.50,fx:'Pieces see 2 hexes further. Blocks tanks, artillery and SAMs.'},
+  mountain:{name:'Mountain',move:3,def:.50,fx:'Pieces see 2 hexes further. Heavy pieces can only crawl across, one hex a turn.'},
   desert:{name:'Desert',move:1,def:0,fx:'Out of supply: heat costs 4 strength a turn. Tanks +10%. Air shimmers.'},
   tundra:{name:'Tundra',move:2,def:.05,fx:'Out of supply: cold costs 4 strength a turn. Frozen ground caps digging at 2.'},
-  swamp:{name:'Swamp',move:3,def:.10,fx:'Hides land pieces. Disease: -3 Org a turn. Blocks tanks.'},
+  swamp:{name:'Swamp',move:3,def:.10,fx:'Hides land pieces. Disease: -3 Org a turn. Heavy pieces bog down, one hex a turn.'},
   urban:{name:'Settlement',move:1,def:.40,fx:'Capture to flip the province. Air base. +3 Org recovery. Chimneys smoke, windows glow at night.'}
 };
 var BIOMES={
@@ -369,7 +390,7 @@ var WEATHER={
 /* Names and unit_type keys come from the game (units.py). */
 var UT={
   soldiers:{name:'Soldiers',atk:20,mp:3,min:1,max:1,take:1,vis:3,cost:6,game:'dmg 1 · supply 1',desc:'Hold ground, dig forts, lay mines, take cities. Beat artillery and apaches.'},
-  tanks:{name:'Tanks',atk:34,mp:5,min:1,max:1,take:.9,vis:3,cost:16,game:'dmg 40 · supply 5',desc:'Fast hammer that crushes soldiers. Stopped by mountains and swamp.'},
+  tanks:{name:'Tanks',atk:34,mp:5,min:1,max:1,take:.9,vis:3,cost:16,game:'dmg 40 · supply 5',desc:'Fast hammer that crushes soldiers. Bogs down in mountains and swamp.'},
   artillery:{name:'Artillery',atk:36,mp:2,min:2,max:3,take:1.4,vis:3,cost:12,game:'dmg 80 · supply 5',desc:'Fires 2 to 3 hexes. Beats tanks. Fragile when reached.'},
   apaches:{name:'Apache Helicopters',atk:30,mp:6,min:1,max:1,take:1,vis:4,cost:15,game:'dmg 100 · supply 5',desc:'Low flyer. Beats soldiers and tanks. Needs a base within 5 hexes.'},
   fighters:{name:'Fighter Jets',atk:28,mp:8,min:1,max:1,take:1,vis:5,cost:18,game:'dmg 100 · supply 5',desc:'Beat bombers and apaches. Weak against ground and ships.'},
@@ -381,18 +402,24 @@ var UT={
   spies:{name:'Spies',atk:0,mp:5,min:1,max:1,take:1.3,vis:5,cost:5,game:'dmg 0 · espionage',desc:'Unarmed. See far, spot hidden pieces, sabotage forts and depots.'},
   kamikaze_drones:{name:'Kamikaze Drones',atk:46,mp:7,min:1,max:1,take:2,vis:3,cost:4,game:'from Drone Sites',desc:'Cheap, single use. Fly in and blow up. SAMs shoot them down.'},
   cruise_missiles:{name:'Cruise Missiles',atk:62,mp:10,min:1,max:1,take:1.5,vis:2,cost:8,game:'from Missile Batteries',desc:'Single use, long reach, ignore most cover. SAMs can intercept.'},
-  sam_batteries:{name:'SAM Batteries',atk:26,mp:1,min:1,max:3,take:1.2,vis:4,cost:10,game:'per army base',desc:'Shoot aircraft and missiles. Shield nearby pieces from air attack.'}
+  engineers:{name:'Engineers',atk:8,mp:3,min:1,max:1,take:1,vis:3,cost:8,proposed:1,game:'proposed, not in game yet',desc:'Build forts, forward bases and mines a turn faster, clear mines, and build causeways over water.'},
+  marines:{name:'Marines',atk:24,mp:3,min:1,max:1,take:1,vis:3,cost:9,proposed:1,game:'proposed, not in game yet',desc:'Wade through coastal water and land from the sea. The way to invade islands.'},
+  mechanized:{name:'Mechanized Infantry',atk:27,mp:4,min:1,max:1,take:.95,vis:3,cost:12,proposed:1,game:'proposed, not in game yet',desc:'Fast infantry in armored carriers. Between soldiers and tanks.'},
+  rocket_artillery:{name:'Rocket Artillery',atk:42,mp:2,min:2,max:4,take:1.5,vis:3,cost:15,proposed:1,game:'proposed, not in game yet',desc:'Salvos out to 4 hexes. Huge Org damage, very fragile.'},
+  supply_convoys:{name:'Supply Convoys',atk:0,mp:3,min:1,max:1,take:1.4,vis:3,cost:7,proposed:1,game:'proposed, not in game yet',desc:'Mobile depot. Supplies 3 hexes around it while it stays put. Unarmed.'},
+  sam_batteries:{name:'SAM Batteries',atk:26,mp:2,min:1,max:3,take:1.2,vis:4,cost:10,game:'per army base',desc:'Shoot aircraft and missiles. Shield nearby pieces from air attack.'}
 };
 var KEYS=Object.keys(UT);
 var FLY={fighters:1,bombers:1,apaches:1,kamikaze_drones:1,cruise_missiles:1};
 var PLANE={fighters:1,bombers:1,apaches:1};
 var HIGH={fighters:1,bombers:1,kamikaze_drones:1,cruise_missiles:1};
 var SEA={destroyers:1,cruisers:1,submarines:1,aircraft_carriers:1};
-var HEAVY={tanks:1,artillery:1,sam_batteries:1};
+var HEAVY={tanks:1,artillery:1,sam_batteries:1,rocket_artillery:1,mechanized:1};
+var BUILDER={soldiers:1,engineers:1};
 var ONESHOT={kamikaze_drones:1,cruise_missiles:1};
-var SHOCK={artillery:1,bombers:1,kamikaze_drones:1,cruise_missiles:1,destroyers:1,cruisers:1,aircraft_carriers:1,submarines:1};
+var SHOCK={rocket_artillery:1,artillery:1,bombers:1,kamikaze_drones:1,cruise_missiles:1,destroyers:1,cruisers:1,aircraft_carriers:1,submarines:1};
 var LEASH={fighters:9,bombers:9,apaches:5};
-var DIGGER={soldiers:1,tanks:1,artillery:1,sam_batteries:1};
+var DIGGER={soldiers:1,tanks:1,artillery:1,sam_batteries:1,engineers:1,marines:1,mechanized:1,rocket_artillery:1};
 var VS={
   soldiers:{artillery:1.5,apaches:1.3,tanks:.6},
   tanks:{soldiers:1.4,artillery:1.2,sam_batteries:1.1},
@@ -406,7 +433,10 @@ var VS={
   aircraft_carriers:{submarines:.5},
   sam_batteries:{fighters:1.2,bombers:1.3,apaches:1.2,kamikaze_drones:2,cruise_missiles:2},
   kamikaze_drones:{soldiers:1.4,artillery:1.3,spies:1.5,tanks:.6,sam_batteries:1.1},
-  cruise_missiles:{tanks:1.2,aircraft_carriers:1.2,cruisers:1.1}
+  cruise_missiles:{tanks:1.2,aircraft_carriers:1.2,cruisers:1.1},
+  mechanized:{soldiers:1.2,artillery:1.3,marines:1.1},
+  rocket_artillery:{soldiers:1.3,mechanized:1.2,tanks:1.1,marines:1.2,artillery:1.1},
+  marines:{soldiers:1.05,artillery:1.3}
 };
 var TRAITS=[
   {k:'build',name:'Master Builder',desc:'forts, depots and mines take 1 turn less'},
@@ -415,16 +445,45 @@ var TRAITS=[
   {k:'log',name:'Quartermaster',desc:'+2 supply range, faster Org recovery'},
   {k:'spy',name:'Spymaster',desc:'+1 vision for all pieces'}];
 var CAPN=16,STRAT={icbm:{name:'ICBM',cost:30,rad:1,p:.25},nuke:{name:'Nuke',cost:70,rad:2,p:.15}};
-var TRAIN={soldiers:2,tanks:3,artillery:3,apaches:3,fighters:4,bombers:4,destroyers:4,cruisers:5,submarines:4,aircraft_carriers:6,spies:2,kamikaze_drones:1,cruise_missiles:2,sam_batteries:3,icbm:3,nuke:5};
-var START_RES={soldiers:4,tanks:2,artillery:2,apaches:1,fighters:1,bombers:1,destroyers:1,cruisers:1,submarines:1,aircraft_carriers:1,spies:2,kamikaze_drones:3,cruise_missiles:2,sam_batteries:1};
+var TRAIN={engineers:2,marines:2,mechanized:3,rocket_artillery:3,supply_convoys:1,soldiers:2,tanks:3,artillery:3,apaches:3,fighters:4,bombers:4,destroyers:4,cruisers:5,submarines:4,aircraft_carriers:6,spies:2,kamikaze_drones:1,cruise_missiles:2,sam_batteries:3,icbm:3,nuke:5};
+var BASE_RES={engineers:2,marines:2,mechanized:2,rocket_artillery:1,supply_convoys:2,soldiers:4,tanks:2,artillery:2,apaches:1,fighters:1,bombers:1,destroyers:1,cruisers:1,submarines:1,aircraft_carriers:1,spies:2,kamikaze_drones:3,cruise_missiles:2,sam_batteries:1};
+/* demo nation army: each piece stands for an equal share of what the nation owns */
+var ARMY={engineers:20000,marines:30000,mechanized:3000,rocket_artillery:1500,supply_convoys:8000,soldiers:16000000,tanks:12000,artillery:8000,apaches:900,fighters:1200,bombers:600,destroyers:40,cruisers:20,submarines:30,aircraft_carriers:6,spies:5000,kamikaze_drones:20000,cruise_missiles:4000,sam_batteries:600};
+var NOUN={engineers:'engineers',marines:'marines',mechanized:'vehicles',rocket_artillery:'launchers',supply_convoys:'trucks',soldiers:'soldiers',tanks:'tanks',artillery:'guns',apaches:'helicopters',fighters:'jets',bombers:'bombers',destroyers:'destroyers',cruisers:'cruisers',submarines:'submarines',aircraft_carriers:'carriers',spies:'agents',kamikaze_drones:'drones',cruise_missiles:'missiles',sam_batteries:'SAM batteries'};
+var REPR={};
+function fmtN(n){if(n>=1e7)return Math.round(n/1e6)+'M';if(n>=1e6)return (n/1e6).toFixed(1)+'M';if(n>=1e4)return Math.round(n/1e3)+'k';if(n>=1e3)return (n/1e3).toFixed(1)+'k';return String(Math.max(0,Math.round(n)));}
+function lossTxt(d,hp){return '~'+fmtN(REPR[d.type]*hp/100)+' '+NOUN[d.type]+' lost';}
+function calcRepr(){REPR={};Object.keys(ARMY).forEach(function(k){var c=(START_RES[k]||0)+units.filter(function(u){return u.team==='A'&&u.type===k;}).length;REPR[k]=ARMY[k]/Math.max(1,c);});}
+function avgCost(side){var sm=0,n=0,mid=Math.floor(W/2);for(var i=0;i<N;i++){var t=terr[i];if(t==='sea')continue;var c=i%W;if(side==='A'?c<mid:c>mid){sm+=(MV.soldiers[t]||1);n++;}}return n?sm/n:1;}
+function balanceTerrain(r){var mid=Math.floor(W/2),it=0;
+  while(it++<600){var a=avgCost('A'),b=avgCost('B');if(Math.abs(a-b)/((a+b)/2)<.07)break;var hard=a>b?'A':'B';
+    for(var k=0;k<4;k++){var i=Math.floor(r()*N),c=i%W,onHard=hard==='A'?c<mid:c>mid,t=terr[i];if(t==='sea'||t==='urban'||c===mid)continue;
+      if(onHard&&(t==='forest'||t==='hills'||t==='swamp'||t==='mountain'||t==='tundra')){terr[i]='plains';break;}
+      if(!onHard&&(t==='plains'||t==='desert')){terr[i]=r()<.5?'hills':'forest';break;}}}
+  lastBal=[avgCost('A'),avgCost('B')];}
+var START_RES=BASE_RES,NAVAL=false,compId=[],compSz=[],capOverride=0,PPS=5;
+var NAVAL_RES={destroyers:3,cruisers:2,submarines:3,aircraft_carriers:2,fighters:3,bombers:2,apaches:1,kamikaze_drones:3,cruise_missiles:3,sam_batteries:1,spies:1};
+var NAVALOK={destroyers:1,cruisers:1,submarines:1,aircraft_carriers:1,fighters:1,bombers:1,apaches:1,kamikaze_drones:1,cruise_missiles:1,sam_batteries:1,spies:1};
+var SIZES={11:{pps:3,cap:12},15:{pps:4,cap:16},19:{pps:5,cap:24},25:{pps:6,cap:32},35:{pps:8,cap:64}};
+function allowed(k){return !NAVAL||!!NAVALOK[k];}
+function pickStyle(){var st=$('selStyle').value;NAVAL=(st==='naval')||(st==='random'&&Math.random()<.15);}
+function applySize(){var z=SIZES[W]||SIZES[19];PPS=z.pps;CAPN=capOverride||z.cap;var f=Math.max(.6,CAPN/16),base=NAVAL?NAVAL_RES:BASE_RES;START_RES={};Object.keys(base).forEach(function(k){START_RES[k]=Math.max(1,Math.round(base[k]*f));});}
+function seaComps(){compId=new Int16Array(N).fill(-1);compSz=[];for(var i=0;i<N;i++){if(terr[i]!=='sea'||compId[i]>=0)continue;var id=compSz.length,q=[i],c=0;compId[i]=id;while(q.length){var x=q.pop();c++;NB[x].forEach(function(y){if(terr[y]==='sea'&&compId[y]<0){compId[y]=id;q.push(y);}});}compSz.push(c);}}
+function bigSea(h){return terr[h]==='sea'&&compId[h]>=0&&compSz[compId[h]]>=10;}
+function hasExit(type,h,taken){return NB[h].some(function(n){return !taken[n]&&isFinite(moveCost(type,terr[n]));});}
 function depCost(k){return Math.max(1,Math.ceil(UT[k].cost/3));}
 /* movement points each terrain costs, per ground unit type (0 = impassable) */
 var MV={
   soldiers:{plains:1,desert:1,forest:2,hills:2,mountain:3,tundra:2,swamp:3,urban:1},
-  tanks:{plains:1,desert:1,forest:3,hills:3,mountain:0,tundra:2,swamp:0,urban:2},
-  artillery:{plains:1,desert:1,forest:2,hills:2,mountain:0,tundra:2,swamp:0,urban:2},
-  sam_batteries:{plains:1,desert:1,forest:2,hills:2,mountain:0,tundra:2,swamp:0,urban:1},
-  spies:{plains:1,desert:1,forest:1,hills:1,mountain:2,tundra:1,swamp:2,urban:1}
+  tanks:{plains:1,desert:1,forest:3,hills:3,mountain:5,tundra:2,swamp:4,urban:2},
+  artillery:{plains:1,desert:1,forest:2,hills:2,mountain:3,tundra:2,swamp:3,urban:2},
+  sam_batteries:{plains:1,desert:1,forest:2,hills:2,mountain:3,tundra:2,swamp:3,urban:1},
+  spies:{plains:1,desert:1,forest:1,hills:1,mountain:2,tundra:1,swamp:2,urban:1},
+  engineers:{plains:1,desert:1,forest:2,hills:2,mountain:3,tundra:2,swamp:3,urban:1},
+  marines:{plains:1,desert:1,forest:2,hills:2,mountain:3,tundra:2,swamp:3,urban:1},
+  mechanized:{plains:1,desert:1,forest:2,hills:2,mountain:4,tundra:2,swamp:3,urban:1},
+  rocket_artillery:{plains:1,desert:1,forest:2,hills:2,mountain:3,tundra:2,swamp:3,urban:2},
+  supply_convoys:{plains:1,desert:1,forest:2,hills:2,mountain:4,tundra:2,swamp:3,urban:1}
 };
 
 /* ---------- geometry ---------- */
@@ -434,8 +493,10 @@ function nbrs(i){var c=i%W,r=(i/W)|0,d=(r&1)?[[1,0],[-1,0],[1,-1],[0,-1],[1,1],[
 function edges(i){var c=i%W,r=(i/W)|0,d=(r&1)?[[1,0],[1,1],[0,1],[-1,0],[0,-1],[1,-1]]:[[1,0],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1]],o=[];
   for(var k=0;k<6;k++){var nc=c+d[k][0],nr=r+d[k][1];o.push(nc>=0&&nc<W&&nr>=0&&nr<H?nr*W+nc:-1);}return o;}
 function cube(i){var c=i%W,r=(i/W)|0,x=c-((r-(r&1))>>1);return [x,r,-x-r];}
-(function(){var cu=[];for(var i=0;i<N;i++){NB[i]=nbrs(i);EDGE[i]=edges(i);cu[i]=cube(i);}
-  for(var a=0;a<N;a++)for(var b=0;b<N;b++){var A=cu[a],B=cu[b];D[a*N+b]=Math.max(Math.abs(A[0]-B[0]),Math.abs(A[1]-B[1]),Math.abs(A[2]-B[2]));}})();
+function setupGrid(w,h){W=w;H=h;N=w*h;NB=[];EDGE=[];D=new Uint8Array(N*N);var cu=[],i,a,b;
+  for(i=0;i<N;i++){NB[i]=nbrs(i);EDGE[i]=edges(i);cu[i]=cube(i);}
+  for(a=0;a<N;a++)for(b=0;b<N;b++){var A=cu[a],B=cu[b];D[a*N+b]=Math.max(Math.abs(A[0]-B[0]),Math.abs(A[1]-B[1]),Math.abs(A[2]-B[2]));}}
+setupGrid(19,19);
 function dist(a,b){return D[a*N+b];}
 
 /* ---------- rng / noise ---------- */
@@ -450,6 +511,7 @@ function mkNoise(seed){
 var terr,prov,provOf,units,unitAt,fort,depot,mines,scar,wreck,fallout,turn,seed,bA='temperate',bB='desert';
 var sel=null,reach=null,attackable=null,focus=-1,busy=false,over=false,vis,supA,supB,effects=[],needStatic=true,strike=null;
 var weather='clear',nextWeather='clear',cmd={A:null,B:null},pp={A:0,B:0},stock={A:{icbm:0,nuke:0},B:{icbm:0,nuke:0}},coast=[],flash={};
+var deployMode=null,deployCache=[],lastBal=null;
 var rnd=Math.random,pendingBridge=false,hov=-1,reserve={A:{},B:{}},queue={A:[],B:[]};
 function pick(arr,r){return arr[Math.floor(r()*arr.length)];}
 function shuffle(a,r){for(var i=a.length-1;i>0;i--){var j=Math.floor(r()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
@@ -459,6 +521,9 @@ function isNight(){var h=hour();return h>=21||h<5;}
 function rollWeather(cur){var tab=BIOMES[bA].wx.concat(BIOMES[bB].wx);if(rnd()<.5)return cur;return pick(tab,rnd);}
 
 function generate(){
+  pickStyle();
+  if(NAVAL&&W<25){setupGrid(25,25);coast=[];size();$('selSize').value='25';}
+  applySize();
   seed=(Math.random()*1e9)|0;
   var r=mulberry32(seed),nz=mkNoise(seed),raw=new Float32Array(N),i,c,rr;
   for(i=0;i<N;i++){c=i%W;rr=(i/W)|0;var px=c+.5*(rr&1);
@@ -467,49 +532,59 @@ function generate(){
   var u=new Float32Array(N);for(i=0;i<N;i++)u[ord[i]]=(i+.5)/N;
   function cdf(b){var acc=0,o=[];for(var k=0;k<ORDER.length;k++){acc+=BIOMES[b].w[ORDER[k]];o.push(acc);}return o;}
   var cA=cdf(bA),cB=cdf(bB);terr=new Array(N);
-  for(i=0;i<N;i++){c=i%W;var t=Math.min(1,Math.max(0,(c-8)/8));t=t*t*(3-2*t);terr[i]='mountain';
+  for(i=0;i<N;i++){c=i%W;var bw=W*.32,t=Math.min(1,Math.max(0,(c-bw)/bw));t=t*t*(3-2*t);terr[i]='mountain';
     for(var k=0;k<ORDER.length;k++){if(u[i]<=(1-t)*cA[k]+t*cB[k]){terr[i]=ORDER[k];break;}}}
+  if(NAVAL){for(i=0;i<N;i++)terr[i]=u[i]>.93?pick(['plains','forest','hills','mountain','swamp'],r):'sea';}
+  else{seaComps();for(i=0;i<N;i++){if(terr[i]==='sea'&&compSz[compId[i]]<7)terr[i]='swamp';}
+    lastBal=null;if($('chkFair').checked)balanceTerrain(r);}
   prov=[];provOf=new Int16Array(N).fill(-1);
   function seeds(side,biome){
-    var lo=side==='A'?0:13,hi=side==='A'?11:24,cand=[],h;
-    for(h=0;h<N;h++){var cc=h%W;if(cc>=lo&&cc<=hi&&terr[h]!=='sea')cand.push(h);}
+    var mid=Math.floor(W/2),lo=side==='A'?0:mid+1,hi=side==='A'?mid-1:W-1,cand=[],h;
+    for(h=0;h<N;h++){var cc=h%W;if(cc>=lo&&cc<=hi&&(NAVAL||terr[h]!=='sea'))cand.push(h);}
     if(!cand.length){for(h=0;h<N;h++){var c2=h%W;if(c2>=lo&&c2<=hi)cand.push(h);}}
-    var capC=cand.filter(function(h){var cc=h%W;return side==='A'?cc<=4:cc>=20;});
+    var capC=cand.filter(function(h){var cc=h%W;var e5=Math.max(1,Math.floor(W*.2))+(W<15?1:0);return side==='A'?cc<=e5-1:cc>=W-e5;});
     if(!capC.length){capC=cand.slice().sort(function(a,b){return side==='A'?(a%W)-(b%W):(b%W)-(a%W);}).slice(0,4);}
     var capital=pick(capC,r),picked=[capital];shuffle(cand,r);
-    for(var sep=5;sep>=1&&picked.length<6;sep--){for(var q=0;q<cand.length&&picked.length<6;q++){var h3=cand[q],ok=true;
+    for(var sep=Math.max(3,Math.round(W/5));sep>=1&&picked.length<PPS;sep--){for(var q=0;q<cand.length&&picked.length<PPS;q++){var h3=cand[q],ok=true;
       for(var z=0;z<picked.length;z++){if(dist(h3,picked[z])<sep){ok=false;break;}}if(ok)picked.push(h3);}}
     var names=shuffle(BIOMES[biome].names.slice(),r);
     return picked.map(function(h,ix){return {id:0,name:names[ix%names.length],owner:side,home:side,seed:h,capital:ix===0};});}
-  prov=seeds('A',bA).concat(seeds('B',bB));prov.forEach(function(p,ix){p.id=ix;terr[p.seed]='urban';});
+  prov=seeds('A',bA).concat(seeds('B',bB));prov.forEach(function(p,ix){p.id=ix;terr[p.seed]='urban';if(NAVAL)NB[p.seed].forEach(function(n){if(terr[n]==='sea')terr[n]=r()<.5?'plains':'forest';});});
   for(i=0;i<N;i++){if(terr[i]==='sea')continue;var best=-1,bd=99;for(var p=0;p<prov.length;p++){var dd=dist(i,prov[p].seed);if(dd<bd){bd=dd;best=p;}}provOf[i]=best;}
   var capA=homeCap('A'),capB=homeCap('B');pendingBridge=false;
-  if(!connected(capA,capB)){var cost=new Float32Array(N).fill(1e9),prev=new Int16Array(N).fill(-1),done=new Uint8Array(N);cost[capA]=0;
+  if(!NAVAL&&!connected(capA,capB)){var cost=new Float32Array(N).fill(1e9),prev=new Int16Array(N).fill(-1),done=new Uint8Array(N);cost[capA]=0;
     for(var s=0;s<N;s++){var m=-1,mc=1e9;for(var x=0;x<N;x++){if(!done[x]&&cost[x]<mc){mc=cost[x];m=x;}}if(m<0||m===capB)break;done[m]=1;
       for(var ni=0;ni<NB[m].length;ni++){var y=NB[m][ni],cc2=cost[m]+(terr[y]==='sea'?1:0.01);if(cc2<cost[y]){cost[y]=cc2;prev[y]=m;}}}
     var cur=capB;while(cur>=0&&cur!==capA){if(terr[cur]==='sea'){terr[cur]='plains';var bp=0,bdist=99;for(var p2=0;p2<prov.length;p2++){var d3=dist(cur,prov[p2].seed);if(d3<bdist){bdist=d3;bp=p2;}}provOf[cur]=bp;}cur=prev[cur];}
     pendingBridge=true;}
+  seaComps();
   coast=[];for(i=0;i<N;i++){if(terr[i]!=='sea')continue;for(var e=0;e<6;e++){var n=EDGE[i][e];if(n>=0&&terr[n]!=='sea')coast.push([i,e]);}}
   buildLists();
   fort={};depot={};mines={};scar={};wreck={};fallout={};flash={};units=[];turn=1;over=false;sel=null;reach=null;attackable=null;strike=null;focus=-1;busy=false;effects=[];
   cmd.A=pick(TRAITS,r);cmd.B=pick(TRAITS,r);pp={A:12,B:12};reserve={A:Object.assign({},START_RES),B:Object.assign({},START_RES)};queue={A:[],B:[]};stock={A:{icbm:0,nuke:0},B:{icbm:0,nuke:0}};
   weather=pick(BIOMES[bA].wx,r);nextWeather=rollWeather(weather);
-  spawn('A');spawn('B');
+  spawn('A');spawn('B');calcRepr();
   rebuildAt();recompute();needStatic=true;$('banner').style.display='none';$('log').innerHTML='';
-  log('New board, seed '+seed+'. '+BIOMES[bA].label+' Aurelia vs '+BIOMES[bB].label+' Kharzun.','s');
+  log('New board '+W+'x'+H+(NAVAL?' (naval war, open sea)':'')+', seed '+seed+'. '+BIOMES[bA].label+' Aurelia vs '+BIOMES[bB].label+' Kharzun.','s');
   log('Commanders: Aurelia '+cmd.A.name+', Kharzun '+cmd.B.name+'.','s');
   if(pendingBridge)log('A land bridge surfaced between the capitals.','s');
+  if(lastBal)log('Fair terrain: average march cost Aurelia '+lastBal[0].toFixed(2)+', Kharzun '+lastBal[1].toFixed(2)+'.','s');
   render();
 }
 function connected(a,b){var seen=new Uint8Array(N),q=[a];seen[a]=1;while(q.length){var x=q.pop();if(x===b)return true;NB[x].forEach(function(y){if(!seen[y]&&terr[y]!=='sea'){seen[y]=1;q.push(y);}});}return false;}
 function homeCap(side){return prov.filter(function(p){return p.capital&&p.home===side;})[0].seed;}
+function placeIn(side,t,order,taken,pred){for(var pass=0;pass<2;pass++){for(var k=0;k<order.length;k++){var h=order[k];if(taken[h]||!pred(h))continue;
+    if(pass===0&&NB[h].some(function(n){return taken[n];}))continue;taken[h]=1;addUnit(side,t,h);return true;}}return false;}
 function spawn(side){
   var cap=homeCap(side),order=[];for(var i=0;i<N;i++)order.push(i);order.sort(function(a,b){return dist(cap,a)-dist(cap,b)||a-b;});
-  var types=['soldiers','soldiers','tanks','artillery','sam_batteries','fighters','spies'],taken={};units.forEach(function(u){taken[u.hex]=1;});
-  types.forEach(function(t){for(var k=0;k<order.length;k++){var h=order[k];if(taken[h])continue;var te=terr[h];
-      if(te==='sea')continue;if(HEAVY[t]&&(te==='mountain'||te==='swamp'))continue;taken[h]=1;addUnit(side,t,h);break;}});
-  var navy=['destroyers','submarines'],ni=0;
-  for(var k2=0;k2<order.length&&ni<navy.length;k2++){var h2=order[k2];if(dist(cap,h2)>9)break;if(terr[h2]==='sea'&&!taken[h2]){taken[h2]=1;addUnit(side,navy[ni++],h2);}}
+  var land=NAVAL?['fighters','fighters','bombers','sam_batteries','spies']:['soldiers','soldiers','tanks','artillery','sam_batteries','fighters','spies','engineers'];
+  if(!NAVAL){var ex=['soldiers','tanks','artillery'],nx=Math.max(0,Math.floor((CAPN-16)/8)*3);for(var e=0;e<nx;e++)land.push(ex[e%3]);}
+  var navy=NAVAL?['destroyers','destroyers','cruisers','submarines','submarines','aircraft_carriers']:(CAPN>=16?['destroyers','submarines']:['destroyers']);
+  if(NAVAL){var nex=['destroyers','cruisers','submarines'],nn=Math.max(0,Math.floor((CAPN-16)/8)*2);for(var e2=0;e2<nn;e2++)navy.push(nex[e2%3]);}
+  var taken={};units.forEach(function(u){taken[u.hex]=1;});
+  land.forEach(function(t){placeIn(side,t,order,taken,function(h){var te=terr[h];return te!=='sea'&&!(HEAVY[t]&&(te==='mountain'||te==='swamp'))&&hasExit(t,h,taken);});});
+  var lim=Math.round(W*(NAVAL?.5:.36));
+  navy.forEach(function(t){placeIn(side,t,order,taken,function(h){return dist(cap,h)<=lim&&bigSea(h)&&hasExit(t,h,taken);});});
 }
 function addUnit(team,type,hex){var u={id:units.length+1,team:team,type:type,hex:hex,hp:100,org:100,xp:0,mpLeft:0,acted:false,dig:0,order:null,digging:false,sweep:false,fought:false,regroup:0,arrive:false,hidden:false,vx:0,vy:0};
   units.push(u);u.mpLeft=mpEff(u);return u;}
@@ -534,7 +609,7 @@ function moveCost(type,t){
   var c=(MV[type]||MV.soldiers)[t];return c?c:Infinity;}
 function canAttack(a,d){
   var at=a.type,dt=d.type;
-  if(at==='spies')return false;
+  if(at==='spies'||at==='supply_convoys')return false;
   if(at==='sam_batteries')return !!FLY[dt];
   if(HIGH[dt])return at==='fighters'||at==='cruisers'||at==='aircraft_carriers';
   if(dt==='apaches')return !(at==='tanks'||at==='artillery'||at==='submarines'||at==='bombers'||ONESHOT[at]);
@@ -547,15 +622,17 @@ function reachable(u){
   var cost={},fr=[[0,u.hex]],L=LEASH[u.type],bases=L?airbases(u.team):null;cost[u.hex]=0;
   while(fr.length){fr.sort(function(a,b){return a[0]-b[0];});var cur=fr.shift(),c0=cur[0],h=cur[1];if(c0>cost[h])continue;
     if(h!==u.hex&&inZOC(h,u.team,u.type))continue;
-    NB[h].forEach(function(n){if(unitAt[n]&&unitAt[n]!==u)return;var mc=moveCost(u.type,terr[n]);if(!isFinite(mc))return;var nc=c0+mc;
+    NB[h].forEach(function(n){var occ=unitAt[n];if(occ&&occ!==u&&occ.team!==u.team)return;var mc=moveCost(u.type,terr[n]);if(!isFinite(mc)&&u.type==='marines'&&terr[n]==='sea'&&NB[n].some(function(m){return terr[m]!=='sea';}))mc=2;if(!isFinite(mc))return;var nc=c0+mc;if(nc>u.mpLeft&&h===u.hex&&u.mpLeft>0&&u.mpLeft>=mpEff(u))nc=u.mpLeft;
       if(L&&!bases.some(function(b){return dist(b,n)<=L;}))return;
       if(nc<=u.mpLeft&&(cost[n]===undefined||nc<cost[n])){cost[n]=nc;fr.push([nc,n]);}});}
+  Object.keys(cost).forEach(function(k){var o=unitAt[+k];if(o&&o!==u)delete cost[k];});
   return cost;}
 function coverBase(h,u){var d=TERR[terr[h]].def;if(u&&FLY[u.type])return 0;if(u&&SEA[u.type])return .05;return d;}
 function fortLevel(h,team){var f=fort[h];return f&&f.owner===team?f.level:0;}
 function digCap(h){return terr[h]==='tundra'?2:3;}
 function supRange(team,base){return base+(cmd[team]&&cmd[team].k==='log'?2:0);}
 function calcSupply(team){var s=new Uint8Array(N),r1=supRange(team,4),r2=supRange(team,6);
+  units.forEach(function(cv){if(cv.team===team&&cv.type==='supply_convoys'&&cv.mpLeft>=mpEff(cv)){for(var h=0;h<N;h++)if(dist(cv.hex,h)<=3)s[h]=1;}});
   prov.forEach(function(p){if(p.owner===team){for(var h=0;h<N;h++)if(dist(p.seed,h)<=r1)s[h]=1;}});
   Object.keys(depot).forEach(function(k){if(depot[k].owner===team){for(var h=0;h<N;h++)if(dist(+k,h)<=r2)s[h]=1;}});return s;}
 function inSupply(u){return (u.team==='A'?supA:supB)[u.hex]===1;}
@@ -599,7 +676,7 @@ function doAttack(att,def){
   var r1=damage(att,def,false),ranged=UT[att.type].max>1||att.type==='bombers';
   def.hp-=r1.hp;def.org-=r1.org;att.xp+=1;
   fx('shot',att.hex,def.hex,att.team);fx('num',def.hex,'-'+r1.hp,'#ff9a8a');fx('boom',def.hex);addScar(def.hex);
-  log(nm(att)+' ('+tn(att.team)+') hits '+nm(def)+' for '+r1.hp+(r1.flank?' (flanked)':'')+(r1.amb?' (ambush)':'')+'.',att.team.toLowerCase());
+  log(nm(att)+' ('+tn(att.team)+') hits '+nm(def)+' for '+r1.hp+' ('+lossTxt(def,r1.hp+Math.min(0,def.hp))+')'+(r1.flank?' (flanked)':'')+(r1.amb?' (ambush)':'')+'.',att.team.toLowerCase());
   var f=fort[def.hex];if(ranged&&f&&f.owner===def.team&&f.level>0&&rnd()<.3){f.level--;if(!f.level)delete fort[def.hex];log('Fort at '+hexName(def.hex)+' damaged.','s');}
   if(def.hp>0&&def.org>0&&canAttack(def,att)){var D2=UT[def.type],dd=dist(att.hex,def.hex);
     if(dd>=D2.min&&dd<=D2.max&&D2.atk>0){var r2=damage(def,att,true);att.hp-=r2.hp;att.org-=r2.org;def.xp+=1;fx('num',att.hex,'-'+r2.hp,'#ffd08a');}}
@@ -612,7 +689,7 @@ function oneShot(att,def){
   fx('shot',att.hex,def.hex,att.team);att.hp=0;
   if(rnd()<p){log(nm(att)+' ('+tn(att.team)+') shot down by SAMs.','s');fx('num',def.hex,'INTERCEPTED','#9fe3ff');}
   else{var r1=damage(att,def,false);def.hp-=r1.hp;def.org-=r1.org;fx('num',def.hex,'-'+r1.hp,'#ff9a8a');fx('boom',def.hex);addScar(def.hex);
-    log(nm(att)+' ('+tn(att.team)+') hits '+nm(def)+' for '+r1.hp+'.',att.team.toLowerCase());
+    log(nm(att)+' ('+tn(att.team)+') hits '+nm(def)+' for '+r1.hp+' ('+lossTxt(def,r1.hp+Math.min(0,def.hp))+').',att.team.toLowerCase());
     var f=fort[def.hex];if(f&&f.owner===def.team&&f.level>0&&rnd()<.5){f.level--;if(!f.level)delete fort[def.hex];log('Fort at '+hexName(def.hex)+' damaged.','s');}
     if(def.hp<=0)die(def,null);else if(def.org<=0)rout(def,att);}
   units=units.filter(function(x){return x.hp>0;});if(sel&&units.indexOf(sel)<0)sel=null;rebuildAt();recompute();}
@@ -630,9 +707,9 @@ function checkMine(u){var m=mines[u.hex];if(!m||m.owner===u.team||!isLand(u.type
   delete mines[u.hex];u.hp-=25;u.org-=30;fx('boom',u.hex);fx('num',u.hex,'-25','#ffd08a');addScar(u.hex);log(nm(u)+' ('+tn(u.team)+') hits a mine at '+hexName(u.hex)+'.',u.team.toLowerCase());
   if(u.hp<=0){die(u,null);units=units.filter(function(x){return x.hp>0;});if(sel===u)sel=null;}}
 function moveUnit(u,h,cost){unitAt[u.hex]=null;u.hex=h;u.mpLeft-=cost;u.dig=0;u.order=null;u.digging=false;unitAt[h]=u;checkMine(u);rebuildAt();recompute();}
-function buildTurns(u,type){var t=type==='fort'?2:type==='depot'?3:2;if(cmd[u.team].k==='build')t=Math.max(1,t-1);return t;}
-function startOrder(u,type){
-  var turns=buildTurns(u,type);u.order={type:type,left:turns,total:turns};u.acted=true;u.mpLeft=0;
+function buildTurns(u,type){var t=type==='fort'?2:type==='depot'?3:type==='causeway'?3:2;if(cmd[u.team].k==='build')t=Math.max(1,t-1);if(u.type==='engineers')t=Math.max(1,t-1);return t;}
+function startOrder(u,type,target){
+  var turns=buildTurns(u,type);u.order={type:type,left:turns,total:turns,target:target};u.acted=true;u.mpLeft=0;
   log(nm(u)+' ('+tn(u.team)+') starts '+(type==='mines'?'mines':'a '+type)+' ('+turns+' turn'+(turns>1?'s':'')+').',u.team.toLowerCase());}
 /* spies */
 function sabTargets(u){var out=[];[u.hex].concat(NB[u.hex]).forEach(function(h){var f=fort[h],d=depot[h],m=mines[h],e=unitAt[h];
@@ -648,16 +725,22 @@ function doSabotage(u){var t=sabTargets(u);if(!t.length)return false;var g=t[0];
   else log(nm(u)+' ('+tn(u.team)+') sabotage failed.',u.team.toLowerCase());
   rebuildAt();recompute();return true;}
 function income(team){return 3+2*prov.filter(function(p){return p.owner===team;}).length;}
-function spawnHex(team,type){
-  var cap=homeCap(team),owned=prov.filter(function(p){return p.owner===team;}),best=-1,bd=99;
-  for(var h=0;h<N;h++){if(unitAt[h])continue;var te=terr[h];
-    if(SEA[type]){if(te!=='sea')continue;var near=owned.some(function(p){return NB[p.seed].some(function(n){return terr[n]==='sea';})&&dist(h,p.seed)<=2;});if(!near)continue;}
-    else{if(te==='sea'||te==='mountain'||te==='swamp')continue;if(owner(h)!==team)continue;}
-    var d=dist(h,cap);if(d<bd){bd=d;best=h;}}
-  return best;}
+function deployHexes(team,type){
+  var owned=prov.filter(function(p){return p.owner===team;}),bases=Object.keys(depot).filter(function(k){return depot[k].owner===team;}).map(Number),out=[];
+  for(var h=0;h<N;h++){if(unitAt[h])continue;var te=terr[h],ok;
+    if(SEA[type]){if(!bigSea(h))continue;ok=owned.some(function(p){return NB[p.seed].some(function(n){return terr[n]==='sea';})&&dist(h,p.seed)<=2;})||bases.some(function(b){return dist(h,b)<=2;});}
+    else{if(te==='sea'||!isFinite(moveCost(type,te)))continue;if(HEAVY[type]&&(te==='mountain'||te==='swamp'))continue;ok=owned.some(function(p){return dist(h,p.seed)<=2;})||bases.some(function(b){return dist(h,b)<=1;});}
+    if(ok)out.push(h);}
+  return out;}
+function spawnHex(team,type){var hs=deployHexes(team,type);if(!hs.length)return -1;
+  var foes=units.filter(function(u){return u.team!==team;});if(team==='A'||!foes.length)return hs[0];
+  var best=hs[0],bd=999;hs.forEach(function(h){var d=999;foes.forEach(function(f){var x=dist(h,f.hex);if(x<d)d=x;});if(d<bd){bd=d;best=h;}});return best;}
 function countOf(team){return units.filter(function(u){return u.team===team;}).length;}
-function buy(team,type){
-  if(reserve[team][type]<1||pp[team]<depCost(type)||countOf(team)>=CAPN)return false;var h=spawnHex(team,type);if(h<0)return false;
+function buy(team,type,hex){
+  if(!allowed(type))return false;
+  if(reserve[team][type]<1||pp[team]<depCost(type)||countOf(team)>=CAPN)return false;
+  var h=(hex===undefined)?spawnHex(team,type):hex;if(h<0||h===undefined)return false;
+  if(hex!==undefined&&deployHexes(team,type).indexOf(h)<0)return false;
   reserve[team][type]--;pp[team]-=depCost(type);var u=addUnit(team,type,h);u.acted=true;u.mpLeft=0;u.arrive=true;rebuildAt();recompute();
   log(tn(team)+' deploys '+nm(u)+' at '+hexName(h)+'.',team.toLowerCase());return true;}
 function train(team,type){
@@ -694,10 +777,10 @@ function endTurn(){
 }
 function aiBuy(){
   if(pp.B>=70&&rnd()<.08)buyStrat('B','nuke');else if(pp.B>=30&&rnd()<.15)buyStrat('B','icbm');
-  for(var k=0;k<2;k++){var pool=KEYS.filter(function(t){return reserve.B[t]>0&&pp.B>=depCost(t)&&spawnHex('B',t)>=0;});if(!pool.length)break;
+  for(var k=0;k<2;k++){var pool=KEYS.filter(function(t){return allowed(t)&&reserve.B[t]>0&&pp.B>=depCost(t)&&spawnHex('B',t)>=0;});if(!pool.length)break;
     var t=pick(pool,rnd);if(rnd()<.3&&pool.indexOf('soldiers')>=0)t='soldiers';if(!buy('B',t))break;}
   if(queue.B.length<4&&pp.B>=24&&rnd()<.5){var types=['soldiers','soldiers','tanks','artillery','fighters','bombers','apaches','spies','sam_batteries','kamikaze_drones','cruise_missiles'];
-    ['destroyers','cruisers','submarines','aircraft_carriers'].forEach(function(t){if(spawnHex('B',t)>=0)types.push(t);});train('B',pick(types,rnd));}}
+    ['destroyers','cruisers','submarines','aircraft_carriers'].forEach(function(t){if(spawnHex('B',t)>=0)types.push(t);});types=types.filter(allowed);if(types.length)train('B',pick(types,rnd));}}
 function aiStrike(){var tk=stock.B.nuke>0?'nuke':stock.B.icbm>0?'icbm':null;if(!tk||rnd()<.5)return;
   var foes=units.filter(function(u){return u.team==='A';});if(!foes.length)return;
   var best=null,bs=-1;foes.forEach(function(f){var s=foes.filter(function(g){return dist(g.hex,f.hex)<=STRAT[tk].rad;}).length-units.filter(function(g){return g.team==='B'&&dist(g.hex,f.hex)<=STRAT[tk].rad+1;}).length*2;if(s>bs){bs=s;best=f;}});
@@ -712,14 +795,14 @@ function aiUnit(u){
     cand.sort(function(a,b){return a.hp-b.hp;});var tg0=cand[0],R2=reachable(u),bh=-1,bc=99;
     Object.keys(R2).forEach(function(k){if(dist(+k,tg0.hex)===1&&R2[k]<bc){bc=R2[k];bh=+k;}});if(bh<0)return;
     if(bh!==u.hex)moveUnit(u,bh,R2[bh]);doAttack(u,tg0);recompute();render();return;}
-  if(t==='sam_batteries'){var tg1=targets(u),k1=Object.keys(tg1);if(k1.length){doAttack(u,tg1[k1[0]]);recompute();render();return;}
+  if(t==='sam_batteries'||t==='supply_convoys'){var tg1=targets(u),k1=Object.keys(tg1);if(k1.length){doAttack(u,tg1[k1[0]]);recompute();render();return;}
     var allies=units.filter(function(x){return x.team===u.team&&x!==u&&x.type!=='sam_batteries';});
     if(allies.length){var A0=nearest(u,allies);if(dist(u.hex,A0.hex)>3){var R3=reachable(u),bb=u.hex,bd3=99;Object.keys(R3).forEach(function(k){var d=dist(+k,A0.hex);if(d<bd3){bd3=d;bb=+k;}});if(bb!==u.hex)moveUnit(u,bb,R3[bb]);}}
     recompute();render();return;}
   var T=nearest(u,foes);
   if(t==='fighters'){var fl=foes.filter(function(f){return FLY[f.type];});if(fl.length){var nf=nearest(u,fl);if(dist(u.hex,nf.hex)<=10)T=nf;}}
   var dT=dist(u.hex,T.hex);
-  if(t==='soldiers'&&dT<=8&&isLand(t)&&terr[u.hex]!=='sea'){
+  if(BUILDER[t]&&dT<=8&&isLand(t)&&terr[u.hex]!=='sea'){
     if(fortLevel(u.hex,u.team)<1&&rnd()<.25){startOrder(u,'fort');render();return;}
     if(dT<=5&&!mines[u.hex]&&rnd()<.12){startOrder(u,'mines');render();return;}
     var cnt=Object.keys(depot).filter(function(k){return depot[k].owner===u.team;}).length;
@@ -739,7 +822,8 @@ function finishTurn(){
   units.forEach(function(u){
     if(u.order){u.order.left--;if(u.order.left<=0){
         if(u.order.type==='fort'){var f=fort[u.hex]||{level:0,owner:u.team};f.level=Math.min(3,f.level+1);f.owner=u.team;fort[u.hex]=f;log('Fort level '+f.level+' completed at '+hexName(u.hex)+'.',u.team.toLowerCase());}
-        else if(u.order.type==='depot'){depot[u.hex]={owner:u.team};log('Depot completed at '+hexName(u.hex)+'.',u.team.toLowerCase());}
+        else if(u.order.type==='depot'){depot[u.hex]={owner:u.team};log('Forward base completed at '+hexName(u.hex)+'.',u.team.toLowerCase());}
+        else if(u.order.type==='causeway'){var th=u.order.target;if(th!==undefined&&terr[th]==='sea'&&!unitAt[th]){terr[th]='plains';provOf[th]=provOf[u.hex];needStatic=true;rebuildCoast();buildLists();seaComps();log('A causeway opens at '+hexName(u.hex)+'.',u.team.toLowerCase());}}
         else{mines[u.hex]={owner:u.team};log('Mines laid at '+hexName(u.hex)+'.',u.team.toLowerCase());}
         u.order=null;}}
     else if(u.digging){u.dig=Math.min(digCap(u.hex),u.dig+1);}
@@ -763,10 +847,14 @@ function finishTurn(){
     u.fought=false;u.arrive=false;u.acted=!!u.order;u.mpLeft=u.order?0:mpEff(u);
     if(u.regroup>0){u.acted=true;u.mpLeft=0;u.regroup--;}
   });
-  prov.forEach(function(p){var u=unitAt[p.seed];if(u&&u.team!==p.owner&&isLand(u.type)&&u.type!=='spies'||u&&u.team!==p.owner&&u.type==='spies'){
-    log(nm(u)+' takes '+p.name+' for '+tn(u.team)+'.',u.team.toLowerCase());p.owner=u.team;needStatic=true;flash[p.id]=performance.now();
-    Object.keys(depot).forEach(function(k){if(provOf[+k]===p.id&&depot[k].owner!==u.team)delete depot[k];});
-    if(p.capital){over=true;$('banner').textContent=tn(u.team)+' takes the capital';$('banner').style.display='grid';log('War over: '+tn(u.team)+' wins.','s');}}});
+  Object.keys(depot).forEach(function(k){var cu=unitAt[+k];if(cu&&cu.team!==depot[k].owner&&isLand(cu.type)){log(nm(cu)+' ('+tn(cu.team)+') captures a forward base at '+hexName(+k)+'.',cu.team.toLowerCase());depot[k].owner=cu.team;}});
+  function capture(p,team,how){log(how+' takes '+p.name+' for '+tn(team)+'.',team.toLowerCase());p.owner=team;p.bl=0;needStatic=true;flash[p.id]=performance.now();
+    Object.keys(depot).forEach(function(k){if(provOf[+k]===p.id&&depot[k].owner!==team)delete depot[k];});
+    if(p.capital){over=true;$('banner').textContent=tn(team)+' takes the capital';$('banner').style.display='grid';log('War over: '+tn(team)+' wins.','s');}}
+  prov.forEach(function(p){var u=unitAt[p.seed];if(u&&u.team!==p.owner&&isLand(u.type))capture(p,u.team,nm(u));});
+  if(NAVAL){prov.forEach(function(p){if(over)return;var en=p.owner==='A'?'B':'A',adj=NB[p.seed];
+    var hasEn=adj.some(function(n){var u=unitAt[n];return u&&u.team===en&&SEA[u.type]&&u.type!=='submarines';}),hasOwn=adj.some(function(n){var u=unitAt[n];return u&&u.team===p.owner;});
+    p.bl=(hasEn&&!hasOwn)?(p.bl||0)+1:0;if(p.bl===1)log(p.name+' is under blockade.','s');if(p.bl>=3)capture(p,en,'A blockade fleet');});}
   var w=WX();log('Hour '+pad(hour())+':00 · '+w.name+(isNight()?' · night':'')+'.','s');
   rebuildAt();recompute();busy=false;render();
 }
@@ -814,18 +902,27 @@ var ICON={
   cruise_missiles:function(g){g.save();g.translate(12,12);g.rotate(Math.PI/4);g.translate(-12,-12);
     rrect(g,9.8,5.6,4.4,13,2);fs(g);poly(g,[9.8,7,12,1.2,14.2,7]);fs(g);poly(g,[9.8,15,6,20.6,9.8,18.4]);fs(g);poly(g,[14.2,15,18,20.6,14.2,18.4]);fs(g);dot(g,12,11,1.2);
     g.fillStyle='#ffd25a';poly(g,[10.6,19,12,23.4,13.4,19]);g.fill();g.restore();},
+  engineers:function(g){g.beginPath();g.moveTo(3.6,16.5);g.arc(12,16.5,8.4,Math.PI,0);g.closePath();fs(g);rrect(g,2,16.2,20,3.4,1.6);fs(g);rrect(g,10.4,5.4,3.2,6.6,1.2);fs(g);dot(g,12,13.6,1.1);},
+  marines:function(g){ICON.soldiers(g);g.strokeStyle='#fff';g.lineWidth=1.4;g.beginPath();g.moveTo(1.5,22.6);g.quadraticCurveTo(5,21,8.5,22.6);g.quadraticCurveTo(12,24.2,15.5,22.6);g.quadraticCurveTo(19,21,22.5,22.6);g.stroke();},
+  mechanized:function(g){rrect(g,1.5,10,21,7.5,2.4);fs(g);[5.5,10,14.5,19].forEach(function(x){g.beginPath();g.arc(x,18.4,2.3,0,6.283);fs(g);dot(g,x,18.4,.8);});rrect(g,8,6.4,8,3.8,1.4);fs(g);line(g,15,8.2,22.5,8.2,1.8);g.beginPath();g.rect(3.6,11.6,3.4,2.4);fs(g);},
+  rocket_artillery:function(g){rrect(g,1.6,16.4,20.8,4,1.2);fs(g);rrect(g,16.6,12,5.6,4.4,1);fs(g);[5.4,11,16.6].forEach(function(x){dot(g,x,20.8,1.7);});
+    for(var k=0;k<3;k++){line(g,4+k*3.2,15.2,11+k*3.2,4.2,2.2);poly(g,[10+k*3.2,5.2,12+k*3.2,2.6,13+k*3.2,5.8]);g.fill();}},
+  supply_convoys:function(g){rrect(g,1.6,16.6,20.8,3.8,1.2);fs(g);rrect(g,15.6,9.4,6.6,7.2,1.4);fs(g);g.beginPath();g.rect(2,6.4,12.4,10.2);fs(g);line(g,8.2,8,8.2,15,1.6);line(g,3.6,11.5,13,11.5,1.6);[5,11,18.5].forEach(function(x){dot(g,x,20.8,1.8);});},
   sam_batteries:function(g){rrect(g,1.6,16,20.8,4,1.2);fs(g);rrect(g,16.6,11.6,5.6,4.4,1);fs(g);[5.4,11,16.6].forEach(function(x){dot(g,x,20.8,1.7);});
     line(g,5,13.8,12.4,4.6,2.8);line(g,9,14.4,16.4,5.4,2.8);poly(g,[11.2,3.6,13.6,3.4,13.6,6.2]);g.fill();poly(g,[15.2,4.4,17.6,4.2,17.4,7]);g.fill();},
   icbm:function(g){rrect(g,9.4,4,5.2,13.6,2.4);fs(g);poly(g,[9.4,6.4,12,0.8,14.6,6.4]);fs(g);poly(g,[9.4,14,5.4,20,9.4,18]);fs(g);poly(g,[14.6,14,18.6,20,14.6,18]);fs(g);dot(g,12,9.4,1.4);
     g.fillStyle='#ffd25a';poly(g,[10.2,18.4,12,23.6,13.8,18.4]);g.fill();},
   nuke:function(g){g.beginPath();g.arc(12,12,10.6,0,6.283);fs(g);g.fillStyle='#222';for(var k=0;k<3;k++){var a=-Math.PI/2+k*2.0944;g.beginPath();g.moveTo(12,12);g.arc(12,12,8.4,a-.52,a+.52);g.closePath();g.fill();}g.beginPath();g.arc(12,12,1.9,0,6.283);g.fill();g.fillStyle='#fff';}
 };
+var CUSTOM={};
 function drawIcon(g,type,x,y,size){g.save();g.translate(x-size/2,y-size/2);var k=size/24;g.scale(k,k);g.fillStyle='#fff';g.strokeStyle='rgba(0,0,0,.55)';g.lineWidth=1.1;g.lineJoin='round';ICON[type](g);g.restore();}
 function drawToken(g,type,x,y,R,col){
   g.save();g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(x+1,y+R*.85,R*.9,R*.28,0,0,6.283);g.fill();
   var gr=g.createRadialGradient(x-R*.35,y-R*.4,R*.1,x,y,R);gr.addColorStop(0,col);gr.addColorStop(1,shade(col,-.35));
   g.fillStyle=gr;g.beginPath();g.arc(x,y,R,0,6.283);g.fill();g.lineWidth=Math.max(1.5,R*.13);g.strokeStyle='#fff';g.stroke();
-  drawIcon(g,type,x,y,R*1.4);g.restore();}
+  if(CUSTOM[type]){g.save();g.beginPath();g.arc(x,y,R*.84,0,6.283);g.clip();g.drawImage(CUSTOM[type],x-R*.84,y-R*.84,R*1.68,R*1.68);g.restore();g.lineWidth=Math.max(1.5,R*.14);g.strokeStyle=col;g.beginPath();g.arc(x,y,R*.84,0,6.283);g.stroke();}
+  else drawIcon(g,type,x,y,R*1.4);
+  g.restore();}
 function shade(hex,amt){var c=String(hex).replace('#','');if(c.length===3)c=c[0]+c[0]+c[1]+c[1]+c[2]+c[2];if(c.length!==6)return hex;
   var n=parseInt(c,16),r=n>>16,g=(n>>8)&255,b=n&255,f=function(v){return Math.max(0,Math.min(255,Math.round(v+(amt<0?v*amt:(255-v)*amt))));};
   return 'rgb('+f(r)+','+f(g)+','+f(b)+')';}
@@ -845,10 +942,11 @@ function center(i){return CEN[i];}
 function hexPath(g,x,y,s){g.beginPath();for(var k=0;k<6;k++){var a=Math.PI/180*(60*k-30);var px=x+s*Math.cos(a),py=y+s*Math.sin(a);if(k)g.lineTo(px,py);else g.moveTo(px,py);}g.closePath();}
 function buildGeom(){CEN=[];for(var i=0;i<N;i++){var c=i%W,r=(i/W)|0;CEN[i]=[PAD+S*SQ3*(c+.5*(r&1))+S*SQ3/2,PAD+S*1.5*r+S];}
   COASTSEG=[];if(coast)coast.forEach(function(cs){var c=CEN[cs[0]],e=cs[1],a1=Math.PI/180*(60*e-30),a2=Math.PI/180*(60*(e+1)-30),rr=S*.9;COASTSEG.push([c[0]+rr*Math.cos(a1),c[1]+rr*Math.sin(a1),c[0]+rr*Math.cos(a2),c[1]+rr*Math.sin(a2)]);});}
+function rebuildCoast(){coast=[];for(var i=0;i<N;i++){if(terr[i]!=='sea')continue;for(var e=0;e<6;e++){var n=EDGE[i][e];if(n>=0&&terr[n]!=='sea')coast.push([i,e]);}}}
 function buildLists(){SEAL=[];FORL=[];PLAL=[];DESL=[];TUNL=[];SWAL=[];
   for(var i=0;i<N;i++){var t=terr[i];if(t==='sea')SEAL.push(i);else if(t==='forest')FORL.push(i);else if(t==='plains')PLAL.push(i);else if(t==='desert')DESL.push(i);else if(t==='tundra')TUNL.push(i);else if(t==='swamp')SWAL.push(i);}buildGeom();}
 function size(){
-  var avail=Math.max(300,$('bw').parentElement.clientWidth-2);S=Math.max(15,Math.min(22,Math.floor((avail-2*PAD)/(SQ3*(W+.5)))));
+  var avail=Math.max(300,$('bw').parentElement.clientWidth-2);S=Math.max(15,Math.min(36,Math.floor((avail-2*PAD)/(SQ3*(W+.5)))));
   CW=Math.ceil(PAD*2+S*SQ3*(W+.5));CH=Math.ceil(PAD*2+S*1.5*(H-1)+S*2);DPR=Math.min(window.devicePixelRatio||1,Q()==='full'?2:1.5);
   [cv,off,fogCv].forEach(function(c){c.width=Math.ceil(CW*DPR);c.height=Math.ceil(CH*DPR);});
   cv.style.width=CW+'px';cv.style.height=CH+'px';TK={};buildGeom();needStatic=true;fogDirty=true;kick();}
@@ -996,6 +1094,7 @@ function ambient(t,q,night){
 }
 function marks(t,q){
   var s=S,k,c;
+  prov.forEach(function(p){if(p.bl>0){var cc=CEN[p.seed];ctx.fillStyle='#ffd25a';ctx.font='700 '+Math.round(s*.6)+'px Roboto,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.strokeStyle='rgba(0,0,0,.8)';ctx.lineWidth=3;ctx.strokeText('blockade '+p.bl+'/3',cc[0],cc[1]-s*1.1);ctx.fillText('blockade '+p.bl+'/3',cc[0],cc[1]-s*1.1);}});
   var sk=Object.keys(scar);if(sk.length){ctx.fillStyle='rgba(20,14,10,.4)';ctx.beginPath();sk.forEach(function(key){c=CEN[+key];var n=scar[key],r=mulberry32(+key*31+5);for(var j=0;j<Math.min(5,n+1);j++){var cx=c[0]+(r()-.5)*s*1.1,cy=c[1]+(r()-.5)*s*.9,rx=s*(.14+r()*.14);ctx.moveTo(cx+rx,cy);ctx.ellipse(cx,cy,rx,s*(.08+r()*.08),r()*3,0,6.283);}});ctx.fill();}
   Object.keys(fallout).forEach(function(key){c=CEN[+key];ctx.fillStyle='rgba(150,230,60,'+(.18+(q==='off'?0:.1*Math.sin(t*3+(+key))))+')';hexPath(ctx,c[0],c[1],s*.95);ctx.fill();ctx.strokeStyle='rgba(190,255,90,.6)';ctx.lineWidth=1;ctx.setLineDash([2,3]);ctx.stroke();ctx.setLineDash([]);});
 }
@@ -1024,6 +1123,7 @@ function drawFort(x,y,f){var col=f.owner==='A'?COL.ca:COL.cb;ctx.fillStyle='rgba
   ctx.fillStyle=col;for(var k=0;k<3;k++)ctx.fillRect(x-S*.9+k*S*.23,y-S*.1,S*.14,S*.13);
   ctx.fillStyle='#fff';ctx.font='700 '+Math.round(S*.5)+'px Roboto,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(f.level,x-S*.58,y+S*.3);}
 function tokenSprite(type,col,R){var key=type+col+R+DPR;if(TK[key])return TK[key];var pad=4,w=R*2+pad*2,c=document.createElement('canvas');c.width=c.height=Math.ceil(w*DPR);var g=c.getContext('2d');g.scale(DPR,DPR);drawToken(g,type,R+pad,R+pad,R,col);TK[key]={c:c,pad:pad,w:w};return TK[key];}
+function hexSub(g,x,y,s){for(var k=0;k<6;k++){var a=Math.PI/180*(60*k-30),px=x+s*Math.cos(a),py=y+s*Math.sin(a);if(k)g.lineTo(px,py);else g.moveTo(px,py);}g.closePath();}
 function draw(now){
   requestAnimationFrame(draw);
   var q=Q();
@@ -1044,6 +1144,9 @@ function draw(now){
   if(sel&&reach){var pulse=.22+(q==='off'?0:.1*Math.sin(t*4));ctx.fillStyle='rgba(120,190,255,'+pulse+')';ctx.strokeStyle='rgba(190,225,255,.9)';ctx.lineWidth=1.2;
     Object.keys(reach).forEach(function(k){if(+k===sel.hex)return;var c=CEN[+k];hexPath(ctx,c[0],c[1],S*.9);ctx.fill();ctx.stroke();
       if(isLand(sel.type)){ctx.save();ctx.fillStyle='#fff';ctx.strokeStyle='rgba(0,0,0,.75)';ctx.lineWidth=3;ctx.font='700 '+Math.round(S*.62)+'px Roboto,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.strokeText(reach[k],c[0],c[1]);ctx.fillText(reach[k],c[0],c[1]);ctx.restore();}});}
+  if(sel&&sel.team==='A'&&UT[sel.type].atk>0&&units.indexOf(sel)>=0){var rg=UT[sel.type];ctx.fillStyle='rgba(255,90,70,'+(rg.max>1?.17:.1)+')';ctx.strokeStyle='rgba(255,100,80,.7)';ctx.lineWidth=1;ctx.beginPath();
+    for(i=0;i<N;i++){var dd=dist(sel.hex,i);if(dd<rg.min||dd>rg.max)continue;p=CEN[i];hexSub(ctx,p[0],p[1],S*.9);}ctx.fill();ctx.stroke();}
+  if(deployMode){var dp2=.28+(Q()==='off'?0:.12*Math.sin(t*5));ctx.fillStyle='rgba(95,212,147,'+dp2+')';ctx.strokeStyle='rgba(95,212,147,.95)';ctx.lineWidth=1.4;ctx.beginPath();deployCache.forEach(function(h){var c=CEN[h];hexSub(ctx,c[0],c[1],S*.9);});ctx.fill();ctx.stroke();}
   if(fogOn()){if(fogDirty)buildFog();ctx.drawImage(fogCv,0,0,CW,CH);}
   timeTint();
   var ease=(q==='off')?1:1-Math.pow(.78,dt/16.7);
@@ -1089,6 +1192,7 @@ function hexAt(ev){var rect=cv.getBoundingClientRect(),x=(ev.clientX-rect.left)*
 function select(u){sel=u;if(u&&u.team==='A'&&!busy&&!over){reach=reachable(u);attackable=u.acted?null:targets(u);if(attackable&&!Object.keys(attackable).length)attackable=null;}else{reach=null;attackable=null;}}
 cv.addEventListener('click',function(ev){
   var h=hexAt(ev);if(h<0||busy)return;
+  if(deployMode&&!over){var dk=deployMode;deployMode=null;if(deployHexes('A',dk).indexOf(h)>=0){buy('A',dk,h);select(null);}render();return;}
   if(strike&&!over){var k=strike;strike=null;launch('A',k,h);render();return;}
   focus=h;var u=unitAt[h];if(u&&u.team==='B'&&!canSee(u))u=null;
   if(over){render();return;}
@@ -1104,7 +1208,7 @@ function log(msg,cls){var d=document.createElement('div');d.className=cls||'';d.
 function kv(rows){return rows.map(function(r){return '<span>'+r[0]+'</span><span>'+r[1]+'</span>';}).join('');}
 function hexPanel(h){var el=$('hexInfo');if(h<0||h===undefined||h===null){el.className='hint';el.textContent='Hover or tap a hex.';return;}
   var t=terr[h],p=provOf[h]>=0?prov[provOf[h]]:null,rows=[['Terrain',TERR[t].name],['Cover',Math.round(TERR[t].def*100)+'%'],['Province',p?p.name+' ('+tn(p.owner)+')':'Open sea'],['Supply',supA[h]?'Aurelia':(supB[h]?'Kharzun':'None')],['Effect',TERR[t].fx]];
-  var f=fort[h];if(f&&(seenHex(h)||f.owner==='A'))rows.push(['Fort','Level '+f.level+' ('+tn(f.owner)+')']);if(depot[h]&&(seenHex(h)||depot[h].owner==='A'))rows.push(['Depot',tn(depot[h].owner)]);
+  var f=fort[h];if(f&&(seenHex(h)||f.owner==='A'))rows.push(['Fort','Level '+f.level+' ('+tn(f.owner)+')']);if(depot[h]&&(seenHex(h)||depot[h].owner==='A'))rows.push(['Forward base',tn(depot[h].owner)+' (supply and deploy point, capturable)']);
   if(mines[h]&&mines[h].owner==='A')rows.push(['Mines','Yours, hidden from the enemy']);if(fallout[h])rows.push(['Fallout',fallout[h].left+' turns, -8 strength a turn']);
   var e=unitAt[h];if(e&&(e.team==='A'||canSee(e)))rows.push(['Piece',nm(e)+' ('+tn(e.team)+') '+Math.round(e.hp)+' HP, '+Math.round(e.org)+' Org']);
   if(!seenHex(h))rows.push(['Vision','Fogged']);
@@ -1120,6 +1224,12 @@ function stratPanel(){var el=$('strat');el.innerHTML='';
     var cb=document.createElement('button');cb.textContent='Cancel launch';cb.onclick=function(){strike=null;render();};el.appendChild(cb);}
   else if(any){var row=document.createElement('div');row.className='acts';['icbm','nuke'].forEach(function(k){if(stock.A[k]<1)return;var bt=document.createElement('button');bt.className='danger';bt.innerHTML='<span>Launch '+STRAT[k].name+'</span><small>'+stock.A[k]+' ready</small>';bt.disabled=busy||over;bt.onclick=function(){strike=k;sel=null;reach=null;attackable=null;render();};row.appendChild(bt);});el.appendChild(row);}
 }
+function setCustom(type,file){var fr=new FileReader();fr.onload=function(){var im=new Image();im.onload=function(){var c=document.createElement('canvas');c.width=c.height=96;var g=c.getContext('2d'),m=Math.min(im.width,im.height);g.drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,96,96);CUSTOM[type]=c;redrawIcons();};im.src=fr.result;};fr.readAsDataURL(file);}
+function pickPicture(type){var inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=function(){if(inp.files&&inp.files[0])setCustom(type,inp.files[0]);};inp.click();}
+function redrawIcons(){TK={};loadColors();var pl=$('pieceLegend');pl.innerHTML='';
+  KEYS.concat(['icbm','nuke']).forEach(function(k){var sp=document.createElement('span'),c=document.createElement('canvas');c.width=c.height=44;c.style.width=c.style.height='28px';drawToken(c.getContext('2d'),k,22,22,18,COL.ca);sp.appendChild(c);sp.appendChild(document.createTextNode(UT[k]?UT[k].name:STRAT[k].name));pl.appendChild(sp);});
+  var cs=$('unitTbl').querySelectorAll('canvas');for(var i=0;i<cs.length;i++){var g=cs[i].getContext('2d');g.clearRect(0,0,56,56);drawToken(g,cs[i].getAttribute('data-t'),28,28,23,COL.ca);}
+  kick();render();}
 function render(){
   kick();
   var a=prov.filter(function(p){return p.owner==='A';}).length,b=prov.length-a,w=WX();
@@ -1130,7 +1240,8 @@ function render(){
   $('conds').innerHTML=kv([['Time',pad(hour())+':00'+(isNight()?' (night, vision -1)':hour()<5||hour()>=19?' (low light)':' (day)')],['Weather',w.name],['Effect',w.note],['Forecast',WEATHER[nextWeather].name],['Aurelia',cmd.A.name+': '+cmd.A.desc],['Kharzun',cmd.B.name+': '+cmd.B.desc]]);
   var box=$('selInfo'),acts=$('acts');acts.innerHTML='';
   if(sel&&units.indexOf(sel)>=0){
-    var u=sel,sp=UT[u.type],rows=[['Piece',sp.name+' '+'★'.repeat(vetLvl(u))],['Strength',Math.round(u.hp)+' / 100'],['Org',Math.round(u.org)+' / 100'],['Move left',u.mpLeft+' / '+mpEff(u)+(isLand(u.type)?' (terrain sets the distance)':'')],['Range',sp.atk===0?'Unarmed':sp.min===sp.max?sp.max:sp.min+'-'+sp.max],['Experience',u.xp]];
+    var u=sel,sp=UT[u.type],rows=[['Piece',sp.name+' '+'★'.repeat(vetLvl(u))],['Strength',Math.round(u.hp)+' / 100'],['Org',Math.round(u.org)+' / 100'],['Move left',u.mpLeft+' / '+mpEff(u)+(isLand(u.type)?' (terrain sets the distance)':'')],['Range',sp.atk===0?'Unarmed':(sp.min===sp.max?sp.max:sp.min+'-'+sp.max)+' (red hexes on the board)'],['Experience',u.xp]];
+    if(REPR[u.type])rows.splice(2,0,['Represents',fmtN(REPR[u.type])+' '+NOUN[u.type]],['Remaining',fmtN(REPR[u.type]*u.hp/100)+' '+NOUN[u.type]]);
     if(DIGGER[u.type])rows.push(['Dig level',u.dig]);
     if(LEASH[u.type])rows.push(['Air base range',LEASH[u.type]+' hexes from a settlement or carrier']);
     if(ONESHOT[u.type])rows.push(['Single use','Consumed when it attacks']);
@@ -1144,24 +1255,31 @@ function render(){
       var add=function(label,sub,fn,dis){var bt=document.createElement('button');bt.innerHTML='<span>'+label+'</span><small>'+sub+'</small>';bt.disabled=!!dis;bt.onclick=function(){fn();recompute();select(units.indexOf(u)>=0?u:null);render();};acts.appendChild(bt);};
       var free=!u.acted&&!u.order&&!u.regroup;
       if(DIGGER[u.type])add('Dig in','1 turn · +10% cover',function(){u.digging=true;u.acted=true;u.mpLeft=0;log(nm(u)+' digs in.','a');},!free||u.dig>=digCap(u.hex));
-      if(u.type==='soldiers'){add('Build fort',buildTurns(u,'fort')+' turns · +18% cover',function(){startOrder(u,'fort');},!free||fortLevel(u.hex,'A')>=3);
-        add('Build depot',buildTurns(u,'depot')+' turns · supply 6',function(){startOrder(u,'depot');},!free||!!depot[u.hex]);
+      if(BUILDER[u.type]){add('Build fort',buildTurns(u,'fort')+' turns · +18% cover',function(){startOrder(u,'fort');},!free||fortLevel(u.hex,'A')>=3);
+        add('Build forward base',buildTurns(u,'depot')+' turns · supply 6 + deploy point',function(){startOrder(u,'depot');},!free||!!depot[u.hex]);
         add('Lay mines',buildTurns(u,'mines')+' turns · hidden',function(){startOrder(u,'mines');},!free||!!mines[u.hex]);}
+      if(u.type==='engineers'){var sh=NB[u.hex].filter(function(n){return terr[n]==='sea'&&!unitAt[n];})[0];
+        add('Build causeway',buildTurns(u,'causeway')+' turns · sea hex becomes road',function(){startOrder(u,'causeway',sh);},!free||sh===undefined);
+        var em=[u.hex].concat(NB[u.hex]).filter(function(h){return mines[h]&&mines[h].owner!=='A';});
+        add('Clear mines',em.length?em.length+' hex(es) nearby':'none nearby',function(){em.forEach(function(h){delete mines[h];});u.acted=true;u.mpLeft=0;log('Engineers clear mines.','a');},!free||!em.length);}
       if(u.type==='spies'){add('Spy sweep','1 turn · vision +2',function(){u.sweep=true;u.acted=true;u.mpLeft=0;log('Spy sweeps the area.','a');},!free);
         var st=sabTargets(u);add('Sabotage',st.length?'adjacent '+st[0].k+' · 60%':'nothing adjacent',function(){doSabotage(u);},!free||!st.length);}
+      add('Use my own picture','this unit type, stays in your browser',function(){pickPicture(u.type);});
+      if(CUSTOM[u.type])add('Use default picture','',function(){delete CUSTOM[u.type];redrawIcons();});
       if(u.order)add('Cancel order','',function(){u.order=null;u.acted=false;u.mpLeft=mpEff(u);});
       add('Hold','end this piece\'s turn',function(){u.acted=true;u.mpLeft=0;},u.acted);
     }
   }else{box.className='hint';box.textContent='Nothing selected. Click one of your blue pieces.';}
   stratPanel();
   var by=$('buy');by.innerHTML='';
-  KEYS.forEach(function(k){var row=document.createElement('div');row.className='r';
+  KEYS.forEach(function(k){if(!allowed(k))return;var row=document.createElement('div');row.className='r';
     var c=document.createElement('canvas');c.width=c.height=36;c.style.width=c.style.height='30px';drawToken(c.getContext('2d'),k,18,18,15,COL.ca);row.appendChild(c);
-    var nmEl=document.createElement('div');nmEl.innerHTML='<b>'+UT[k].name+'</b><small>'+reserve.A[k]+' in reserve</small>';row.appendChild(nmEl);
-    var dp=document.createElement('button');dp.innerHTML='Deploy<small>'+depCost(k)+' PP</small>';dp.disabled=busy||over||reserve.A[k]<1||pp.A<depCost(k)||countOf('A')>=CAPN||spawnHex('A',k)<0;dp.onclick=function(){if(buy('A',k)){select(null);render();}};row.appendChild(dp);
+    var nmEl=document.createElement('div');nmEl.innerHTML='<b>'+UT[k].name+(UT[k].proposed?' <span class="tag">NEW</span>':'')+'</b><small>'+reserve.A[k]+' in reserve</small>';row.appendChild(nmEl);
+    var dp=document.createElement('button');dp.innerHTML='Deploy<small>'+depCost(k)+' PP</small>';dp.disabled=busy||over||reserve.A[k]<1||pp.A<depCost(k)||countOf('A')>=CAPN||spawnHex('A',k)<0;dp.onclick=function(){deployMode=k;strike=null;sel=null;reach=null;attackable=null;deployCache=deployHexes('A',k);render();};row.appendChild(dp);
     var tr=document.createElement('button');tr.innerHTML='Train<small>'+UT[k].cost+' PP · '+TRAIN[k]+'t</small>';tr.disabled=busy||over||pp.A<UT[k].cost;tr.onclick=function(){if(train('A',k))render();};row.appendChild(tr);
     by.appendChild(row);});
-  $('buyNote').textContent='Field: '+countOf('A')+' / '+CAPN+'. Deploying costs production points and only draws from your reserve. Training adds new pieces to the reserve after a delay.';
+  var bn=$('buyNote');bn.textContent=deployMode?'Deploying '+UT[deployMode].name+': click a green hex near one of your towns or forward bases.':'Field: '+countOf('A')+' / '+CAPN+'. Deploying costs production points, only draws from your reserve, and happens next to your towns or forward bases. Training adds new pieces to the reserve after a delay.';
+  if(deployMode){var cb2=document.createElement('button');cb2.textContent='Cancel deploying';cb2.style.marginLeft='8px';cb2.onclick=function(){deployMode=null;render();};bn.appendChild(cb2);}
   $('queue').textContent=queue.A.length?'In training: '+queue.A.map(function(q){return (UT[q.type]?UT[q.type].name:STRAT[q.type].name)+' ('+q.left+')';}).join(', '):'Nothing in training.';
   hexPanel(focus);
 }
@@ -1178,15 +1296,15 @@ function initWidgets(){
     ['plains','Swaying grass, wildflowers','Open ground. Tanks +10% attack.'],
     ['forest','Trees sway in the wind','Hides land pieces unless an enemy is adjacent. Ambush +10%.'],
     ['hills','Rounded ridges with long shadows','High ground: pieces see 1 hex further.'],
-    ['mountain','Snow-capped shaded peaks','Pieces see 2 hexes further. Blocks tanks, artillery and SAMs.'],
+    ['mountain','Snow-capped shaded peaks','Pieces see 2 hexes further. Heavy pieces can only crawl across, one hex a turn.'],
     ['desert','Dunes, heat shimmer, drifting sand','Tanks +10%. Out of supply: heat costs 4 strength a turn.'],
     ['tundra','Falling snow','Out of supply: cold costs 4 a turn. Dig levels cap at 2.'],
-    ['swamp','Reeds, rising bubbles, creeping mist','Hides land pieces. -3 Org a turn. Blocks tanks.'],
+    ['swamp','Reeds, rising bubbles, creeping mist','Hides land pieces. -3 Org a turn. Heavy pieces bog down, one hex a turn.'],
     ['urban','Chimney smoke, windows glowing at night','Capture to flip the province. Air base. +3 Org recovery.'],
     ['sea','Rolling waves, white surf on every coast','Ships only. Deep water is darker than the shallows.']
   ].map(function(r){return '<tr><td><span class="sw" style="background:var(--t-'+r[0]+')"></span>'+TERR[r[0]].name+'</td><td class="n">'+Math.round(TERR[r[0]].def*100)+'%</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>';}).join('');
   $('wxTbl').innerHTML='<tr><th>Weather</th><th>Look</th><th>Effect</th></tr>'+Object.keys(WEATHER).map(function(k){var look={clear:'Open sky',rain:'Slanting rain',storm:'Heavy rain and lightning',fog:'Drifting fog banks',snow:'Falling snow',blizzard:'Whiteout streaks',sandstorm:'Tan haze and blowing sand'}[k];return '<tr><td>'+WEATHER[k].name+'</td><td>'+look+'</td><td>'+WEATHER[k].note+'</td></tr>';}).join('');
-  $('unitTbl').innerHTML='<tr><th></th><th>Piece</th><th class="n">Move</th><th class="n">Range</th><th class="n">Attack</th><th class="n">Deploy / train (PP)</th><th>In the game</th><th>Role</th></tr>'+KEYS.map(function(k){var u=UT[k];return '<tr><td><canvas data-t="'+k+'" width="56" height="56" style="width:40px;height:40px"></canvas></td><td>'+u.name+'</td><td class="n">'+u.mp+'</td><td class="n">'+(u.atk===0?'–':u.min===u.max?u.max:u.min+'-'+u.max)+'</td><td class="n">'+u.atk+'</td><td class="n">'+depCost(k)+' / '+u.cost+'</td><td class="f">'+u.game+'</td><td>'+u.desc+'</td></tr>';}).join('')+
+  $('unitTbl').innerHTML='<tr><th></th><th>Piece</th><th class="n">Move</th><th class="n">Range</th><th class="n">Attack</th><th class="n">Deploy / train (PP)</th><th>In the game</th><th>Role</th></tr>'+KEYS.map(function(k){var u=UT[k];return '<tr><td><canvas data-t="'+k+'" width="56" height="56" style="width:40px;height:40px"></canvas></td><td>'+u.name+(u.proposed?' <span class="tag">NEW</span>':'')+'</td><td class="n">'+u.mp+'</td><td class="n">'+(u.atk===0?'–':u.min===u.max?u.max:u.min+'-'+u.max)+'</td><td class="n">'+u.atk+'</td><td class="n">'+depCost(k)+' / '+u.cost+'</td><td class="f">'+u.game+'</td><td>'+u.desc+'</td></tr>';}).join('')+
     ['icbm','nuke'].map(function(k){return '<tr><td><canvas data-t="'+k+'" width="56" height="56" style="width:40px;height:40px"></canvas></td><td>'+(k==='icbm'?'ICBMs':'Nuclear Warheads')+'</td><td class="n">–</td><td class="n">any hex</td><td class="n">'+(k==='icbm'?'40 / 25':'90 / 65 / 30')+'</td><td class="n">train '+STRAT[k].cost+'</td><td class="f">'+(k==='icbm'?'dmg 1000 · supply 500':'dmg 3000 · supply 1000')+'</td><td>'+(k==='icbm'?'Strike a hex and its 6 neighbors. SAM batteries near the target can intercept.':'Strike 19 hexes, wipe forts, depots and mines, leave fallout for 6 turns.')+'</td></tr>';}).join('');
   var cs=$('unitTbl').querySelectorAll('canvas');for(var i=0;i<cs.length;i++){drawToken(cs[i].getContext('2d'),cs[i].getAttribute('data-t'),28,28,23,COL.ca);}
   $('counterTbl').innerHTML='<tr><th>Piece</th><th>Strong against</th><th>Beaten by</th></tr>'+KEYS.map(function(k){
@@ -1202,7 +1320,10 @@ function onTheme(){loadColors();needStatic=true;}
 try{matchMedia('(prefers-color-scheme: light)').addEventListener('change',onTheme);}catch(e){}
 new MutationObserver(onTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 window.addEventListener('resize',function(){size();});
-$('btnNew').onclick=function(){bA=$('selA').value;bB=$('selB').value;generate();};
+$('btnNew').onclick=function(){bA=$('selA').value;bB=$('selB').value;capOverride=+$('selCap').value||0;var w=+$('selSize').value;
+  try{localStorage.setItem('ano_wb_size',w);localStorage.setItem('ano_wb_style',$('selStyle').value);localStorage.setItem('ano_wb_cap',capOverride);}catch(e){}
+  if(w!==W){setupGrid(w,w);}coast=[];sel=null;reach=null;attackable=null;size();generate();};
+['selSize','selStyle','selCap','chkFair'].forEach(function(id){$(id).onchange=function(){$('btnNew').onclick();};});
 $('btnEnd').onclick=endTurn;
 $('chkFog').onchange=function(){recompute();render();};
 $('chkSup').onchange=function(){kick();};
@@ -1210,6 +1331,8 @@ try{var sq=localStorage.getItem('ano_wb_q');if(sq==='auto'||sq==='full'||sq==='l
 $('selQ').value=qMode;
 $('selQ').onchange=function(){qMode=this.value;autoQ='full';frameMs=0;slowCount=0;frames=0;try{localStorage.setItem('ano_wb_q',qMode);}catch(e){}size();};
 try{new IntersectionObserver(function(es){onScreen=es[0].isIntersecting;kick();}).observe(cv);}catch(e){}
+try{var zs=+localStorage.getItem('ano_wb_size'),st=localStorage.getItem('ano_wb_style'),cp=+localStorage.getItem('ano_wb_cap');
+  if(SIZES[zs]){setupGrid(zs,zs);$('selSize').value=zs;}if(st==='random'||st==='land'||st==='naval')$('selStyle').value=st;if(cp){capOverride=cp;$('selCap').value=cp;}}catch(e){}
 initWidgets();size();generate();requestAnimationFrame(draw);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){needStatic=true;});
 })();
