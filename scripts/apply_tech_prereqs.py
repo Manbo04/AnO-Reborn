@@ -18,7 +18,7 @@ def apply_prereqs():
         
         # Propaganda and Looting
         ("widespread_propaganda", "government_regulation"),
-        ("looting_teams", "organized_supply_lines"),
+        ("looting_teams", None),  # was organized_supply_lines (retired 2026-10-11)
     ]
 
     for tech_name, prereq_name in updates:
