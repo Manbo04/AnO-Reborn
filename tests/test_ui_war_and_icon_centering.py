@@ -47,8 +47,8 @@ def test_war_v2_attacker_rendering(app):
             defender_name="Mordor",
             cId_type="attacker",
             war_id=77,
-            attacker_info={"morale": 90, "supplies": 1500},
-            defender_info={"morale": 35, "supplies": 400},
+            attacker_info={"morale": 90},
+            defender_info={"morale": 35},
             peace_to_send=20,
             spyCount=12,
         )
@@ -69,8 +69,8 @@ def test_war_v2_attacker_rendering(app):
         # Stats display
         assert "90 / 100 Morale" in html
         assert "35 / 100 Morale" in html
-        assert "1500 / 2000 Supplies" in html
-        assert "400 / 2000 Supplies" in html
+        # War supply was removed; the route no longer sends a supplies key.
+        assert "Supplies" not in html
 
         # Action attack button
         assert 'href="/war/77/attack"' in html
@@ -100,8 +100,8 @@ def test_war_v2_defender_rendering(app):
             defender_name="Mordor",
             cId_type="defender",
             war_id=77,
-            attacker_info={"morale": 90, "supplies": 1500},
-            defender_info={"morale": 35, "supplies": 400},
+            attacker_info={"morale": 90},
+            defender_info={"morale": 35},
             peace_to_send=10,
             spyCount=5,
         )
@@ -123,8 +123,8 @@ def test_war_classic_no_stretch(app):
             defender_name="Mordor",
             cId_type="defender",
             war_id=77,
-            attacker_info={"morale": 90, "supplies": 1500},
-            defender_info={"morale": 35, "supplies": 400},
+            attacker_info={"morale": 90},
+            defender_info={"morale": 35},
             peace_to_send=10,
             spyCount=5,
         )
@@ -169,8 +169,8 @@ SPECTATOR_CTX = dict(
     war_id=77,
     war_type="Raze",
     agressor_message="",
-    attacker_info={"morale": 90, "supplies": 1500},
-    defender_info={"morale": 35, "supplies": 400},
+    attacker_info={"morale": 90},
+    defender_info={"morale": 35},
 )
 
 

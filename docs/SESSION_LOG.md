@@ -948,3 +948,16 @@ first global tick in a new hour claims it, so it moves to ~:00/:10 once -- no do
 - Supply-only upgrades (Looting Teams, Organized Supply Lines, Large Storehouses) now do nothing; decide whether to remove/rework them and refund players.
 - Seed data still lists the supply upgrades in `db/reference_data.sql` / tech descriptions.
 - Tests needing Postgres were not runnable in this sandbox; rely on the `prod-shaped` CI job.
+
+## 2026-10-11 — Hotfix: /war/<id> 500 on v2 theme after supply removal
+
+**Root cause**: PR #147 stopped putting `supplies` in `attacker_info`/`defender_info`, but
+`templates/war_v2.html` (missed in that PR) still did `defender_info['supplies'] / 20`;
+Jinja `Undefined / int` raises TypeError, so every war page 500'd for v2-theme players
+(Chelovka report in #chat right after deploy).
+
+**Fix**: removed the two supply bars from `war_v2.html`; new guard test
+`tests/test_no_war_supply_templates.py` fails if any template reads a `supplies` key again.
+
+**What to watch**: confirm /war/<id> loads on both themes; country.html policy text
+"+N supplies per hour" is static copy only (no crash), left for the upgrades/policies cleanup.
