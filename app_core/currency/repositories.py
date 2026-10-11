@@ -16,14 +16,15 @@ def get_gold_and_currency(db, user_id):
 
 
 def debit_gold(db, user_id, amount):
-    db.execute(
-        "UPDATE stats SET gold = GREATEST(0, gold - %s) WHERE id = %s",
-        (amount, user_id),
-    )
+    from app_core.economy import ledger
+
+    ledger.take_gold(db, user_id, amount)
 
 
 def credit_gold(db, user_id, amount):
-    db.execute("UPDATE stats SET gold = gold + %s WHERE id = %s", (amount, user_id))
+    from app_core.economy import ledger
+
+    ledger.credit_gold(db, user_id, amount)
 
 
 def debit_currency(db, user_id, amount):
