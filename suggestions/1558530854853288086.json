@@ -2,8 +2,8 @@
   "author_id": "519965006867988490",
   "created_at": "2026-10-10T17:25:11Z",
   "kind": "suggestion",
-  "last_message_id": "1558549254170222593",
-  "last_player_message_at": "2026-10-10T18:38:18Z",
+  "last_message_id": "1558794497456873564",
+  "last_player_message_at": "2026-10-11T10:52:49Z",
   "messages": [
     {
       "at": "2026-10-10T17:25:11Z",
@@ -154,6 +154,16 @@
       "id": "1558549254170222593",
       "staff": true,
       "text": "I hope nobody gets offended by my statement"
+    },
+    {
+      "at": "2026-10-11T10:52:49Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1558794497456873564",
+      "staff": false,
+      "text": "Have an idea on making different sizes of school as well as schools that serve 2 levels at once"
     }
   ],
   "status": "new",

@@ -1,9 +1,11 @@
 {
   "author_id": "616524068987863060",
   "created_at": "2026-10-11T07:58:56Z",
+  "delivered_at": "2026-10-11T15:32:44Z",
+  "delivered_nonce": "d1b3a438ce3844c296d584c39bbc5437",
   "kind": "bug",
-  "last_message_id": "1558754370794029119",
-  "last_player_message_at": "2026-10-11T08:13:22Z",
+  "last_message_id": "1558786039861084162",
+  "last_player_message_at": "2026-10-11T10:19:12Z",
   "messages": [
     {
       "at": "2026-10-11T07:58:56Z",
@@ -136,6 +138,26 @@
       "id": "1558754370794029119",
       "staff": false,
       "text": "maybe"
+    },
+    {
+      "at": "2026-10-11T10:18:49Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558785944209854507",
+      "staff": false,
+      "text": "<@616524068987863060> war range is based on total strength, not just troops: it's your population divided by 1000 plus your units (soldiers, tanks, etc). the target has to be between 75% and 133% of your strength, and that's calculated live (no waiting for the tick). so discharging troops only lowers it a little if you have a big population, and the target can still be just outside the band. the error message shows your exact strength and the allowed range, check that against their strength on the nation page. if your numbers sit inside the range and it still refuses, post them here and i'll dig in"
+    },
+    {
+      "at": "2026-10-11T10:19:12Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1558786039861084162",
+      "staff": false,
+      "text": "alr, ill keep that in mind"
     }
   ],
   "thread_id": "1558750739113975938",

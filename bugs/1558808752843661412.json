@@ -1,0 +1,246 @@
+{
+  "author_id": "616524068987863060",
+  "created_at": "2026-10-11T11:49:27Z",
+  "kind": "bug",
+  "last_message_id": "1558863841042104552",
+  "last_player_message_at": "2026-10-11T15:28:21Z",
+  "messages": [
+    {
+      "at": "2026-10-11T11:49:27Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1558808752843661412/1558808753438982194/IMG_4431.png?ex=6accc948&is=6acb77c8&hm=8ce8f5ac00075179f6b9ef46503b66c65e2aa7768108f91b965186d18fabc4b4&"
+      ],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1558808752843661412",
+      "staff": false,
+      "text": "during this attack the only air units i had were about 20 helicopters and nothing at all happened"
+    },
+    {
+      "at": "2026-10-11T14:28:44Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558848835806167103",
+      "staff": false,
+      "text": "<@616524068987863060> not a bug, that's how air attacks work: helicopters (and fighters/bombers) can only be met by the defender's air units. if they have no air units there's nothing to fight, so nothing happens and nothing dies. to hit ground troops you have to attack with the ground domain (soldiers/tanks/artillery). we'll make the attack screen say this more clearly, and if you want helicopters to hit ground units post it in #suggestions and it goes on the next ballot"
+    },
+    {
+      "at": "2026-10-11T14:31:23Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1558849503971246111",
+      "staff": false,
+      "text": "ah i see\ni was confused because on the attack tab it clearly says that helicopters attack ground units"
+    },
+    {
+      "at": "2026-10-11T15:11:20Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558859556321239044",
+      "staff": false,
+      "text": "<@616524068987863060> done, helicopters can hit ground troops now. in the attack screen they show up under Ground Invasion (send them with your soldiers/tanks/artillery) and they still work in the Air War too. they do extra damage to soldiers and tanks, but soldiers counter them so don't send them alone. it's live, try it and tell me how it feels"
+    },
+    {
+      "at": "2026-10-11T15:12:00Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1558859725414867045",
+      "staff": false,
+      "text": "yeah... if only i had components to do it after my 8 fighter jets got shot down by a nonexistent enemy"
+    },
+    {
+      "at": "2026-10-11T15:12:07Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1558859752463671327",
+      "staff": false,
+      "text": "but thanks ill try it"
+    },
+    {
+      "at": "2026-10-11T15:12:22Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1558859817790218371",
+      "staff": true,
+      "text": "apologies"
+    },
+    {
+      "at": "2026-10-11T15:12:26Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1558859831685812346",
+      "staff": true,
+      "text": "want a refund?"
+    },
+    {
+      "at": "2026-10-11T15:12:46Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1558859916842639361",
+      "staff": true,
+      "text": "also tell me more what happened that you lost your jets?"
+    },
+    {
+      "at": "2026-10-11T15:12:55Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1558859954880782408",
+      "staff": false,
+      "text": "i sent you the battle result in dms"
+    },
+    {
+      "at": "2026-10-11T15:13:07Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1558860004067516471",
+      "staff": true,
+      "text": "ah kk"
+    },
+    {
+      "at": "2026-10-11T15:15:52Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1558860696056365089",
+      "staff": false,
+      "text": "Guy had planes what you moaning about?"
+    },
+    {
+      "at": "2026-10-11T15:16:53Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1558860953553207377",
+      "staff": false,
+      "text": "Good use of components out of you fr though"
+    },
+    {
+      "at": "2026-10-11T15:20:45Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1558861925444489287",
+      "staff": true,
+      "text": "the issue is the low casualties"
+    },
+    {
+      "at": "2026-10-11T15:22:12Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1558862290516840583",
+      "staff": false,
+      "text": "or excessive in this case"
+    },
+    {
+      "at": "2026-10-11T15:26:30Z",
+      "attachments": [],
+      "author": "L4",
+      "author_id": "1326884862346657803",
+      "bot": false,
+      "id": "1558863374954143795",
+      "staff": false,
+      "text": "Gang, Lerslen planes are just built different lol"
+    },
+    {
+      "at": "2026-10-11T15:26:57Z",
+      "attachments": [],
+      "author": "L4",
+      "author_id": "1326884862346657803",
+      "bot": false,
+      "id": "1558863487038521602",
+      "staff": false,
+      "text": "It was just 1 plane in this case lmao"
+    },
+    {
+      "at": "2026-10-11T15:27:13Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1558808752843661412/1558863552381456424/image0.webp?ex=6accfc51&is=6acbaad1&hm=46f184c1f681a6dfff01154181cce1bbca64a0a96cc9e05cfcd3ec07705bf3f0&"
+      ],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1558863553212190730",
+      "staff": false,
+      "text": ""
+    },
+    {
+      "at": "2026-10-11T15:27:13Z",
+      "attachments": [],
+      "author": "L4",
+      "author_id": "1326884862346657803",
+      "bot": false,
+      "id": "1558863554101383269",
+      "staff": false,
+      "text": "Gang, gimme a refund too then"
+    },
+    {
+      "at": "2026-10-11T15:27:41Z",
+      "attachments": [],
+      "author": "L4",
+      "author_id": "1326884862346657803",
+      "bot": false,
+      "id": "1558863670962823231",
+      "staff": false,
+      "text": "That plane blew 8 of yours lol"
+    },
+    {
+      "at": "2026-10-11T15:28:03Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1558863763933765683",
+      "staff": false,
+      "text": "Well did you have planes or helicopters Cheese"
+    },
+    {
+      "at": "2026-10-11T15:28:08Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1558863785182109727",
+      "staff": false,
+      "text": "planes"
+    },
+    {
+      "at": "2026-10-11T15:28:21Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1558863841042104552",
+      "staff": false,
+      "text": "i sold off my helicopters after i realised they were useless"
+    }
+  ],
+  "thread_id": "1558808752843661412",
+  "title": "Helicopters don't attack ground troops",
+  "url": "https://discord.com/channels/708006319658893385/1558808752843661412"
+}
