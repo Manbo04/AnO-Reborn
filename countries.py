@@ -636,15 +636,16 @@ def get_revenue(cId, db=None):
             total_rations_needed = 1
         total_rations_needed += military_upkeep.get("rations", 0)
         new_rations = max(0, current_rations_for_calc - total_rations_needed)
-        # Same spoilage the hourly tick applies to the banked surplus.
-        db.execute(
-            "SELECT bd.name, COALESCE(SUM(ub.quantity), 0) "
-            "FROM user_buildings ub JOIN building_dictionary bd "
-            "ON bd.building_id = ub.building_id "
-            "WHERE ub.user_id = %s AND bd.name = ANY(%s) GROUP BY bd.name",
-            (cId, variables.RATIONS_DISTRIBUTION_BUILDINGS),
-        )
-        storage_buffer = rations_storage_buffer(db.fetchall() or [])
+        # Same spoilage the hourly tick applies to the banked surplus. Storage
+        # comes from the per-province building batch fetched above (no extra
+        # query).
+        _dist_names = set(variables.RATIONS_DISTRIBUTION_BUILDINGS)
+        _dist_totals = {}
+        for _prov_buildings in proinfra_by_id.values():
+            for _bname, _qty in _prov_buildings.items():
+                if _bname in _dist_names:
+                    _dist_totals[_bname] = _dist_totals.get(_bname, 0) + (_qty or 0)
+        storage_buffer = rations_storage_buffer(_dist_totals.items())
         new_rations -= rations_spoilage(
             new_rations, total_rations_needed, storage_buffer
         )
