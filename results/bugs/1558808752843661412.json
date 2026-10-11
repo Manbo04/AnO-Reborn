@@ -1,0 +1,8 @@
+{
+ "status": "fixed",
+ "reply": "helicopters can now hit ground troops (send them with your soldiers/tanks/artillery in a ground invasion), and the casualty formula was also changed so losses scale with army size, so tiny forces no longer wipe out big ones like in your report. should be live within the hour. refunds are for staff to decide, dede already asked you about it",
+ "nonce": "2dd9d924439449a1bd5f5076f54cc9c4",
+ "updated_at": "2026-10-11T16:18:10Z",
+ "branch": null,
+ "summary": "helicopters attack ground (#160) and casualties scale with army size (#161), both already merged; refund question left to staff"
+}
