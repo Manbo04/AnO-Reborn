@@ -117,6 +117,8 @@ td canvas{display:block}
 .steps div{padding:12px 14px;border-right:1px solid var(--line);font-size:13px}
 .steps div:last-child{border-right:0}
 .steps b{display:block;font:700 15px var(--f-d);margin-bottom:4px;color:var(--accent)}
+.note{background:var(--accent-sub);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:12px 16px;font-size:14px;max-width:none}
+.note b{color:var(--accent)}
 .heat1{background:color-mix(in srgb,var(--ok) 22%,transparent)}
 .heat2{background:color-mix(in srgb,var(--gold) 24%,transparent)}
 .heat3{background:color-mix(in srgb,var(--bad) 24%,transparent)}
@@ -152,7 +154,8 @@ if(t==='theme-dark')h.setAttribute('data-theme','dark');else if(t||game)h.setAtt
 
 <section id="play">
   <div><div class="eyebrow">Playable prototype</div><h2>Try a war</h2></div>
-  <p class="hint">You command Aurelia (blue, west). Click a piece, click a tinted hex to move it, click a red-ringed enemy to attack, or pick an order. Deploy pieces from your reserves with production points, or train more. End Turn lets Kharzun answer, then the hour, weather and income advance. Take their capital to win.</p>
+  <p class="hint">You command Aurelia (blue, west). Click a piece, click a tinted hex to move it, click a red-ringed enemy to attack, or pick an order. Deploy pieces from your reserves with production points, or train more. Skip an hour lets Kharzun answer and moves the clock on. Take their capital to win.</p>
+  <div class="note"><b>How turns work in the real game:</b> a turn is one real hour, on the clock. Every hour you get fresh moves whether or not the other player has moved, so you never wait for anyone and nobody can stall a war by not playing. The <b>Skip an hour</b> button exists only in this demo so you can test without waiting a real hour between moves.</div>
   <div class="bar">
     <label>Aurelia biome<select id="selA"></select></label>
     <label>Kharzun biome<select id="selB"></select></label>
@@ -161,7 +164,7 @@ if(t==='theme-dark')h.setAttribute('data-theme','dark');else if(t||game)h.setAtt
     <label class="tog"><input type="checkbox" id="chkSup"> Supply range</label>
     <label>Animation<select id="selQ"><option value="auto">Auto</option><option value="full">Full</option><option value="lite">Lite</option><option value="off">Off</option></select></label>
     <span class="spacer"></span>
-    <button id="btnEnd" class="primary">End turn</button>
+    <button id="btnEnd" class="primary" title="Demo only: skips one hour so you can test without waiting">Skip an hour (demo)</button>
   </div>
   <div class="stage">
     <div>
@@ -287,7 +290,7 @@ Org hit  = Damage × 1.25  (×1.3 if flanked, ×1.4 from artillery, bombers, shi
 
 <section>
   <div><div class="eyebrow">Turn structure</div><h2>One hour, step by step</h2></div>
-  <p>The demo lets you move immediately so you can feel the board. In the real game every player queues orders during the hour and they lock at :55. Everything then resolves in the same fixed order and a replay plays for everyone, spectators included. That keeps it chess-like but simultaneous, so you are always guessing what the other side is doing.</p>
+  <p>Turns run on the real clock, not on a button. Every hour each side gets a fresh set of moves, whatever the other player does. During the hour you queue orders, they lock at :55, and everything then resolves together in the same fixed order. A replay plays for everyone, spectators included. It stays chess-like, but because both sides move at once you are always guessing what the other side is doing. The demo above lets you move instantly and skip hours so you can feel the board.</p>
   <div class="steps">
     <div><b>Orders</b>Draw arrows and pick actions any time in the hour.</div>
     <div><b>Build</b>Forts, depots, mines and digs tick down one turn.</div>
@@ -296,6 +299,12 @@ Org hit  = Damage × 1.25  (×1.3 if flanked, ×1.4 from artillery, bombers, shi
     <div><b>Air and guns</b>Bombers, fleets, artillery and drones fire before contact.</div>
     <div><b>Ground</b>Melee combat, counter-fire, flanks, routs.</div>
     <div><b>Upkeep</b>Captures, income, weather, supply, fog and the clock advance.</div>
+  </div>
+  <div class="cols">
+    <div class="card"><h3>Can someone stall a war by not playing?</h3><p>No. The hour passes whether you move or not. If you skip an hour, your pieces hold where they are, orders already running (forts, depots, mines, training) keep going, and the enemy keeps moving. Skipping only hurts the one who skips.</p></div>
+    <div class="card"><h3>Do I wait for the other player?</h3><p>Never. You move, and one hour later you can move again, regardless of what the other player has done. Both sides give orders during the same hour and they resolve together.</p></div>
+    <div class="card"><h3>What if I am asleep or offline?</h3><p>Part of the proposal: standing orders such as Hold, Dig in or Fall back, so an army is never helpless while you are away. Anything you set keeps working until you change it.</p></div>
+    <div class="card"><h3>What is the button in the demo?</h3><p>Demo only. Skip an hour lets you test the board without waiting a real hour for every move. The real game has no such button.</p></div>
   </div>
 </section>
 
