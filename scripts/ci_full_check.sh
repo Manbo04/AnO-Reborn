@@ -21,6 +21,10 @@ echo "::group::Apply new migrations (strict)"
 "$PY" scripts/apply_all_pending_migrations.py --strict
 echo "::endgroup::"
 
+echo "::group::Economy writes go through the ledger"
+"$PY" scripts/check_economy_writes.py
+echo "::endgroup::"
+
 echo "::group::SQL vs production schema"
 "$PY" scripts/check_sql_against_schema.py
 echo "::endgroup::"

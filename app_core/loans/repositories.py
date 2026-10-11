@@ -102,14 +102,15 @@ def get_last_repaid_at(db, user_id):
 
 
 def credit_gold(db, user_id, amount):
-    db.execute("UPDATE stats SET gold = gold + %s WHERE id = %s", (amount, user_id))
+    from app_core.economy import ledger
+
+    ledger.credit_gold(db, user_id, amount)
 
 
 def debit_gold(db, user_id, amount):
-    db.execute(
-        "UPDATE stats SET gold = GREATEST(0, gold - %s) WHERE id = %s",
-        (amount, user_id),
-    )
+    from app_core.economy import ledger
+
+    ledger.take_gold(db, user_id, amount)
 
 
 def update_loan_balance(db, loan_id, new_balance):

@@ -33,6 +33,7 @@ from flask import (
     current_app,
 )
 from helpers import login_required, login_required_or_crawler_preview, error, empty_state, require_post_origin, get_bulk_influence, is_theme_v2_enabled
+from app_core.economy import ledger
 import csv
 import io
 import json
@@ -1622,15 +1623,11 @@ def update_col_info(coalition_id):
                                 f"Renaming a coalition (after the first free rename) costs {RENAME_COST:,} gold. You have {user_gold:,} gold available.",
                             )
 
-                        # Deduct gold from leader
-                        db.execute(
-                            """
-                            UPDATE stats
-                            SET gold = gold - %s
-                            WHERE id = %s
-                            """,
-                            (RENAME_COST, cId),
-                        )
+                        # Atomic: the read above isn't locked.
+                        try:
+                            ledger.spend_gold(db, cId, RENAME_COST)
+                        except ledger.InsufficientFunds:
+                            return error(400, f"Renaming a coalition costs {RENAME_COST:,} gold.")
 
                     # Update the name and increment change counter
                     db.execute(
@@ -1710,9 +1707,9 @@ def deposit_into_bank(coalition_id):
 
         # If the resource is money, removes the money from the seller
         if resource == "money":
-            db.execute("UPDATE stats SET gold=gold-%s WHERE id=(%s) AND gold>=%s RETURNING gold", (amount, cId, amount))
-            row = db.fetchone()
-            if not row:
+            try:
+                ledger.spend_gold(db, cId, amount)
+            except ledger.InsufficientFunds:
                 return error(400, "You don't have enough money")
 
         # If it isn't, removes the resource from the giver
@@ -1725,21 +1722,13 @@ def deposit_into_bank(coalition_id):
             resource_row = db.fetchone()
             if not resource_row:
                 return error(400, f"Invalid resource: {resource}")
-            resource_id = resource_row[0]
 
             if amount < 1:
                 return error(400, "Amount cannot be less than 1")
 
-            db.execute(
-                """
-                UPDATE user_economy SET quantity=quantity-%s
-                WHERE user_id=%s AND resource_id=%s AND quantity>=%s
-                RETURNING quantity
-                """,
-                (amount, cId, resource_id, amount)
-            )
-            row = db.fetchone()
-            if not row:
+            try:
+                ledger.spend_resources(db, cId, {resource: amount})
+            except ledger.InsufficientFunds:
                 return error(400, f"You don't have enough {resource}")
 
         # Gives the coalition the resource
@@ -1828,7 +1817,8 @@ def withdraw(resource, amount, user_id, coalition_id, actor_id=None):
         # Gives the leader his resource
         # If the resource is money, gives him money
         if resource == "money":
-            db.execute("UPDATE stats SET gold=gold+%s WHERE id=(%s) RETURNING gold", (amount, user_id))
+            ledger.credit_gold(db, user_id, amount)
+            db.execute("SELECT gold FROM stats WHERE id = %s", (user_id,))
             row = db.fetchone()
             new_money = row[0] if row else 0
             current_app.logger.info(
@@ -1849,18 +1839,8 @@ def withdraw(resource, amount, user_id, coalition_id, actor_id=None):
             if not resource_row:
                 current_app.logger.error(f"Invalid resource in withdraw: {resource}")
                 return error(400, f"Invalid resource: {resource}")
-            resource_id = resource_row[0]
 
-            # Update user_economy using UPSERT atomically
-            db.execute(
-                """
-                INSERT INTO user_economy (user_id, resource_id, quantity)
-                VALUES (%s, %s, %s)
-                ON CONFLICT (user_id, resource_id)
-                DO UPDATE SET quantity = user_economy.quantity + %s
-                """,
-                (user_id, resource_id, amount, amount),
-            )
+            ledger.credit_resources(db, user_id, {resource: amount})
             current_app.logger.info(
                 (
                     f"withdraw: user_id={user_id} "
@@ -2039,7 +2019,7 @@ def withdraw_personal_from_bank(coalition_id):
             )
 
             if name == "money":
-                db.execute("UPDATE stats SET gold=gold+%s WHERE id=%s RETURNING gold", (amount, cId))
+                ledger.credit_gold(db, cId, amount)
             else:
                 db.execute(
                     "SELECT resource_id FROM resource_dictionary WHERE name = %s",
@@ -2048,17 +2028,8 @@ def withdraw_personal_from_bank(coalition_id):
                 res_row = db.fetchone()
                 if not res_row:
                     return error(400, f"Invalid resource: {name}")
-                resource_id = res_row[0]
 
-                db.execute(
-                    """
-                    INSERT INTO user_economy (user_id, resource_id, quantity)
-                    VALUES (%s, %s, %s)
-                    ON CONFLICT (user_id, resource_id)
-                    DO UPDATE SET quantity = user_economy.quantity + %s
-                    """,
-                    (cId, resource_id, amount, amount),
-                )
+                ledger.credit_resources(db, cId, {name: amount})
 
             try:
                 db.execute("SAVEPOINT txn_log")

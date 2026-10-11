@@ -47,7 +47,7 @@ def test_debit_gold_floors_at_zero_in_sql():
     repositories.debit_gold(db, 1, 50)
     sql, params = db.calls[-1]
     assert "GREATEST(0" in sql
-    assert params == (50, 1)
+    assert params == (50, 1, 1)  # ledger.take_gold
 
 
 def test_credit_currency_sql():

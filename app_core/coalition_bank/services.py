@@ -12,6 +12,7 @@ Bond insurance: leadership picks which members are insured. The payout
 and recovery themselves happen in app_core/game_ticks/bond_tick.py; this
 module only manages the roster and what the page shows.
 """
+from app_core.economy import ledger
 import variables
 
 from app_core.coalitions.repositories import _coalition_members_sql
@@ -70,40 +71,21 @@ def _resource_id(db, resource):
 
 def _take_from_player(db, user_id, resource, amount):
     """Atomically deduct; False if the player doesn't have enough."""
-    if resource == "money":
-        db.execute(
-            "UPDATE stats SET gold = gold - %s WHERE id = %s AND gold >= %s RETURNING gold",
-            (amount, user_id, amount),
-        )
-        return db.fetchone() is not None
-    resource_id = _resource_id(db, resource)
-    if resource_id is None:
+    try:
+        if resource == "money":
+            ledger.spend_gold(db, user_id, amount)
+        else:
+            ledger.spend_resources(db, user_id, {resource: amount})
+        return True
+    except ledger.InsufficientFunds:
         return False
-    db.execute(
-        """
-        UPDATE user_economy SET quantity = quantity - %s
-        WHERE user_id = %s AND resource_id = %s AND quantity >= %s
-        RETURNING quantity
-        """,
-        (amount, user_id, resource_id, amount),
-    )
-    return db.fetchone() is not None
 
 
 def _give_to_player(db, user_id, resource, amount):
     if resource == "money":
-        db.execute("UPDATE stats SET gold = gold + %s WHERE id = %s", (amount, user_id))
-        return
-    resource_id = _resource_id(db, resource)
-    db.execute(
-        """
-        INSERT INTO user_economy (user_id, resource_id, quantity)
-        VALUES (%s, %s, %s)
-        ON CONFLICT (user_id, resource_id)
-        DO UPDATE SET quantity = user_economy.quantity + EXCLUDED.quantity
-        """,
-        (user_id, resource_id, amount),
-    )
+        ledger.credit_gold(db, user_id, amount)
+    else:
+        ledger.credit_resources(db, user_id, {resource: amount})
 
 
 def _log_bank_txn(db, coalition_id, user_id, actor_id, resource, amount, direction, kind="trade"):
