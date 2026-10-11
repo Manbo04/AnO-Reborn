@@ -1,0 +1,8 @@
+{
+ "status": "not_a_bug",
+ "reply": "war range is based on total strength, not just troops: it's your population divided by 1000 plus your units (soldiers, tanks, etc). the target has to be between 75% and 133% of your strength, and that's calculated live (no waiting for the tick). so discharging troops only lowers it a little if you have a big population, and the target can still be just outside the band. the error message shows your exact strength and the allowed range, check that against their strength on the nation page. if your numbers sit inside the range and it still refuses, post them here and i'll dig in",
+ "nonce": "d1b3a438ce3844c296d584c39bbc5437",
+ "updated_at": "2026-10-11T10:18:36Z",
+ "branch": null,
+ "summary": "war range works as designed (pop/1000 + unit weights, 75-133%); player just out of range"
+}
