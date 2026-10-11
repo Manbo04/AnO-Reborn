@@ -250,6 +250,13 @@ def resolve_battle_outcome(
         )
 
 
+# Casualty tuning (share of the committed force of each unit type)
+WINNER_LOSS_PER_POINT = 0.04
+WINNER_MAX_LOSS_FRAC = 0.30
+LOSER_LOSS_PER_POINT = 0.05
+LOSER_MAX_LOSS_FRAC = 0.50
+
+
 def compute_unit_casualties(
     winner_casulties: float,
     win_type: float,
@@ -286,12 +293,17 @@ def compute_unit_casualties(
         w_sent = (winner_units.get(w_unit, 0) or 0) if w_unit is not None else 0
         l_sent = (loser_units.get(l_unit, 0) or 0) if l_unit is not None else 0
 
+        # Casualties scale with the size of the force committed: the winner
+        # loses a small share (more if the fight was close), the loser a large
+        # share that grows with how decisive the defeat was.
         if w_sent > 0:
-            w_cas = min(w_sent, winner_casulties * _rng.uniform(2, 10) * 2)
+            w_frac = min(WINNER_MAX_LOSS_FRAC, WINNER_LOSS_PER_POINT * winner_casulties)
+            w_cas = min(w_sent, max(1, round(w_sent * w_frac * _rng.uniform(0.7, 1.3))))
             winner_pairs.append((w_unit, w_cas))
 
         if l_sent > 0:
-            l_cas = min(l_sent, win_type * _rng.uniform(2, 10.5) * 2)
+            l_frac = min(LOSER_MAX_LOSS_FRAC, LOSER_LOSS_PER_POINT * win_type)
+            l_cas = min(l_sent, max(1, round(l_sent * l_frac * _rng.uniform(0.8, 1.2))))
             loser_pairs.append((l_unit, l_cas))
 
     return winner_pairs, loser_pairs

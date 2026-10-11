@@ -1297,13 +1297,22 @@ def warResult():
                     (defender.user_id,),
                 )
                 province_id_fetch = db.fetchall()
-                if len(province_id_fetch) > 0:
+                # Only a winning attacker razes anything; every building type in
+                # the hit province is a valid target and the war type caps how
+                # much of the province one attack can level.
+                if len(province_id_fetch) > 0 and winner == attacker.user_id:
                     random_province = province_id_fetch[
                         random.randint(0, len(province_id_fetch) - 1)
                     ][0]
-                    public_works = Nation.get_public_works(random_province)
+                    province_buildings = Nation.get_province_buildings(random_province)
+                    destroy_frac = {"Raze": 0.25, "Sustained": 0.08, "Loot": 0.03}.get(
+                        war_type, 0.08
+                    )
                     infra_damage_effects = Military.infrastructure_damage(
-                        attack_effects[0], public_works, random_province
+                        attack_effects[0],
+                        province_buildings,
+                        random_province,
+                        destroy_frac,
                     )
             except Exception:
                 rollback_db_cursor(db)
