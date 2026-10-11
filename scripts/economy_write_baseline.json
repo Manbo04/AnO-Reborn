@@ -1,9 +1,6 @@
 {
   "action_loop.py": 3,
   "app_core/admin/repositories.py": 6,
-  "app_core/coalition_bank/services.py": 4,
-  "app_core/coalitions/routes.py": 8,
-  "app_core/economy/building_purchase.py": 2,
   "app_core/events/routes.py": 4,
   "app_core/game_ticks/bond_tick.py": 8,
   "app_core/game_ticks/disasters.py": 1,
@@ -13,8 +10,6 @@
   "app_core/game_ticks/revenue.py": 2,
   "app_core/game_ticks/taxes.py": 4,
   "app_core/game_ticks/unit_production.py": 2,
-  "app_core/market/repositories.py": 5,
-  "app_core/market/services.py": 5,
   "app_core/military/repositories.py": 1,
   "app_core/referrals/service.py": 1,
   "app_core/world_map/repositories.py": 1,
@@ -23,7 +18,7 @@
   "bot_api.py": 1,
   "countries.py": 1,
   "database.py": 1,
-  "province.py": 8,
+  "province.py": 1,
   "signup.py": 2,
   "wars/routes.py": 3
 }

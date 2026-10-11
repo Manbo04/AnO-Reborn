@@ -34,6 +34,9 @@ def report_trade_error(msg, exc=None, extra=None):
         pass
 
 
+from app_core.economy import ledger
+
+
 def give_resource(giver_id, taker_id, resource, amount, cursor=None):
     if giver_id != "bank":
         giver_id = int(giver_id)
@@ -49,80 +52,19 @@ def give_resource(giver_id, taker_id, resource, amount, cursor=None):
         if resource not in ["gold", "money"] and not is_active_resource(db, resource):
             return "No such active resource"
 
-        if resource in ["gold", "money"]:
-            if giver_id != "bank":
-                db.execute(
-                    (
-                        "UPDATE stats SET gold=gold-%s "
-                        "WHERE id=%s AND gold>=%s "
-                        "RETURNING gold"
-                    ),
-                    (amount, giver_id, amount),
-                )
-                if db.fetchone() is None:
-                    return "Giver doesn't have enough resources to transfer such amount."
-
-            if taker_id != "bank":
-                db.execute(
-                    ("UPDATE stats SET gold=gold+%s WHERE id=%s RETURNING gold"),
-                    (amount, taker_id),
-                )
-                db.fetchone()
-
-        else:
-            if giver_id != "bank":
-                db.execute(
-                    (
-                        """
-                        WITH rid AS (
-                            SELECT resource_id
-                            FROM resource_dictionary
-                            WHERE name=%s
-                        )
-                        UPDATE user_economy ue
-                        SET quantity = ue.quantity - %s
-                        FROM rid
-                        WHERE ue.user_id=%s
-                          AND ue.resource_id = rid.resource_id
-                          AND ue.quantity >= %s
-                        RETURNING ue.quantity
-                        """
-                    ),
-                    (resource, amount, giver_id, amount),
-                )
-                if db.fetchone() is None:
-                    return "Giver doesn't have enough resources to transfer such amount."
-
-            if taker_id != "bank":
-                db.execute(
-                    """
-                    INSERT INTO user_economy (user_id, resource_id, quantity)
-                    SELECT %s, rd.resource_id, 0
-                    FROM resource_dictionary rd
-                    WHERE rd.name=%s
-                    ON CONFLICT (user_id, resource_id) DO NOTHING
-                    """,
-                    (taker_id, resource),
-                )
-                db.execute(
-                    (
-                        """
-                        WITH rid AS (
-                            SELECT resource_id
-                            FROM resource_dictionary
-                            WHERE name=%s
-                        )
-                        UPDATE user_economy ue
-                        SET quantity = ue.quantity + %s
-                        FROM rid
-                        WHERE ue.user_id=%s
-                          AND ue.resource_id = rid.resource_id
-                        RETURNING ue.quantity
-                        """
-                    ),
-                    (resource, amount, taker_id),
-                )
-                db.fetchone()
+        try:
+            if resource in ["gold", "money"]:
+                if giver_id != "bank":
+                    ledger.spend_gold(db, giver_id, amount)
+                if taker_id != "bank":
+                    ledger.credit_gold(db, taker_id, amount)
+            else:
+                if giver_id != "bank":
+                    ledger.spend_resources(db, giver_id, {resource: amount})
+                if taker_id != "bank":
+                    ledger.credit_resources(db, taker_id, {resource: amount})
+        except ledger.InsufficientFunds:
+            return "Giver doesn't have enough resources to transfer such amount."
 
         return True
 

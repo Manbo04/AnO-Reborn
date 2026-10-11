@@ -35,14 +35,14 @@ def _amount(value):
 def credit_gold(db, user_id, amount):
     amount = _amount(amount)
     if amount:
-        db.execute("UPDATE stats SET gold = gold + %s WHERE id = %s", (amount, user_id))
+        db.execute("UPDATE stats SET gold=gold+%s WHERE id=%s", (amount, user_id))
 
 
 def spend_gold(db, user_id, amount):
     """Take exactly amount or raise InsufficientFunds. Returns the new balance."""
     amount = _amount(amount)
     db.execute(
-        "UPDATE stats SET gold = gold - %s WHERE id = %s AND gold >= %s RETURNING gold",
+        "UPDATE stats SET gold=gold-%s WHERE id=%s AND gold>=%s RETURNING gold",
         (amount, user_id, amount),
     )
     row = db.fetchone()
@@ -73,26 +73,31 @@ def take_gold(db, user_id, amount):
 
 _ENSURE_ROW = """
     INSERT INTO user_economy (user_id, resource_id, quantity)
-    SELECT %s, rd.resource_id, 0 FROM resource_dictionary rd WHERE rd.name = %s
+    SELECT %s, rd.resource_id, 0
+    FROM resource_dictionary rd
+    WHERE rd.name=%s
     ON CONFLICT (user_id, resource_id) DO NOTHING
 """
 
 
 def credit_resources(db, user_id, amounts):
     """amounts: {resource_name: quantity}."""
-    items = [(name, _amount(q)) for name, q in amounts.items() if int(q)]
-    if not items:
-        return
-    execute_batch(db, _ENSURE_ROW, [(user_id, name) for name, _ in items])
-    execute_batch(
-        db,
-        """
-        UPDATE user_economy ue SET quantity = ue.quantity + %s
-        FROM resource_dictionary rd
-        WHERE ue.user_id = %s AND ue.resource_id = rd.resource_id AND rd.name = %s
-        """,
-        [(q, user_id, name) for name, q in items],
-    )
+    for name, q in amounts.items():
+        q = _amount(q)
+        if not q:
+            continue
+        db.execute(_ENSURE_ROW, (user_id, name))
+        db.execute(
+            """
+            WITH rid AS (SELECT resource_id FROM resource_dictionary WHERE name=%s)
+            UPDATE user_economy ue SET quantity = ue.quantity + %s
+            FROM rid
+            WHERE ue.user_id=%s AND ue.resource_id = rid.resource_id
+            RETURNING ue.quantity
+            """,
+            (name, q, user_id),
+        )
+        db.fetchone()
 
 
 def spend_resources(db, user_id, amounts):
@@ -103,14 +108,16 @@ def spend_resources(db, user_id, amounts):
             continue
         db.execute(
             """
+            WITH rid AS (SELECT resource_id FROM resource_dictionary WHERE name=%s)
             UPDATE user_economy ue SET quantity = ue.quantity - %s
-            FROM resource_dictionary rd
-            WHERE ue.user_id = %s AND ue.resource_id = rd.resource_id
-              AND rd.name = %s AND ue.quantity >= %s
+            FROM rid
+            WHERE ue.user_id=%s AND ue.resource_id = rid.resource_id
+              AND ue.quantity >= %s
+            RETURNING ue.quantity
             """,
-            (q, user_id, name, q),
+            (name, q, user_id, q),
         )
-        if db.rowcount != 1:
+        if db.fetchone() is None:
             raise InsufficientFunds(name, q)
 
 

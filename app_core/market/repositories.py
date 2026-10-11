@@ -1,4 +1,5 @@
 from database import get_request_cursor, get_db_connection
+from app_core.economy import ledger
 
 def is_active_resource(db, resource):
     db.execute(
@@ -28,75 +29,29 @@ def get_user_resource_quantity(db, user_id, resource):
     return int(row[0] or 0)
 
 def decrement_gold(db, user_id, amount):
-    db.execute(
-        (
-            "UPDATE stats SET gold=gold-%s "
-            "WHERE id=%s AND gold>=%s "
-            "RETURNING gold"
-        ),
-        (amount, user_id, amount),
-    )
-    return db.fetchone() is not None
+    try:
+        ledger.spend_gold(db, user_id, amount)
+        return True
+    except ledger.InsufficientFunds:
+        return False
+
 
 def increment_gold(db, user_id, amount):
-    db.execute(
-        ("UPDATE stats SET gold=gold+%s WHERE id=%s RETURNING gold"),
-        (amount, user_id),
-    )
-    return db.fetchone() is not None
+    ledger.credit_gold(db, user_id, amount)
+    return True
+
 
 def decrement_resource(db, user_id, resource, amount):
-    db.execute(
-        (
-            """
-            WITH rid AS (
-                SELECT resource_id
-                FROM resource_dictionary
-                WHERE name=%s
-            )
-            UPDATE user_economy ue
-            SET quantity = ue.quantity - %s
-            FROM rid
-            WHERE ue.user_id=%s
-              AND ue.resource_id = rid.resource_id
-              AND ue.quantity >= %s
-            RETURNING ue.quantity
-            """
-        ),
-        (resource, amount, user_id, amount),
-    )
-    return db.fetchone() is not None
+    try:
+        ledger.spend_resources(db, user_id, {resource: amount})
+        return True
+    except ledger.InsufficientFunds:
+        return False
+
 
 def increment_resource(db, user_id, resource, amount):
-    db.execute(
-        """
-        INSERT INTO user_economy (user_id, resource_id, quantity)
-        SELECT %s, rd.resource_id, 0
-        FROM resource_dictionary rd
-        WHERE rd.name=%s
-        ON CONFLICT (user_id, resource_id) DO NOTHING
-        """,
-        (user_id, resource),
-    )
-    db.execute(
-        (
-            """
-            WITH rid AS (
-                SELECT resource_id
-                FROM resource_dictionary
-                WHERE name=%s
-            )
-            UPDATE user_economy ue
-            SET quantity = ue.quantity + %s
-            FROM rid
-            WHERE ue.user_id=%s
-              AND ue.resource_id = rid.resource_id
-            RETURNING ue.quantity
-            """
-        ),
-        (resource, amount, user_id),
-    )
-    return db.fetchone() is not None
+    ledger.credit_resources(db, user_id, {resource: amount})
+    return True
 
 def get_offer_by_id(db, offer_id):
     db.execute(

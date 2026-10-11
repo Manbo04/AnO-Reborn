@@ -11,6 +11,7 @@ from app_core.economy.building_costs import (
     get_slot_type,
 )
 import variables
+from app_core.economy import ledger
 
 
 class BuildingPurchaseError(Exception):
@@ -163,24 +164,14 @@ def purchase_building(
 
     for resource, per_unit in resources_data.items():
         qty = int(per_unit) * quantity
-        resource_id = res_map[resource]
-        db.execute(
-            """
-            UPDATE user_economy SET quantity = quantity - %s
-            WHERE user_id = %s AND resource_id = %s AND quantity >= %s
-            RETURNING quantity
-            """,
-            (qty, user_id, resource_id, qty),
-        )
-        if db.fetchone() is None:
+        try:
+            ledger.spend_resources(db, user_id, {resource: qty})
+        except ledger.InsufficientFunds:
             raise BuildingPurchaseError(f"Missing {qty} {resource}")
 
-    db.execute(
-        "UPDATE stats SET gold = gold - %s WHERE id = %s AND gold >= %s "
-        "RETURNING gold",
-        (total_gold, user_id, total_gold),
-    )
-    if db.fetchone() is None:
+    try:
+        ledger.spend_gold(db, user_id, total_gold)
+    except ledger.InsufficientFunds:
         raise BuildingPurchaseError("You don't have enough money.")
 
     db.execute(

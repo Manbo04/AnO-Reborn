@@ -18,6 +18,7 @@ from helpers import (
 )
 from dotenv import load_dotenv
 import variables
+from app_core.economy import ledger
 from helpers import get_date
 from database import (
     get_request_cursor,
@@ -1337,12 +1338,9 @@ def rename_province(pId):
             return redirect(f"/province/{pId}")
 
         # Atomic gold deduction, same pattern as coalition renames
-        db.execute(
-            "UPDATE stats SET gold = gold - %s "
-            "WHERE id = %s AND gold >= %s RETURNING gold",
-            (PROVINCE_RENAME_COST, cId, PROVINCE_RENAME_COST),
-        )
-        if not db.fetchone():
+        try:
+            ledger.spend_gold(db, cId, PROVINCE_RENAME_COST)
+        except ledger.InsufficientFunds:
             return error(
                 400,
                 f"Renaming a province costs {PROVINCE_RENAME_COST:,} gold, "
@@ -1653,13 +1651,9 @@ def createprovince():
                 # Use atomic gold deduction to prevent race conditions
                 province_price = get_province_price(cId)
 
-                db.execute(
-                    "UPDATE stats SET gold = gold - %s "
-                    "WHERE id = %s AND gold >= %s RETURNING gold",
-                    (province_price, cId, province_price),
-                )
-                result = db.fetchone()
-                if not result:
+                try:
+                    ledger.spend_gold(db, cId, province_price)
+                except ledger.InsufficientFunds:
                     return error(400, "You don't have enough money.")
 
                 create_province_record(db, cId, pName)
@@ -1972,16 +1966,9 @@ def province_sell_buy(way, units, province_id):
                 # --- All checks passed — now deduct all resources ---
                 for resource, amount in resources_list:
                     qty = amount * wantedUnits
-                    resource_id = _res_id_map.get(resource)
-                    db.execute(
-                        (
-                            "UPDATE user_economy SET quantity = quantity - %s "
-                            "WHERE user_id = %s AND resource_id = %s AND "
-                            "quantity >= %s RETURNING quantity"
-                        ),
-                        (qty, cId, resource_id, qty),
-                    )
-                    if db.fetchone() is None:
+                    try:
+                        ledger.spend_resources(db, cId, {resource: qty})
+                    except ledger.InsufficientFunds:
                         # Should not happen after pre-check, but guard anyway
                         return {
                             "fail": True,
@@ -1997,16 +1984,7 @@ def province_sell_buy(way, units, province_id):
                     if not resource_id:
                         continue
 
-                    # Increment resource on sell
-                    db.execute(
-                        (
-                            "UPDATE user_economy SET quantity = quantity + %s "
-                            "WHERE user_id = %s AND resource_id = %s "
-                            "RETURNING quantity"
-                        ),
-                        (qty, cId, resource_id),
-                    )
-                    db.fetchone()
+                    ledger.credit_resources(db, cId, {resource: qty})
 
         if way == "sell":
             if wantedUnits > currentUnits:  # Checks if user has enough units to sell
@@ -2036,10 +2014,7 @@ def province_sell_buy(way, units, province_id):
                 return error(500, "Nation data could not be found")
             gold_before = gold_before_row[0] or 0
 
-            db.execute(
-                "UPDATE stats SET gold = gold + %s WHERE id = %s",
-                (totalPrice, cId),
-            )
+            ledger.credit_gold(db, cId, totalPrice)
 
             db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
             gold_after_row = db.fetchone()
@@ -2113,10 +2088,13 @@ def province_sell_buy(way, units, province_id):
                     return error(500, "Nation data could not be found")
                 gold_before = gold_before_row[0] or 0
 
-                db.execute(
-                    "UPDATE stats SET gold=gold-%s WHERE id=(%s)",
-                    (totalPrice, cId),
-                )
+                # Atomic: the gold read above isn't locked, so a second
+                # concurrent purchase could otherwise drive gold negative.
+                try:
+                    ledger.spend_gold(db, cId, totalPrice)
+                except ledger.InsufficientFunds:
+                    rollback_db_cursor(db)  # undo the resources taken above
+                    return error(400, "You don't have enough money.")
 
                 db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
                 gold_after_row = db.fetchone()
@@ -2387,12 +2365,9 @@ def _mass_buy_land_city(db, cId, unit, mode, quantity, province_ids):
         )
 
     # One atomic, conditional deduction for the whole order.
-    db.execute(
-        "UPDATE stats SET gold = gold - %s WHERE id = %s AND gold >= %s RETURNING gold",
-        (total, cId, total),
-    )
-    row = db.fetchone()
-    if row is None:
+    try:
+        ledger.spend_gold(db, cId, total)
+    except ledger.InsufficientFunds:
         raise BuildingPurchaseError("You don't have enough money.")
 
     column = "cityCount" if unit == "cityCount" else "land"
