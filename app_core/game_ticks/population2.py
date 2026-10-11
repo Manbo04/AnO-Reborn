@@ -62,7 +62,11 @@ def homes(districts, land, buildings):
         TRANSIT_BONUS[k] * int(buildings.get(k, 0) or 0) for k in TRANSIT_BONUS
     )
     transit = min(TRANSIT_MAX, transit)
-    base = BASE_HOMES + HOMES_PER_DISTRICT * (districts or 0) + HOMES_PER_LAND * (land or 0)
+    base = (
+        BASE_HOMES
+        + HOMES_PER_DISTRICT * (districts or 0)
+        + HOMES_PER_LAND * (land or 0)
+    )
     return int(base * (1 + transit))
 
 
@@ -120,7 +124,9 @@ def emigrants(pop, home_count, dt=DT):
     return int(max(0, over) * EMIGRATION_RATE * dt)
 
 
-def step_province(p, hospitals, home_count, food_ratio, universal_healthcare, grace, dt=DT):
+def step_province(
+    p, hospitals, home_count, food_ratio, universal_healthcare, grace, dt=DT
+):
     """One tick for one province. p has pop_children/working/elderly,
     happiness, pollution. Returns (children, working, elderly) deltas from
     births, deaths and settlers/emigration (NOT aging, NOT migration)."""
@@ -223,7 +229,9 @@ def _scale_down(c, w, e, remove):
     return max(0, c - rc), max(0, w - rw), max(0, e - re_)
 
 
-def simulate_nation(provs, buildings_map, food_ratio, healthcare, starve_grace, now=None):
+def simulate_nation(
+    provs, buildings_map, food_ratio, healthcare, starve_grace, now=None
+):
     """provs: dicts with id, population, pop_children/working/elderly,
     citycount, land, happiness, pollution (one nation). Returns
     {province_id: (children, working, elderly)} after one tick of births,
