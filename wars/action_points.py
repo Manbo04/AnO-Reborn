@@ -176,8 +176,6 @@ def parse_one_screen_attack(
     form_data: Dict[str, Any],
     owned_units: Dict[str, int],
     unit_domain_map: Optional[Dict[str, List[str]]] = None,
-    unit_costs: Optional[Dict[str, int]] = None,
-    available_supplies: int = 2000,
     current_ap: Optional[Dict[str, int]] = None,
 ) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
     """Pure validation and parser for one-screen attack form submission.
@@ -190,14 +188,6 @@ def parse_one_screen_attack(
             "air": ["fighters", "bombers", "apaches"],
             "naval": ["destroyers", "cruisers", "submarines"],
         }
-    if unit_costs is None:
-        unit_costs = {
-            "soldiers": 1, "tanks": 3, "artillery": 2,
-            "fighters": 5, "bombers": 10, "apaches": 5,
-            "destroyers": 25, "cruisers": 50, "submarines": 30,
-            "icbms": 20, "nukes": 50,
-        }
-
     attack_type = form_data.get("attack_type") or form_data.get("domain") or "ground"
 
     # Special attack (icbms)
@@ -241,7 +231,6 @@ def parse_one_screen_attack(
     domain_units = unit_domain_map[attack_type]
     selected_units = {}
     total_sent = 0
-    total_supply_cost = 0
 
     for u in domain_units:
         raw_val = form_data.get(u, 0)
@@ -256,16 +245,9 @@ def parse_one_screen_attack(
             return None, f"You only own {owned} {u}"
         selected_units[u] = amt
         total_sent += amt
-        total_supply_cost += amt * unit_costs.get(u, 1)
 
     if total_sent == 0:
         return None, "Can't attack because you haven't sent any units"
-
-    if available_supplies < 200:
-        return None, "The minimum supply amount is 200"
-
-    if total_supply_cost > available_supplies:
-        return None, f"Not enough supplies available (need {total_supply_cost}, have {available_supplies})"
 
     # AP check if current_ap passed
     branch, ap_cost = get_ap_cost(f"{attack_type}_attack")
@@ -278,7 +260,6 @@ def parse_one_screen_attack(
         "special": False,
         "domain": attack_type,
         "units": selected_units,
-        "supply_cost": total_supply_cost,
         "ap_branch": branch,
         "ap_cost": ap_cost,
     }, None

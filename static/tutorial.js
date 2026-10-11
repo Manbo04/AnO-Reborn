@@ -436,36 +436,6 @@
         }
     }
 
-    /* Supply attack calculator */
-    var supplyWidget = root.querySelector("[data-widget='supply-calc']");
-    if (supplyWidget) {
-        var infantry = supplyWidget.querySelector("[data-sup-infantry]");
-        var tanks = supplyWidget.querySelector("[data-sup-tanks]");
-        var supplyResult = supplyWidget.querySelector("[data-sup-result]");
-        var minSup = constants.min_attack_supplies || 200;
-
-        function updateSupply() {
-            var inf = parseInt(infantry.value, 10) || 0;
-            var tn = parseInt(tanks.value, 10) || 0;
-            var cost = inf * 1 + tn * 5;
-            var ok = cost >= minSup;
-            if (supplyResult) {
-                supplyResult.innerHTML =
-                    "Attack supply cost: <strong>" +
-                    cost +
-                    "</strong> " +
-                    (ok
-                        ? "(≥ " + minSup + " — you can launch!)"
-                        : "(need at least " + minSup + " supplies)");
-                supplyResult.style.color = ok ? "#2ecc71" : "#e74c3c";
-            }
-        }
-        [infantry, tanks].forEach(function (el) {
-            if (el) el.addEventListener("input", updateSupply);
-        });
-        updateSupply();
-    }
-
     /* Quizzes */
     function setupQuiz(panel, chapterIndex) {
         var quiz = panel.querySelector(".tutorial-quiz");

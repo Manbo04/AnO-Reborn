@@ -101,8 +101,6 @@ def test_two_concurrent_wartarget_posts_resolve_only_once(war_pair):
         "user_id": attacker_id,
         "selected_units": {"nukes": 0},
         "bonuses": None,
-        "supply_costs": 0,
-        "available_supplies": 200,
         "war_id": war_id,
         "selected_units_list": ["nukes"],
     }

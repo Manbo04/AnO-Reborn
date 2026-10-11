@@ -68,7 +68,6 @@
     padding: 12px 14px;
     margin-bottom: 12px;
 }
-.unit-card.wr-supply { border-left-color: var(--accent); }
 .unit-card.wr-militia { border-left-color: var(--wr-warn); }
 .loot-card { border-left-color: var(--success); }
 .unit-name {
@@ -83,7 +82,6 @@
     background: color-mix(in srgb, var(--danger) 30%, transparent);
 }
 .progress-fill { height: 100%; background: var(--success); transition: width 1s ease-in-out; }
-.progress-fill.wr-supply-fill { background: var(--accent); }
 .casualty-counter {
     display: flex; justify-content: space-between;
     font-size: 0.88em; color: var(--text-secondary);
@@ -185,36 +183,6 @@
                     <span class="wr-role wr-role--def">Defender</span> {{ defender_result["nation_name"] }}
                 </div>
                 
-                {% if defender_result.get("supply") %}
-                    <div class="unit-card wr-supply">
-                        <h4 style="display: flex; align-items: center; justify-content: space-between;">
-                            <span><i class="fas fa-box"></i> Defender Supply</span>
-                            {% if defender_result["supply"]["owned"] > defender_result["supply"]["fielded"] %}
-                                <span class="wr-warn" style="font-size: 12px; font-weight: normal;"><i class="fas fa-exclamation-triangle"></i> Supply Shortage</span>
-                            {% endif %}
-                        </h4>
-                        <div class="casualty-counter" style="margin-bottom: 5px;">
-                            <span>Pool before: {{defender_result["supply"]["pool_before"]}}</span>
-                            <span>Spent: <span class="casualty-loss">-{{defender_result["supply"]["spent"]}}</span></span>
-                        </div>
-                        <div class="progress-container" style="margin: 5px 0;">
-                            {% set s_pool = defender_result["supply"]["pool_after"] %}
-                            {% set s_cap = 2000 %}
-                            {% set s_pct = (s_pool / s_cap * 100)|round %}
-                            <div class="progress-fill wr-supply-fill" style="width: {{s_pct}}%;"></div>
-                        </div>
-                        <div class="casualty-counter">
-                            <span>Remaining: {{s_pool}}</span>
-                            <span class="wr-muted">(Floor: {{defender_result["supply"]["floor"]}})</span>
-                        </div>
-                        {% if defender_result["supply"]["owned"] > defender_result["supply"]["fielded"] %}
-                            <div class="wr-warn" style="font-size: 12px; margin-top: 5px; text-align: center;">
-                                Only {{defender_result["supply"]["fielded"]}} / {{defender_result["supply"]["owned"]}} units fielded.
-                            </div>
-                        {% endif %}
-                    </div>
-                {% endif %}
-
                 {% if defender_result.get("citizen_army") %}
                     <div class="unit-card wr-militia">
                         <h4 class="wr-warn"><i class="fas fa-users"></i> Citizen Army Activated</h4>

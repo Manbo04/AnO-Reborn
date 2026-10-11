@@ -73,7 +73,7 @@ CHAPTERS = [
         "images": ["military.jpg", "cruiser.jpg"],
         "captions": [
             "Recruit units with manpower and resources",
-            "Attacks need 200+ supplies minimum",
+            "Attacks cost action points, not supplies",
             "Balance offense with economy",
         ],
     },

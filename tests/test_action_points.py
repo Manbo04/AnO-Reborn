@@ -82,6 +82,23 @@ def test_parse_one_screen_attack_domain():
     assert payload["ap_cost"] == 3
 
 
+def test_parse_one_screen_attack_has_no_supply_limit():
+    # Wars cost action points only: a huge army is accepted as long as the
+    # units are owned and AP covers the attack.
+    owned = {"soldiers": 500_000, "tanks": 100_000, "artillery": 100_000}
+    form = {
+        "attack_type": "ground",
+        "soldiers": "500000",
+        "tanks": "100000",
+        "artillery": "100000",
+    }
+    payload, err = action_points.parse_one_screen_attack(
+        form, owned, current_ap={"ground": 3, "air": 0, "naval": 0}
+    )
+    assert err is None
+    assert "supply_cost" not in payload
+
+
 def test_parse_one_screen_attack_insufficient_units():
     owned = {"soldiers": 10, "tanks": 0, "artillery": 0}
     form = {

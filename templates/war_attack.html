@@ -266,7 +266,7 @@
         </div>
         {% endif %}
 
-        <!-- COMBAT STATUS (AP, ENTRENCHMENT, INTEL, SUPPLY) -->
+        <!-- COMBAT STATUS (AP, ENTRENCHMENT, INTEL) -->
         <div class="war-status-grid">
             <!-- AP BOX -->
             <div class="war-stat-box">
@@ -307,9 +307,6 @@
                         <div style="color:var(--text-secondary);">Entrenchment: <b style="color:#48bb78;">Lvl {{ status.my_entrench }}/3</b></div>
                         <div style="font-size:0.8em; color:var(--text-secondary);">+{{ status.my_entrench * 10 }}% Ground Def (Theirs: Lvl {{ status.enemy_entrench }})</div>
                     </div>
-                </div>
-                <div style="font-size:0.8em; color:var(--text-secondary); margin-top:2px;">
-                    Supply Pool: <b>{{ available_supplies }}</b> / 2000
                 </div>
             </div>
         </div>
@@ -367,7 +364,6 @@
                         <div class="unit-name">{{ u }}</div>
                         <div class="unit-counts">
                             <span>Owned: <b id="owned-{{ u }}">{{ owned.get(u, 0) }}</b></span>
-                            <span>Supply: {{ unit_costs.get(u, 1) }}/ea</span>
                             {% if status.enemy_units_revealed %}
                             <span class="unit-intel-revealed">&#128065; Enemy: {{ status.enemy_units.get(u, 0) }}</span>
                             {% endif %}
@@ -375,7 +371,7 @@
                     </div>
                     <div class="unit-input-group">
                         <button type="button" class="btn-max" onclick="setMax('{{ u }}')">Max</button>
-                        <input type="number" id="input-{{ u }}" name="{{ u }}" class="unit-amount-input count-input" data-unit="{{ u }}" data-cost="{{ unit_costs.get(u, 1) }}" min="0" max="{{ owned.get(u, 0) }}" value="{{ form_values.get(u, 0) if form_values else 0 }}">
+                        <input type="number" id="input-{{ u }}" name="{{ u }}" class="unit-amount-input count-input" data-unit="{{ u }}" min="0" max="{{ owned.get(u, 0) }}" value="{{ form_values.get(u, 0) if form_values else 0 }}">
                     </div>
                 </div>
                 {% endfor %}
@@ -390,7 +386,6 @@
                         <div class="unit-name">{{ u }}</div>
                         <div class="unit-counts">
                             <span>Owned: <b id="owned-{{ u }}">{{ owned.get(u, 0) }}</b></span>
-                            <span>Supply: {{ unit_costs.get(u, 1) }}/ea</span>
                             {% if status.enemy_units_revealed %}
                             <span class="unit-intel-revealed">&#128065; Enemy: {{ status.enemy_units.get(u, 0) }}</span>
                             {% endif %}
@@ -398,7 +393,7 @@
                     </div>
                     <div class="unit-input-group">
                         <button type="button" class="btn-max" onclick="setMax('{{ u }}')">Max</button>
-                        <input type="number" id="input-{{ u }}" name="{{ u }}" class="unit-amount-input count-input" data-unit="{{ u }}" data-cost="{{ unit_costs.get(u, 1) }}" min="0" max="{{ owned.get(u, 0) }}" value="{{ form_values.get(u, 0) if form_values else 0 }}">
+                        <input type="number" id="input-{{ u }}" name="{{ u }}" class="unit-amount-input count-input" data-unit="{{ u }}" min="0" max="{{ owned.get(u, 0) }}" value="{{ form_values.get(u, 0) if form_values else 0 }}">
                     </div>
                 </div>
                 {% endfor %}
@@ -413,7 +408,6 @@
                         <div class="unit-name">{{ u }}</div>
                         <div class="unit-counts">
                             <span>Owned: <b id="owned-{{ u }}">{{ owned.get(u, 0) }}</b></span>
-                            <span>Supply: {{ unit_costs.get(u, 1) }}/ea</span>
                             {% if status.enemy_units_revealed %}
                             <span class="unit-intel-revealed">&#128065; Enemy: {{ status.enemy_units.get(u, 0) }}</span>
                             {% endif %}
@@ -421,7 +415,7 @@
                     </div>
                     <div class="unit-input-group">
                         <button type="button" class="btn-max" onclick="setMax('{{ u }}')">Max</button>
-                        <input type="number" id="input-{{ u }}" name="{{ u }}" class="unit-amount-input count-input" data-unit="{{ u }}" data-cost="{{ unit_costs.get(u, 1) }}" min="0" max="{{ owned.get(u, 0) }}" value="{{ form_values.get(u, 0) if form_values else 0 }}">
+                        <input type="number" id="input-{{ u }}" name="{{ u }}" class="unit-amount-input count-input" data-unit="{{ u }}" min="0" max="{{ owned.get(u, 0) }}" value="{{ form_values.get(u, 0) if form_values else 0 }}">
                     </div>
                 </div>
                 {% endfor %}
@@ -435,13 +429,12 @@
                         <div class="unit-name">Ballistic Missiles (ICBMs)</div>
                         <div class="unit-counts">
                             <span>Owned: <b id="owned-icbms">{{ owned.get('icbms', 0) }}</b></span>
-                            <span>Supply: 20/ea</span>
                         </div>
                     </div>
                     <div class="unit-input-group">
                         <input type="hidden" name="special_unit" value="icbms">
                         <button type="button" class="btn-max" onclick="setMax('icbms')">Max</button>
-                        <input type="number" id="input-icbms" name="amount" class="unit-amount-input count-input" data-unit="icbms" data-cost="20" min="0" max="{{ owned.get('icbms', 0) }}" value="{{ form_values.get('amount', 0) if form_values else 0 }}">
+                        <input type="number" id="input-icbms" name="amount" class="unit-amount-input count-input" data-unit="icbms" min="0" max="{{ owned.get('icbms', 0) }}" value="{{ form_values.get('amount', 0) if form_values else 0 }}">
                     </div>
                 </div>
 
@@ -474,9 +467,6 @@
             <!-- FOOTER ESTIMATES & LAUNCH BUTTON -->
             <div class="attack-footer-panel">
                 <div class="cost-breakdown">
-                    <div>
-                        Supply Cost: <b id="display-supply-cost" style="color:var(--accent, #00a7e1);">0</b> / {{ available_supplies }}
-                    </div>
                     <div>
                         AP Cost: <b id="display-ap-cost" style="color:#48bb78;">3 Ground AP</b>
                     </div>
@@ -523,8 +513,6 @@ function switchTab(tab) {
 
     // Update AP cost label
     document.getElementById('display-ap-cost').textContent = apCosts[tab] || '3 AP';
-
-    updateSupplyCost();
 }
 
 function setMax(unit) {
@@ -532,32 +520,7 @@ function setMax(unit) {
     const inputElem = document.getElementById('input-' + unit);
     if (ownedElem && inputElem) {
         inputElem.value = ownedElem.innerText.replace(/,/g, '');
-        updateSupplyCost();
     }
 }
-
-function updateSupplyCost() {
-    let totalSupply = 0;
-    const activePanel = document.getElementById('panel-' + currentTab);
-    if (activePanel) {
-        const inputs = activePanel.querySelectorAll('.count-input');
-        inputs.forEach(inp => {
-            const qty = parseInt(inp.value, 10) || 0;
-            const cost = parseInt(inp.getAttribute('data-cost'), 10) || 1;
-            totalSupply += qty * cost;
-        });
-    }
-    const display = document.getElementById('display-supply-cost');
-    if (display) {
-        display.innerText = totalSupply.toLocaleString();
-    }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.count-input').forEach(inp => {
-        inp.addEventListener('input', updateSupplyCost);
-    });
-    updateSupplyCost();
-});
 </script>
 {% endblock %}

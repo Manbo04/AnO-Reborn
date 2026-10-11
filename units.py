@@ -78,7 +78,6 @@ class BlueprintUnit(ABC):
 class SoldierUnit(BlueprintUnit):
     unit_type = "soldiers"
     damage = 1
-    supply_cost = 1
     resource_cost = {"ammunition": 1}
 
     def __init__(self, amount: int) -> None:
@@ -99,7 +98,6 @@ class SoldierUnit(BlueprintUnit):
 class TankUnit(BlueprintUnit):
     unit_type = "tanks"
     damage = 40
-    supply_cost = 5
     resource_cost = {"ammunition": 1, "gasoline": 1}
 
     def __init__(self, amount):
@@ -122,7 +120,6 @@ class TankUnit(BlueprintUnit):
 class ArtilleryUnit(BlueprintUnit):
     unit_type = "artillery"
     damage = 80
-    supply_cost = 5
     resource_cost = {"ammunition": 2}
 
     def __init__(self, amount):
@@ -141,7 +138,6 @@ class ArtilleryUnit(BlueprintUnit):
 class BomberUnit(BlueprintUnit):
     unit_type = "bombers"
     damage = 100
-    supply_cost = 5
     resource_cost = {"ammunition": 2, "gasoline": 2}
 
     def __init__(self, amount):
@@ -171,7 +167,6 @@ class BomberUnit(BlueprintUnit):
 class FighterUnit(BlueprintUnit):
     unit_type = "fighters"
     damage = 100
-    supply_cost = 5
     resource_cost = {"ammunition": 2, "gasoline": 2}
 
     def __init__(self, amount):
@@ -192,7 +187,6 @@ class FighterUnit(BlueprintUnit):
 class ApacheUnit(BlueprintUnit):
     unit_type = "apaches"
     damage = 100
-    supply_cost = 5
     resource_cost = {"ammunition": 2, "gasoline": 2}
 
     def __init__(self, amount):
@@ -212,7 +206,6 @@ class ApacheUnit(BlueprintUnit):
 class DestroyerUnit(BlueprintUnit):
     unit_type = "destroyers"
     damage = 100
-    supply_cost = 5
     resource_cost = {"ammunition": 2, "gasoline": 2}
 
     def __init__(self, amount):
@@ -230,7 +223,6 @@ class DestroyerUnit(BlueprintUnit):
 class CruiserUnit(BlueprintUnit):
     unit_type = "cruisers"
     damage = 200
-    supply_cost = 5
     resource_cost = {"ammunition": 2, "gasoline": 2}
 
     def __init__(self, amount):
@@ -252,7 +244,6 @@ class CruiserUnit(BlueprintUnit):
 class SubmarineUnit(BlueprintUnit):
     unit_type = "submarines"
     damage = 100
-    supply_cost = 5
     resource_cost = {"ammunition": 2, "gasoline": 2}
 
     def __init__(self, amount):
@@ -270,7 +261,6 @@ class SubmarineUnit(BlueprintUnit):
 class CarrierUnit(BlueprintUnit):
     unit_type = "aircraft_carriers"
     damage = 300
-    supply_cost = 12
     resource_cost = {"ammunition": 2, "gasoline": 4}
 
     def __init__(self, amount):
@@ -291,7 +281,6 @@ class CarrierUnit(BlueprintUnit):
 class IcbmUnit(BlueprintUnit):
     unit_type = "icbms"
     damage = 1000
-    supply_cost = 500
 
     def __init__(self, amount):
         self.amount = amount
@@ -308,7 +297,6 @@ class IcbmUnit(BlueprintUnit):
 class NukeUnit(BlueprintUnit):
     unit_type = "nukes"
     damage = 3000
-    supply_cost = 1000
 
     def __init__(self, amount):
         self.amount = amount
@@ -396,8 +384,6 @@ class Units(Military):
         self.user_id = user_id
         self.selected_units = selected_units
         self.bonuses = bonuses
-        self.supply_costs = 0
-        self.available_supplies = None
         self.war_id = war_id
         # Cache for unusable-unit lookup (populated lazily on first combat use)
         self._unusable_units_cache = None
@@ -425,10 +411,10 @@ class Units(Military):
         # if you modify the sess_dict it'll affect the actual session. For safety,
         # create a copy before mutating.
         dic = dict(sess_dict)
-        sort_out = ["supply_costs", "available_supplies"]
-        # Always remove these from dic (they're not __init__ params) and
-        # restore them after construction, even when the value is None.
-        store_sort_values = [dic.pop(it, None) for it in sort_out]
+        # Sessions created before the supply system was removed still carry
+        # these keys; they're no longer __init__ params, so drop them.
+        for legacy_key in ("supply_costs", "available_supplies"):
+            dic.pop(legacy_key, None)
 
         # Filter out private/cache attributes (e.g. _unusable_units_cache)
         # that are stored in __dict__ but are NOT __init__ parameters.
@@ -439,9 +425,6 @@ class Units(Military):
             reb = cls(**dic)
         except (TypeError, ValueError):
             raise TypeError("Cannot create Units instance from database row")
-
-        for sort, value in zip(sort_out, store_sort_values):
-            setattr(reb, sort, value)
 
         return reb
 
@@ -454,7 +437,6 @@ class Units(Military):
     #        example: units_count = 1 when a single special unit type is selected
     #                 (e.g., nukes or icbms)
     def attach_units(self, selected_units: dict, units_count: int) -> Union[str, None]:
-        self.supply_costs = 0
         unit_types = list(selected_units.keys())
         normal_units = self.get_military(self.user_id)
         special_units = self.get_special(self.user_id)
@@ -488,20 +470,10 @@ class Units(Military):
                 return "Invalid amount selected!"
 
             # If an actual amount (>0) was supplied, ensure user owns that many
-            # units and that supplies are sufficient. When amount==0 (selection
-            # stage) we skip supply-related checks to avoid spurious failures
-            # when wars have low available supplies (e.g., <200).
-            if amt > 0:
-                if amt > available_units.get(current_unit, 0):
-                    return "Invalid amount selected!"
-
-                # Check supply cost only when we will actually send units.
-                for interface in self.allUnitInterfaces:
-                    if interface.unit_type == current_unit:
-                        supply_check = self.attack_cost(interface.supply_cost * amt)
-                        if supply_check:
-                            return supply_check
-                        break
+            # units. Attacks are limited by action points only (the war supply
+            # system was removed).
+            if amt > 0 and amt > available_units.get(current_unit, 0):
+                return "Invalid amount selected!"
 
         # If the validation is ended successfully
         self.selected_units = selected_units
@@ -526,12 +498,6 @@ class Units(Military):
                     if attacker_unit in self.unusable_units:
                         return (0, 0)
 
-                    # interface.supply_cost * self.selected_units[attacker_unit]
-                    # calculates the supply cost based on unit amount
-                    # supply = self.attack_cost(
-                    #     interface.supply_cost * self.selected_units[attacker_unit]
-                    # )
-
                     if unit_amount != 0:
                         interface_object = interface(unit_amount)
                         attack_effects = interface_object.attack(target)
@@ -545,45 +511,10 @@ class Units(Military):
             return "Units are not attached!"
 
     def save(self, db_cursor=None):
-        """Persist post-fight state.
-
-        Casualties are now handled by war_orchestrator.persist_fight_results(),
-        so this method only deducts supply costs from the war record.
-        """
-        if not self.supply_costs or not self.war_id:
-            return
-
-        def _do_save(db):
-            # Determine whether this user is attacker or defender in the war
-            db.execute(
-                "SELECT attacker, defender FROM wars WHERE id = %s",
-                (self.war_id,),
-            )
-            row = db.fetchone()
-            if not row:
-                return
-            attacker_id, defender_id = row[0], row[1]
-            if self.user_id == attacker_id:
-                supply_col = "attacker_supplies"
-            elif self.user_id == defender_id:
-                supply_col = "defender_supplies"
-            else:
-                return
-
-            db.execute(
-                f"UPDATE wars SET {supply_col} = "
-                f"GREATEST(0, {supply_col} - %s) "
-                f"WHERE id = %s",
-                (self.supply_costs, self.war_id)
-            )
-
-        if db_cursor is not None:
-            _do_save(db_cursor)
-        else:
-            with get_db_connection() as connection:
-                db = connection.cursor()
-                _do_save(db)
-                connection.commit()
+        """Kept for call-site compatibility. Casualties are handled by
+        war_orchestrator.persist_fight_results() and wars no longer cost
+        supply (action points only), so there is nothing left to persist."""
+        return
 
     # Save casualties to the db and check for casualty validity
     # NOTE: to save the data to the db later on put it to the save method
@@ -614,51 +545,6 @@ class Units(Military):
                 (amount, self.user_id, unit_type),
             )
             connection.commit()
-
-    # Fetch the available supplies and resources which are required
-    # and compare them to the unit attack cost. Also persist morale.
-
-    def attack_cost(self, cost: int) -> str:
-        if self.available_supplies is None:
-            with get_db_connection() as connection:
-                db = connection.cursor()
-
-                db.execute(
-                    "SELECT attacker FROM wars WHERE id=(%s)", (self.war_id,)
-                )
-                row = db.fetchone()
-
-                # Resolve attacker id safely and compare to this object's user id.
-                attacker_id = row[0] if row else None
-
-                # If the current Units object belongs to the attacker side,
-                # read attacker_supplies,
-                # otherwise read defender_supplies.
-                if attacker_id is not None and attacker_id == self.user_id:
-                    db.execute(
-                        "SELECT attacker_supplies FROM wars WHERE id=(%s)",
-                        (self.war_id,),
-                    )
-                    fetched = db.fetchone()
-                    self.available_supplies = (
-                        fetched[0] if fetched and fetched[0] is not None else 0
-                    )
-                else:
-                    db.execute(
-                        "SELECT defender_supplies FROM wars WHERE id=(%s)",
-                        (self.war_id,),
-                    )
-                    fetched = db.fetchone()
-                    self.available_supplies = (
-                        fetched[0] if fetched and fetched[0] is not None else 0
-                    )
-
-        if self.available_supplies < 200:
-            return "The minimum supply amount is 200"
-
-        self.supply_costs += cost
-        if self.supply_costs > self.available_supplies:
-            return "Not enough supplies available"
 
 
 # DEBUGGING
