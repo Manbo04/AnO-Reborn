@@ -351,13 +351,39 @@ def get_population_growth(cId, db=None):
 
         total_delta = 0
         per_province = {}
+        pop2_info = None
         if pop2_on:
             hc = population2.fetch_healthcare_users(active_db, [cId])
+            b_map = population2.fetch_province_buildings(
+                active_db, [r["id"] for r in rows]
+            )
+            total_homes = sum(
+                population2.homes(r["citycount"], r["land"], b_map.get(r["id"], {}))
+                for r in rows
+            )
+            hospitals = sum(
+                b_map.get(r["id"], {}).get("hospitals", 0) for r in rows
+            )
+            covers = [
+                population2.hospital_cover(
+                    b_map.get(r["id"], {}).get("hospitals", 0), r["population"]
+                )
+                * r["population"]
+                for r in rows
+            ]
+            pop2_info = {
+                "homes": int(total_homes),
+                "housing_pct": (
+                    nation["pop"] / total_homes * 100 if total_homes else 0.0
+                ),
+                "hospitals": int(hospitals),
+                "hospital_cover_pct": (
+                    sum(covers) / nation["pop"] * 100 if nation["pop"] else 100.0
+                ),
+            }
             sim = population2.simulate_nation(
                 rows,
-                population2.fetch_province_buildings(
-                    active_db, [r["id"] for r in rows]
-                ),
+                b_map,
                 min(1.0, rations_ratio),
                 cId in hc,
                 grace_period,
@@ -395,6 +421,7 @@ def get_population_growth(cId, db=None):
             "current_population": int(current_population),
             "per_province": per_province,
             "comfort": int(nation["comfort"]),
+            "pop2": pop2_info,
         }
         query_cache.set(cache_key, result)
         return result
