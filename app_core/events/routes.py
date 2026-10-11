@@ -1,4 +1,5 @@
 import os
+from app_core.economy import ledger
 import json
 from flask import Blueprint, request, jsonify, current_app
 from database import get_db_connection
@@ -124,26 +125,19 @@ def respond_event(event_id):
             if held < amount:
                 return jsonify({"success": False, "message": f"Not enough {name.replace('_', ' ')}"}), 400
         for name, amount, _, _ in cost_list:
-            if name == "gold":
-                db.execute("UPDATE stats SET gold = gold - %s WHERE id = %s AND gold >= %s RETURNING gold",
-                           (amount, cId, amount))
-            else:
-                db.execute("UPDATE user_economy SET quantity = quantity - %s WHERE user_id = %s "
-                           "AND resource_id = %s AND quantity >= %s RETURNING quantity",
-                           (amount, cId, resource_map[name], amount))
-            if db.fetchone() is None:
+            try:
+                if name == "gold":
+                    ledger.spend_gold(db, cId, amount)
+                else:
+                    ledger.spend_resources(db, cId, {name: amount})
+            except ledger.InsufficientFunds:
                 conn.rollback()
                 return jsonify({"success": False, "message": f"Not enough {name.replace('_', ' ')}"}), 400
         for name, amount, _, _ in reward_list:
             if name == "gold":
-                db.execute("UPDATE stats SET gold = gold + %s WHERE id = %s", (amount, cId))
+                ledger.credit_gold(db, cId, amount)
             else:
-                db.execute("""
-                    INSERT INTO user_economy (user_id, resource_id, quantity)
-                    VALUES (%s, %s, %s)
-                    ON CONFLICT (user_id, resource_id)
-                    DO UPDATE SET quantity = user_economy.quantity + %s
-                """, (cId, resource_map[name], amount, amount))
+                ledger.credit_resources(db, cId, {name: amount})
         summary = [t for _, _, t, _ in cost_list + reward_list]
 
         db.execute("UPDATE interactive_events SET resolved_at = now(), chosen_option_index = %s WHERE id = %s", (option_index, event_id))

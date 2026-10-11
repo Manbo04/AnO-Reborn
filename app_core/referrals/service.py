@@ -1,6 +1,7 @@
 """Referral code resolution, activity tracking, and reward payouts."""
 from __future__ import annotations
 
+from app_core.economy import ledger
 import logging
 import secrets
 import string
@@ -109,10 +110,7 @@ def _apply_rewards(db, user_id: int, rewards: dict[str, int]) -> dict[str, int]:
         if amount <= 0:
             continue
         if resource == "money":
-            db.execute(
-                "UPDATE stats SET gold = gold + %s WHERE id = %s",
-                (amount, user_id),
-            )
+            ledger.credit_gold(db, user_id, amount)
             granted["money"] = amount
             continue
         result = give_resource("bank", user_id, resource, amount, cursor=db)

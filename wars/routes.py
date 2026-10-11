@@ -16,6 +16,7 @@ from attack_scripts.Nations import (
     Military,
 )
 from attack_scripts import Nation
+from app_core.economy import ledger
 import time
 from datetime import datetime, timezone
 
@@ -1271,14 +1272,9 @@ def warResult():
                                 max_loot = 0
                             loot = random.randint(0, max_loot)
                             if loot > 0:
-                                _loot_cur.execute(
-                                    "UPDATE stats SET gold = gold + %s WHERE id = %s",
-                                    (loot, attacker.user_id),
-                                )
-                                _loot_cur.execute(
-                                    "UPDATE stats SET gold = GREATEST(0, gold - %s) WHERE id = %s",
-                                    (loot, defender.user_id),
-                                )
+                                # Attacker gets only what the defender actually lost.
+                                loot = ledger.take_gold(_loot_cur, defender.user_id, loot)
+                                ledger.credit_gold(_loot_cur, attacker.user_id, loot)
                         attacker_result["loot"] = {"money": loot}
                 elif war_type == "Sustained":
                     pass
@@ -2526,17 +2522,11 @@ def _spend_gasoline(db, user_id, amount):
     (not even a GREATEST(0, ...) floor), so it could drive gasoline negative
     if ever called unlocked.
     """
-    db.execute(
-        """
-        UPDATE user_economy SET quantity = quantity - %s
-        WHERE user_id = %s
-          AND resource_id = (SELECT resource_id FROM resource_dictionary WHERE name = 'gasoline')
-          AND quantity >= %s
-        RETURNING quantity
-        """,
-        (amount, user_id, amount),
-    )
-    return db.fetchone() is not None
+    try:
+        ledger.spend_resources(db, user_id, {"gasoline": amount})
+        return True
+    except ledger.InsufficientFunds:
+        return False
 
 
 def _strike_news(db, attacker_id, target_id, attacker_msg, defender_msg):

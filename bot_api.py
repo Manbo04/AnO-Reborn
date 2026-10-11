@@ -1079,7 +1079,10 @@ def bot_heuristics_sync():
             xp_amount = 0
         xp_amount = max(0, min(xp_amount, 50))
         try:
-            QueryHelper.execute("UPDATE stats SET gold = gold + %s WHERE id = %s", (xp_amount * 10, user_id))
+            from database import get_db_cursor
+            from app_core.economy import ledger
+            with get_db_cursor() as _db:
+                ledger.credit_gold(_db, user_id, xp_amount * 10)
         except:
             pass
         return jsonify({"ok": True, "message": "XP synced to game economy"})
@@ -1307,3 +1310,4 @@ def bot_coalition_bank_summary():
 def register_bot_api_routes(app_instance):
   app_instance.register_blueprint(bp)
 
+from app_core.economy import ledger

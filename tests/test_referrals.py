@@ -74,7 +74,7 @@ class ReferralFakeCursor:
             self._last = (self.state["users"].get(uid, {}).get("is_verified", True),)
             return
 
-        if "update stats set gold = gold + %s where id" in sql_lower:
+        if "update stats set gold = gold + %s where id" in sql_lower or "update stats set gold=gold+%s where id" in sql_lower:
             amount, uid = params
             self.state["stats"].setdefault(uid, {"gold": 0})["gold"] += amount
             return

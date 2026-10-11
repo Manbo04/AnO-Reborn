@@ -1,3 +1,4 @@
+from app_core.economy import ledger
 from psycopg2.extras import execute_batch
 from helpers import get_date
 
@@ -243,9 +244,13 @@ def add_units(db, cId, unit_id, amount):
     )
 
 def update_manpower_and_gold(db, cId, gold_delta, manpower_delta):
+    if gold_delta > 0:
+        ledger.credit_gold(db, cId, gold_delta)
+    elif gold_delta < 0:
+        ledger.take_gold(db, cId, -gold_delta)
     db.execute(
-        "UPDATE stats SET gold = GREATEST(0, gold + %s), manpower = GREATEST(0, manpower + %s) WHERE id=%s",
-        (gold_delta, manpower_delta, cId),
+        "UPDATE stats SET manpower = GREATEST(0, manpower + %s) WHERE id=%s",
+        (manpower_delta, cId),
     )
 
 def get_unit_id_by_name(db, unit_name):
