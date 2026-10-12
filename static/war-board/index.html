@@ -51,7 +51,8 @@ p{margin:0 0 12px;max-width:68ch}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{font:500 12px var(--f-b);border:1px solid rgba(255,255,255,.35);padding:5px 10px;border-radius:999px;color:#fff;background:rgba(255,255,255,.16)}
 .chip b{color:#fff;font-weight:700}
-section{padding-block:40px 8px;display:grid;gap:16px}
+section{padding-block:40px 8px;display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+.stage{min-width:0}.boardwrap{max-width:100%}.bar{max-width:100%}
 .stage{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}
 @media (max-width:960px){.stage{grid-template-columns:minmax(0,1fr)}}
 .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:end;background:var(--panel);border:1px solid var(--line);padding:12px 14px;border-radius:12px;box-shadow:var(--shadow)}
@@ -120,6 +121,30 @@ td canvas{display:block}
 .note{background:var(--accent-sub);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:12px 16px;font-size:14px;max-width:none}
 .note b{color:var(--accent)}
 .tag{display:inline-block;font:700 9px var(--f-b);letter-spacing:.06em;background:var(--accent);color:#fff;padding:1px 5px;border-radius:999px;vertical-align:1px}
+.boardcol{min-width:0}
+.boardtools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-top:0;border-bottom:0;padding:6px 10px}
+.boardtools button{min-width:40px}
+#modeText{font:500 13px var(--f-b);color:var(--muted);min-width:0}
+#modeText:empty,#modeCancel[hidden]{display:none}
+#modeText.on{color:#fff;background:var(--accent);padding:8px 12px;border-radius:8px;flex:1 1 60%;order:10}
+#modeCancel{order:11}
+.setup{flex:1 1 100%;order:9}.setup summary{cursor:pointer;font:500 13px var(--f-b);color:var(--muted);padding:6px 0}
+.setupgrid{display:flex;flex-wrap:wrap;gap:10px;align-items:end;padding-top:6px}
+.legendbox summary{cursor:pointer;font:500 13px var(--f-b);color:var(--muted)}
+@media (max-width:960px){
+  .stage{display:block}
+  .boardcol{position:sticky;top:0;z-index:15;background:var(--bg);padding-bottom:8px}
+  .boardwrap{height:42vh;height:42dvh;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  .side{display:flex;flex-direction:column;margin-top:10px}
+  .c-sel{order:1}.c-res{order:2}.c-str{order:3}.c-con{order:4}.c-hex{order:5}.c-log{order:6}.c-leg{order:7}
+  .vote{position:static}
+  select,button{min-height:42px;font-size:15px}
+  .scorebar{font-size:12px;padding:6px 10px}
+  .boardtools{padding:6px 8px;gap:6px}.boardtools button{min-height:38px;padding:4px 12px}
+  .boardwrap{height:40vh;height:40dvh}
+  .bar{padding:10px}
+}
+.fb{display:grid;gap:3px;margin:0 0 8px}.fbar{display:block;height:8px;background:var(--panel2);border-radius:4px;overflow:hidden}.fbar i{display:block;height:100%}.fb b{font-size:12px;font-weight:500}.fb em,.fnote{font-style:normal;color:var(--muted);font-size:12px}
 .heat1{background:color-mix(in srgb,var(--ok) 22%,transparent)}
 .heat2{background:color-mix(in srgb,var(--gold) 24%,transparent)}
 .heat3{background:color-mix(in srgb,var(--bad) 24%,transparent)}
@@ -132,6 +157,7 @@ td canvas{display:block}
 .vote a{background:var(--accent);color:#fff;text-decoration:none;padding:8px 16px;border-radius:8px;font-weight:500;white-space:nowrap}
 .vote a:hover{background:var(--accent-h)}
 .vote button{background:var(--panel2);color:var(--fg)}
+@media (max-width:960px){.vote{position:static}}
 footer{padding-block:48px 8px;color:var(--muted);font-size:13px}
 footer a{color:var(--accent)}
 </style>
@@ -158,33 +184,34 @@ if(t==='theme-dark')h.setAttribute('data-theme','dark');else if(t||game)h.setAtt
   <p class="hint">You command Aurelia (blue, west). Click a piece, click a tinted hex to move it, click a red-ringed enemy to attack, or pick an order. Deploy pieces from your reserves with production points, or train more. Skip an hour lets Kharzun answer and moves the clock on. Take their capital to win. Select a piece to see how many real units it stands for, or give its type your own picture. Red hexes show where the selected piece can fire from where it stands.</p>
   <div class="note"><b>How turns work in the real game:</b> a turn is one real hour, on the clock. Every hour you get fresh moves whether or not the other player has moved, so you never wait for anyone and nobody can stall a war by not playing. The <b>Skip an hour</b> button exists only in this demo so you can test without waiting a real hour between moves.</div>
   <div class="bar">
-    <label>Aurelia biome<select id="selA"></select></label>
-    <label>Kharzun biome<select id="selB"></select></label>
     <button id="btnNew">New map</button>
-    <label>Map size<select id="selSize"><option value="11">Skirmish 11x11</option><option value="15">Small 15x15</option><option value="19" selected>Medium 19x19</option><option value="25">Large 25x25</option><option value="35">Huge 35x35 (strong devices)</option></select></label>
-    <label>Battlefield<select id="selStyle"><option value="random">Random (sometimes all sea)</option><option value="land">Land and coast</option><option value="naval">Naval war (open sea)</option></select></label>
-    <label>Field limit<select id="selCap"><option value="0">Auto</option><option value="16">16</option><option value="24">24</option><option value="32">32</option><option value="48">48</option><option value="64">64</option><option value="96">96</option><option value="128">128</option></select></label>
-    <label class="tog"><input type="checkbox" id="chkFair" checked> Fair terrain</label>
     <label class="tog"><input type="checkbox" id="chkFog" checked> Fog of war</label>
     <label class="tog"><input type="checkbox" id="chkSup"> Supply range</label>
-    <label>Animation<select id="selQ"><option value="auto">Auto</option><option value="full">Full</option><option value="lite">Lite</option><option value="off">Off</option></select></label>
-    <span class="spacer"></span>
-    <button id="btnEnd" class="primary" title="Demo only: skips one hour so you can test without waiting">Skip an hour (demo)</button>
+    <label class="tog" title="Colours the map: green is easy to march across, yellow is rough, red is very hard"><input type="checkbox" id="chkHeat"> Terrain difficulty</label>
+    <details id="setup" class="setup"><summary>Setup: map size, battlefield, biomes, field limit</summary><div class="setupgrid">
+      <label>Aurelia biome<select id="selA"></select></label><label>Kharzun biome<select id="selB"></select></label><label>Map size<select id="selSize"><option value="11">Skirmish 11x11</option><option value="15">Small 15x15</option><option value="19" selected>Medium 19x19</option><option value="25">Large 25x25</option><option value="35">Huge 35x35 (strong devices)</option></select></label><label>Battlefield<select id="selStyle"><option value="random">Random (sometimes all sea)</option><option value="land">Land and coast</option><option value="naval">Naval war (open sea)</option></select></label><label>Field limit<select id="selCap"><option value="0">Auto</option><option value="16">16</option><option value="24">24</option><option value="32">32</option><option value="48">48</option><option value="64">64</option><option value="96">96</option><option value="128">128</option></select></label><label class="tog" title="Evens out how hard each half of the map is to cross"><input type="checkbox" id="chkFair" checked> Fair terrain</label>
+      <p class="hint" style="flex:1 1 100%;margin:0"><b>Fair terrain</b> checks how hard each half of the map is to march across (soldiers, tanks and guns) and swaps a few hexes until neither side has a big advantage, so nobody gets an easy desert while the other fights through hills. The Conditions panel shows both halves before and after, and the <b>Terrain difficulty</b> toggle colours the map (green easy, yellow rough, red very hard) so you can see it.</p><label>Animation<select id="selQ"><option value="auto">Auto</option><option value="full">Full</option><option value="lite">Lite</option><option value="off">Off</option></select></label>
+    </div></details>
   </div>
   <div class="stage">
-    <div>
+    <div class="boardcol">
       <div class="scorebar"><span class="a" id="scA"></span><span id="turnLbl"></span><span class="b" id="scB"></span></div>
+      <div class="boardtools">
+        <button id="zOut" type="button" aria-label="Zoom out">&minus;</button><button id="zIn" type="button" aria-label="Zoom in">+</button><button id="goBase" type="button">My base</button>
+        <span id="modeText"></span><button id="modeCancel" type="button" hidden>Cancel</button>
+        <span class="spacer"></span>
+        <button id="btnEnd" class="primary" title="Demo only: skips one hour so you can test without waiting">Skip an hour</button>
+      </div>
       <div class="boardwrap" id="bw"><canvas id="board"></canvas><div id="banner"></div></div>
-      <div class="legend" id="legend" style="margin-top:10px"></div>
-      <div class="pieces" id="pieceLegend"></div>
     </div>
     <div class="side">
-      <div class="card"><h3>Conditions</h3><div id="conds" class="kv"></div></div>
-      <div class="card"><h3>Selected</h3><div id="selInfo" class="hint">Nothing selected.</div><div class="acts" id="acts"></div></div>
-      <div class="card"><h3>Strategic</h3><div id="strat"></div></div>
-      <div class="card"><h3>Reserves</h3><div class="res" id="buy"></div><p class="hint" style="margin:8px 0 0" id="buyNote"></p><div id="queue" class="hint"></div></div>
-      <div class="card"><h3>Hex</h3><div id="hexInfo" class="hint">Hover or tap a hex.</div></div>
-      <div class="card"><h3>Battle log</h3><div class="log" id="log"></div></div>
+      <div class="card c-con"><h3>Conditions</h3><div id="conds" class="kv"></div></div>
+      <div class="card c-sel"><h3>Selected</h3><div id="selInfo" class="hint">Nothing selected.</div><div class="acts" id="acts"></div></div>
+      <div class="card c-str"><h3>Strategic</h3><div id="strat"></div></div>
+      <div class="card c-res"><h3>Reserves</h3><div class="res" id="buy"></div><p class="hint" style="margin:8px 0 0" id="buyNote"></p><div id="queue" class="hint"></div></div>
+      <div class="card c-hex"><h3>Hex</h3><div id="hexInfo" class="hint">Hover or tap a hex.</div></div>
+      <div class="card c-log"><h3>Battle log</h3><div class="log" id="log"></div></div>
+      <div class="card c-leg"><details id="legendBox" class="legendbox"><summary>Legend</summary><div class="legend" id="legend" style="margin-top:10px"></div><div class="pieces" id="pieceLegend"></div></details></div>
     </div>
   </div>
 </section>
@@ -206,7 +233,7 @@ if(t==='theme-dark')h.setAttribute('data-theme','dark');else if(t||game)h.setAtt
   <div class="cols">
     <div class="card"><h3>The reserve</h3><p>Your reserve is the army your nation actually owns. At the start of a war each side has a set of units waiting off the board. In the real game these would be your real unit counts, scaled to fit.</p></div>
     <div class="card"><h3>Deploying</h3><p>Putting a piece on the field costs production points and can only draw from the reserve. No reserve, no deployment, however many points you have. Deployed pieces arrive at your territory or a port and can act next hour.</p></div>
-    <div class="card"><h3>Choose where to deploy</h3><p>Press Deploy and every legal hex lights up green: near your towns, or beside any forward base you have built. Pushing deep into enemy land? Build a forward base on the front line and reinforce from there, instead of walking units across the whole map.</p></div>
+    <div class="card"><h3>Choose where to deploy</h3><p>Press Deploy and every legal hex lights up green: anywhere in your own territory, or beside any forward base you have built. On a phone the board jumps to the right spot and you just tap. Pushing deep into enemy land? Build a forward base on the front line and reinforce from there, instead of walking units across the whole map.</p></div>
     <div class="card"><h3>Forward bases are objectives</h3><p>A forward base is a supply source and a deployment point, and enemy land pieces can capture it. Taking the enemy base nearest the front cuts their supply and stops them replacing losses there.</p></div>
     <div class="card"><h3>Training</h3><p>New units are bought with production points and arrive in the reserve after a delay: 1 turn for drones, 2 to 3 for ground units, 4 for most aircraft and ships, 6 for a carrier. ICBMs take 3 turns and nukes 5.</p></div>
     <div class="card"><h3>Losses are permanent</h3><p>A destroyed piece does not return to the reserve. Wars drain what you own, so a long war is decided by who can train faster than they lose pieces.</p></div>
@@ -231,7 +258,7 @@ if(t==='theme-dark')h.setAttribute('data-theme','dark');else if(t||game)h.setAtt
     <div class="card"><h3>Submarines and the deep</h3><p>Submarines are invisible unless an enemy destroyer is within 3 hexes, a cruiser or aircraft within 2, or a spy within 3. Destroyers hit them 60% harder, and bombers also find them. A hidden submarine hits cruisers and carriers hard.</p></div>
     <div class="card"><h3>Drones, missiles and SAMs</h3><p>Kamikaze drones and cruise missiles fly in, hit once and are used up. Each SAM battery within range gives a chance to shoot them down, and SAMs shield nearby friends from all air attacks by 35%. Fighters and cruisers can also hit aircraft in the air.</p></div>
     <div class="card"><h3>ICBMs and nukes</h3><p>Buy them from production points and launch at any hex, even one you cannot see. An ICBM hits a hex and its 6 neighbors, a nuke 19 hexes, leaving fallout for 6 turns. SAM batteries near the target can intercept, and friendly pieces in the blast are hit too. This is where the Iron Dome and Star Wars projects plug in.</p></div>
-  <div class="card"><h3>Fair terrain</h3><p>With Fair terrain on (the default) the generator evens out how hard each half of the board is to march across, so neither side gets an easy desert while the other fights through forest and hills. The battle log shows the average march cost for each side.</p></div>
+  <div class="card"><h3>Fair terrain</h3><p>With Fair terrain on (the default) the generator measures how hard each half of the board is to march across (a blend of soldiers, tanks and guns, so a desert that is easy for tanks counts) and swaps rough hexes for plains on the harder side and plains for hills or forest on the easier side until the two halves are within about 7% of each other. The Conditions panel shows both halves before and after, and the Terrain difficulty toggle colours the map green, yellow and red so you can see the result.</p></div>
     <div class="card"><h3>Naval wars</h3><p>Some boards, or any board you pick, are open sea with island ports, for full naval battles. Ships and aircraft carry the war. Park a surface ship beside an enemy port with none of their pieces next to it for 3 turns and the port is blockaded and taken. Tiny ponds never appear, so ships are never stranded.</p></div>
   </div>
 </section>
@@ -301,7 +328,7 @@ Org hit  = Damage × 1.25  (×1.3 if flanked, ×1.4 from artillery, bombers, shi
     <tr><td>Lay mines</td><td>Soldiers</td><td>2 turns</td><td>Hidden from the enemy. The first enemy ground piece to step on it takes 25 damage and loses 30 Org.</td></tr>
     <tr><td>Spy sweep</td><td>Spies</td><td>1 turn</td><td>Vision +2 for the turn. Spots hidden pieces.</td></tr>
     <tr><td>Sabotage</td><td>Spies</td><td>Instant</td><td>60% to destroy an adjacent enemy fort level, depot or mine, or to cut a piece's Org by 30. On failure the spy may be caught.</td></tr>
-    <tr><td>Deploy</td><td>Any unit in reserve</td><td>Arrives next hour</td><td>Spend production points to put a piece from your reserve on the field. You choose the hex: next to your towns or within 1 hex of a forward base. You can never deploy more than you own.</td></tr>
+    <tr><td>Deploy</td><td>Any unit in reserve</td><td>Arrives next hour</td><td>Spend production points to put a piece from your reserve on the field. You choose the hex: anywhere in your own territory or within 2 hexes of a forward base. You can never deploy more than you own.</td></tr>
     <tr><td>Train</td><td>Any unit</td><td>1 to 6 turns</td><td>Spend production points to add a new piece to your reserve after a delay.</td></tr>
     <tr><td>Launch ICBM or nuke</td><td>Stockpile</td><td>Instant</td><td>Strike any hex. SAM batteries near it can intercept.</td></tr>
     <tr><td>Build causeway</td><td>Engineers</td><td>2 turns</td><td>Turns a sea hex beside the engineers into a road. New unit, in the demo.</td></tr>
@@ -494,7 +521,13 @@ var REPR={};
 function fmtN(n){if(n>=1e7)return Math.round(n/1e6)+'M';if(n>=1e6)return (n/1e6).toFixed(1)+'M';if(n>=1e4)return Math.round(n/1e3)+'k';if(n>=1e3)return (n/1e3).toFixed(1)+'k';return String(Math.max(0,Math.round(n)));}
 function lossTxt(d,hp){return '~'+fmtN(REPR[d.type]*hp/100)+' '+NOUN[d.type]+' lost';}
 function calcRepr(){REPR={};Object.keys(ARMY).forEach(function(k){var c=(START_RES[k]||0)+units.filter(function(u){return u.team==='A'&&u.type===k;}).length;REPR[k]=ARMY[k]/Math.max(1,c);});}
-function avgCost(side){var sm=0,n=0,mid=Math.floor(W/2);for(var i=0;i<N;i++){var t=terr[i];if(t==='sea')continue;var c=i%W;if(side==='A'?c<mid:c>mid){sm+=(MV.soldiers[t]||1);n++;}}return n?sm/n:1;}
+function hexCost(t){return ((MV.soldiers[t]||1)+(MV.tanks[t]||1)+(MV.artillery[t]||1))/3;}
+function avgCost(side){var sm=0,n=0,mid=Math.floor(W/2);for(var i=0;i<N;i++){var t=terr[i];if(t==='sea')continue;var c=i%W;if(side==='A'?c<mid:c>mid){sm+=hexCost(t);n++;}}return n?sm/n:1;}
+function gapPct(a,b){return Math.round(Math.abs(a-b)/((a+b)/2)*100);}
+function balHtml(){if(NAVAL||!rawBal)return 'Open sea, no land to balance.';
+  var f=lastBal,r=rawBal,mx=Math.max(r[0],r[1],f?f[0]:0,f?f[1]:0)*1.05;
+  function bars(v,lab){return '<span class="fb"><b>'+lab+'</b><span class="fbar"><i style="width:'+Math.round(v[0]/mx*100)+'%;background:var(--ca)"></i></span><span class="fbar"><i style="width:'+Math.round(v[1]/mx*100)+'%;background:var(--cb)"></i></span><em>'+v[0].toFixed(2)+' vs '+v[1].toFixed(2)+' ('+gapPct(v[0],v[1])+'% apart)</em></span>';}
+  return (f?bars(r,'Map as generated')+bars(f,'After fair terrain'):bars(r,'Fair terrain is off'))+'<em class="fnote">How hard each half is to march across (soldiers, tanks and guns). Shorter bar is easier. Blue is Aurelia, red is Kharzun.</em>';}
 function balanceTerrain(r){var mid=Math.floor(W/2),it=0;
   while(it++<600){var a=avgCost('A'),b=avgCost('B');if(Math.abs(a-b)/((a+b)/2)<.07)break;var hard=a>b?'A':'B';
     for(var k=0;k<4;k++){var i=Math.floor(r()*N),c=i%W,onHard=hard==='A'?c<mid:c>mid,t=terr[i];if(t==='sea'||t==='urban'||c===mid)continue;
@@ -551,7 +584,7 @@ function mkNoise(seed){
 var terr,prov,provOf,units,unitAt,fort,depot,mines,scar,wreck,fallout,turn,seed,bA='temperate',bB='desert';
 var sel=null,reach=null,attackable=null,focus=-1,busy=false,over=false,vis,supA,supB,effects=[],needStatic=true,strike=null;
 var weather='clear',nextWeather='clear',cmd={A:null,B:null},pp={A:0,B:0},stock={A:{icbm:0,nuke:0,sat:0},B:{icbm:0,nuke:0,sat:0}},coast=[],flash={};
-var deployMode=null,deployCache=[],lastBal=null,opMode=null,opCache=[],reveals=[],supCut=[],satUntil=0,satReady=0;
+var deployMode=null,deployCache=[],lastBal=null,rawBal=null,opMode=null,opCache=[],reveals=[],supCut=[],satUntil=0,satReady=0;
 var rnd=Math.random,pendingBridge=false,hov=-1,reserve={A:{},B:{}},queue={A:[],B:[]};
 function pick(arr,r){return arr[Math.floor(r()*arr.length)];}
 function shuffle(a,r){for(var i=a.length-1;i>0;i--){var j=Math.floor(r()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
@@ -574,9 +607,9 @@ function generate(){
   var cA=cdf(bA),cB=cdf(bB);terr=new Array(N);
   for(i=0;i<N;i++){c=i%W;var bw=W*.32,t=Math.min(1,Math.max(0,(c-bw)/bw));t=t*t*(3-2*t);terr[i]='mountain';
     for(var k=0;k<ORDER.length;k++){if(u[i]<=(1-t)*cA[k]+t*cB[k]){terr[i]=ORDER[k];break;}}}
-  if(NAVAL){for(i=0;i<N;i++)terr[i]=u[i]>.93?pick(['plains','forest','hills','mountain','swamp'],r):'sea';}
+  if(NAVAL){rawBal=null;lastBal=null;for(i=0;i<N;i++)terr[i]=u[i]>.93?pick(['plains','forest','hills','mountain','swamp'],r):'sea';}
   else{seaComps();for(i=0;i<N;i++){if(terr[i]==='sea'&&compSz[compId[i]]<7)terr[i]='swamp';}
-    lastBal=null;if($('chkFair').checked)balanceTerrain(r);}
+    rawBal=[avgCost('A'),avgCost('B')];lastBal=null;if($('chkFair').checked)balanceTerrain(r);}
   prov=[];provOf=new Int16Array(N).fill(-1);
   function seeds(side,biome){
     var mid=Math.floor(W/2),lo=side==='A'?0:mid+1,hi=side==='A'?mid-1:W-1,cand=[],h;
@@ -608,7 +641,8 @@ function generate(){
   log('New board '+W+'x'+H+(NAVAL?' (naval war, open sea)':'')+', seed '+seed+'. '+BIOMES[bA].label+' Aurelia vs '+BIOMES[bB].label+' Kharzun.','s');
   log('Commanders: Aurelia '+cmd.A.name+', Kharzun '+cmd.B.name+'.','s');
   if(pendingBridge)log('A land bridge surfaced between the capitals.','s');
-  if(lastBal)log('Fair terrain: average march cost Aurelia '+lastBal[0].toFixed(2)+', Kharzun '+lastBal[1].toFixed(2)+'.','s');
+  setTimeout(function(){if(prov&&prov.length)centerOn(homeCap('A'));},30);
+  if(rawBal)log(lastBal?'Fair terrain: the two halves were '+gapPct(rawBal[0],rawBal[1])+'% apart in how hard they are to cross, now '+gapPct(lastBal[0],lastBal[1])+'%.':'Fair terrain is off: the two halves are '+gapPct(rawBal[0],rawBal[1])+'% apart in how hard they are to cross.','s');
   render();
 }
 function connected(a,b){var seen=new Uint8Array(N),q=[a];seen[a]=1;while(q.length){var x=q.pop();if(x===b)return true;NB[x].forEach(function(y){if(!seen[y]&&terr[y]!=='sea'){seen[y]=1;q.push(y);}});}return false;}
@@ -770,8 +804,8 @@ function income(team){return 3+2*prov.filter(function(p){return p.owner===team;}
 function deployHexes(team,type){
   var owned=prov.filter(function(p){return p.owner===team;}),bases=Object.keys(depot).filter(function(k){return depot[k].owner===team;}).map(Number),out=[];
   for(var h=0;h<N;h++){if(unitAt[h])continue;var te=terr[h],ok;
-    if(SEA[type]){if(!bigSea(h))continue;ok=owned.some(function(p){return NB[p.seed].some(function(n){return terr[n]==='sea';})&&dist(h,p.seed)<=2;})||bases.some(function(b){return dist(h,b)<=2;});}
-    else{if(te==='sea'||!isFinite(moveCost(type,te)))continue;if(HEAVY[type]&&(te==='mountain'||te==='swamp'))continue;ok=owned.some(function(p){return dist(h,p.seed)<=2;})||bases.some(function(b){return dist(h,b)<=1;});}
+    if(SEA[type]){if(!bigSea(h))continue;ok=owned.some(function(p){return NB[p.seed].some(function(n){return terr[n]==='sea';})&&dist(h,p.seed)<=3;})||bases.some(function(b){return dist(h,b)<=2;});}
+    else{if(te==='sea'||!isFinite(moveCost(type,te)))continue;if(HEAVY[type]&&(te==='mountain'||te==='swamp'))continue;ok=owner(h)===team||owned.some(function(p){return dist(h,p.seed)<=2;})||bases.some(function(b){return dist(h,b)<=2;});}
     if(ok)out.push(h);}
   return out;}
 function spawnHex(team,type){var hs=deployHexes(team,type);if(!hs.length)return -1;
@@ -1045,8 +1079,8 @@ function shade(hex,amt){var c=String(hex).replace('#','');if(c.length===3)c=c[0]
 
 /* ---------- canvas ---------- */
 var cv=$('board'),ctx=cv.getContext('2d'),off=document.createElement('canvas'),octx=off.getContext('2d'),fogCv=document.createElement('canvas'),fctx=fogCv.getContext('2d');
-var S=16,PAD=8,CW=0,CH=0,DPR=1,COL={},CEN=[],COASTSEG=[],SEAL=[],FORL=[],PLAL=[],DESL=[],TUNL=[],SWAL=[],TK={};
-var fogDirty=true,qMode='auto',autoQ='full',lastDraw=0,frames=0,frameMs=0,slowCount=0,onScreen=true,needFrame=60;
+var S=16,PAD=8,CW=0,CH=0,DPR=1,COL={},CEN=[],COASTSEG=[],SEAL=[],FORL=[],PLAL=[],DESL=[],TUNL=[],SWAL=[],HEAT=[],TK={};
+var zoomMul=1,fogDirty=true,qMode='auto',autoQ='full',lastDraw=0,frames=0,frameMs=0,slowCount=0,onScreen=true,needFrame=60;
 var PART=[];for(var pi=0;pi<150;pi++)PART.push({x:Math.random(),y:Math.random(),v:.5+Math.random(),s:Math.random()});
 var blob=document.createElement('canvas');(function(){blob.width=blob.height=200;var g=blob.getContext('2d'),gr=g.createRadialGradient(100,100,6,100,100,100);gr.addColorStop(0,'rgba(220,230,235,.34)');gr.addColorStop(1,'rgba(220,230,235,0)');g.fillStyle=gr;g.fillRect(0,0,200,200);})();
 /* Quality: full (30fps, all motion), lite (20fps, less motion), off (draws only when something changes). Auto drops a level on slow devices. */
@@ -1059,11 +1093,11 @@ function hexPath(g,x,y,s){g.beginPath();for(var k=0;k<6;k++){var a=Math.PI/180*(
 function buildGeom(){CEN=[];for(var i=0;i<N;i++){var c=i%W,r=(i/W)|0;CEN[i]=[PAD+S*SQ3*(c+.5*(r&1))+S*SQ3/2,PAD+S*1.5*r+S];}
   COASTSEG=[];if(coast)coast.forEach(function(cs){var c=CEN[cs[0]],e=cs[1],a1=Math.PI/180*(60*e-30),a2=Math.PI/180*(60*(e+1)-30),rr=S*.9;COASTSEG.push([c[0]+rr*Math.cos(a1),c[1]+rr*Math.sin(a1),c[0]+rr*Math.cos(a2),c[1]+rr*Math.sin(a2)]);});}
 function rebuildCoast(){coast=[];for(var i=0;i<N;i++){if(terr[i]!=='sea')continue;for(var e=0;e<6;e++){var n=EDGE[i][e];if(n>=0&&terr[n]!=='sea')coast.push([i,e]);}}}
-function buildLists(){SEAL=[];FORL=[];PLAL=[];DESL=[];TUNL=[];SWAL=[];
-  for(var i=0;i<N;i++){var t=terr[i];if(t==='sea')SEAL.push(i);else if(t==='forest')FORL.push(i);else if(t==='plains')PLAL.push(i);else if(t==='desert')DESL.push(i);else if(t==='tundra')TUNL.push(i);else if(t==='swamp')SWAL.push(i);}buildGeom();}
+function buildLists(){HEAT=[];SEAL=[];FORL=[];PLAL=[];DESL=[];TUNL=[];SWAL=[];
+  for(var i=0;i<N;i++){var t=terr[i];var hc=t==='sea'?0:hexCost(t);HEAT[i]=t==='sea'?0:hc<=1.2?1:hc<=2.4?2:3;if(t==='sea')SEAL.push(i);else if(t==='forest')FORL.push(i);else if(t==='plains')PLAL.push(i);else if(t==='desert')DESL.push(i);else if(t==='tundra')TUNL.push(i);else if(t==='swamp')SWAL.push(i);}buildGeom();}
 function size(){
-  var avail=Math.max(300,$('bw').parentElement.clientWidth-2);S=Math.max(15,Math.min(36,Math.floor((avail-2*PAD)/(SQ3*(W+.5)))));
-  CW=Math.ceil(PAD*2+S*SQ3*(W+.5));CH=Math.ceil(PAD*2+S*1.5*(H-1)+S*2);DPR=Math.min(window.devicePixelRatio||1,Q()==='full'?2:1.5);
+  var mob=window.innerWidth<=700,avail=Math.max(300,$('bw').parentElement.clientWidth-2);S=mob?26:Math.max(15,Math.min(36,Math.floor((avail-2*PAD)/(SQ3*(W+.5)))));S=Math.max(12,Math.min(48,Math.round(S*zoomMul)));
+  CW=Math.ceil(PAD*2+S*SQ3*(W+.5));CH=Math.ceil(PAD*2+S*1.5*(H-1)+S*2);DPR=Math.min(window.devicePixelRatio||1,Q()==='full'?(mob?1.5:2):1.25);if(N>900)DPR=Math.min(DPR,1.25);
   [cv,off,fogCv].forEach(function(c){c.width=Math.ceil(CW*DPR);c.height=Math.ceil(CH*DPR);});
   cv.style.width=CW+'px';cv.style.height=CH+'px';TK={};buildGeom();needStatic=true;fogDirty=true;kick();}
 function rngFor(i){return mulberry32(i*7919+13);}
@@ -1163,6 +1197,12 @@ function buildStatic(){
 function buildFog(){fctx.setTransform(DPR,0,0,DPR,0,0);fctx.clearRect(0,0,CW,CH);fctx.fillStyle='rgba(4,8,8,.58)';fctx.beginPath();
   for(var i=0;i<N;i++){if(vis[i])continue;var p=CEN[i];for(var k=0;k<6;k++){var a=Math.PI/180*(60*k-30),px=p[0]+(S+.6)*Math.cos(a),py=p[1]+(S+.6)*Math.sin(a);if(k)fctx.lineTo(px,py);else fctx.moveTo(px,py);}fctx.closePath();}
   fctx.fill();fogDirty=false;}
+function centerOn(hex){var c=CEN[hex],w=$('bw');if(!c||!w)return;w.scrollLeft=Math.max(0,c[0]-w.clientWidth/2);w.scrollTop=Math.max(0,c[1]-w.clientHeight/2);}
+function centerOnList(list){if(!list.length)return;var x=0,y=0;list.forEach(function(h){x+=CEN[h][0];y+=CEN[h][1];});var w=$('bw');w.scrollLeft=Math.max(0,x/list.length-w.clientWidth/2);w.scrollTop=Math.max(0,y/list.length-w.clientHeight/2);}
+function zoomBy(f){var w=$('bw'),fx=(w.scrollLeft+w.clientWidth/2)/Math.max(1,CW),fy=(w.scrollTop+w.clientHeight/2)/Math.max(1,CH);zoomMul=Math.max(.6,Math.min(2,zoomMul*f));try{localStorage.setItem('ano_wb_zoom',zoomMul);}catch(e){}
+  size();w.scrollLeft=Math.max(0,fx*CW-w.clientWidth/2);w.scrollTop=Math.max(0,fy*CH-w.clientHeight/2);}
+function modeBar(){var t='';if(deployMode)t='Tap a green hex to deploy '+UT[deployMode].name;else if(opMode&&OPS[opMode.id])t=OPS[opMode.id].name+': tap a gold hex';else if(strike)t='Tap any hex to launch the '+STRAT[strike].name;
+  var m=$('modeText');m.textContent=t;m.className=t?'on':'';$('modeCancel').hidden=!t;}
 function showHex(i){return !fogOn()||vis[i]===1;}
 /* moving parts: everything batched into a few paths, fogged hexes skipped */
 function ambient(t,q,night){
@@ -1252,6 +1292,7 @@ function draw(now){
   ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,CW,CH);ctx.drawImage(off,0,0,CW,CH);
   ambient(t,q,night);marks(t,q);
   if($('chkSup').checked){ctx.strokeStyle='rgba(95,212,147,.7)';ctx.fillStyle='rgba(95,212,147,.12)';ctx.lineWidth=1;ctx.beginPath();for(i=0;i<N;i++){if(supA[i]!==1)continue;p=CEN[i];for(var k=0;k<6;k++){var a=Math.PI/180*(60*k-30),px=p[0]+S*.92*Math.cos(a),py=p[1]+S*.92*Math.sin(a);if(k)ctx.lineTo(px,py);else ctx.moveTo(px,py);}ctx.closePath();}ctx.fill();ctx.stroke();}
+  if($('chkHeat').checked){var HC=['','rgba(60,200,120,.34)','rgba(240,200,60,.36)','rgba(230,80,60,.40)'];for(var hcl=1;hcl<=3;hcl++){ctx.fillStyle=HC[hcl];ctx.beginPath();for(i=0;i<N;i++){if(HEAT[i]!==hcl)continue;p=CEN[i];hexSub(ctx,p[0],p[1],S*.97);}ctx.fill();}}
   if(sel&&sel.team==='A'&&!FLY[sel.type]){ctx.strokeStyle='rgba(255,90,70,.3)';ctx.lineWidth=1;ctx.setLineDash([3,3]);units.forEach(function(e){if(e.team!=='B'||FLY[e.type]||!canSee(e))return;NB[e.hex].forEach(function(n){var c=CEN[n];hexPath(ctx,c[0],c[1],S*.85);ctx.stroke();});});ctx.setLineDash([]);}
   Object.keys(fort).forEach(function(k){var h=+k;if(!seenHex(h)&&fort[k].owner!=='A')return;var c=CEN[h];drawFort(c[0],c[1],fort[k]);});
   Object.keys(depot).forEach(function(k){var h=+k;if(!seenHex(h)&&depot[k].owner!=='A')return;var c=CEN[h];ctx.fillStyle=depot[k].owner==='A'?COL.ca:COL.cb;ctx.strokeStyle='#fff';ctx.lineWidth=1.2;ctx.beginPath();ctx.rect(c[0]-S*.85,c[1]-S*.7,S*.36,S*.36);ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(c[0]-S*.85,c[1]-S*.52);ctx.lineTo(c[0]-S*.49,c[1]-S*.52);ctx.stroke();});
@@ -1262,8 +1303,8 @@ function draw(now){
       if(isLand(sel.type)){ctx.save();ctx.fillStyle='#fff';ctx.strokeStyle='rgba(0,0,0,.75)';ctx.lineWidth=3;ctx.font='700 '+Math.round(S*.62)+'px Roboto,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.strokeText(reach[k],c[0],c[1]);ctx.fillText(reach[k],c[0],c[1]);ctx.restore();}});}
   if(sel&&sel.team==='A'&&UT[sel.type].atk>0&&units.indexOf(sel)>=0){var rg=UT[sel.type];ctx.fillStyle='rgba(255,90,70,'+(rg.max>1?.17:.1)+')';ctx.strokeStyle='rgba(255,100,80,.7)';ctx.lineWidth=1;ctx.beginPath();
     for(i=0;i<N;i++){var dd=dist(sel.hex,i);if(dd<rg.min||dd>rg.max)continue;p=CEN[i];hexSub(ctx,p[0],p[1],S*.9);}ctx.fill();ctx.stroke();}
-  if(opMode&&units.indexOf(opMode.unit)>=0){var op2=.3+(Q()==='off'?0:.12*Math.sin(t*5));ctx.fillStyle='rgba(255,210,90,'+op2+')';ctx.strokeStyle='rgba(255,210,90,.95)';ctx.lineWidth=1.6;ctx.beginPath();opCache.forEach(function(h){var c=CEN[h];hexSub(ctx,c[0],c[1],S*.9);});ctx.fill();ctx.stroke();}
-  if(deployMode){var dp2=.28+(Q()==='off'?0:.12*Math.sin(t*5));ctx.fillStyle='rgba(95,212,147,'+dp2+')';ctx.strokeStyle='rgba(95,212,147,.95)';ctx.lineWidth=1.4;ctx.beginPath();deployCache.forEach(function(h){var c=CEN[h];hexSub(ctx,c[0],c[1],S*.9);});ctx.fill();ctx.stroke();}
+  if(opMode&&units.indexOf(opMode.unit)>=0){var op2=.3+(Q()==='off'?0:.12*Math.sin(t*5));ctx.fillStyle='rgba(255,210,90,'+(op2+.2)+')';ctx.strokeStyle='rgba(255,255,255,.95)';ctx.lineWidth=2;ctx.beginPath();opCache.forEach(function(h){var c=CEN[h];hexSub(ctx,c[0],c[1],S*.9);});ctx.fill();ctx.stroke();}
+  if(deployMode){var dp2=.28+(Q()==='off'?0:.12*Math.sin(t*5));ctx.fillStyle='rgba(120,255,160,'+(dp2+.2)+')';ctx.strokeStyle='rgba(255,255,255,.95)';ctx.lineWidth=2;ctx.beginPath();deployCache.forEach(function(h){var c=CEN[h];hexSub(ctx,c[0],c[1],S*.9);});ctx.fill();ctx.stroke();}
   if(fogOn()){if(fogDirty)buildFog();ctx.drawImage(fogCv,0,0,CW,CH);}
   timeTint();
   units.forEach(function(u){var tr=u.trail;if(!tr||tr.turn<turn-1||tr.from===u.hex)return;if(u.team==='B'&&!canSee(u))return;
@@ -1356,13 +1397,13 @@ function redrawIcons(){TK={};loadColors();var pl=$('pieceLegend');pl.innerHTML='
   var cs=$('unitTbl').querySelectorAll('canvas');for(var i=0;i<cs.length;i++){var g=cs[i].getContext('2d');g.clearRect(0,0,56,56);drawToken(g,cs[i].getAttribute('data-t'),28,28,23,COL.ca);}
   kick();render();}
 function render(){
-  kick();
+  kick();modeBar();
   var a=prov.filter(function(p){return p.owner==='A';}).length,b=prov.length-a,w=WX();
   $('scA').textContent='Aurelia · '+a+' prov · '+countOf('A')+' pcs · '+pp.A+' PP (+'+income('A')+')';
   $('scB').textContent='Kharzun · '+b+' prov · '+(fogOn()?'? pcs':countOf('B')+' pcs')+' · '+(fogOn()?'? PP':pp.B+' PP');
   $('turnLbl').textContent='Turn '+turn+' · '+pad(hour())+':00 · '+w.name+(busy?' · enemy moving':'');
   $('btnEnd').disabled=busy||over;
-  $('conds').innerHTML=kv([['Time',pad(hour())+':00'+(isNight()?' (night, vision -1)':hour()<5||hour()>=19?' (low light)':' (day)')],['Weather',w.name],['Effect',w.note],['Forecast',WEATHER[nextWeather].name],['Aurelia',cmd.A.name+': '+cmd.A.desc],['Kharzun',cmd.B.name+': '+cmd.B.desc]]);
+  $('conds').innerHTML=kv([['Time',pad(hour())+':00'+(isNight()?' (night, vision -1)':hour()<5||hour()>=19?' (low light)':' (day)')],['Weather',w.name],['Effect',w.note],['Forecast',WEATHER[nextWeather].name],['Terrain',balHtml()],['Aurelia',cmd.A.name+': '+cmd.A.desc],['Kharzun',cmd.B.name+': '+cmd.B.desc]]);
   var box=$('selInfo'),acts=$('acts');acts.innerHTML='';
   if(sel&&units.indexOf(sel)>=0){
     var u=sel,sp=UT[u.type],rows=[['Piece',sp.name+' '+'★'.repeat(vetLvl(u))],['Strength',Math.round(u.hp)+' / 100'],['Org',Math.round(u.org)+' / 100'],['Move left',u.mpLeft+' / '+mpEff(u)+(isLand(u.type)?' (terrain sets the distance)':'')],['Range',sp.atk===0?'Unarmed':(sp.min===sp.max?sp.max:sp.min+'-'+sp.max)+' (red hexes on the board)'],['Experience',u.xp]];
@@ -1405,10 +1446,10 @@ function render(){
   KEYS.forEach(function(k){if(!allowed(k))return;var row=document.createElement('div');row.className='r';
     var c=document.createElement('canvas');c.width=c.height=36;c.style.width=c.style.height='30px';drawToken(c.getContext('2d'),k,18,18,15,COL.ca);row.appendChild(c);
     var nmEl=document.createElement('div');nmEl.innerHTML='<b>'+UT[k].name+(UT[k].proposed?' <span class="tag">NEW</span>':'')+'</b><small>'+reserve.A[k]+' in reserve</small>';row.appendChild(nmEl);
-    var dp=document.createElement('button');dp.innerHTML='Deploy<small>'+depCost(k)+' PP</small>';dp.disabled=busy||over||reserve.A[k]<1||pp.A<depCost(k)||countOf('A')>=CAPN||spawnHex('A',k)<0;dp.onclick=function(){deployMode=k;strike=null;sel=null;reach=null;attackable=null;deployCache=deployHexes('A',k);render();};row.appendChild(dp);
+    var dp=document.createElement('button');dp.innerHTML='Deploy<small>'+depCost(k)+' PP</small>';dp.disabled=busy||over||reserve.A[k]<1||pp.A<depCost(k)||countOf('A')>=CAPN||spawnHex('A',k)<0;dp.onclick=function(){deployMode=k;strike=null;sel=null;reach=null;attackable=null;deployCache=deployHexes('A',k);render();centerOnList(deployCache);};row.appendChild(dp);
     var tr=document.createElement('button');tr.innerHTML='Train<small>'+UT[k].cost+' PP · '+TRAIN[k]+'t</small>';tr.disabled=busy||over||pp.A<UT[k].cost;tr.onclick=function(){if(train('A',k))render();};row.appendChild(tr);
     by.appendChild(row);});
-  var bn=$('buyNote');bn.textContent=deployMode?'Deploying '+UT[deployMode].name+': click a green hex near one of your towns or forward bases.':'Field: '+countOf('A')+' / '+CAPN+'. Deploying costs production points, only draws from your reserve, and happens next to your towns or forward bases. Training adds new pieces to the reserve after a delay.';
+  var bn=$('buyNote');bn.textContent=deployMode?'Deploying '+UT[deployMode].name+': tap a green hex anywhere in your territory or near a forward base.':'Field: '+countOf('A')+' / '+CAPN+'. Deploying costs production points, only draws from your reserve, and you choose the hex: anywhere in your territory or near a forward base. Training adds new pieces to the reserve after a delay.';
   if(deployMode){var cb2=document.createElement('button');cb2.textContent='Cancel deploying';cb2.style.marginLeft='8px';cb2.onclick=function(){deployMode=null;render();};bn.appendChild(cb2);}
   $('queue').textContent=queue.A.length?'In training: '+queue.A.map(function(q){return (UT[q.type]?UT[q.type].name:STRAT[q.type].name)+' ('+q.left+')';}).join(', '):'Nothing in training.';
   hexPanel(focus);
@@ -1456,6 +1497,9 @@ $('btnNew').onclick=function(){bA=$('selA').value;bB=$('selB').value;capOverride
 ['selSize','selStyle','selCap','chkFair'].forEach(function(id){$(id).onchange=function(){$('btnNew').onclick();};});
 $('btnEnd').onclick=endTurn;
 $('chkFog').onchange=function(){recompute();render();};
+$('chkHeat').onchange=function(){kick();};
+$('zIn').onclick=function(){zoomBy(1.2);};$('zOut').onclick=function(){zoomBy(1/1.2);};$('goBase').onclick=function(){centerOn(homeCap('A'));};
+$('modeCancel').onclick=function(){deployMode=null;opMode=null;strike=null;render();};
 $('chkSup').onchange=function(){kick();};
 try{var sq=localStorage.getItem('ano_wb_q');if(sq==='auto'||sq==='full'||sq==='lite'||sq==='off')qMode=sq;}catch(e){}
 $('selQ').value=qMode;
@@ -1463,7 +1507,9 @@ $('selQ').onchange=function(){qMode=this.value;autoQ='full';frameMs=0;slowCount=
 try{new IntersectionObserver(function(es){onScreen=es[0].isIntersecting;kick();}).observe(cv);}catch(e){}
 try{var zs=+localStorage.getItem('ano_wb_size'),st=localStorage.getItem('ano_wb_style'),cp=+localStorage.getItem('ano_wb_cap');
   if(SIZES[zs]){setupGrid(zs,zs);$('selSize').value=zs;}if(st==='random'||st==='land'||st==='naval')$('selStyle').value=st;if(cp){capOverride=cp;$('selCap').value=cp;}}catch(e){}
-initWidgets();size();generate();requestAnimationFrame(draw);
+try{var zm=+localStorage.getItem('ano_wb_zoom');if(zm>=.6&&zm<=2)zoomMul=zm;}catch(e){}
+if(window.innerWidth>700)$('setup').open=true;if(window.innerWidth>960)$('legendBox').open=true;
+initWidgets();size();generate();setTimeout(function(){centerOn(homeCap('A'));},50);requestAnimationFrame(draw);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){needStatic=true;});
 })();
 </script>
