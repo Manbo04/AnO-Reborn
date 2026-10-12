@@ -8,11 +8,11 @@ Rewards are paid in **in-game gold**, sent to your nation.
 
 | Severity | What it looks like | Base reward |
 |---|---|---|
-| **Cosmetic** | Typo, misaligned text, wrong icon | 5,000,000 |
-| **Minor** | Wrong number or label on a page, dead link, small UI glitch | 25,000,000 |
-| **Moderate** | A feature errors out (500 page), a calculation or formula is wrong | 100,000,000 |
-| **Major** | Blocks normal play, breaks the economy, a war or the market | 250,000,000 |
-| **Critical** | Duplicates money or resources, bypasses login or 2FA, exposes private data | 500,000,000 to 1,000,000,000 |
+| **Cosmetic** | Typo, misaligned text, wrong icon | 50,000,000 |
+| **Minor** | Wrong number or label on a page, dead link, small UI glitch | 2,500,000,000 |
+| **Moderate** | A feature errors out (500 page), a calculation or formula is wrong | 1,000,000,000 |
+| **Major** | Blocks normal play, breaks the economy, a war or the market | 2,500,000,000 |
+| **Critical** | Duplicates money or resources, bypasses login or 2FA, exposes private data | 5,000,000,000 to 10,000,000,000 |
 
 Staff set the severity after reproducing the bug. If you think it was rated too low, say why and we will look again.
 
@@ -22,10 +22,10 @@ The more you help, the more you earn. Bonuses are a percentage of the base rewar
 
 | What you provide | Bonus | Moderate bug pays |
 |---|---|---|
-| Clear, reproducible report | none | 100M |
-| A **fix idea** that points at the cause (file, function or formula, and what to change) | **+50%** | 150M |
-| A **pull request** that is reviewed and merged | **+100%** | 200M |
-| That pull request includes a **regression test** | **+150%** | 250M |
+| Clear, reproducible report | none | 1B |
+| A **fix idea** that points at the cause (file, function or formula, and what to change) | **+50%** | 1.5B |
+| A **pull request** that is reviewed and merged | **+100%** | 2B |
+| That pull request includes a **regression test** | **+150%** | 2.5B |
 
 Bonuses do not stack: you get the highest one that applies.
 
@@ -65,7 +65,7 @@ Rewards are sent **after the fix is live**, normally within a few days. You will
 - **One account per person.** Alt accounts do not earn extra rewards.
 - **No attacking the live servers.** No load testing, scraping at scale, spamming, or touching other players' data.
 - **Already known, by design, or wontfix** items are not paid. Balance opinions belong in the weekly vote.
-- **Weekly cap:** 2,000,000,000 per person per week, so the economy stays healthy.
+- **Weekly cap:** 20,000,000,000 per person per week, so the economy stays healthy.
 - **Staff decisions are final**, but we will always explain them.
 - Rewards are game cash only and have no real-world value.
 
