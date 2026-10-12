@@ -1538,6 +1538,30 @@ def upload_province_flag(pId):
 
 
 
+def _nearest_free_hex(start_coords, occupied_coords, max_rings=500):
+    """Breadth-first search outward from start_coords over the hex grid and
+    return the first (x, y) not in occupied_coords. Deterministic; raises
+    RuntimeError only if nothing is free within max_rings steps."""
+    from collections import deque
+
+    directions = [(1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1)]
+    seen = {tuple(c) for c in start_coords}
+    queue = deque((c[0], c[1], 0) for c in sorted(seen))
+    while queue:
+        x, y, dist = queue.popleft()
+        if dist >= max_rings:
+            continue
+        for dx, dy in directions:
+            n = (x + dx, y + dy)
+            if n in seen:
+                continue
+            seen.add(n)
+            if n not in occupied_coords:
+                return n
+            queue.append((n[0], n[1], dist + 1))
+    raise RuntimeError("No free hex available for a new province")
+
+
 def create_province_record(db, user_id: int, name: str) -> int:
     """Place a new province on a free hex next to the owner (or anywhere for a first
     province), insert it and invalidate the owner's caches. Caller handles payment
@@ -1572,19 +1596,11 @@ def create_province_record(db, user_id: int, name: str) -> int:
         else:
             new_x, new_y = 0, 0
     else:
-        # Find an adjacent free hex tile
-        found = False
-        for ux, uy in user_coords:
-            for dx, dy in hex_directions:
-                nx, ny = ux + dx, uy + dy
-                if (nx, ny) not in occupied_coords:
-                    new_x, new_y = nx, ny
-                    found = True
-                    break
-            if found:
-                break
-        if not found:
-            new_x, new_y = 0, 0 # Fallback
+        # Find the nearest free hex, searching outward from the owner's
+        # territory (not just the 6 neighbours: a fully enclosed nation used
+        # to fall back to (0, 0), which is taken and violates the unique
+        # coordinate index -> "unexpected error" on buying a province).
+        new_x, new_y = _nearest_free_hex(user_coords, occupied_coords)
 
     # Split the starting 10,000 population across age brackets
     # (60% working / 30% children / 10% elderly) instead of
