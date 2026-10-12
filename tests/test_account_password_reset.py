@@ -147,3 +147,22 @@ def test_public_reset_ignores_ambient_session(client, _create_user):
         assert db.fetchone() is not None
         db.execute("SELECT user_id FROM reset_codes WHERE user_id=%s", (victim_id,))
         assert db.fetchone() is None
+
+
+def test_public_reset_finds_mixed_case_email(client, _create_user):
+    """Accounts stored with capitals/padding must still get a reset code when
+    the player types the address in any case (Discord bug, 2026-10-05)."""
+    user_id = _create_user()
+    stored = f"  Mixed.Case_{uuid.uuid4().hex[:6]}@Example.invalid "
+    with get_db_cursor() as db:
+        db.execute("UPDATE users SET email=%s WHERE id=%s", (stored, user_id))
+
+    typed = stored.strip().lower()
+    with patch("change.sendEmail") as send:
+        resp = client.post("/request_password_reset", data={"email": typed})
+    assert resp.status_code in (302, 303)
+    send.assert_called_once()
+    assert send.call_args.args[0] == typed
+    with get_db_cursor() as db:
+        db.execute("SELECT 1 FROM reset_codes WHERE user_id=%s", (user_id,))
+        assert db.fetchone() is not None
