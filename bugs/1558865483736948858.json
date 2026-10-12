@@ -2,8 +2,8 @@
   "author_id": "249007223454433292",
   "created_at": "2026-10-11T15:34:53Z",
   "kind": "bug",
-  "last_message_id": "1558995242353696909",
-  "last_player_message_at": "2026-10-12T00:10:30Z",
+  "last_message_id": "1559036453554622545",
+  "last_player_message_at": "2026-10-12T02:54:16Z",
   "messages": [
     {
       "at": "2026-10-11T15:34:53Z",
@@ -162,6 +162,98 @@
       "id": "1558995242353696909",
       "staff": false,
       "text": "was 90t"
+    },
+    {
+      "at": "2026-10-12T00:30:12Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1559000201555873924",
+      "staff": false,
+      "text": "update: now, sometime in the last 10 minutes I got the listed 1.27m revenue!"
+    },
+    {
+      "at": "2026-10-12T00:31:30Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1559000525402406925",
+      "staff": false,
+      "text": "well, i got some of it anyway"
+    },
+    {
+      "at": "2026-10-12T00:31:32Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1558865483736948858/1559000534151860274/image.png?ex=6acd7be4&is=6acc2a64&hm=969c7ab9e9689e87ccf3df0043bb952b6dcc0134856e6dcac488c0a220aeaeda&"
+      ],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1559000534650847282",
+      "staff": false,
+      "text": ""
+    },
+    {
+      "at": "2026-10-12T00:33:24Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1559001005289373828",
+      "staff": false,
+      "text": "1,360,000-75,210 = 1,284,790"
+    },
+    {
+      "at": "2026-10-12T00:33:27Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1559001019315265547",
+      "staff": false,
+      "text": "what even is this"
+    },
+    {
+      "at": "2026-10-12T00:33:57Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1559001142091059284",
+      "staff": false,
+      "text": "first i lost some, then i got more than the estimate"
+    },
+    {
+      "at": "2026-10-12T00:34:23Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1559001251222528021",
+      "staff": false,
+      "text": "seems like it evened out"
+    },
+    {
+      "at": "2026-10-12T02:53:59Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1559036385430601812",
+      "staff": false,
+      "text": "Feels wrong.\n\nbased on this, real production for 600 farms is 118k/hour?\nformula from bot is #farms * (12+land*3) **specialization bonus\n\nso 600 farms * (12 + 600*3) = 1.087m per hour (not even including specialization bonus.\n\nhow could \"real production is around 118K/hour\" match up to that? But I also seem to have gotten millions of rations overnight, so it seems to be working even though the explanation seems wrong."
+    },
+    {
+      "at": "2026-10-12T02:54:16Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1559036453554622545",
+      "staff": false,
+      "text": "also, as an aside... each soldier eats as much as 50,000 pop?"
     }
   ],
   "thread_id": "1558865483736948858",
