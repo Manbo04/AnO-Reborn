@@ -1,7 +1,8 @@
 {
  "status": "fixed",
- "reply": "",
- "updated_at": "2026-10-12T00:25:00Z",
+ "reply": "you're right and sorry, my earlier '118k/hour' explanation was wrong. the real tick adds the land bonus (land x 3) to every farm, same as your formula, so 600 farms on 605 land really is huge. the page was briefly changed to count it once per province, and that was reverted and is live now, so the revenue page matches what the tick pays again. the soldier rations cost is a balance thing, post it in #suggestions if you want it voted on",
+ "nonce": "4533c78d319d40fab051042f8ad6ebde",
+ "updated_at": "2026-10-12T08:19:12Z",
  "branch": null,
- "summary": "Hourly Revenue page counted farm land bonus per farm instead of per province; fixed and deployed 2026-10-11 (already replied in thread)"
+ "summary": "Earlier once-per-province claim was wrong; revert 17dd267 (land bonus per farm) already on master. Replied with correction."
 }

@@ -1,0 +1,8 @@
+{
+ "status": "not_a_bug",
+ "reply": "this is how the citizen militia works: when the defender has no troops left in that domain, a militia fights instead and kills a % of every unit you send (about 4-25% depending on their population and provinces). because it's a percentage, sending 1 troop or 100k loses about the same share, so send only what you need. refunds are a staff decision. if you think the militia hits too hard, post it in #suggestions and it goes on the next ballot",
+ "nonce": "a82e36e32c1c4c86aa32810ce85a774d",
+ "updated_at": "2026-10-12T08:19:12Z",
+ "branch": null,
+ "summary": "Militia casualties are intended (% of units sent); balance complaint, pointed to suggestions. Refund request left to staff."
+}
