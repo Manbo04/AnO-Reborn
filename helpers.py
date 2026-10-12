@@ -711,6 +711,8 @@ def get_influence(country_id, db=None):
             (int(country_id),),
         )
         row = db.fetchone()
+        from app_core.assembly_effects import influence_multipliers
+        mult = influence_multipliers(db, [country_id]).get(int(country_id), 1.0)
 
     if not row:
         influence = 0
@@ -718,9 +720,6 @@ def get_influence(country_id, db=None):
         value = row["influence"] if isinstance(row, dict) else row[0]
         influence = int(value or 0)
 
-    with reuse_or_new_cursor(db) as db:
-        from app_core.assembly_effects import influence_multipliers
-        mult = influence_multipliers(db, [country_id]).get(int(country_id), 1.0)
     influence = int(influence * mult)
 
     query_cache.set(cache_key, influence)
