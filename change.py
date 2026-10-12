@@ -193,9 +193,16 @@ def request_password_reset():
         client_ip,
     )
 
-    email = request.form.get("email")
+    # Signup matches emails case-insensitively, so reset must too: some
+    # accounts were stored with capitals/stray spaces and an exact match
+    # silently never found them (Discord bug thread 2026-10-05).
+    email = (request.form.get("email") or "").strip()
     with get_request_cursor() as db:
-        db.execute("SELECT id FROM users WHERE email=%s", (email,))
+        db.execute(
+            "SELECT id FROM users WHERE LOWER(BTRIM(email)) = LOWER(%s) "
+            "ORDER BY id LIMIT 1",
+            (email,),
+        )
         result = db.fetchone()
         if not result:
             # Don't reveal whether an email exists; behave as if request succeeded
