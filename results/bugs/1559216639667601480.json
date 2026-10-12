@@ -1,8 +1,8 @@
 {
  "status": "fixed",
- "reply": "found it: when every tile around your provinces was already taken by other nations, the game tried to put the new province on a tile that's already occupied and crashed. it now looks further out for the nearest free tile. fixed, should be live within the hour",
- "nonce": "26477ce50fe44d1aadfc09b715617149",
- "updated_at": "2026-10-12T18:20:42Z",
- "branch": "claude/robot-20261012-province-hex",
- "summary": "Province purchase crashed for enclosed nations (fallback hex 0,0 violates unique coord index); now BFS for nearest free hex. PR #178"
+ "reply": "<@519965006867988490> <@1002628734932762755> the province fix is live now. i checked it against the real game: 136 nations are boxed in by their neighbours (the exact case that crashed), and buying a province now works for the ones i tried, including yours - it finds the nearest free tile further out instead of failing. if it still errors after a refresh, tell me your nation name and i'll look at it directly",
+ "nonce": "4af1fd084cfc4b5c83259e06b602ec46",
+ "updated_at": "2026-10-12T22:43:00Z",
+ "branch": null,
+ "summary": "province purchase fix verified on prod"
 }
