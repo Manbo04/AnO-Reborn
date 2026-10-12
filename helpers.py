@@ -718,6 +718,11 @@ def get_influence(country_id, db=None):
         value = row["influence"] if isinstance(row, dict) else row[0]
         influence = int(value or 0)
 
+    with reuse_or_new_cursor(db) as db:
+        from app_core.assembly_effects import influence_multipliers
+        mult = influence_multipliers(db, [country_id]).get(int(country_id), 1.0)
+    influence = int(influence * mult)
+
     query_cache.set(cache_key, influence)
     return influence
 
@@ -753,13 +758,15 @@ def get_bulk_influence(user_ids):
             (list(uncached_ids),),
         )
         rows = db.fetchall()
+        from app_core.assembly_effects import influence_multipliers
+        mults = influence_multipliers(db, uncached_ids)
 
     for row in rows:
         if isinstance(row, dict):
             user_id, value = row["user_id"], row["influence"]
         else:
             user_id, value = row[0], row[1]
-        influence = int(value or 0)
+        influence = int((value or 0) * mults.get(user_id, 1.0))
         results[user_id] = influence
         query_cache.set(f"influence_{user_id}", influence)
 

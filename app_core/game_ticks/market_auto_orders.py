@@ -20,6 +20,7 @@ treasury, and the offer is an ordinary one that refunds the normal way.
 from datetime import datetime, timedelta, timezone
 
 from app_core.game_ticks.common import handle_exception
+from app_core.assembly_effects import MARKET_BLOCK_SQL
 from app_core.game_ticks.locks import try_pg_advisory_lock
 
 TASK_NAME = "market_auto_orders"
@@ -94,8 +95,7 @@ def _run_one(db, rule_id, now=None):
 
     db.execute(
         "SELECT 1 FROM assembly_effects WHERE target_nation_id = %s"
-        " AND effect_type = 'sanction' AND active = TRUE"
-        " AND (expires_at IS NULL OR expires_at > NOW())",
+        " AND" + MARKET_BLOCK_SQL,
         (user_id,),
     )
     if db.fetchone():

@@ -6,6 +6,7 @@
 {% macro proposal_title(prop) -%}
     {%- set target = prop.target_name or ('Nation #' ~ prop.target_nation_id) -%}
     {%- if prop.type == 'sanction' %}Sanction {{ target }}
+    {%- elif prop.type == 'commend' %}Commend {{ target }}
     {%- elif prop.type == 'condemn' %}Condemn {{ target }}
     {%- elif prop.type == 'lift_sanction' %}Lift sanctions on {{ target }}
     {%- elif prop.type == 'currency_cap' %}Cap currency #{{ prop.target_currency_id }}
@@ -160,9 +161,9 @@
                         {% if sanction.effect_type == 'currency_cap' %}
                             &mdash; currency #{{ sanction.target_currency_id }} capped at {{ sanction.currency_cap_amount }}
                         {% else %}
-                            &mdash; trade sanctions
+                            &mdash; {% if sanction.effect_type == 'commend' %}commended (+5% influence){% else %}{{ (sanction.severity or 'regular')|title }} sanctions{% endif %}
                         {% endif %}
-                        {% if sanction.expires_at %}<span class="game-faint">(ends {{ sanction.expires_at.strftime('%Y-%m-%d %H:%M') }})</span>{% endif %}
+                        {% if sanction.expires_at %}<span class="game-faint">(ends {{ sanction.expires_at.strftime('%Y-%m-%d %H:%M') }})</span>{% else %}<span class="game-faint">(indefinite)</span>{% endif %}
                     </li>
                     {% endfor %}
                 </ul>

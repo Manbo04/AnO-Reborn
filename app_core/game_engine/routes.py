@@ -127,7 +127,7 @@ def assembly_propose():
     if request.method == "GET":
         return render_template("assembly_propose.html")
 
-    _VALID_TYPES = {'sanction', 'condemn', 'lift_sanction', 'currency_cap', 'free_text'}
+    _VALID_TYPES = {'sanction', 'condemn', 'lift_sanction', 'currency_cap', 'commend', 'free_text'}
 
     p_type = request.form.get("type", "")
     if p_type not in _VALID_TYPES:
@@ -139,6 +139,16 @@ def assembly_propose():
     currency_cap_amount = request.form.get("currency_cap_amount")
     text = request.form.get("text", "").strip()[:2000]
 
+    from app_core.assembly_effects import DURATIONS, SEVERITIES
+    severity = request.form.get("severity", "regular")
+    if severity not in SEVERITIES:
+        severity = "regular"
+    duration_days = DURATIONS.get(request.form.get("duration", "14"), 14)
+    if p_type not in ('sanction', 'currency_cap', 'commend'):
+        severity, duration_days = None, None
+    elif p_type != 'sanction':
+        severity = None
+
     if not text:
         flash("Proposal text is required.", "danger")
         return redirect("/assembly/propose")
@@ -147,7 +157,7 @@ def assembly_propose():
     target_currency_id = int(target_currency_id) if target_currency_id and target_currency_id.isdigit() else None
     currency_cap_amount = int(currency_cap_amount) if currency_cap_amount and currency_cap_amount.isdigit() else None
 
-    if p_type in ('sanction', 'condemn', 'lift_sanction') and not target_nation_id:
+    if p_type in ('sanction', 'condemn', 'lift_sanction', 'commend') and not target_nation_id:
         flash("Target nation ID is required for this proposal type.", "danger")
         return redirect("/assembly/propose")
 
@@ -185,9 +195,9 @@ def assembly_propose():
 
         # Insert proposal
         db.execute('''
-            INSERT INTO assembly_proposals (proposer_id, type, target_nation_id, target_currency_id, currency_cap_amount, text, closes_at)
-            VALUES (%s, %s, %s, %s, %s, %s, NOW() + INTERVAL '48 hours')
-        ''', (user_id, p_type, target_nation_id, target_currency_id, currency_cap_amount, text))
+            INSERT INTO assembly_proposals (proposer_id, type, target_nation_id, target_currency_id, currency_cap_amount, text, severity, duration_days, closes_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW() + INTERVAL '48 hours')
+        ''', (user_id, p_type, target_nation_id, target_currency_id, currency_cap_amount, text, severity, duration_days))
 
         flash("Proposal submitted successfully.", "success")
         return redirect("/assembly")
