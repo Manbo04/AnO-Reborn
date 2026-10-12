@@ -14,7 +14,7 @@ from typing import Dict, Iterable, Optional
 from wars.war_range import UNIT_WEIGHTS, in_war_range as strength_in_range
 
 BOTS_PER_PLAYER = 3
-MAX_BOTS = 150
+MAX_BOTS = 300
 
 # War-strength ratio of a bot to the player it was spawned for. The legal
 # window is 0.75-1.33x; these keep a margin so a bot that has just lost units

@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 # Hard cap on bots created in one run, so a first run on a big player base
 # can't hold the leader lock for minutes.
-MAX_SPAWN_PER_RUN = 15
+MAX_SPAWN_PER_RUN = 40
 # Range is by strength, not province count, so bots needn't mirror huge nations
 # (each province costs a hex on the world map and a row in every tick).
 MAX_BOT_PROVINCES = 8
@@ -320,7 +320,14 @@ def ensure_coverage(conn, cur) -> Dict[str, int]:
     created = 0
     in_range_ids = set()
 
-    for human in sorted(humans, key=lambda h: h["strength"]):
+    # Least-covered first, biggest first on ties: large nations have few
+    # neighbours to share bots with and must not starve behind the cap.
+    def _coverage(h):
+        return sum(
+            1 for b in bots if profiles.in_war_range(h["strength"], b["strength"])
+        )
+
+    for human in sorted(humans, key=lambda h: (_coverage(h), -h["strength"])):
         covering = [
             b for b in bots if profiles.in_war_range(human["strength"], b["strength"])
         ]
