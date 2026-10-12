@@ -9,7 +9,7 @@ Rewards are paid in **in-game gold**, sent to your nation.
 | Severity | What it looks like | Base reward |
 |---|---|---|
 | **Cosmetic** | Typo, misaligned text, wrong icon | 50,000,000 |
-| **Minor** | Wrong number or label on a page, dead link, small UI glitch | 2,500,000,000 |
+| **Minor** | Wrong number or label on a page, dead link, small UI glitch | 250,000,000 |
 | **Moderate** | A feature errors out (500 page), a calculation or formula is wrong | 1,000,000,000 |
 | **Major** | Blocks normal play, breaks the economy, a war or the market | 2,500,000,000 |
 | **Critical** | Duplicates money or resources, bypasses login or 2FA, exposes private data | 5,000,000,000 to 10,000,000,000 |

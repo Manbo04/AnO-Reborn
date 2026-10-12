@@ -162,7 +162,7 @@ Found a bug? **We pay in game cash.** Propose a fix and **the reward grows.** Fu
 | Severity | Example | Reward |
 |---|---|---|
 | Cosmetic | Typo, misaligned text | **50M** |
-| Minor | Wrong number on a page, broken link | **2.5B** |
+| Minor | Wrong number on a page, broken link | **250M** |
 | Moderate | A feature errors out, a calculation is wrong | **1B** |
 | Major | Blocks normal play, wrecks the economy or a war | **2.5B** |
 | Critical | Duplicates money or resources, bypasses login | **5B to 10B** (report privately) |
