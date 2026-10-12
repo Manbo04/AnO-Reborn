@@ -1,25 +1,27 @@
 {
   "deploy": {
-    "checked_at": "2026-10-11T23:53:39Z",
-    "msg": "live game still runs 93315271, but abebee73 was deployed 208 min ago and never went live",
-    "ok": true,
-    "pending": true
+    "alerted_at": "2026-10-12T06:25:03Z",
+    "checked_at": "2026-10-12T06:25:03Z",
+    "healed_at": "2026-10-12T06:25:03Z",
+    "msg": "live game still runs 93315271, but abebee73 was deployed 600 min ago and never went live",
+    "ok": false,
+    "since": "2026-10-12T06:25:03Z"
   },
   "pipeline": {
-    "alerted_at": "2026-10-11T23:53:39Z",
-    "checked_at": "2026-10-11T23:53:39Z",
+    "alerted_at": "2026-10-12T06:25:03Z",
+    "checked_at": "2026-10-12T06:25:03Z",
     "healed_at": null,
     "msg": "last deploy job cancelled: https://github.com/Manbo04/AnO-Reborn/actions/runs/38172177980",
     "ok": false,
     "since": "2026-10-11T23:53:39Z"
   },
   "site": {
-    "checked_at": "2026-10-11T23:53:39Z",
+    "checked_at": "2026-10-12T06:25:03Z",
     "msg": "ok",
     "ok": true
   },
   "ticks": {
-    "checked_at": "2026-10-11T23:53:39Z",
+    "checked_at": "2026-10-12T06:25:03Z",
     "msg": "ok",
     "ok": true
   }
