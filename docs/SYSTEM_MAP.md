@@ -51,7 +51,7 @@ every writer listed there can create or destroy value.
 | admin_actions | `app_core/admin/repositories.py` | -- |
 | admin_user_controls | `app.py`<br>`app_core/admin/repositories.py` | -- |
 | advertisements | `app_core/ads/repositories.py` | `app_core/ads/helpers.py` |
-| assembly_effects | `app_core/game_ticks/assembly_tick.py` | `app_core/currency/services.py`<br>`app_core/game_ticks/market_auto_orders.py`<br>`app_core/market/routes.py` |
+| assembly_effects | `app_core/game_ticks/assembly_tick.py` | `app_core/assembly_effects.py`<br>`app_core/currency/services.py`<br>`app_core/game_ticks/market_auto_orders.py`<br>`app_core/market/routes.py` |
 | assembly_proposals | `app_core/game_engine/routes.py`<br>`app_core/game_ticks/assembly_tick.py` | -- |
 | assembly_votes | `app_core/game_engine/routes.py` | `app_core/game_ticks/assembly_tick.py` |
 | bmc_gem_purchases | `app_core/store/repositories.py` | -- |
