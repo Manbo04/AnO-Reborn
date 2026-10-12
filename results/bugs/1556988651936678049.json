@@ -1,8 +1,8 @@
 {
- "status": "needs_info",
- "reply": "i can't open the screenshot on my side - what exactly looks garbled (the text on the transfer page, the message the receiver gets, or the resource amounts)? and which resource were you sending?",
- "nonce": "2a32b05b55444df589edd4bc7bf6b6cb",
- "updated_at": "2026-10-06T18:18:49Z",
+ "status": "fixed",
+ "reply": "<@1180720719060029500> found it - when you pressed 'add another resource' the new row collapsed into a tiny box and its labels piled on top of each other, like in your screenshot. rows now stack properly with a minimum width. it's live now, hard refresh the page (old css can be cached) and tell me if it still looks off",
+ "nonce": "544e70f497f249278781e6258dcc36c0",
+ "updated_at": "2026-10-12T22:43:00Z",
  "branch": null,
- "summary": "Garbled Resource Transfer: screenshot only, asked what is garbled"
+ "summary": "transfer form rows layout fixed, live"
 }
