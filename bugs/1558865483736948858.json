@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-12T08:19:29Z",
   "delivered_nonce": "4533c78d319d40fab051042f8ad6ebde",
   "kind": "bug",
-  "last_message_id": "1559036453554622545",
-  "last_player_message_at": "2026-10-12T02:54:16Z",
+  "last_message_id": "1559155732786577542",
+  "last_player_message_at": "2026-10-12T10:48:14Z",
   "messages": [
     {
       "at": "2026-10-11T15:34:53Z",
@@ -256,6 +256,46 @@
       "id": "1559036453554622545",
       "staff": false,
       "text": "also, as an aside... each soldier eats as much as 50,000 pop?"
+    },
+    {
+      "at": "2026-10-12T07:28:59Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1559105591471767614",
+      "staff": false,
+      "text": "<@249007223454433292> you're right and it's why you got millions overnight. The \"once per province\" explanation I gave earlier was true for the tick until yesterday evening: since 29 June the land bonus was added once per province, so 600 farms on 605 land made about 118k an hour. At 20:05 UTC yesterday we put it back on every farm, so it's now 600 x (100 + 3 x 605) = about 1.1M an hour before the specialisation bonus, matching your formula and the Hourly Revenue page. The final system is being decided by vote in #weekly-vote.\nOn soldiers: yes, one soldier costs 1 ration an hour while a civilian costs 1 per 50,000, so a soldier eats like 50,000 people. That's how it's set today, I've passed it on to Dede.\n<@1043204044774183032> the dip then jump is the schedule: the population and army upkeep come out at :45 and farm production lands at :25, so your stockpile can dip before it rises. The page shows the net for the whole hour."
+    },
+    {
+      "at": "2026-10-12T08:19:32Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1559118311571066964",
+      "staff": false,
+      "text": "<@249007223454433292> you're right and sorry, my earlier '118k/hour' explanation was wrong. the real tick adds the land bonus (land x 3) to every farm, same as your formula, so 600 farms on 605 land really is huge. the page was briefly changed to count it once per province, and that was reverted and is live now, so the revenue page matches what the tick pays again. the soldier rations cost is a balance thing, post it in #suggestions if you want it voted on"
+    },
+    {
+      "at": "2026-10-12T10:24:46Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1559149827168804945",
+      "staff": false,
+      "text": "its giving sycophantic ai"
+    },
+    {
+      "at": "2026-10-12T10:48:14Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1559155732786577542",
+      "staff": false,
+      "text": "Have you considered changing that to process upkeep and income at the same time? So that you dont need to stockpile resources you produce enough of?"
     }
   ],
   "thread_id": "1558865483736948858",

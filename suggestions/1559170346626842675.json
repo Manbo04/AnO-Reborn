@@ -1,0 +1,135 @@
+{
+  "author_id": "1180720719060029500",
+  "created_at": "2026-10-12T11:46:18Z",
+  "kind": "suggestion",
+  "last_message_id": "1559234538712993824",
+  "last_player_message_at": "2026-10-12T16:01:23Z",
+  "messages": [
+    {
+      "at": "2026-10-12T11:46:18Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1559170346626842675",
+      "staff": false,
+      "text": "# THIS IS LONG\n\nRight now it’s quite difficult for new nations to get CGs. Workshops cost 5t steel, which new nations start with very little of – a new nation can build maybe about 4 of them, which would only support a little more than 1.8 million citizens at best.\n\nThere’s also a lack of distinction between production and distribution buildings…. Since when did gas stations start making stuff? \n\nI have ghost CGs too and I don’t know where they come from. \nI call them ghost CGs because one day they are produced and the next day you’re in the negative again.\n\n**DISCLAIMERS, ASSUMPTIONS:**\n* I don’t know how to BALANCEEEE so numbers, slot costs, effects etc. can be changed by your suggestions\n* I don’t have time to calculate building costs, employment numbers, etc. Up to Dede I guess.\n* I’m assuming that the capacities are based off average yearly visitor numbers."
+    },
+    {
+      "at": "2026-10-12T11:46:34Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1559170414221987914",
+      "staff": false,
+      "text": "**Major system change:**\n* **Distribution buildings should be able to benefit from some kind of transport bonus.** The better a city’s transport is, the more they can serve. Opposite applies as well.\n* **Consumer spending will be a FLAT, not incremental increase, with a base of 50** (I haven’t decided on a cap since technically people spend variable amounts). Each building boosts consumer spending by a certain amount, boosted by any transport buildings that exist. Consumer spending increases income by up to.... well. it's a piecewise function. +100% at 100 CS, +200% at 200CS, whatever. I'm not doing allat math. The concept is important.\n* **Tiered CGs. No way a jewelry store produces the same things as a factory. **There will be your regular CGs then luxury CGs, or LGs for short. CGs are consumed by everyone. LGs are consumed by the wealthy, at baseline (yet to make a suggestion adding economic classes. More politics in the politics game!)"
+    },
+    {
+      "at": "2026-10-12T11:46:37Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1559170426356236379",
+      "staff": false,
+      "text": "**Distribution buildings:**\n* **Distribution center** (1 large plot) – the old reliable, still serves the province as well as those outside the province albeit at half capacity.  However, if distribution centers really are large-scale hubs completely dedicated to distributing food and consumer goods, they should be able to serve upwards of 3-5 million or more. No boost to consumer spending, since they’re just getting shi for free UNLESS I propose some policy about this (:3). The building cost should increase if Distri Centers get buffed like this, though. They should consume a decent amount of electricity (2-3?) and fuel (to get food and stuff to those who need it)\n* **Food bank** (1 small plot)  – DC’s neglected little sibling. I suggest that Food Banks serve 750,000-1million, while eating only 1/3 or 1/4 as much electricity (maybe 0.5). Since DC’s will become huge to the point they can become gamebreaking if implemented as is, I think, if this is implemented, current DCs will be replaced by Food Banks at a rate of 2:1.\n* **Gas station** (1 small plot) – small-scale, with the convenience stores. Serves 750,000 in that province only, increasing consumer spending slightly (maybe by about 0.5%). +33% consumer spending effect if it gets gasoline, consuming a certain amount according to how many it serves. Consumes little energy, prob just as much as the food bank.\n* **General Stores** (1 small plot) – more flexible, serves about 1,000,000 in that province only, increasing consumer spending slightly (about 0.75-0.8%). Consumes little energy.\n* **Farmers’ Market** (2 small plots)   – bigger than a general store, and the first “commerce building” to serve  outside the province. Serves up to 1.75-3 million in that province and outside (at half capacity, like how DCs work right now). Stronger influence on consumer spending (about 1-1.5%). Consumes more energy, but not that much considering its yearly capacity."
+    },
+    {
+      "at": "2026-10-12T11:46:54Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1559170495663054949",
+      "staff": false,
+      "text": "**Semi-producers; LGs in particular.**\n* **Luxury Retail** (1 small plot) – produces and sells LGs on demand. Serves only LGs, about 25,000. Produces some LGs (about 0.5 lg/h). Slight consumer spending boost (about 1%). For the posh of your population, or those with special tastes if your country doesn’t believe in economic classes.\n* **Minimalls** (2/3 small plots) – a mall but smaller. Serves 2-3.5 million people a year, first to distribute LGs (50,000). Consumes maybe 2 electricity. Produces some LGs on its own (about 1.5 lg/h).\n* **Malls** (1 large plot) – The big bad boy, but not the biggest baddest one. Where many will go to get their things or, really spend time. Major center of commerce for a province. Since they’re so expensive, their effects should be greater than what they have now – comfortably serving about 6-10 million in the province and outside it (still at 50% capacity) as well as a major consumer spending boost (about 5-7%). Distributes LGs to 100,000 people that want it and produces some of its own (2-3 lg/h). Since it is visited a lot, it places a burden on your transport systems. \n* **Megamalls** (2/3 large plots) – Inspired by the lively megamalls that exist where I live. Serves about 25-50 million, but in reality, these places experience yearly visitor numbers higher than 100 million. LG distribution capacity of 250,000-600,000 (produces 5-10 lg/h), big consumer spending boost (15-30%). Serves other provinces at 75% capacity instead of 50%. Being so big, however, it places a major burden on your province’s transport system, reducing mobility."
+    },
+    {
+      "at": "2026-10-12T11:47:13Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1559170575140655165",
+      "staff": false,
+      "text": "**Pure production buildings:**\n* **Workshops** (1 small plot) – small-scale production; think of artisans. Produce both CG (2-3kg/h) and LG (0.1kg/h). <1 electricity. Needs bullion/gems/silver for LGs. **NO INPUT NEEDED FOR CG**. *Update to make CGs more accessible to small/new nations.*\n* **Workshop Complex** (1 large plot) – Many workshops together. Produce CGs, LGs on a relatively larger, low-tech scale (15-20 cg, 2 lg/h maybe). Specializes in making stuff that’s better if you make them with attention. Same inputs as Workshop except more. 1-2 electricity?\n* **Small civ. factory** (? Small plots) – A smaller-scale factory. Some machinery needed but can spit stuff out faster than a workshop ever could (10-15cg/h). Consumes 2 electricity maybe\n* **Factory Complex** (1 large plot) – Many factories together…. Think of the Long Day Factory but a good handful of those. 100cg/h, consume about 4 electricity.\n* **Industrial District** (2/3/4 large plots) – You will have a long day whether you like it or not. Consume 10-15 electricity, for 500-1000 cg/h. (wtf are these numbers)\n\n*so uncreative with the prod buildings but like. Its really all factories in the world.*\n\n**Neither distribution nor production:**\n* **Banks** (1 small plot? 1 large plot?) – Ew. These don’t actually distribute to anyone much, nor produce anything. If anything, banks would provide major boost to spending cap (raising max consumer spending). And generally be helpful, if you decide to pursue a capitalist economic policy. (I hate private banks.)"
+    },
+    {
+      "at": "2026-10-12T11:47:32Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1559170658251051072",
+      "staff": false,
+      "text": "yeah..... this is my most major suggestion thus far. Fuck."
+    },
+    {
+      "at": "2026-10-12T11:48:00Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1559170771945914479",
+      "staff": false,
+      "text": "**DISCLAIMERS, ASSUMPTIONS: (again)**\n* I don’t know how to BALANCEEEE so numbers, slot costs, effects etc. can be changed by your suggestions\n* I don’t have time to calculate building costs, employment numbers, etc. Up to Dede I guess.\n* I’m assuming that the capacities are based off average yearly visitor numbers."
+    },
+    {
+      "at": "2026-10-12T11:52:54Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1559172006736433203",
+      "staff": false,
+      "text": "(holy wall of text)"
+    },
+    {
+      "at": "2026-10-12T11:54:05Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1559170346626842675/1559172305882579024/vypjpoqz1rrh1.png?ex=6ace1bdd&is=6accca5d&hm=63ed54154228376de8d7d6182abef9e7748351d652b78b41c0b709652b090b79&"
+      ],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1559172305966342286",
+      "staff": false,
+      "text": ""
+    },
+    {
+      "at": "2026-10-12T11:56:14Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1559172845614014487",
+      "staff": false,
+      "text": "I forgot automotive plants. Automotive plants will merge into industrial district I think. So big."
+    },
+    {
+      "at": "2026-10-12T15:50:56Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1559231909077327923",
+      "staff": false,
+      "text": "I have an idea. \"Production slots\" for factories. A page to manage production.\n\nAutomotive plants are really powerful but also have to be lategame because they needed components. A factory that produces CG straight out is just plain overpowered.\n\nMy idea is that we can assign \"lines\" to different products in a whole different screen. Each product type has different costs and different equivalent CG output/hr.\n\nSome ideas for product types:\n\nProduct - Description - Resources needed - Output (base)\n* **General CGs** - clothing, paper, pencils, packaged food, you name it. Common items. - n/a - low\n* **Personal Electronics** - Personal computers, headphones, and the like. - **electronics (new resource?)**, copper - medium\n* **Appliances** - Airconditioners, refrigerators, ovens, washing machines. Common machines, whatever - electronics, components, copper? - high\n* **Furniture** - Things that make spaces functional and livable. - wood, steel, alu - medium\n* **Automotives** - Things and parts of things that move people and things. Occasionally abused for fun. - steel, alu, components, electronics - very high\n\nFactory capacities:\n**Small civ. factory:** 1 line only. Can only make basic things like general cgs. Can make electronics and furniture, albeit with difficulty.\n\n**Factory Complex:** 8 lines. Anything except big complex things like automotives.\n\n**Industrial District:** 40 lines (many large factories in one). Anything and everything."
+    },
+    {
+      "at": "2026-10-12T16:01:23Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1559234538712993824",
+      "staff": false,
+      "text": "this is kinda rushed. up to you to make it more comprehensive/interesting than this"
+    }
+  ],
+  "status": "new",
+  "thread_id": "1559170346626842675",
+  "title": "CG REWORK!!",
+  "url": "https://discord.com/channels/708006319658893385/1559170346626842675"
+}

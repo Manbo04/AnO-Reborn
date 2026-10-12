@@ -1,0 +1,621 @@
+{
+  "author_id": "297362383226142720",
+  "created_at": "2026-10-12T09:03:00Z",
+  "kind": "suggestion",
+  "last_message_id": "1559194471256686603",
+  "last_player_message_at": "2026-10-12T13:22:10Z",
+  "messages": [
+    {
+      "at": "2026-10-12T09:03:00Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559129249040957450",
+      "staff": true,
+      "text": "With the outbreak of total war because of piracy, I think it would be a good idea to introduce new WA measures to incentivise conformity and give an alternative measure to diplomacy oriented nations\n\nSuggested changes\n1. Add a resolution duration option:\n7 days\n14 days\n30 days\n90 days\nIndefinite\nCustom duration\nSanctions and other resolutions apply for that period. Indefinite resolutions can only be removed on a succesful vote by the WA.\n\n2. Split Sanction Nation into three stages of severity, able to be selected before submitting. Some cases make sanctions too big a punishment, or too little of one:\n\n**Minor sanctions** impose high fees on trade, raising transport costs by 50% for the duration, a 33% influence cut, and a lower happiness cap (maybe 20% lower) to represent difficulties experienced by exclusion from international institutions like banking and science.\n**Regular sanctions** block trade completely, cut influence by 50%, even lower happiness cap (maybe 30% lower).\n**Major sanctions**, which block both trade and foreign aid, making it possible to only use the coalition bank. Cut influence by 66%, lower happiness even further.\n\n3. Add extra targets to resolutions:\nCurrency/Trade unions\nCoalitions\nWhich would blanket affect every nation part of them when passed.\n\n4. New resolutions\n**WA Peacekeeping Mission**: Drain manpower, stop manpower regen, Impose an attack penalty on target, making it harder for them to win offensive wars\n**Commend nation**: Commend a nation for it's achievements and give them an influence bonus (around 10% maybe?). Multiples do not stack.\n**Appoint WA chairman**: Nation receives small influence reward, and a role in discord to watch over and run the assembly channels like <#1555717555870503012>"
+    },
+    {
+      "at": "2026-10-12T09:10:52Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559131231390797987",
+      "staff": true,
+      "text": "You might want to implement this faster dede"
+    },
+    {
+      "at": "2026-10-12T09:11:02Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559131269995036754",
+      "staff": true,
+      "text": "Than at the end of the week"
+    },
+    {
+      "at": "2026-10-12T09:12:54Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1559131743401938946",
+      "staff": false,
+      "text": "based"
+    },
+    {
+      "at": "2026-10-12T09:13:08Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1559131801807757383",
+      "staff": false,
+      "text": "actual politics shall now exist"
+    },
+    {
+      "at": "2026-10-12T09:38:14Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1559138117993373777",
+      "staff": true,
+      "text": "<:Dewit:1033091417658101761>"
+    },
+    {
+      "at": "2026-10-12T09:38:50Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559138267566440451",
+      "staff": false,
+      "text": "Consequences of you can’t play the game"
+    },
+    {
+      "at": "2026-10-12T09:39:05Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559138331902869525",
+      "staff": false,
+      "text": "Let’s add a resolution that deletes your nation actually"
+    },
+    {
+      "at": "2026-10-12T09:40:38Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559138719842304063",
+      "staff": true,
+      "text": "Pov: russia irl"
+    },
+    {
+      "at": "2026-10-12T09:42:02Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559139073858211922",
+      "staff": false,
+      "text": "Russia who’s army is growing yearly and still trades with China India turkey Belarus Kazakhstan etc"
+    },
+    {
+      "at": "2026-10-12T09:42:12Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559139114459078708",
+      "staff": false,
+      "text": "And America now apparently"
+    },
+    {
+      "at": "2026-10-12T09:42:23Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1559139163503075329",
+      "staff": true,
+      "text": "and never stopped trading with the EU sadly :(("
+    },
+    {
+      "at": "2026-10-12T09:42:56Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559139298979094590",
+      "staff": false,
+      "text": "Most sanctioned nation in the world"
+    },
+    {
+      "at": "2026-10-12T09:43:08Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559139348354572339",
+      "staff": false,
+      "text": "Sure did a lot to them"
+    },
+    {
+      "at": "2026-10-12T09:48:10Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559140615726309498",
+      "staff": true,
+      "text": "It did"
+    },
+    {
+      "at": "2026-10-12T09:48:29Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559140697355845696",
+      "staff": true,
+      "text": "Their economy is stagnating, relatively declining"
+    },
+    {
+      "at": "2026-10-12T09:50:36Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559141231014191155",
+      "staff": false,
+      "text": "Make it drop tax income or something then to represent no tourism or cost more money to buy buildings to represent businesses struggling more but irl sanctions definitely didn’t stop Russia trading or growing its army"
+    },
+    {
+      "at": "2026-10-12T09:58:50Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559143300441833483",
+      "staff": false,
+      "text": "Let the WA designate 3 nations to be peacekeepers and if a peacekeeping mission is declared all nations at war with that country get 10% of the army of the 3 peacekeepers temporarily added during the war any lost units of that 10% is lost from the 3 peacekeeper’s army it is up to the WA to maintain an army to deter people"
+    },
+    {
+      "at": "2026-10-12T09:59:00Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1559143344423174196",
+      "staff": true,
+      "text": "I come from a super anti Russia country and even our most stonch critics say there is little change"
+    },
+    {
+      "at": "2026-10-12T09:59:07Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559143371984085013",
+      "staff": false,
+      "text": "That’s a better way to do peacekeeping if you reallllly want to do that"
+    },
+    {
+      "at": "2026-10-12T09:59:35Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559143490972164178",
+      "staff": true,
+      "text": "Hence i said stagnating"
+    },
+    {
+      "at": "2026-10-12T09:59:43Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559143522169397259",
+      "staff": true,
+      "text": "Which is also bad"
+    },
+    {
+      "at": "2026-10-12T09:59:56Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559143576749867011",
+      "staff": true,
+      "text": "Since theyre aging super fast"
+    },
+    {
+      "at": "2026-10-12T10:00:02Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559143603798806549",
+      "staff": true,
+      "text": "Anyways offtop"
+    },
+    {
+      "at": "2026-10-12T10:03:43Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1559144528500363299",
+      "staff": false,
+      "text": "\"super anti russia country\" ultimate vaguepost"
+    },
+    {
+      "at": "2026-10-12T10:04:13Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1559144656627834954",
+      "staff": true,
+      "text": "Dont want to be doxxed for now"
+    },
+    {
+      "at": "2026-10-12T10:04:27Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1559144716350529577",
+      "staff": true,
+      "text": "I will probably disclose my identity once the game is no longer in beta"
+    },
+    {
+      "at": "2026-10-12T10:06:01Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1559129249040957450/1559145106664071249/images_12.png?ex=6ace0288&is=6accb108&hm=dd53b3720199287f05f1f1a10fd7ab84752adcd4c05b4ea804b836ce99ec6eb0&"
+      ],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1559145107163320331",
+      "staff": false,
+      "text": "countries are huge but fair enough"
+    },
+    {
+      "at": "2026-10-12T10:22:26Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1559149240742060044",
+      "staff": true,
+      "text": "Not mine"
+    },
+    {
+      "at": "2026-10-12T10:23:20Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559149466181959761",
+      "staff": false,
+      "text": "Belgium"
+    },
+    {
+      "at": "2026-10-12T10:30:20Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559151228812795978",
+      "staff": true,
+      "text": "Got another idea"
+    },
+    {
+      "at": "2026-10-12T10:30:59Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559151391505645659",
+      "staff": true,
+      "text": "Maybe make the peacekeeping restrict the offensive war range?"
+    },
+    {
+      "at": "2026-10-12T10:31:53Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559151619722186753",
+      "staff": true,
+      "text": "Instead of the manpower thing"
+    },
+    {
+      "at": "2026-10-12T10:32:22Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559151741281370223",
+      "staff": true,
+      "text": "I still think a partial offense penalty should stay"
+    },
+    {
+      "at": "2026-10-12T10:33:18Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559151976158072883",
+      "staff": false,
+      "text": "That’s better than the previous and a 10% offensive penalty is okay (but still not ideal) but I still think this is better"
+    },
+    {
+      "at": "2026-10-12T10:33:34Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559152043854405725",
+      "staff": false,
+      "text": "It lets the WA be active in defending people"
+    },
+    {
+      "at": "2026-10-12T10:34:01Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559152155556970577",
+      "staff": false,
+      "text": "if the WA does a good job and has a large ass army it will be more punishing and if it’s useless it won’t do much"
+    },
+    {
+      "at": "2026-10-12T10:55:16Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559157501331509259",
+      "staff": true,
+      "text": "It doesnt address the issue tho. Its for stopping wars not starting new ones"
+    },
+    {
+      "at": "2026-10-12T10:55:36Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559157588883673109",
+      "staff": false,
+      "text": "Deterrents are way better than just a stop button for gameplay"
+    },
+    {
+      "at": "2026-10-12T10:55:55Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559157665698152551",
+      "staff": false,
+      "text": "I should always have the option to do something it just shouldn’t always be a good idea"
+    },
+    {
+      "at": "2026-10-12T11:01:12Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559158997716574330",
+      "staff": true,
+      "text": "Some deterrents are good"
+    },
+    {
+      "at": "2026-10-12T11:01:20Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559159028712607776",
+      "staff": true,
+      "text": "Like noob protection"
+    },
+    {
+      "at": "2026-10-12T11:01:51Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559159160141254780",
+      "staff": false,
+      "text": "New players should get two weeks of protection if they don’t already I have no idea if that got added"
+    },
+    {
+      "at": "2026-10-12T11:03:09Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559159485564715011",
+      "staff": true,
+      "text": "The war range restriction would just make the wars more even, since the target wouldn't stomp on strictly weaker opponents"
+    },
+    {
+      "at": "2026-10-12T11:03:40Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559159615848058933",
+      "staff": false,
+      "text": "The war ranges are already almost entirely based on military size"
+    },
+    {
+      "at": "2026-10-12T11:03:46Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559159641999409203",
+      "staff": false,
+      "text": "Just nobody has a military"
+    },
+    {
+      "at": "2026-10-12T11:04:07Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559159729211838515",
+      "staff": false,
+      "text": "Every 1m pop is only 1k soldiers worth of score"
+    },
+    {
+      "at": "2026-10-12T11:05:56Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559160189117014047",
+      "staff": false,
+      "text": "And that’s just infantry every other unit is worth a lot lot more score than infantry"
+    },
+    {
+      "at": "2026-10-12T11:29:18Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1559129249040957450/1559166068017201282/IMG_7901.png?ex=6ace160e&is=6accc48e&hm=609e34405a43e51547c737b77d084a001cd38fbb79841b49292b2a5eaca8ee7d&"
+      ],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559166068264542290",
+      "staff": false,
+      "text": "Look at lerslens stats compared to people he went to war with"
+    },
+    {
+      "at": "2026-10-12T11:29:27Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1559129249040957450/1559166105619267644/IMG_7902.png?ex=6ace1617&is=6accc497&hm=86bdf74442712e0475d98ce373284bbf58211b15e7cb9ccf37ef5f8e035e1956&",
+        "https://cdn.discordapp.com/attachments/1559129249040957450/1559166105975660544/IMG_7903.png?ex=6ace1617&is=6accc497&hm=45fff380a63e8db7c5dac19e9fc19b36675820a15ee2becd206902082ca7c79c&",
+        "https://cdn.discordapp.com/attachments/1559129249040957450/1559166106378444861/IMG_7904.png?ex=6ace1617&is=6accc497&hm=5ae64a9efade2ee933e5fcb53ac2cdd1dd1467f3850112961d72d64fffe3332f&"
+      ],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559166106722115594",
+      "staff": false,
+      "text": ""
+    },
+    {
+      "at": "2026-10-12T11:29:40Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559166158735810612",
+      "staff": false,
+      "text": "I wouldn’t call that stomping on strictly weaker opponents"
+    },
+    {
+      "at": "2026-10-12T11:39:26Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559168619173249056",
+      "staff": true,
+      "text": "Lerslen was not at war with me"
+    },
+    {
+      "at": "2026-10-12T11:40:18Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559168835813253161",
+      "staff": false,
+      "text": "He is currently at war with you"
+    },
+    {
+      "at": "2026-10-12T11:40:28Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559168876288147488",
+      "staff": false,
+      "text": "If you check your wars tab"
+    },
+    {
+      "at": "2026-10-12T11:40:51Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559168976594935889",
+      "staff": true,
+      "text": "Oh, notification didnt show"
+    },
+    {
+      "at": "2026-10-12T11:41:19Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1559169091200098357",
+      "staff": false,
+      "text": "Is there not notifications for that cos like that’s kinda an issue if there’s not"
+    },
+    {
+      "at": "2026-10-12T11:56:25Z",
+      "attachments": [],
+      "author": "L4",
+      "author_id": "1326884862346657803",
+      "bot": false,
+      "id": "1559172893387259935",
+      "staff": false,
+      "text": "<:Wheeze:1031648828841021511>"
+    },
+    {
+      "at": "2026-10-12T12:37:52Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1559183323937378434",
+      "staff": true,
+      "text": "I said small bruh"
+    },
+    {
+      "at": "2026-10-12T13:21:39Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1559194341161967727",
+      "staff": false,
+      "text": "WA should have no affect of military"
+    },
+    {
+      "at": "2026-10-12T13:22:10Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1559194471256686603",
+      "staff": false,
+      "text": "Which ever coalition has more influence in a war would just win ie Lameor co can just do whatever they want in WA right now"
+    }
+  ],
+  "status": "new",
+  "thread_id": "1559129249040957450",
+  "title": "New, better WA options",
+  "url": "https://discord.com/channels/708006319658893385/1559129249040957450"
+}

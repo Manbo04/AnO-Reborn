@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-12T08:19:32Z",
   "delivered_nonce": "a82e36e32c1c4c86aa32810ce85a774d",
   "kind": "bug",
-  "last_message_id": "1559030790703157289",
-  "last_player_message_at": "2026-10-12T02:31:45Z",
+  "last_message_id": "1559205108409966735",
+  "last_player_message_at": "2026-10-12T14:04:26Z",
   "messages": [
     {
       "at": "2026-10-12T01:35:43Z",
@@ -78,6 +78,138 @@
       "id": "1559030790703157289",
       "staff": false,
       "text": "Would be fine if I didn't get almost the same result if I attacked with a single troop"
+    },
+    {
+      "at": "2026-10-12T08:19:35Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1559118322379915356",
+      "staff": false,
+      "text": "<@1326884862346657803> this is how the citizen militia works: when the defender has no troops left in that domain, a militia fights instead and kills a % of every unit you send (about 4-25% depending on their population and provinces). because it's a percentage, sending 1 troop or 100k loses about the same share, so send only what you need. refunds are a staff decision. if you think the militia hits too hard, post it in #suggestions and it goes on the next ballot"
+    },
+    {
+      "at": "2026-10-12T08:24:23Z",
+      "attachments": [],
+      "author": "L4",
+      "author_id": "1326884862346657803",
+      "bot": false,
+      "id": "1559119533979996231",
+      "staff": false,
+      "text": "Gang"
+    },
+    {
+      "at": "2026-10-12T08:38:43Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1559123138053410959",
+      "staff": false,
+      "text": "Honkiamat is with us"
+    },
+    {
+      "at": "2026-10-12T11:47:37Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1559016687481917500/1559170675506151514/image0.jpg?ex=6ace1a59&is=6accc8d9&hm=0f22d24e29a6baede69820bccf0ec550d466b29461970b28162089bb449f8cd8&"
+      ],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559170675967787069",
+      "staff": true,
+      "text": ""
+    },
+    {
+      "at": "2026-10-12T11:47:43Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559170701771153421",
+      "staff": true,
+      "text": "It's super dumb"
+    },
+    {
+      "at": "2026-10-12T11:47:51Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559170734511759401",
+      "staff": true,
+      "text": "Same for planes"
+    },
+    {
+      "at": "2026-10-12T11:48:16Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559170840443232337",
+      "staff": true,
+      "text": "The militia thing still works on air and naval"
+    },
+    {
+      "at": "2026-10-12T11:59:58Z",
+      "attachments": [],
+      "author": "L4",
+      "author_id": "1326884862346657803",
+      "bot": false,
+      "id": "1559173785482039338",
+      "staff": false,
+      "text": "Besides, why are we able to steal loot with planes and ships lol"
+    },
+    {
+      "at": "2026-10-12T12:00:16Z",
+      "attachments": [],
+      "author": "L4",
+      "author_id": "1326884862346657803",
+      "bot": false,
+      "id": "1559173861885476957",
+      "staff": false,
+      "text": "Only ground should be able to do that"
+    },
+    {
+      "at": "2026-10-12T13:34:50Z",
+      "attachments": [],
+      "author": "𝕿𝖍𝖊_𝖐𝖆𝖎𝖘𝖊𝖗",
+      "author_id": "1166065212537970722",
+      "bot": false,
+      "id": "1559197661364621423",
+      "staff": true,
+      "text": "Yeah man, why ships, land vehicles and planes get losses without enemies?"
+    },
+    {
+      "at": "2026-10-12T13:57:14Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559203296256991323",
+      "staff": true,
+      "text": "Yep"
+    },
+    {
+      "at": "2026-10-12T14:04:18Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1559205072980811920",
+      "staff": false,
+      "text": "Theoretically ships could steel resources you have on the market"
+    },
+    {
+      "at": "2026-10-12T14:04:26Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1559205108409966735",
+      "staff": false,
+      "text": "Convoy raiding"
     }
   ],
   "thread_id": "1559016687481917500",

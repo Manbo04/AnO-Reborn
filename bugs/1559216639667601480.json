@@ -1,0 +1,22 @@
+{
+  "author_id": "519965006867988490",
+  "created_at": "2026-10-12T14:50:15Z",
+  "kind": "bug",
+  "last_message_id": "1559216639667601480",
+  "last_player_message_at": "2026-10-12T14:50:15Z",
+  "messages": [
+    {
+      "at": "2026-10-12T14:50:15Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1559216639667601480",
+      "staff": true,
+      "text": "I tried buying a new province, but it keeps running into an unexpected error, no explanation. I have enough cash"
+    }
+  ],
+  "thread_id": "1559216639667601480",
+  "title": "Unable to buy provinces",
+  "url": "https://discord.com/channels/708006319658893385/1559216639667601480"
+}
