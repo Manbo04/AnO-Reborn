@@ -101,6 +101,10 @@ def resolve_cache_control(path, status_code, existing):
         if path.endswith((".css", ".js")):
             return "public, max-age=3600, must-revalidate"
         return "public, max-age=604800, must-revalidate"
+    if path.startswith("/flag/") and status_code < 400:
+        # Flag images are identical for every viewer and change rarely; letting
+        # browsers/CDNs keep them 10 min stops re-downloading them on every page.
+        return "public, max-age=600, must-revalidate"
     return "private, max-age=5, must-revalidate"
 
 

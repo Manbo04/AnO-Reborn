@@ -319,10 +319,57 @@ def mechanics_biomes():
         matrix=matrix,
     )
 
+_FLAG_MAX_PX = 300
+_FLAG_SHRINK_OVER_BYTES = 40_000
+
+
+def _shrink_flag_bytes(data, mimetype):
+    """Downscale oversized legacy flag images (some are raw 4288x2844, 1.4MB).
+
+    Uploads already go through helpers.compress_flag_image (300px); this only
+    catches old rows/files so every viewer stops downloading megabytes per flag.
+    Falls back to the original bytes on any failure.
+    """
+    if len(data) <= _FLAG_SHRINK_OVER_BYTES or mimetype == "image/gif":
+        return data, mimetype
+    try:
+        import io
+        from PIL import Image
+        img = Image.open(io.BytesIO(data))
+        if img.width <= _FLAG_MAX_PX and img.height <= _FLAG_MAX_PX:
+            return data, mimetype
+        img.thumbnail((_FLAG_MAX_PX, _FLAG_MAX_PX), Image.Resampling.LANCZOS)
+        out = io.BytesIO()
+        if mimetype == "image/png" and img.mode in ("RGBA", "LA", "P"):
+            img.save(out, "PNG", optimize=True)
+            return out.getvalue(), "image/png"
+        img.convert("RGB").save(out, "JPEG", quality=85, optimize=True)
+        return out.getvalue(), "image/jpeg"
+    except Exception:
+        return data, mimetype
+
+
+def _serve_flag_file(cache_key, fname):
+    """static/flags file fallback, resized + cached like DB-stored flags."""
+    path = os.path.join(current_app.static_folder, "flags", fname)
+    try:
+        with open(path, "rb") as f:
+            raw = f.read()
+    except Exception:
+        return send_from_directory("static/flags", fname)
+    low = fname.lower()
+    mimetype = "image/png" if low.endswith(".png") else "image/gif" if low.endswith(".gif") else "image/jpeg"
+    body, mimetype = _shrink_flag_bytes(raw, mimetype)
+    if len(serve_flag._cache) < 500:
+        serve_flag._cache[cache_key] = (body, mimetype, time_module.time())
+    response = Response(body, mimetype=mimetype)
+    response.headers["Cache-Control"] = "public, max-age=30, must-revalidate"
+    return response
+
+
 @bp.route("/flag/<flag_type>/<int:flag_id>")
 def serve_flag(flag_type, flag_id):
     import base64
-    from flask import Response
     from database import table_has_column
 
     cache_key = f"{flag_type}_{flag_id}"
@@ -346,7 +393,7 @@ def serve_flag(flag_type, flag_id):
                 if not (row and row[0]):
                     cur.execute("SELECT flag FROM users WHERE id = %s", (flag_id,))
                     fname = cur.fetchone()
-                    if fname and fname[0]: return send_from_directory("static/flags", fname[0])
+                    if fname and fname[0]: return _serve_flag_file(cache_key, fname[0])
             elif flag_type == "coalition":
                 if table_has_column("colnames", "flag_data"):
                     cur.execute("SELECT flag_data FROM colNames WHERE id = %s", (flag_id,))
@@ -354,7 +401,7 @@ def serve_flag(flag_type, flag_id):
                 if not (row and row[0]):
                     cur.execute("SELECT flag FROM colNames WHERE id = %s", (flag_id,))
                     fname = cur.fetchone()
-                    if fname and fname[0]: return send_from_directory("static/flags", fname[0])
+                    if fname and fname[0]: return _serve_flag_file(cache_key, fname[0])
             elif flag_type == "province":
                 # No filesystem fallback for provinces -- flag_data (DB) is
                 # the only storage, added in migration 0073.
@@ -375,6 +422,7 @@ def serve_flag(flag_type, flag_id):
                 elif flag_data[:6] in (b"GIF87a", b"GIF89a"): mimetype = "image/gif"
                 else: mimetype = "image/png"
 
+                flag_data, mimetype = _shrink_flag_bytes(flag_data, mimetype)
                 if len(serve_flag._cache) < 500: serve_flag._cache[cache_key] = (flag_data, mimetype, time_module.time())
                 response = Response(flag_data, mimetype=mimetype)
                 response.headers["Cache-Control"] = "public, max-age=30, must-revalidate"
@@ -385,7 +433,7 @@ def serve_flag(flag_type, flag_id):
         else: cur.execute("SELECT flag FROM colNames WHERE id = %s", (flag_id,))
         row = cur.fetchone()
         if row and row[0]:
-            try: return send_from_directory("static/flags", row[0])
+            try: return _serve_flag_file(cache_key, row[0])
             except Exception: pass
 
         default_path = os.path.join(current_app.static_folder, "flags", "default_flag.jpg")
