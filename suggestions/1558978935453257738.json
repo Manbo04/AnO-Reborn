@@ -1,0 +1,66 @@
+{
+  "author_id": "204961091892019200",
+  "created_at": "2026-10-11T23:05:42Z",
+  "kind": "suggestion",
+  "last_message_id": "1558984305290510430",
+  "last_player_message_at": "2026-10-11T23:27:02Z",
+  "messages": [
+    {
+      "at": "2026-10-11T23:05:42Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1558978935453257738/1558978935608451082/image.png?ex=6acd67c6&is=6acc1646&hm=de0887c09f569a24f6fc092c14274fe584e4c057ae93764f2a084783ae792701&",
+        "https://cdn.discordapp.com/attachments/1558978935453257738/1558978935969026219/image.png?ex=6acd67c6&is=6acc1646&hm=13adbf541c2f2e6679226e279cb7dc7c7c4018253356610e959cbe727d2b24e2&"
+      ],
+      "author": "ieb",
+      "author_id": "204961091892019200",
+      "bot": false,
+      "id": "1558978935453257738",
+      "staff": false,
+      "text": "Here with already opinions on the farming food production, sadly currently tired and desmos does not want to work with me. But I made a lil formula which I think would work nicer. \n\nSo I wanted something that started giving you the nice bonus of +3 food per land at the start, but curbs it to a lower level to prevent the absolutely exponential growth with a linear +3. So my late night ramblings give you a formula that now at about 2000 land lower the bonus to only about 1 food per 10 land, if I made it correctly.\n\nNumbers not final, but I feel like it tapering off at higher counts is a good mechanic, where it should provide little to no bonusses at the more extremes. \n\n(x would be land, and y would be bonus food production. green is the line it approaches and eventually follows)\n((If you want to imagine what the current vote winner would look like, trace a line trough the start of the purple graph and continue that)"
+    },
+    {
+      "at": "2026-10-11T23:06:05Z",
+      "attachments": [],
+      "author": "ieb",
+      "author_id": "204961091892019200",
+      "bot": false,
+      "id": "1558979032328962110",
+      "staff": false,
+      "text": "Made in response to the most recent poll https://discord.com/channels/708006319658893385/1556457101025353888/1558931443307118593"
+    },
+    {
+      "at": "2026-10-11T23:08:06Z",
+      "attachments": [],
+      "author": "ieb",
+      "author_id": "204961091892019200",
+      "bot": false,
+      "id": "1558979540729077875",
+      "staff": false,
+      "text": "another final final thought, other buildings also do not get this infinite scaling ingame. And clearly farms irl do not care much if they are located in either a large country like the usa, or a smaller europian nation. Difference's in yield are very much affected by other factors not related to country size."
+    },
+    {
+      "at": "2026-10-11T23:08:42Z",
+      "attachments": [],
+      "author": "ieb",
+      "author_id": "204961091892019200",
+      "bot": false,
+      "id": "1558979688125173884",
+      "staff": false,
+      "text": "so crop breeding and seed trades when :P (that will kill me)"
+    },
+    {
+      "at": "2026-10-11T23:27:02Z",
+      "attachments": [],
+      "author": "Malinok",
+      "author_id": "176063647880052737",
+      "bot": false,
+      "id": "1558984305290510430",
+      "staff": false,
+      "text": "Balance here is hard.  Sales to smaller nations should be encouaged.  Make it possible for larger nations to not need farms?"
+    }
+  ],
+  "status": "new",
+  "thread_id": "1558978935453257738",
+  "title": "Farm production",
+  "url": "https://discord.com/channels/708006319658893385/1558978935453257738"
+}

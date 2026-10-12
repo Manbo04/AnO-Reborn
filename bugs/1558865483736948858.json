@@ -2,8 +2,8 @@
   "author_id": "249007223454433292",
   "created_at": "2026-10-11T15:34:53Z",
   "kind": "bug",
-  "last_message_id": "1558918178673926276",
-  "last_player_message_at": "2026-10-11T18:58:29Z",
+  "last_message_id": "1558995242353696909",
+  "last_player_message_at": "2026-10-12T00:10:30Z",
   "messages": [
     {
       "at": "2026-10-11T15:34:53Z",
@@ -98,6 +98,70 @@
       "id": "1558918178673926276",
       "staff": false,
       "text": "<@249007223454433292> <@616524068987863060> the fix is live now. timeline (UTC, today):\n- 19:02 fix merged, 19:03 deployed\n- the Hourly Revenue page now adds the farm land bonus once per province, same as the real tick, so the gross/net rations numbers should now match what your stockpile actually does across the :25 tick\n- it also subtracts spoilage on big stockpiles (2%/hour of what is above a 14-day buffer plus your distribution storage), which the page was leaving out\nceless, with your 600 farms on one province the old page overstated production about 15x, so expect a much smaller (and now correct) number. refresh the page and compare it with your stockpile after the next :25 tick. if it still looks off, send before/after screenshots like you did and i will dig further."
+    },
+    {
+      "at": "2026-10-11T20:20:49Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1558937438792056935",
+      "staff": false,
+      "text": "its happened again, i think its because my overall rations revenue got updated after i disbanded half of my army"
+    },
+    {
+      "at": "2026-10-11T20:20:53Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1558865483736948858/1558937458656288949/image0.jpg?ex=6acd4125&is=6acbefa5&hm=385f9cb4eb2ab7eea7003f3cd68d41c6e985d623be1ae90ce4eacc6c4d6e4283&"
+      ],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1558937459218186280",
+      "staff": false,
+      "text": ""
+    },
+    {
+      "at": "2026-10-12T00:08:00Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1558994614726426806",
+      "staff": false,
+      "text": "<@1447272377896669236> this may have been fixed earlier but it's bugged for me again"
+    },
+    {
+      "at": "2026-10-12T00:08:35Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1558865483736948858/1558994760520306749/image.png?ex=6acd7683&is=6acc2503&hm=705e2f1da97905e2d1fcdc78251c1d0d9067b40a41a158b6903070f71a8e394d&"
+      ],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1558994760809578658",
+      "staff": false,
+      "text": "my stockpile decreased while the revenue page says this"
+    },
+    {
+      "at": "2026-10-12T00:10:07Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1558995144584466453",
+      "staff": false,
+      "text": "stockpile decreased by about 15t"
+    },
+    {
+      "at": "2026-10-12T00:10:30Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1558995242353696909",
+      "staff": false,
+      "text": "was 90t"
     }
   ],
   "thread_id": "1558865483736948858",

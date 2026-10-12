@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-11T20:19:18Z",
   "delivered_nonce": "22784cf9718d",
   "kind": "bug",
-  "last_message_id": "1558904556182708297",
+  "last_message_id": "1558937063896780821",
   "last_player_message_at": "2026-10-11T18:10:09Z",
   "messages": [
     {
@@ -48,6 +48,16 @@
       "id": "1558904556182708297",
       "staff": true,
       "text": "I will give them myself"
+    },
+    {
+      "at": "2026-10-11T20:19:19Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1558937063896780821",
+      "staff": false,
+      "text": "<@1326884862346657803> found it, the first blood check looked for a 'winner' field on wars that the game never actually fills in, so nobody could ever unlock it. it now works out the winner from morale (whoever dropped the other side to 0), and it checks every tick, so you should get it automatically once this is live, within the hour. only wars still on record (finished ones are wiped a week after peace) can count, so if yours is older, staff can hand it out"
     }
   ],
   "thread_id": "1558902418559733862",

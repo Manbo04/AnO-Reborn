@@ -1,0 +1,53 @@
+{
+  "author_id": "176063647880052737",
+  "created_at": "2026-10-11T21:49:13Z",
+  "kind": "suggestion",
+  "last_message_id": "1558992828858892289",
+  "last_player_message_at": "2026-10-12T00:00:55Z",
+  "messages": [
+    {
+      "at": "2026-10-11T21:49:13Z",
+      "attachments": [],
+      "author": "Malinok",
+      "author_id": "176063647880052737",
+      "bot": false,
+      "id": "1558959685174824970",
+      "staff": false,
+      "text": "There should be a war history that everyone can access.   Keeps wars and winnings public.  It is also a great reference tool."
+    },
+    {
+      "at": "2026-10-11T21:54:30Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1558961017533366325",
+      "staff": true,
+      "text": "I think, and correct me if i am wrong, but he wants similar to what pnw did, total wars, wins and losses tracked for public view."
+    },
+    {
+      "at": "2026-10-11T22:21:01Z",
+      "attachments": [],
+      "author": "Malinok",
+      "author_id": "176063647880052737",
+      "bot": false,
+      "id": "1558967690134298676",
+      "staff": false,
+      "text": "Details on what was won/lost in the war.  The other details is a bonus."
+    },
+    {
+      "at": "2026-10-12T00:00:55Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1558992828858892289",
+      "staff": false,
+      "text": "yeah i think it should be publicly accessible, the entire war history. what attacks were done, what units were lost, what was destroyed\nthen u can learn from wars and also notice anomalies and such"
+    }
+  ],
+  "status": "new",
+  "thread_id": "1558959685174824970",
+  "title": "War history",
+  "url": "https://discord.com/channels/708006319658893385/1558959685174824970"
+}
