@@ -12593,6 +12593,48 @@ body.page-country .revenue .stat-value {
     }
 }
 
+/* --- Resource transfer form: "Add another resource" rows ------------------
+   Cloned rows collapsed to ~30px and overlapped their labels on phones
+   (Discord bug thread "Garbled Resource Transfer"). Rows are now an explicit
+   stacked column, and each field has a floor width so it can never shrink. */
+body #transferRows {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+body #transferRows .transfer-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 8px 12px;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin: 0;
+}
+body #transferRows .transfer-row > div {
+    flex: 1 1 150px;
+    width: auto;
+    min-width: 140px;
+    max-width: 100%;
+    margin: 0;
+}
+body #transferRows .transfer-row > .transfer-row-remove {
+    flex: 0 0 auto;
+    min-width: 0;
+}
+body #transferRows .transfer-row select,
+body #transferRows .transfer-row input {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    margin: 0;
+}
+
 
 /* --- static/css/game-mechanics.css --- */
 /**
