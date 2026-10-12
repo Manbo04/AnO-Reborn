@@ -161,26 +161,26 @@ Found a bug? **We pay in game cash.** Propose a fix and **the reward grows.** Fu
 
 | Severity | Example | Reward |
 |---|---|---|
-| Cosmetic | Typo, misaligned text | **50M** |
-| Minor | Wrong number on a page, broken link | **250M** |
-| Moderate | A feature errors out, a calculation is wrong | **1B** |
-| Major | Blocks normal play, wrecks the economy or a war | **2.5B** |
-| Critical | Duplicates money or resources, bypasses login | **5B to 10B** (report privately) |
+| Cosmetic | Typo, misaligned text | **1B** |
+| Minor | Wrong number on a page, broken link | **5B** |
+| Moderate | A feature errors out, a calculation is wrong | **20B** |
+| Major | Blocks normal play, wrecks the economy or a war | **50B** |
+| Critical | Duplicates money or resources, bypasses login | **100B to 200B** (report privately) |
 
 ```mermaid
 xychart-beta
     title "Reward in millions by how much you help (moderate bug)"
     x-axis ["Report only", "+ fix idea", "+ merged PR", "+ PR with test"]
-    y-axis "Moderate bug reward (M)" 0 --> 2600
-    bar [1000, 1500, 2000, 2500]
+    y-axis "Moderate bug reward (M)" 0 --> 52000
+    bar [20000, 30000, 40000, 50000]
 ```
 
 | You provide | Bonus | Moderate bug total |
 |---|---|---|
-| A clear, reproducible report | base reward | 1B |
-| ...plus a **fix idea** that points to the cause | **+50%** | 1.5B |
-| ...plus a **pull request that gets merged** | **+100%** | 2B |
-| ...plus a **regression test** in the PR | **+150%** | 2.5B |
+| A clear, reproducible report | base reward | 20B |
+| ...plus a **fix idea** that points to the cause | **+50%** | 30B |
+| ...plus a **pull request that gets merged** | **+100%** | 40B |
+| ...plus a **regression test** in the PR | **+150%** | 50B |
 
 ```mermaid
 flowchart LR

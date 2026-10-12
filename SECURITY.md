@@ -17,4 +17,4 @@ Money or resource duplication, login or 2FA bypass, access to other players' dat
 
 ## Rewards
 
-Valid private reports are paid **5B to 10B in-game gold**, plus fix bonuses, under the [Bug Bounty](BOUNTIES.md). If you used the bug for gain before reporting it, the report is not eligible.
+Valid private reports are paid **100B to 200B in-game gold**, plus fix bonuses, under the [Bug Bounty](BOUNTIES.md). If you used the bug for gain before reporting it, the report is not eligible.
