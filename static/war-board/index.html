@@ -310,6 +310,46 @@ Org hit  = Damage × 1.25  (×1.3 if flanked, ×1.4 from artillery, bombers, shi
 </section>
 
 <section>
+  <div><div class="eyebrow">Operations</div><h2>The war actions you already know</h2></div>
+  <p>Players asked for the same operations the current war screen offers, so every one of them has a place on the board. Select a piece and its Operations list shows what it can do. Most ask you to pick a target hex, and the gold hexes show where it can land. Each operation uses the piece's action for the turn.</p>
+  <div class="tw"><table>
+    <tr><th>Domain</th><th>Operation</th><th>On the board</th></tr>
+    <tr><td rowspan="7">Ground</td><td>Ground Invasion</td><td>Soldiers, tanks, mechanized infantry and marines attack, then advance into the hex if the defender is destroyed or routs. <b>In the demo.</b></td></tr>
+    <tr><td>Skirmish</td><td>Any armed piece: a light attack at half damage with no counter-fire. <b>In the demo.</b></td></tr>
+    <tr><td>Raid</td><td>Ground pieces hit an adjacent fort, forward base or mines (65% to succeed, a failed raid costs Org). <b>In the demo.</b></td></tr>
+    <tr><td>Entrench</td><td>The Dig in order. <b>In the demo.</b></td></tr>
+    <tr><td>Artillery Bombardment</td><td>Artillery and rocket artillery hit the target hex and its neighbours, and can knock down a fort level. <b>In the demo.</b></td></tr>
+    <tr><td>Missile Strike</td><td>Cruise missile pieces, or an ICBM from the stockpile. <b>In the demo.</b></td></tr>
+    <tr><td>Resupply</td><td>Restores strength and Org (full effect only in supply). Supply convoys resupply every piece beside them. <b>In the demo.</b></td></tr>
+    <tr><td rowspan="8">Naval</td><td>Naval Battle</td><td>The normal Attack between ships. <b>In the demo.</b></td></tr>
+    <tr><td>Naval Skirmish</td><td>Skirmish, with ships. <b>In the demo.</b></td></tr>
+    <tr><td>Naval Blockade</td><td>Automatic: park a surface ship beside a port with none of their pieces nearby for 3 turns and the port falls. <b>In the demo.</b></td></tr>
+    <tr><td>Submarine Assault</td><td>Hidden submarines torpedo a ship within 2 hexes at +35% damage, with no counter. <b>In the demo.</b></td></tr>
+    <tr><td>Shore Bombardment</td><td>Destroyers, cruisers and carriers shell land pieces, with area damage. <b>In the demo.</b></td></tr>
+    <tr><td>Cruiser Missile Strike</td><td>Cruisers fire out to 4 hexes for 3 PP. SAM batteries can intercept. <b>In the demo.</b></td></tr>
+    <tr><td>Naval Landings</td><td>Marines wade ashore from coastal water, and engineers can build causeways. <b>In the demo.</b></td></tr>
+    <tr><td>Naval Resupply</td><td>Repairs the ship and any ships beside it. <b>In the demo.</b></td></tr>
+    <tr><td rowspan="13">Air</td><td>Air Supremacy</td><td>Fighters sweep every enemy aircraft within 3 hexes. <b>In the demo.</b></td></tr>
+    <tr><td>Air Skirmish</td><td>Skirmish, with aircraft. <b>In the demo.</b></td></tr>
+    <tr><td>Air Disruption</td><td>Cuts a target's Org by 35 with no damage, so it routs sooner. <b>In the demo.</b></td></tr>
+    <tr><td>Port Strike</td><td>Bombers hit an enemy town: that nation loses 6 PP. <b>In the demo.</b></td></tr>
+    <tr><td>Navy Strike</td><td>Aircraft attack ships at +20%. <b>In the demo.</b></td></tr>
+    <tr><td>Ground Strike</td><td>The normal Attack against land pieces. <b>In the demo.</b></td></tr>
+    <tr><td>Bomb Supply Lines</td><td>Bombers cut enemy supply around a base, town or convoy for 3 turns, so their pieces there fight at -25%. <b>In the demo.</b></td></tr>
+    <tr><td>Bomb Infrastructure</td><td>Bombers wreck two fort levels, a forward base or mines, and a bombed capital costs the owner 3 PP. <b>In the demo.</b></td></tr>
+    <tr><td>Paradrop</td><td>Needs paratroopers, which are on the new-units poll. <b>Not in the demo yet.</b></td></tr>
+    <tr><td>Resupply</td><td>Bombers drop supplies on a friendly piece up to 3 hexes away. <b>In the demo.</b></td></tr>
+    <tr><td>Aerial Surveillance</td><td>Fighters and apaches reveal 4 hexes around a spot for 2 turns. <b>In the demo.</b></td></tr>
+    <tr><td>Cruise Missile Strike</td><td>Cruise missile pieces. <b>In the demo.</b></td></tr>
+    <tr><td>Nuclear Missile Strike</td><td>Nuke from the stockpile. <b>In the demo.</b></td></tr>
+  </table></div>
+  <div class="cols">
+    <div class="card"><h3>Satellites</h3><p>Train a satellite (35 PP, 4 turns) and it goes into orbit. Once per 4 turns you can run a scan: the whole map is visible for that turn and the next, so you can watch enemy armies move. Canopy hides what is under it, so pieces in forest and swamp, and submarines, stay hidden unless a spy or ship is close.</p></div>
+    <div class="card"><h3>Movement trails</h3><p>Every piece that moved in the last hour leaves a dashed arrow showing where it came from. You see the trails of anything you can see, so a satellite scan or an aerial surveillance pass shows how the whole enemy force is shifting, and tells you where the push is coming.</p></div>
+  </div>
+</section>
+
+<section>
   <div><div class="eyebrow">Turn structure</div><h2>One hour, step by step</h2></div>
   <p>Turns run on the real clock, not on a button. Every hour each side gets a fresh set of moves, whatever the other player does. During the hour you queue orders, they lock at :55, and everything then resolves together in the same fixed order. A replay plays for everyone, spectators included. It stays chess-like, but because both sides move at once you are always guessing what the other side is doing. The demo above lets you move instantly and skip hours so you can feel the board.</p>
   <div class="steps">
@@ -444,8 +484,8 @@ var TRAITS=[
   {k:'fort',name:'Fortress Builder',desc:'+6% cover everywhere'},
   {k:'log',name:'Quartermaster',desc:'+2 supply range, faster Org recovery'},
   {k:'spy',name:'Spymaster',desc:'+1 vision for all pieces'}];
-var CAPN=16,STRAT={icbm:{name:'ICBM',cost:30,rad:1,p:.25},nuke:{name:'Nuke',cost:70,rad:2,p:.15}};
-var TRAIN={engineers:2,marines:2,mechanized:3,rocket_artillery:3,supply_convoys:1,soldiers:2,tanks:3,artillery:3,apaches:3,fighters:4,bombers:4,destroyers:4,cruisers:5,submarines:4,aircraft_carriers:6,spies:2,kamikaze_drones:1,cruise_missiles:2,sam_batteries:3,icbm:3,nuke:5};
+var CAPN=16,STRAT={icbm:{name:'ICBM',cost:30,rad:1,p:.25},nuke:{name:'Nuke',cost:70,rad:2,p:.15},sat:{name:'Satellite',cost:35,rad:0,p:0}};
+var TRAIN={sat:4,engineers:2,marines:2,mechanized:3,rocket_artillery:3,supply_convoys:1,soldiers:2,tanks:3,artillery:3,apaches:3,fighters:4,bombers:4,destroyers:4,cruisers:5,submarines:4,aircraft_carriers:6,spies:2,kamikaze_drones:1,cruise_missiles:2,sam_batteries:3,icbm:3,nuke:5};
 var BASE_RES={engineers:2,marines:2,mechanized:2,rocket_artillery:1,supply_convoys:2,soldiers:4,tanks:2,artillery:2,apaches:1,fighters:1,bombers:1,destroyers:1,cruisers:1,submarines:1,aircraft_carriers:1,spies:2,kamikaze_drones:3,cruise_missiles:2,sam_batteries:1};
 /* demo nation army: each piece stands for an equal share of what the nation owns */
 var ARMY={engineers:20000,marines:30000,mechanized:3000,rocket_artillery:1500,supply_convoys:8000,soldiers:16000000,tanks:12000,artillery:8000,apaches:900,fighters:1200,bombers:600,destroyers:40,cruisers:20,submarines:30,aircraft_carriers:6,spies:5000,kamikaze_drones:20000,cruise_missiles:4000,sam_batteries:600};
@@ -510,8 +550,8 @@ function mkNoise(seed){
 /* ---------- state ---------- */
 var terr,prov,provOf,units,unitAt,fort,depot,mines,scar,wreck,fallout,turn,seed,bA='temperate',bB='desert';
 var sel=null,reach=null,attackable=null,focus=-1,busy=false,over=false,vis,supA,supB,effects=[],needStatic=true,strike=null;
-var weather='clear',nextWeather='clear',cmd={A:null,B:null},pp={A:0,B:0},stock={A:{icbm:0,nuke:0},B:{icbm:0,nuke:0}},coast=[],flash={};
-var deployMode=null,deployCache=[],lastBal=null;
+var weather='clear',nextWeather='clear',cmd={A:null,B:null},pp={A:0,B:0},stock={A:{icbm:0,nuke:0,sat:0},B:{icbm:0,nuke:0,sat:0}},coast=[],flash={};
+var deployMode=null,deployCache=[],lastBal=null,opMode=null,opCache=[],reveals=[],supCut=[],satUntil=0,satReady=0;
 var rnd=Math.random,pendingBridge=false,hov=-1,reserve={A:{},B:{}},queue={A:[],B:[]};
 function pick(arr,r){return arr[Math.floor(r()*arr.length)];}
 function shuffle(a,r){for(var i=a.length-1;i>0;i--){var j=Math.floor(r()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
@@ -560,8 +600,8 @@ function generate(){
   seaComps();
   coast=[];for(i=0;i<N;i++){if(terr[i]!=='sea')continue;for(var e=0;e<6;e++){var n=EDGE[i][e];if(n>=0&&terr[n]!=='sea')coast.push([i,e]);}}
   buildLists();
-  fort={};depot={};mines={};scar={};wreck={};fallout={};flash={};units=[];turn=1;over=false;sel=null;reach=null;attackable=null;strike=null;focus=-1;busy=false;effects=[];
-  cmd.A=pick(TRAITS,r);cmd.B=pick(TRAITS,r);pp={A:12,B:12};reserve={A:Object.assign({},START_RES),B:Object.assign({},START_RES)};queue={A:[],B:[]};stock={A:{icbm:0,nuke:0},B:{icbm:0,nuke:0}};
+  fort={};depot={};mines={};scar={};wreck={};fallout={};flash={};units=[];turn=1;reveals=[];supCut=[];satUntil=0;satReady=0;opMode=null;over=false;sel=null;reach=null;attackable=null;strike=null;focus=-1;busy=false;effects=[];
+  cmd.A=pick(TRAITS,r);cmd.B=pick(TRAITS,r);pp={A:12,B:12};reserve={A:Object.assign({},START_RES),B:Object.assign({},START_RES)};queue={A:[],B:[]};stock={A:{icbm:0,nuke:0,sat:0},B:{icbm:0,nuke:0,sat:0}};
   weather=pick(BIOMES[bA].wx,r);nextWeather=rollWeather(weather);
   spawn('A');spawn('B');calcRepr();
   rebuildAt();recompute();needStatic=true;$('banner').style.display='none';$('log').innerHTML='';
@@ -634,7 +674,7 @@ function supRange(team,base){return base+(cmd[team]&&cmd[team].k==='log'?2:0);}
 function calcSupply(team){var s=new Uint8Array(N),r1=supRange(team,4),r2=supRange(team,6);
   units.forEach(function(cv){if(cv.team===team&&cv.type==='supply_convoys'&&cv.mpLeft>=mpEff(cv)){for(var h=0;h<N;h++)if(dist(cv.hex,h)<=3)s[h]=1;}});
   prov.forEach(function(p){if(p.owner===team){for(var h=0;h<N;h++)if(dist(p.seed,h)<=r1)s[h]=1;}});
-  Object.keys(depot).forEach(function(k){if(depot[k].owner===team){for(var h=0;h<N;h++)if(dist(+k,h)<=r2)s[h]=1;}});return s;}
+  Object.keys(depot).forEach(function(k){if(depot[k].owner===team){for(var h=0;h<N;h++)if(dist(+k,h)<=r2)s[h]=1;}});supCut.forEach(function(c){if(c.team===team){for(var h=0;h<N;h++)if(dist(c.hex,h)<=c.r)s[h]=0;}});return s;}
 function inSupply(u){return (u.team==='A'?supA:supB)[u.hex]===1;}
 function fogOn(){return $('chkFog').checked;}
 function canSee(e){return !fogOn()||(vis[e.hex]===1&&!e.hidden);}
@@ -644,6 +684,8 @@ function recompute(){
   units.forEach(function(u){if(u.team!=='A')return;var r=visR(u);for(var h=0;h<N;h++)if(dist(u.hex,h)<=r)v[h]=1;});
   prov.forEach(function(p){if(p.owner==='A'){for(var h=0;h<N;h++)if(dist(p.seed,h)<=2)v[h]=1;}});
   Object.keys(depot).forEach(function(k){if(depot[k].owner==='A'){for(var h=0;h<N;h++)if(dist(+k,h)<=2)v[h]=1;}});
+  reveals.forEach(function(rv){for(var h=0;h<N;h++)if(dist(rv.hex,h)<=rv.r)v[h]=1;});
+  if(satUntil>=turn){for(var h2=0;h2<N;h2++)v[h2]=1;}
   vis=v;fogDirty=true;
   units.forEach(function(e){e.hidden=false;if(e.team!=='B')return;var te=terr[e.hex];
     if(e.type==='submarines'){e.hidden=!units.some(function(a){if(a.team!=='A')return false;var d=dist(a.hex,e.hex);return (a.type==='destroyers'&&d<=3)||(a.type==='cruisers'&&d<=2)||(PLANE[a.type]&&d<=2)||(a.type==='spies'&&d<=3);});return;}
@@ -706,7 +748,7 @@ function rout(u,by){
 function checkMine(u){var m=mines[u.hex];if(!m||m.owner===u.team||!isLand(u.type))return;
   delete mines[u.hex];u.hp-=25;u.org-=30;fx('boom',u.hex);fx('num',u.hex,'-25','#ffd08a');addScar(u.hex);log(nm(u)+' ('+tn(u.team)+') hits a mine at '+hexName(u.hex)+'.',u.team.toLowerCase());
   if(u.hp<=0){die(u,null);units=units.filter(function(x){return x.hp>0;});if(sel===u)sel=null;}}
-function moveUnit(u,h,cost){unitAt[u.hex]=null;u.hex=h;u.mpLeft-=cost;u.dig=0;u.order=null;u.digging=false;unitAt[h]=u;checkMine(u);rebuildAt();recompute();}
+function moveUnit(u,h,cost){if(!u.trail||u.trail.turn!==turn)u.trail={from:u.hex,turn:turn};unitAt[u.hex]=null;u.hex=h;u.mpLeft-=cost;u.dig=0;u.order=null;u.digging=false;unitAt[h]=u;checkMine(u);rebuildAt();recompute();}
 function buildTurns(u,type){var t=type==='fort'?2:type==='depot'?3:type==='causeway'?3:2;if(cmd[u.team].k==='build')t=Math.max(1,t-1);if(u.type==='engineers')t=Math.max(1,t-1);return t;}
 function startOrder(u,type,target){
   var turns=buildTurns(u,type);u.order={type:type,left:turns,total:turns,target:target};u.acted=true;u.mpLeft=0;
@@ -747,9 +789,9 @@ function train(team,type){
   if(pp[team]<UT[type].cost)return false;pp[team]-=UT[type].cost;queue[team].push({type:type,left:TRAIN[type]});
   log(tn(team)+' starts training '+nm({type:type})+' ('+TRAIN[type]+' turns).',team.toLowerCase());return true;}
 function buyStrat(team,k){if(pp[team]<STRAT[k].cost)return false;pp[team]-=STRAT[k].cost;queue[team].push({type:k,left:TRAIN[k]});
-  log(tn(team)+' starts building '+(k==='nuke'?'a nuclear warhead':'an ICBM')+' ('+TRAIN[k]+' turns).',team.toLowerCase());return true;}
+  log(tn(team)+' starts building '+(k==='nuke'?'a nuclear warhead':k==='sat'?'a satellite':'an ICBM')+' ('+TRAIN[k]+' turns).',team.toLowerCase());return true;}
 function processQueues(){['A','B'].forEach(function(t){queue[t]=queue[t].filter(function(q){q.left--;if(q.left>0)return true;
-    if(STRAT[q.type]){stock[t][q.type]++;log(tn(t)+' finishes an '+(q.type==='nuke'?'nuclear warhead':'ICBM')+'.',t.toLowerCase());}
+    if(STRAT[q.type]){stock[t][q.type]++;log(tn(t)+' finishes '+(q.type==='nuke'?'a nuclear warhead':q.type==='sat'?'a satellite':'an ICBM')+'.',t.toLowerCase());}
     else{reserve[t][q.type]++;log(tn(t)+' finishes training '+UT[q.type].name+'.',t.toLowerCase());}return false;});});}
 function launch(team,k,h){
   var S2=STRAT[k],def=team==='A'?'B':'A',n=units.filter(function(s){return s.team===def&&s.type==='sam_batteries'&&dist(s.hex,h)<=6;}).length,p=Math.min(.75,n*S2.p);
@@ -766,9 +808,81 @@ function launch(team,k,h){
   units.forEach(function(u){if(u.hp>0&&u.org<=0)rout(u,{hex:h,type:'strike'});});
   units=units.filter(function(x){return x.hp>0;});if(sel&&units.indexOf(sel)<0)sel=null;rebuildAt();recompute();}
 
+/* ---------- operations: the war actions players know, played on the board ---------- */
+var AIRU={fighters:1,bombers:1,apaches:1},GROUNDOP={soldiers:1,marines:1,mechanized:1,tanks:1};
+var OPS={
+  invasion:{name:'Ground Invasion',who:GROUNDOP,tgt:'enemy',min:1,max:1,sub:'attack, then advance if the hex falls'},
+  skirmish:{name:'Skirmish',who:'armed',tgt:'enemy',sub:'light attack, no counter-fire'},
+  raid:{name:'Raid',who:GROUNDOP,tgt:'structure',min:1,max:1,sub:'destroy a fort level, base or mines'},
+  bombard:{name:'Artillery Bombardment',who:{artillery:1,rocket_artillery:1},tgt:'enemy',sub:'hits the hex and its neighbours'},
+  resupply:{name:'Resupply',who:'all',tgt:'self',sub:'restore strength and Org'},
+  sub_assault:{name:'Submarine Assault',who:{submarines:1},tgt:'enemy',min:1,max:2,ships:true,sub:'torpedo strike, no counter'},
+  shore:{name:'Shore Bombardment',who:{destroyers:1,cruisers:1,aircraft_carriers:1},tgt:'enemy',landOnly:true,sub:'shells the coast, area damage'},
+  cruiser_missile:{name:'Cruiser Missile Strike',who:{cruisers:1},tgt:'enemy',min:1,max:4,pp:3,sub:'long range, SAMs can intercept'},
+  naval_resupply:{name:'Naval Resupply',who:{destroyers:1,cruisers:1,submarines:1,aircraft_carriers:1},tgt:'self',sub:'repair nearby ships'},
+  supremacy:{name:'Air Supremacy',who:{fighters:1},tgt:'self',sub:'sweep enemy aircraft within 3 hexes'},
+  disruption:{name:'Air Disruption',who:AIRU,tgt:'enemy',min:1,max:1,sub:'cut a target\'s Org, no damage'},
+  port_strike:{name:'Port Strike',who:{bombers:1},tgt:'town',min:1,max:2,sub:'enemy loses 6 PP'},
+  navy_strike:{name:'Navy Strike',who:AIRU,tgt:'enemy',min:1,max:1,ships:true,sub:'attack ships from the air'},
+  supply_bomb:{name:'Bomb Supply Lines',who:{bombers:1},tgt:'supply',min:1,max:2,sub:'cut enemy supply around it for 3 turns'},
+  infra_bomb:{name:'Bomb Infrastructure',who:{bombers:1},tgt:'structure',min:1,max:2,sub:'wreck forts, bases and mines'},
+  air_resupply:{name:'Air Resupply',who:{bombers:1},tgt:'friend',min:1,max:3,sub:'drop supplies on a friendly piece'},
+  surveillance:{name:'Aerial Surveillance',who:{fighters:1,apaches:1},tgt:'hex',min:0,max:6,sub:'reveal 4 hexes around a spot for 2 turns'}
+};
+function opAllowed(u,op){var w=op.who;if(w==='all')return true;if(w==='armed')return UT[u.type].atk>0;return !!w[u.type];}
+function opHexes(u,id){var op=OPS[id],out=[],rg=op.min!==undefined?op.min:UT[u.type].min,rx=op.max!==undefined?op.max:UT[u.type].max,i,d,e;
+  if(op.tgt==='self')return [u.hex];
+  for(i=0;i<N;i++){d=dist(u.hex,i);if(d<rg||d>rx)continue;
+    if(op.tgt==='hex'){out.push(i);continue;}
+    if(op.tgt==='friend'){e=unitAt[i];if(e&&e.team===u.team&&e!==u)out.push(i);continue;}
+    if(op.tgt==='enemy'){e=unitAt[i];if(!e||e.team===u.team||(u.team==='A'&&!canSee(e)))continue;if(!canAttack(u,e)&&id!=='disruption')continue;
+      if(op.ships&&!SEA[e.type])continue;if(op.landOnly&&!isLand(e.type))continue;out.push(i);continue;}
+    if(op.tgt==='structure'){var f=fort[i],bd=depot[i],mn=mines[i];if((f&&f.owner!==u.team&&seenHex(i))||(bd&&bd.owner!==u.team&&seenHex(i))||(mn&&mn.owner!==u.team&&u.team==='B'))out.push(i);continue;}
+    if(op.tgt==='town'){var pr=provOf[i]>=0?prov[provOf[i]]:null;if(pr&&pr.seed===i&&pr.owner!==u.team&&seenHex(i))out.push(i);continue;}
+    if(op.tgt==='supply'){var p2=provOf[i]>=0?prov[provOf[i]]:null,b2=depot[i];e=unitAt[i];
+      if(((p2&&p2.seed===i&&p2.owner!==u.team)||(b2&&b2.owner!==u.team)||(e&&e.team!==u.team&&e.type==='supply_convoys'))&&seenHex(i))out.push(i);}
+  }
+  return out;}
+function opGrounded(u){return (PLANE[u.type]||u.type==='kamikaze_drones')&&!WX().air;}
+function runOp(u,id,h){
+  var op=OPS[id],e=unitAt[h],et=u.team==='A'?'B':'A',i;
+  if(op.pp){if(pp[u.team]<op.pp)return;pp[u.team]-=op.pp;}
+  function hit(def,hpM,orgM,tag){var r=damage(u,def,false),hp=Math.max(1,Math.round(r.hp*hpM)),og=Math.round(r.org*orgM);
+    def.hp-=hp;def.org-=og;u.xp+=1;fx('shot',u.hex,def.hex,u.team);fx('num',def.hex,'-'+hp,'#ff9a8a');fx('boom',def.hex);addScar(def.hex);
+    log(nm(u)+' ('+tn(u.team)+') '+tag+' '+nm(def)+' for '+hp+' ('+lossTxt(def,hp+Math.min(0,def.hp))+').',u.team.toLowerCase());
+    if(def.hp<=0)die(def,u);else if(def.org<=0)rout(def,u);}
+  function shotDown(per){var n=samsNear(et,h,3);if(rnd()<Math.min(.8,n*per)){log(op.name+' by '+nm(u)+' ('+tn(u.team)+') shot down by SAMs.','s');fx('num',h,'INTERCEPTED','#9fe3ff');u.hp-=15;if(u.hp<=0)die(u,null);return true;}return false;}
+  function heal(x,hp,og){x.hp=Math.min(100,x.hp+hp);x.org=Math.min(100,x.org+og);fx('num',x.hex,'+'+hp,'#8affb0');}
+  function area(mc,mn,og,tag,landOnly){var tg=[h].concat(NB[h]);tg.forEach(function(k){var d=unitAt[k];if(d&&d.team===et&&(!landOnly||isLand(d.type))&&d.hp>0)hit(d,k===h?mc:mn,og,tag);});
+    var f=fort[h];if(f&&f.owner===et&&rnd()<.5){f.level--;if(f.level<=0)delete fort[h];log('Fort at '+hexName(h)+' damaged.','s');}}
+  if(id==='invasion'){doAttack(u,e);if((units.indexOf(e)<0||e.hex!==h)&&!unitAt[h]&&isFinite(moveCost(u.type,terr[h]))&&units.indexOf(u)>=0){moveUnit(u,h,0);log(nm(u)+' ('+tn(u.team)+') advances into '+hexName(h)+'.',u.team.toLowerCase());}return;}
+  if(id==='skirmish')hit(e,.5,.4,'skirmishes with');
+  else if(id==='raid'||id==='infra_bomb'){var f2=fort[h],ok=id==='infra_bomb'||rnd()<.65;
+    if(!ok){u.org-=15;log(nm(u)+' ('+tn(u.team)+') raid failed.',u.team.toLowerCase());}
+    else{var did=false;if(f2&&f2.owner===et){f2.level-=(id==='infra_bomb'?2:1);if(f2.level<=0)delete fort[h];did=true;}
+      if(depot[h]&&depot[h].owner===et){delete depot[h];did=true;}if(mines[h]&&mines[h].owner===et){delete mines[h];did=true;}
+      var pr=provOf[h]>=0?prov[provOf[h]]:null;if(id==='infra_bomb'&&pr&&pr.seed===h&&pr.owner===et){pp[et]=Math.max(0,pp[et]-3);}
+      addScar(h);fx('boom',h);log(nm(u)+' ('+tn(u.team)+') '+(id==='raid'?'raids':'bombs')+' '+hexName(h)+(did?', structures destroyed':', nothing left to destroy')+'.',u.team.toLowerCase());}}
+  else if(id==='bombard')area(.9,.55,1.6,'bombards');
+  else if(id==='shore')area(.8,.5,1.4,'shells',true);
+  else if(id==='resupply'){var sup=inSupply(u);if(u.type==='supply_convoys'){[u].concat(NB[u.hex].map(function(n){return unitAt[n];}).filter(function(x){return x&&x.team===u.team;})).forEach(function(x){heal(x,15,25);});log('Supply convoy resupplies nearby pieces.',u.team.toLowerCase());}
+    else{heal(u,sup?20:8,sup?30:12);log(nm(u)+' ('+tn(u.team)+') resupplies'+(sup?'':' (out of supply, half effect)')+'.',u.team.toLowerCase());}}
+  else if(id==='sub_assault')hit(e,1.35,1,'torpedoes');
+  else if(id==='cruiser_missile'){if(!shotDown(.3))hit(e,1.3,1.2,'missile-strikes');}
+  else if(id==='naval_resupply'){heal(u,15,20);NB[u.hex].forEach(function(n){var x=unitAt[n];if(x&&x.team===u.team&&SEA[x.type])heal(x,15,20);});log('Naval resupply repairs nearby ships.',u.team.toLowerCase());}
+  else if(id==='supremacy'){var ec=units.filter(function(x){return x.team===et&&FLY[x.type]&&dist(u.hex,x.hex)<=3&&canAttack(u,x);});if(!ec.length)log('Air supremacy sweep finds nothing.',u.team.toLowerCase());ec.forEach(function(x){hit(x,.7,1.2,'sweeps');});}
+  else if(id==='disruption'){e.org-=35;fx('num',e.hex,'-35 Org','#9fd3ff');log(nm(u)+' ('+tn(u.team)+') disrupts '+nm(e)+'.',u.team.toLowerCase());if(e.org<=0&&e.hp>0)rout(e,u);}
+  else if(id==='port_strike'){if(!shotDown(.35)){pp[et]=Math.max(0,pp[et]-6);addScar(h);fx('boom',h);log(nm(u)+' ('+tn(u.team)+') strikes '+hexName(h)+': '+tn(et)+' loses 6 PP.',u.team.toLowerCase());if(e&&e.team===et)hit(e,.6,1,'bombs');}}
+  else if(id==='navy_strike')hit(e,1.2,1,'strikes');
+  else if(id==='supply_bomb'){if(!shotDown(.35)){supCut.push({team:et,hex:h,r:3,left:3});fx('boom',h);log(nm(u)+' ('+tn(u.team)+') cuts '+tn(et)+' supply lines near '+hexName(h)+' for 3 turns.',u.team.toLowerCase());}}
+  else if(id==='air_resupply'){heal(e,15,25);log(nm(u)+' ('+tn(u.team)+') drops supplies on '+nm(e)+'.',u.team.toLowerCase());}
+  else if(id==='surveillance'){reveals.push({hex:h,r:4,left:2});log(nm(u)+' ('+tn(u.team)+') surveys '+hexName(h)+'.',u.team.toLowerCase());}
+  u.acted=true;u.mpLeft=0;u.dig=0;u.order=null;u.digging=false;
+  units=units.filter(function(x){return x.hp>0;});if(sel&&units.indexOf(sel)<0)sel=null;rebuildAt();recompute();}
+
 /* ---------- turn end + AI ---------- */
 function endTurn(){
-  if(busy||over)return;busy=true;sel=null;reach=null;attackable=null;strike=null;
+  if(busy||over)return;busy=true;sel=null;reach=null;attackable=null;strike=null;opMode=null;deployMode=null;
   aiBuy();aiStrike();render();
   var ai=units.filter(function(u){return u.team==='B';}),i=0;
   (function step(){
@@ -832,6 +946,7 @@ function finishTurn(){
   Object.keys(wreck).forEach(function(k){wreck[k].left--;if(wreck[k].left<=0)delete wreck[k];});
   Object.keys(fallout).forEach(function(k){fallout[k].left--;if(fallout[k].left<=0)delete fallout[k];});
   processQueues();
+  reveals=reveals.filter(function(r){return --r.left>0;});supCut=supCut.filter(function(c){return --c.left>0;});
   weather=nextWeather;nextWeather=rollWeather(weather);turn++;
   pp.A+=income('A');pp.B+=income('B');
   recompute();
@@ -908,6 +1023,7 @@ var ICON={
   rocket_artillery:function(g){rrect(g,1.6,16.4,20.8,4,1.2);fs(g);rrect(g,16.6,12,5.6,4.4,1);fs(g);[5.4,11,16.6].forEach(function(x){dot(g,x,20.8,1.7);});
     for(var k=0;k<3;k++){line(g,4+k*3.2,15.2,11+k*3.2,4.2,2.2);poly(g,[10+k*3.2,5.2,12+k*3.2,2.6,13+k*3.2,5.8]);g.fill();}},
   supply_convoys:function(g){rrect(g,1.6,16.6,20.8,3.8,1.2);fs(g);rrect(g,15.6,9.4,6.6,7.2,1.4);fs(g);g.beginPath();g.rect(2,6.4,12.4,10.2);fs(g);line(g,8.2,8,8.2,15,1.6);line(g,3.6,11.5,13,11.5,1.6);[5,11,18.5].forEach(function(x){dot(g,x,20.8,1.8);});},
+  sat:function(g){rrect(g,9,9,6,6,1);fs(g);rrect(g,1.2,10,7,4,.8);fs(g);rrect(g,15.8,10,7,4,.8);fs(g);line(g,12,9,12,4.5,1.4);g.beginPath();g.arc(12,4,2,0,6.283);fs(g);line(g,12,15,12,19.5,1.4);},
   sam_batteries:function(g){rrect(g,1.6,16,20.8,4,1.2);fs(g);rrect(g,16.6,11.6,5.6,4.4,1);fs(g);[5.4,11,16.6].forEach(function(x){dot(g,x,20.8,1.7);});
     line(g,5,13.8,12.4,4.6,2.8);line(g,9,14.4,16.4,5.4,2.8);poly(g,[11.2,3.6,13.6,3.4,13.6,6.2]);g.fill();poly(g,[15.2,4.4,17.6,4.2,17.4,7]);g.fill();},
   icbm:function(g){rrect(g,9.4,4,5.2,13.6,2.4);fs(g);poly(g,[9.4,6.4,12,0.8,14.6,6.4]);fs(g);poly(g,[9.4,14,5.4,20,9.4,18]);fs(g);poly(g,[14.6,14,18.6,20,14.6,18]);fs(g);dot(g,12,9.4,1.4);
@@ -1146,9 +1262,14 @@ function draw(now){
       if(isLand(sel.type)){ctx.save();ctx.fillStyle='#fff';ctx.strokeStyle='rgba(0,0,0,.75)';ctx.lineWidth=3;ctx.font='700 '+Math.round(S*.62)+'px Roboto,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.strokeText(reach[k],c[0],c[1]);ctx.fillText(reach[k],c[0],c[1]);ctx.restore();}});}
   if(sel&&sel.team==='A'&&UT[sel.type].atk>0&&units.indexOf(sel)>=0){var rg=UT[sel.type];ctx.fillStyle='rgba(255,90,70,'+(rg.max>1?.17:.1)+')';ctx.strokeStyle='rgba(255,100,80,.7)';ctx.lineWidth=1;ctx.beginPath();
     for(i=0;i<N;i++){var dd=dist(sel.hex,i);if(dd<rg.min||dd>rg.max)continue;p=CEN[i];hexSub(ctx,p[0],p[1],S*.9);}ctx.fill();ctx.stroke();}
+  if(opMode&&units.indexOf(opMode.unit)>=0){var op2=.3+(Q()==='off'?0:.12*Math.sin(t*5));ctx.fillStyle='rgba(255,210,90,'+op2+')';ctx.strokeStyle='rgba(255,210,90,.95)';ctx.lineWidth=1.6;ctx.beginPath();opCache.forEach(function(h){var c=CEN[h];hexSub(ctx,c[0],c[1],S*.9);});ctx.fill();ctx.stroke();}
   if(deployMode){var dp2=.28+(Q()==='off'?0:.12*Math.sin(t*5));ctx.fillStyle='rgba(95,212,147,'+dp2+')';ctx.strokeStyle='rgba(95,212,147,.95)';ctx.lineWidth=1.4;ctx.beginPath();deployCache.forEach(function(h){var c=CEN[h];hexSub(ctx,c[0],c[1],S*.9);});ctx.fill();ctx.stroke();}
   if(fogOn()){if(fogDirty)buildFog();ctx.drawImage(fogCv,0,0,CW,CH);}
   timeTint();
+  units.forEach(function(u){var tr=u.trail;if(!tr||tr.turn<turn-1||tr.from===u.hex)return;if(u.team==='B'&&!canSee(u))return;
+    var a=CEN[tr.from],b=CEN[u.hex],ang=Math.atan2(b[1]-a[1],b[0]-a[0]),tx=b[0]-Math.cos(ang)*S*.9,ty=b[1]-Math.sin(ang)*S*.9;
+    ctx.globalAlpha=.65;ctx.strokeStyle=ctx.fillStyle=u.team==='A'?COL.ca:COL.cb;ctx.lineWidth=2.2;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(tx,ty);ctx.stroke();ctx.setLineDash([]);
+    var px2=-Math.sin(ang),py2=Math.cos(ang),hx=tx+Math.cos(ang)*S*.3,hy=ty+Math.sin(ang)*S*.3;ctx.beginPath();ctx.moveTo(hx+Math.cos(ang)*S*.15,hy+Math.sin(ang)*S*.15);ctx.lineTo(hx-Math.cos(ang)*S*.2+px2*S*.25,hy-Math.sin(ang)*S*.2+py2*S*.25);ctx.lineTo(hx-Math.cos(ang)*S*.2-px2*S*.25,hy-Math.sin(ang)*S*.2-py2*S*.25);ctx.closePath();ctx.fill();ctx.globalAlpha=1;});
   var ease=(q==='off')?1:1-Math.pow(.78,dt/16.7);
   units.forEach(function(u){
     var tgt=CEN[u.hex];if(!u.vx){u.vx=tgt[0];u.vy=tgt[1];}
@@ -1192,6 +1313,7 @@ function hexAt(ev){var rect=cv.getBoundingClientRect(),x=(ev.clientX-rect.left)*
 function select(u){sel=u;if(u&&u.team==='A'&&!busy&&!over){reach=reachable(u);attackable=u.acted?null:targets(u);if(attackable&&!Object.keys(attackable).length)attackable=null;}else{reach=null;attackable=null;}}
 cv.addEventListener('click',function(ev){
   var h=hexAt(ev);if(h<0||busy)return;
+  if(opMode&&!over){var om=opMode;opMode=null;var ou=om.unit;if(units.indexOf(ou)>=0&&opCache.indexOf(h)>=0)runOp(ou,om.id,h);select(units.indexOf(ou)>=0?ou:null);render();return;}
   if(deployMode&&!over){var dk=deployMode;deployMode=null;if(deployHexes('A',dk).indexOf(h)>=0){buy('A',dk,h);select(null);}render();return;}
   if(strike&&!over){var k=strike;strike=null;launch('A',k,h);render();return;}
   focus=h;var u=unitAt[h];if(u&&u.team==='B'&&!canSee(u))u=null;
@@ -1214,12 +1336,15 @@ function hexPanel(h){var el=$('hexInfo');if(h<0||h===undefined||h===null){el.cla
   if(!seenHex(h))rows.push(['Vision','Fogged']);
   el.className='kv';el.innerHTML=kv(rows);}
 function stratPanel(){var el=$('strat');el.innerHTML='';
-  var line1=document.createElement('p');line1.className='hint';line1.style.margin='0 0 8px';line1.textContent='Stockpile: '+stock.A.icbm+' ICBM, '+stock.A.nuke+' nuke. Train with production points, launch at any hex.';el.appendChild(line1);
+  var line1=document.createElement('p');line1.className='hint';line1.style.margin='0 0 8px';line1.textContent='Stockpile: '+stock.A.icbm+' ICBM, '+stock.A.nuke+' nuke, '+stock.A.sat+' satellite. Train with production points. Missiles launch at any hex.';el.appendChild(line1);
   var g=document.createElement('div');g.className='buy';
-  ['icbm','nuke'].forEach(function(k){var bt=document.createElement('button'),c=document.createElement('canvas');c.width=c.height=36;c.style.width=c.style.height='36px';drawToken(c.getContext('2d'),k,18,18,15,COL.ca);bt.appendChild(c);
+  ['icbm','nuke','sat'].forEach(function(k){var bt=document.createElement('button'),c=document.createElement('canvas');c.width=c.height=36;c.style.width=c.style.height='36px';drawToken(c.getContext('2d'),k,18,18,15,COL.ca);bt.appendChild(c);
     var sp=document.createElement('span');sp.textContent='Train '+STRAT[k].name;bt.appendChild(sp);var sm=document.createElement('small');sm.textContent=STRAT[k].cost+' PP · '+TRAIN[k]+'t';bt.appendChild(sm);
     bt.disabled=busy||over||pp.A<STRAT[k].cost;bt.onclick=function(){if(buyStrat('A',k))render();};g.appendChild(bt);});el.appendChild(g);
   var any=stock.A.icbm+stock.A.nuke>0;
+  var sc=document.createElement('div');sc.className='acts';var sb=document.createElement('button');
+  sb.innerHTML='<span>Satellite scan</span><small>'+(stock.A.sat<1?'train a satellite first':turn<satReady?'recharging, ready turn '+satReady:satUntil>=turn?'active now':'whole map this turn and next')+'</small>';
+  sb.disabled=busy||over||stock.A.sat<1||turn<satReady;sb.onclick=function(){satUntil=turn+1;satReady=turn+4;log('Satellite scan: the whole map is visible, movement trails shown.','a');recompute();render();};sc.appendChild(sb);el.appendChild(sc);
   if(strike){var m=document.createElement('p');m.className='hint';m.style.margin='8px 0 6px';m.textContent='Click any hex to fire. Blast reaches '+(STRAT[strike].rad)+' hex'+(STRAT[strike].rad>1?'es':'')+' out and hits your own pieces too.';el.appendChild(m);
     var cb=document.createElement('button');cb.textContent='Cancel launch';cb.onclick=function(){strike=null;render();};el.appendChild(cb);}
   else if(any){var row=document.createElement('div');row.className='acts';['icbm','nuke'].forEach(function(k){if(stock.A[k]<1)return;var bt=document.createElement('button');bt.className='danger';bt.innerHTML='<span>Launch '+STRAT[k].name+'</span><small>'+stock.A[k]+' ready</small>';bt.disabled=busy||over;bt.onclick=function(){strike=k;sel=null;reach=null;attackable=null;render();};row.appendChild(bt);});el.appendChild(row);}
@@ -1266,10 +1391,15 @@ function render(){
         var st=sabTargets(u);add('Sabotage',st.length?'adjacent '+st[0].k+' · 60%':'nothing adjacent',function(){doSabotage(u);},!free||!st.length);}
       add('Use my own picture','this unit type, stays in your browser',function(){pickPicture(u.type);});
       if(CUSTOM[u.type])add('Use default picture','',function(){delete CUSTOM[u.type];redrawIcons();});
+      var oplab=document.createElement('p');oplab.className='hint';oplab.style.margin='8px 0 0';oplab.textContent='Operations';var oplab2=false;
+      Object.keys(OPS).forEach(function(id){var op=OPS[id];if(!opAllowed(u,op))return;if(!oplab2){acts.appendChild(oplab);oplab2=true;}
+        var hs=op.tgt==='self'?[u.hex]:opHexes(u,id),dis=!free||(op.pp&&pp.A<op.pp)||!hs.length||opGrounded(u);
+        add(op.name,op.sub+(op.pp?' ('+op.pp+' PP)':''),function(){if(op.tgt==='self'){runOp(u,id,u.hex);}else{opMode={id:id,unit:u};opCache=opHexes(u,id);}},dis);});
       if(u.order)add('Cancel order','',function(){u.order=null;u.acted=false;u.mpLeft=mpEff(u);});
       add('Hold','end this piece\'s turn',function(){u.acted=true;u.mpLeft=0;},u.acted);
     }
   }else{box.className='hint';box.textContent='Nothing selected. Click one of your blue pieces.';}
+  if(opMode){var hm=document.createElement('p');hm.className='hint';hm.textContent='Operation: '+OPS[opMode.id].name+'. Click a gold hex.';var cb3=document.createElement('button');cb3.textContent='Cancel operation';cb3.onclick=function(){opMode=null;render();};acts.insertBefore(cb3,acts.firstChild);acts.insertBefore(hm,acts.firstChild);}
   stratPanel();
   var by=$('buy');by.innerHTML='';
   KEYS.forEach(function(k){if(!allowed(k))return;var row=document.createElement('div');row.className='r';
