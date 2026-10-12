@@ -1,6 +1,8 @@
 from database import get_db_connection
 from datetime import datetime
 
+from app_core.assembly_effects import DEFAULT_DURATION_DAYS
+
 def run_assembly_tick():
     """
     Checks for expired Assembly proposals, resolves them, applies effects,
@@ -12,7 +14,8 @@ def run_assembly_tick():
             # FOR UPDATE SKIP LOCKED prevents two concurrent tick workers from
             # double-processing the same row (e.g. cron overlap or manual run).
             cur.execute('''
-                SELECT id, type, proposer_id, target_nation_id, target_currency_id, currency_cap_amount, text
+                SELECT id, type, proposer_id, target_nation_id, target_currency_id, currency_cap_amount, text,
+                       severity, duration_days
                 FROM assembly_proposals
                 WHERE status = 'open' AND closes_at <= NOW()
                 FOR UPDATE SKIP LOCKED
@@ -20,7 +23,11 @@ def run_assembly_tick():
             proposals = cur.fetchall()
 
             for prop in proposals:
-                prop_id, p_type, proposer, target_nation, target_curr, cap_amount, p_text = prop
+                prop_id, p_type, proposer, target_nation, target_curr, cap_amount, p_text, severity, duration_days = prop
+                # duration_days: NULL -> default, 0 -> indefinite (expires_at NULL)
+                days = DEFAULT_DURATION_DAYS if duration_days is None else int(duration_days)
+                expires_sql = "NOW() + make_interval(days => %s)" if days > 0 else "NULL"
+                exp_params = (days,) if days > 0 else ()
 
                 # Fetch votes for this proposal
                 cur.execute('''
@@ -51,11 +58,15 @@ def run_assembly_tick():
                 if passed:
                     # Apply effects based on type
                     if p_type == 'sanction':
-                        # Default 14 days
+                        cur.execute('''
+                            INSERT INTO assembly_effects (proposal_id, target_nation_id, effect_type, severity, active, expires_at)
+                            VALUES (%s, %s, 'sanction', %s, TRUE, ''' + expires_sql + ')',
+                            (prop_id, target_nation, severity or 'regular') + exp_params)
+                    elif p_type == 'commend':
                         cur.execute('''
                             INSERT INTO assembly_effects (proposal_id, target_nation_id, effect_type, active, expires_at)
-                            VALUES (%s, %s, 'sanction', TRUE, NOW() + INTERVAL '14 days')
-                        ''', (prop_id, target_nation))
+                            VALUES (%s, %s, 'commend', TRUE, ''' + expires_sql + ')',
+                            (prop_id, target_nation) + exp_params)
                     elif p_type == 'condemn':
                         # Record as news only — 'condemn' carries no stat change.
                         # (users.influence does not exist; influence is computed.)
@@ -72,8 +83,8 @@ def run_assembly_tick():
                         cur.execute('''
                             INSERT INTO assembly_effects
                                 (proposal_id, target_nation_id, target_currency_id, effect_type, currency_cap_amount, active, expires_at)
-                            VALUES (%s, %s, %s, 'currency_cap', %s, TRUE, NOW() + INTERVAL '14 days')
-                        ''', (prop_id, target_nation or target_curr, target_curr, cap_amount))
+                            VALUES (%s, %s, %s, 'currency_cap', %s, TRUE, ''' + expires_sql + ')',
+                            (prop_id, target_nation or target_curr, target_curr, cap_amount) + exp_params)
 
                     # Notify target nation via news
                     target_to_notify = target_nation or target_curr

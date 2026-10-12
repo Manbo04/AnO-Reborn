@@ -2,6 +2,7 @@ from flask import Blueprint, request, render_template, session, redirect, flash
 from urllib.parse import urlencode
 from helpers import login_required, redirect_back, error, get_valid_int, record_trade_event, is_theme_v2_enabled
 import variables
+from app_core.assembly_effects import MARKET_BLOCK_SQL
 import logging
 from database import get_request_cursor, invalidate_user_cache, invalidate_view_cache, rollback_db_cursor
 
@@ -283,12 +284,11 @@ def buy_market_offer(offer_id):
 
         db.execute(
             "SELECT 1 FROM assembly_effects WHERE target_nation_id IN (%s, %s)"
-            " AND effect_type = 'sanction' AND active = TRUE"
-            " AND (expires_at IS NULL OR expires_at > NOW())",
+            " AND" + MARKET_BLOCK_SQL,
             (seller_id, cId),
         )
         if db.fetchone():
-            return error(403, "Trade blocked by active World Assembly sanctions on one of the nations.")
+            return error(403, "Public market trade blocked by World Assembly sanctions on one of the nations (direct trade agreements are unaffected).")
 
         if not is_active_resource(db, resource):
             return error(400, "This resource is not currently tradable.")
@@ -415,12 +415,11 @@ def sell_market_offer(offer_id):
 
         db.execute(
             "SELECT 1 FROM assembly_effects WHERE target_nation_id IN (%s, %s)"
-            " AND effect_type = 'sanction' AND active = TRUE"
-            " AND (expires_at IS NULL OR expires_at > NOW())",
+            " AND" + MARKET_BLOCK_SQL,
             (buyer_id, seller_id),
         )
         if db.fetchone():
-            return error(403, "Trade blocked by active World Assembly sanctions on one of the nations.")
+            return error(403, "Public market trade blocked by World Assembly sanctions on one of the nations (direct trade agreements are unaffected).")
 
         lock_users(db, [seller_id, buyer_id])
 
@@ -601,8 +600,7 @@ def post_offer(offer_type):
             return error(400, cur_err)
         db.execute(
             "SELECT 1 FROM assembly_effects WHERE target_nation_id = %s"
-            " AND effect_type = 'sanction' AND active = TRUE"
-            " AND (expires_at IS NULL OR expires_at > NOW())",
+            " AND" + MARKET_BLOCK_SQL,
             (cId,),
         )
         if db.fetchone():
