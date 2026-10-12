@@ -1,8 +1,8 @@
 {
  "status": "fixed",
- "reply": "found it, the upkeep discount was applied in the real hourly charge but the expenses breakdown didn't show it, so it looked like nothing changed. the expenses page now shows the -30% on industrial buildings too. should be live within the hour",
- "nonce": "47b612cc1a2944548386e232069efa79",
- "updated_at": "2026-10-10T16:26:36Z",
- "branch": "claude/robot-20261010-fixes",
- "summary": "Industrial Subsidies discount missing in get_econ_statistics expenses display; fixed"
+ "reply": "<@465912833352138768> found why it looked like nothing happened: the policy does cut upkeep of industrial and power buildings by 30% in the hourly tick, but the Expenses tab on your nation page ignored it and kept showing the full cost. it now shows the reduced numbers. live now. i checked it on a real nation, expenses drop when the policy is on (only those buildings get the cut, so the total falls by less than 30%)",
+ "nonce": "1f534808ab38470f8350c08691ba24c1",
+ "updated_at": "2026-10-12T22:43:00Z",
+ "branch": null,
+ "summary": "subsidies expenses display fixed, live"
 }
