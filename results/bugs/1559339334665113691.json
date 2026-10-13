@@ -1,0 +1,8 @@
+{
+ "status": "not_a_bug",
+ "reply": "population 2.0 went live yesterday evening, so the old rules are gone. the 2 week grace only covers people emigrating from overcrowded provinces, it doesn't stop starvation. what matters now for food is the distribution capacity of your whole nation (distribution centers, malls etc): rations only reach as many people as your distribution buildings can serve, and anyone not covered starves, up to 1% of your people per hour. at 170m people you need a lot of capacity even if every province shows distribution. deaths also depend on hospitals (each covers 1m people, fewer hospitals = more elderly/child deaths). so build more distribution buildings and hospitals. if you think the new rules are too harsh, post it in #suggestions and it goes on the next ballot. restoring lost people is a staff decision",
+ "nonce": "99fff623fe94422d883458219de0f8e2",
+ "updated_at": "2026-10-13T02:20:08Z",
+ "branch": null,
+ "summary": "Pop deaths after Pop2.0: starvation from insufficient nation-wide distribution capacity + low hospital cover; working as designed"
+}

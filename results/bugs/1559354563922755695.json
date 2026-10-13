@@ -1,0 +1,8 @@
+{
+ "status": "not_a_bug",
+ "reply": "that's a feature: you can declare war on coalition mates, unless you've signed an mdp with them. nothing to fix",
+ "nonce": "ac62df7b1383413a8f888b9bd4ba88b2",
+ "updated_at": "2026-10-13T02:20:08Z",
+ "branch": null,
+ "summary": "Declaring war on coalition mate is intended unless MDP signed"
+}
