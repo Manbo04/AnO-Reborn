@@ -222,6 +222,8 @@ def google_signup_route():
                     return error(429, "Too many signup attempts from this IP. Please try again tomorrow.")
 
                 db.execute("INSERT INTO signup_attempts (ip_address) VALUES (%s)", (client_ip,))
+                from database import keep_request_writes
+                keep_request_writes()  # failed signups must still count toward the IP cap
 
             # Google Session Validation
             oauth_token = session.get("google_oauth2_token")

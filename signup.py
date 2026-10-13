@@ -658,6 +658,10 @@ def discord_register():
                 """,
                     (client_ip, client_ip),
                 )
+                # Attempts count toward the per-IP cap even when this request
+                # later answers 4xx (error responses roll back request writes).
+                from database import keep_request_writes
+                keep_request_writes()
 
             app.config["SESSION_PERMANENT"] = True
             from login_verification import SESSION_LIFETIME_DAYS
@@ -932,6 +936,8 @@ def signup():
             """,
                 (client_ip, client_ip),
             )
+            from database import keep_request_writes
+            keep_request_writes()  # failed signups must still count toward the IP cap
 
         # Gets user's form inputs
         username = request.form.get("username")

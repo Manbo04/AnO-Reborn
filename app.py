@@ -4,7 +4,7 @@ import os
 import json
 import hmac
 import time as time_module
-from flask import Flask, request, render_template, session, redirect, send_from_directory
+from flask import Flask, g, request, render_template, session, redirect, send_from_directory
 from flask_compress import Compress
 import traceback
 from extensions import limiter
@@ -117,7 +117,7 @@ def create_app():
         from database import ensure_schema_compat
         ensure_schema_compat()
     except Exception:
-        pass
+        logging.getLogger(__name__).exception("ensure_schema_compat failed at startup")
 
 
     try:
@@ -432,6 +432,9 @@ def create_app():
     def after_request(response):
         import logging
         logger = logging.getLogger(__name__)
+        if response.status_code >= 400 and not getattr(g, "_db_keep_on_error", False):
+            # Error response: don't let teardown commit half-applied writes.
+            g._db_rollback = True
         try:
             from time import time
             elapsed = time() - getattr(request, "start_time", time())
