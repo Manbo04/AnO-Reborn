@@ -1,8 +1,8 @@
 {
  "status": "not_a_bug",
- "reply": "that's a feature: you can declare war on coalition mates, unless you've signed an mdp with them. nothing to fix",
- "nonce": "ac62df7b1383413a8f888b9bd4ba88b2",
- "updated_at": "2026-10-13T02:20:08Z",
+ "reply": "blockades only block the market right now, the coalition bank isn't covered, so that's how it works at the moment. whether the bank should be blockaded too is a balance call, so post it in #suggestions and it'll go on the next friday ballot. same for war pacing.",
+ "nonce": "34ca98fe66234498a3641f595881e3f2",
+ "updated_at": "2026-10-13T08:18:44Z",
  "branch": null,
- "summary": "Declaring war on coalition mate is intended unless MDP signed"
+ "summary": "Blockade doesn't cover coalition bank withdrawals (market only); balance question, pointed to #suggestions"
 }
