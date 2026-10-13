@@ -12,6 +12,7 @@ from app_core.economy.industry_bonuses import production_bonuses
 from app_core.economy.tick_order import upkeep_budget
 from app_core.economy.project_bonuses import project_output_bonus
 from app_core.economy.consumer_goods import load_province_cg_capacities
+from app_core.directives.services import active_keys, tax_multiplier_for
 from app_core.economy.tax_formula import compute_tax_income
 from wars.service import target_data
 import math
@@ -528,6 +529,7 @@ def get_revenue(cId, db=None):
                 [cg_caps_by_id.get(row[0], 0.0) for row in province_rows],
                 healthcare,
                 effective_rations,
+                tax_multiplier=tax_multiplier_for(active_keys(db, cId)),
             )
             ti_money = ti["income"]
             # CG the tick will pull from the stockpile when it isn't the

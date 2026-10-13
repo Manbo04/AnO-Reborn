@@ -47,12 +47,15 @@ def food_tax_multiplier(provinces, effective_rations):
     return 1.0 + (rcp * (1.0 - variables.NO_FOOD_TAX_MULTIPLIER))
 
 
-def compute_tax_income(provinces, consumer_goods, cg_caps, healthcare, effective_rations=None):
+def compute_tax_income(
+    provinces, consumer_goods, cg_caps, healthcare, effective_rations=None, tax_multiplier=1.0
+):
     """Gross hourly tax income before coalition tax.
 
     provinces: list of (population, land, pop_children, pop_working, pop_elderly)
     cg_caps: per-province retail capacity, aligned with provinces
     effective_rations: rations that can reach people; None skips the food penalty
+    tax_multiplier: product of active directive boosts (app_core/directives)
 
     Returns dict(income=int, removed_consumer_goods=int, cg_delivered=float).
     """
@@ -84,6 +87,8 @@ def compute_tax_income(provinces, consumer_goods, cg_caps, healthcare, effective
 
     if effective_rations is not None:
         income *= food_tax_multiplier(provinces, effective_rations)
+
+    income *= tax_multiplier
 
     return {
         "income": int(math.floor(income)),

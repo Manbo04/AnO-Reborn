@@ -18,6 +18,7 @@ from helpers import (
 )
 from dotenv import load_dotenv
 import variables
+from app_core.directives.services import active_keys, land_price_multiplier_for
 from app_core.economy import ledger
 from helpers import get_date
 from database import (
@@ -1896,6 +1897,7 @@ def province_sell_buy(way, units, province_id):
                 current_cityCount if units == "cityCount" else current_land,
                 wantedUnits,
                 policies,
+                land_price_multiplier_for(active_keys(db, cId)),
             )
         else:
             if units not in allUnits:
@@ -2287,6 +2289,7 @@ def _plan_mass_purchase(db, user_id, unit, mode, quantity, province_ids, lock):
         unit_gold = int(cost["gold"])
         unit_resources = dict(cost["resources"] or {})
 
+    land_mult = land_price_multiplier_for(active_keys(db, user_id))
     plan = []
     for pid, pname, cities, land in rows:
         if unit == "cityCount":
@@ -2299,7 +2302,7 @@ def _plan_mass_purchase(db, user_id, unit, mode, quantity, province_ids, lock):
         if num <= 0:
             continue
         if unit in MASS_LAND_CITY_UNITS:
-            gold = land_city_purchase_cost(unit, current, num, policies)
+            gold = land_city_purchase_cost(unit, current, num, policies, land_mult)
         else:
             gold = unit_gold * num
         plan.append(
