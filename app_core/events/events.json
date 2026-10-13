@@ -1,121 +1,2041 @@
 {
-  "dockworkers_strike": {"title": "The Docks Go Quiet", "description": "Dockworkers have downed tools over pay, and cargo is rotting on the quays. Their union leader says the strike ends the moment the treasury opens its purse.",
-    "options": [{"text": "Meet their demands in full", "costs": {"gold_pct": 3}, "rewards": {"consumer_goods_pct": 6}},
-                {"text": "Bring in replacement crews", "costs": {"consumer_goods_pct": 4}, "rewards": {"gold_pct": 1}},
-                {"text": "Wait them out", "costs": {"rations_pct": 5}, "rewards": {}}]},
-  "wandering_merchant": {"title": "A Wandering Merchant", "description": "A caravan master with an impressive hat offers crates of foreign goods at a price he swears is robbery. Whose robbery, he does not say.",
-    "options": [{"text": "Buy the whole caravan", "costs": {"gold_pct": 2}, "rewards": {"consumer_goods": 2500, "silver": 300}},
-                {"text": "Trade lumber for his goods", "costs": {"lumber": 2000}, "rewards": {"consumer_goods": 1500}},
-                {"text": "Send him on his way", "costs": {}, "rewards": {}}]},
-  "bumper_harvest": {"title": "A Bumper Harvest", "description": "The granaries are overflowing after the best season in living memory. Farmers want the surplus sold abroad; the ministry of food wants it stored for leaner years.",
-    "options": [{"text": "Sell the surplus abroad", "costs": {"rations_pct": 6}, "rewards": {"gold_pct": 3}},
-                {"text": "Fill the national reserves", "costs": {"gold_pct": 1}, "rewards": {"rations_pct": 8}}]},
-  "mine_collapse": {"title": "Collapse at the Iron Pits", "description": "A shaft at the largest iron mine has caved in. The miners are safe, but the owners say reopening it will take money the treasury would rather keep.",
-    "options": [{"text": "Fund the repairs", "costs": {"gold_pct": 2}, "rewards": {"iron_pct": 6}},
-                {"text": "Let the owners pay", "costs": {"iron_pct": 5}, "rewards": {}},
-                {"text": "Seize the mine for the state", "costs": {"gold_pct": 4}, "rewards": {"iron_pct": 8, "coal": 1000}}]},
-  "inventor_petition": {"title": "The Eccentric Inventor", "description": "An inventor claims her new furnace doubles steel output, and she needs only a modest grant. Her last invention exploded, but she insists that was the point.",
-    "options": [{"text": "Fund the furnace", "costs": {"gold_pct": 2, "coal": 1500}, "rewards": {"steel_pct": 7}},
-                {"text": "Buy the patent outright", "costs": {"gold_pct": 4}, "rewards": {"steel_pct": 8, "components": 800}},
-                {"text": "Politely decline", "costs": {}, "rewards": {}}]},
-  "refugee_column": {"title": "Refugees at the Border", "description": "Thousands of families fleeing a neighbouring war have reached the frontier. They bring skills and hungry mouths in roughly equal measure.",
-    "options": [{"text": "Open the gates and feed them", "costs": {"rations_pct": 6}, "rewards": {"components": 1500, "lumber": 2000}},
-                {"text": "Admit only skilled workers", "costs": {"gold_pct": 1}, "rewards": {"components": 800}},
-                {"text": "Keep the border closed", "costs": {}, "rewards": {}}]},
-  "minister_scandal": {"title": "The Minister's Yacht", "description": "A newspaper has photographed the Minister of Finance aboard a yacht nobody can explain. The opposition is demanding his head; his friends are demanding silence.",
-    "options": [{"text": "Sack him and seize the yacht", "costs": {}, "rewards": {"gold_pct": 2}},
-                {"text": "Quietly pay off the paper", "costs": {"gold_pct": 3}, "rewards": {"consumer_goods": 1000}},
-                {"text": "Stand by your minister", "costs": {"consumer_goods_pct": 3}, "rewards": {}}]},
-  "harvest_festival": {"title": "The Harvest Festival", "description": "Citizens want a grand national festival this year. It would lift spirits across the country and empty a good number of warehouses doing it.",
-    "options": [{"text": "Throw the festival of the century", "costs": {"rations_pct": 4, "consumer_goods_pct": 4}, "rewards": {"gold_pct": 3}},
-                {"text": "A modest local fair", "costs": {"rations": 1000}, "rewards": {"gold_pct": 1}},
-                {"text": "Cancel it, times are hard", "costs": {}, "rewards": {}}]},
-  "smuggler_ring": {"title": "A Smuggling Ring Uncovered", "description": "Customs officers have caught a ring moving diamonds through the northern ports. The smugglers offer to cut the state in if it looks the other way.",
-    "options": [{"text": "Arrest them and seize the haul", "costs": {"ammunition": 500}, "rewards": {"diamonds": 400}},
-                {"text": "Take the cut", "costs": {}, "rewards": {"gold_pct": 2}},
-                {"text": "Recruit them as informants", "costs": {"gold_pct": 1}, "rewards": {"silver": 400, "diamonds": 150}}]},
-  "foreign_envoy": {"title": "An Envoy Bearing Gifts", "description": "A foreign envoy arrives with chests of aluminium and a treaty proposal written in very small print. The gifts are real; the treaty's intentions are less clear.",
-    "options": [{"text": "Accept the gifts and sign", "costs": {"oil_pct": 5}, "rewards": {"aluminium": 3000}},
-                {"text": "Accept the gifts, refuse the treaty", "costs": {}, "rewards": {"aluminium": 800}},
-                {"text": "Refuse everything", "costs": {}, "rewards": {"gold_pct": 1}}]},
-  "river_flood": {"title": "The River Bursts Its Banks", "description": "Spring floods have swamped farmland along the great river. Engineers can build levees now, or the state can pay out compensation when the waters recede.",
-    "options": [{"text": "Build levees immediately", "costs": {"lumber": 3000, "steel": 1000}, "rewards": {"rations_pct": 4}},
-                {"text": "Compensate the farmers", "costs": {"gold_pct": 2}, "rewards": {}},
-                {"text": "Do nothing and hope", "costs": {"rations_pct": 7}, "rewards": {}}]},
-  "spy_caught": {"title": "A Spy in the Ministry", "description": "Counter-intelligence has caught a foreign agent photographing defence plans. He offers to become a double agent in exchange for his freedom.",
-    "options": [{"text": "Turn him into a double agent", "costs": {"gold_pct": 1}, "rewards": {"components": 1200, "ammunition": 1000}},
-                {"text": "Execute a public trial", "costs": {}, "rewards": {"ammunition": 600}},
-                {"text": "Trade him back for gold", "costs": {}, "rewards": {"gold_pct": 2}}]},
-  "snap_election": {"title": "Calls for a Snap Election", "description": "Parliament is deadlocked and the press smells blood. Calling an election would clear the air, but campaigns cost money and promises cost more.",
-    "options": [{"text": "Call the election", "costs": {"gold_pct": 3}, "rewards": {"consumer_goods_pct": 5, "rations_pct": 3}},
-                {"text": "Form an emergency coalition", "costs": {"gold_pct": 1}, "rewards": {}},
-                {"text": "Suspend parliament for a month", "costs": {"consumer_goods_pct": 5}, "rewards": {"gold_pct": 2}}]},
-  "railway_proposal": {"title": "The Great Railway", "description": "Engineers propose a railway linking the mines to the capital. It would take a mountain of steel and lumber, and pay for itself for decades.",
-    "options": [{"text": "Build it at full scale", "costs": {"steel": 3000, "lumber": 4000}, "rewards": {"coal_pct": 6, "iron_pct": 6}},
-                {"text": "Build a single line", "costs": {"steel": 1000, "lumber": 1500}, "rewards": {"coal_pct": 3}},
-                {"text": "Shelve the plans", "costs": {}, "rewards": {}}]},
-  "plague_outbreak": {"title": "Fever in the Slums", "description": "A fever is spreading through the capital's poorest districts. Doctors want the markets closed; merchants want them open.",
-    "options": [{"text": "Close the markets and quarantine", "costs": {"consumer_goods_pct": 6}, "rewards": {"rations_pct": 2}},
-                {"text": "Fund emergency hospitals", "costs": {"gold_pct": 3}, "rewards": {}},
-                {"text": "Keep trading and hope", "costs": {"rations_pct": 6}, "rewards": {"gold_pct": 1}}]},
-  "border_dispute": {"title": "The Disputed Valley", "description": "A neighbour claims a fertile valley on your border, citing a map older than both nations. Their troops are camped on the ridge, waiting.",
-    "options": [{"text": "Mobilise and hold the valley", "costs": {"ammunition": 2000, "gasoline": 1000}, "rewards": {"rations_pct": 4}},
-                {"text": "Buy them off", "costs": {"gold_pct": 3}, "rewards": {}},
-                {"text": "Cede the valley", "costs": {"rations_pct": 5}, "rewards": {"gold_pct": 1}}]},
-  "oil_discovery": {"title": "Oil in the Marshes", "description": "Surveyors have struck oil beneath a protected marshland. Drilling would make the state rich and the birdwatchers furious.",
-    "options": [{"text": "Drill everything", "costs": {"lumber": 2000}, "rewards": {"oil_pct": 8}},
-                {"text": "Drill carefully at the edges", "costs": {"gold_pct": 1}, "rewards": {"oil_pct": 4}},
-                {"text": "Protect the marsh", "costs": {}, "rewards": {"consumer_goods": 800}}]},
-  "bank_run": {"title": "A Run on the Banks", "description": "Rumours of insolvency have sent crowds to the bank doors. If the state does not act, the panic could spread to every counting house in the land.",
-    "options": [{"text": "Guarantee all deposits", "costs": {"gold_pct": 5}, "rewards": {"consumer_goods_pct": 4}},
-                {"text": "Close the banks for a week", "costs": {"consumer_goods_pct": 6}, "rewards": {}},
-                {"text": "Back the currency with bullion", "costs": {"bullion": 400}, "rewards": {"gold_pct": 2}}]},
-  "arms_dealer": {"title": "The Arms Dealer's Offer", "description": "A discreet gentleman offers surplus ammunition at a fraction of the market price. He is vague about where it came from and specific about the payment.",
-    "options": [{"text": "Buy the full stockpile", "costs": {"gold_pct": 2}, "rewards": {"ammunition": 4000}},
-                {"text": "Pay in silver instead", "costs": {"silver": 600}, "rewards": {"ammunition": 2500}},
-                {"text": "Report him to the police", "costs": {}, "rewards": {"ammunition": 400}}]},
-  "copper_boom": {"title": "The Copper Rush", "description": "Prospectors have found copper in the southern hills and are flooding in by the thousand. The state can tax the rush or claim the richest seams itself.",
-    "options": [{"text": "Tax the prospectors", "costs": {}, "rewards": {"gold_pct": 2}},
-                {"text": "Claim the best seams", "costs": {"gold_pct": 2}, "rewards": {"copper_pct": 8}},
-                {"text": "Let the free market sort it out", "costs": {}, "rewards": {"copper": 1500}}]},
-  "power_blackout": {"title": "The Lights Go Out", "description": "An overloaded grid has plunged half the country into darkness. Factories are idle and the evening news is being read by candlelight.",
-    "options": [{"text": "Burn coal to restore power", "costs": {"coal_pct": 6}, "rewards": {"components": 800}},
-                {"text": "Import emergency fuel", "costs": {"gold_pct": 2}, "rewards": {}},
-                {"text": "Ration electricity", "costs": {"consumer_goods_pct": 4}, "rewards": {}}]},
-  "university_request": {"title": "The Grand University", "description": "Scholars petition for a national university to rival the great academies abroad. It would be expensive, prestigious, and slow to pay off.",
-    "options": [{"text": "Build it in marble", "costs": {"gold_pct": 4}, "rewards": {"components_pct": 8}},
-                {"text": "Expand the existing colleges", "costs": {"gold_pct": 1}, "rewards": {"components": 1000}},
-                {"text": "Scholars can wait", "costs": {}, "rewards": {}}]},
-  "timber_baron": {"title": "The Timber Baron", "description": "A timber baron wants rights to clear the ancient northern forest. He offers a generous fee and promises to plant saplings, eventually, somewhere.",
-    "options": [{"text": "Sell the logging rights", "costs": {}, "rewards": {"gold_pct": 2, "lumber": 2000}},
-                {"text": "Log it as a state enterprise", "costs": {"gasoline": 800}, "rewards": {"lumber_pct": 8}},
-                {"text": "Protect the old forest", "costs": {}, "rewards": {"rations": 800}}]},
-  "silver_counterfeit": {"title": "Counterfeit Coins", "description": "Forged silver coins are circulating in the markets, and shopkeepers are refusing coins altogether. The mint says it can fix this, for a price.",
-    "options": [{"text": "Recall and reissue the coinage", "costs": {"silver": 800, "gold_pct": 1}, "rewards": {"consumer_goods_pct": 4}},
-                {"text": "Hunt down the forgers", "costs": {"ammunition": 800}, "rewards": {"silver": 500}},
-                {"text": "Ignore it", "costs": {"consumer_goods_pct": 5}, "rewards": {}}]},
-  "uranium_offer": {"title": "Uranium for Sale", "description": "A struggling foreign regime offers uranium in exchange for food. The deal would make the generals very happy and the diplomats very nervous.",
-    "options": [{"text": "Trade food for uranium", "costs": {"rations_pct": 5}, "rewards": {"uranium": 600}},
-                {"text": "Pay gold instead", "costs": {"gold_pct": 2}, "rewards": {"uranium": 400}},
-                {"text": "Decline the offer", "costs": {}, "rewards": {}}]},
-  "factory_fire": {"title": "Fire at the Munitions Works", "description": "A fire has gutted the main munitions factory. Investigators suspect sabotage, but the immediate question is whether to rebuild bigger or smaller.",
-    "options": [{"text": "Rebuild bigger and safer", "costs": {"steel": 2000, "gold_pct": 1}, "rewards": {"ammunition_pct": 7}},
-                {"text": "Rebuild as it was", "costs": {"steel": 1000}, "rewards": {"ammunition_pct": 3}},
-                {"text": "Move production abroad", "costs": {"ammunition_pct": 4}, "rewards": {"gold_pct": 1}}]},
-  "drought": {"title": "The Long Drought", "description": "No rain has fallen in three months and the wells are running dry. Farmers are selling their livestock and eyeing the city reservoirs.",
-    "options": [{"text": "Open the city reservoirs to farms", "costs": {"consumer_goods_pct": 4}, "rewards": {"rations_pct": 4}},
-                {"text": "Import grain", "costs": {"gold_pct": 2}, "rewards": {"rations_pct": 3}},
-                {"text": "Let the market set prices", "costs": {"rations_pct": 7}, "rewards": {"gold_pct": 1}}]},
-  "bauxite_contract": {"title": "The Aluminium Contract", "description": "A foreign aircraft maker wants a long-term bauxite contract. The price is good, but it would tie up a large share of your mines for years.",
-    "options": [{"text": "Sign the long contract", "costs": {"bauxite_pct": 6}, "rewards": {"gold_pct": 3}},
-                {"text": "Refine it ourselves", "costs": {"bauxite_pct": 4, "coal": 1000}, "rewards": {"aluminium": 2000}},
-                {"text": "Keep the bauxite at home", "costs": {}, "rewards": {}}]},
-  "general_coup_rumour": {"title": "Whispers of a Coup", "description": "Intelligence suggests a popular general is sounding out officers about 'restoring order'. He has not done anything illegal, yet.",
-    "options": [{"text": "Promote him to a distant post", "costs": {"gold_pct": 1}, "rewards": {}},
-                {"text": "Buy the army's loyalty", "costs": {"gold_pct": 3}, "rewards": {"ammunition": 1500}},
-                {"text": "Arrest him before he moves", "costs": {"ammunition_pct": 4}, "rewards": {"gold_pct": 1}}]},
-  "lead_pipes": {"title": "Poison in the Pipes", "description": "Doctors have traced a wave of illness to old lead water pipes in the capital. Replacing them is urgent, and the old lead is worth something to someone.",
-    "options": [{"text": "Replace every pipe now", "costs": {"copper": 2500, "gold_pct": 1}, "rewards": {"lead": 1500}},
-                {"text": "Replace them district by district", "costs": {"copper": 1000}, "rewards": {"lead": 500}},
-                {"text": "Deny there is a problem", "costs": {"rations_pct": 4}, "rewards": {}}]}
+  "dockworkers_strike": {
+    "title": "The Docks Go Quiet",
+    "description": "Dockworkers have downed tools over pay, and cargo is rotting on the quays. Their union leader says the strike ends the moment the treasury opens its purse.",
+    "options": [
+      {
+        "text": "Meet their demands in full",
+        "costs": {
+          "gold_pct": 3
+        },
+        "rewards": {
+          "consumer_goods_pct": 6
+        }
+      },
+      {
+        "text": "Bring in replacement crews",
+        "costs": {
+          "consumer_goods_pct": 4
+        },
+        "rewards": {
+          "gold_pct": 1
+        }
+      },
+      {
+        "text": "Wait them out",
+        "costs": {
+          "rations_pct": 5
+        },
+        "rewards": {}
+      }
+    ]
+  },
+  "wandering_merchant": {
+    "title": "A Wandering Merchant",
+    "description": "A caravan master with an impressive hat offers crates of foreign goods at a price he swears is robbery. Whose robbery, he does not say.",
+    "options": [
+      {
+        "text": "Buy the whole caravan",
+        "costs": {
+          "gold_pct": 2
+        },
+        "rewards": {
+          "consumer_goods": 2500,
+          "silver": 300
+        }
+      },
+      {
+        "text": "Trade lumber for his goods",
+        "costs": {
+          "lumber": 2000
+        },
+        "rewards": {
+          "consumer_goods": 1500
+        }
+      },
+      {
+        "text": "Send him on his way",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "bumper_harvest": {
+    "title": "A Bumper Harvest",
+    "description": "The granaries are overflowing after the best season in living memory. Farmers want the surplus sold abroad; the ministry of food wants it stored for leaner years.",
+    "options": [
+      {
+        "text": "Sell the surplus abroad",
+        "costs": {
+          "rations_pct": 6
+        },
+        "rewards": {
+          "gold_pct": 3
+        }
+      },
+      {
+        "text": "Fill the national reserves",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "rations_pct": 8
+        }
+      }
+    ]
+  },
+  "mine_collapse": {
+    "title": "Collapse at the Iron Pits",
+    "description": "A shaft at the largest iron mine has caved in. The miners are safe, but the owners say reopening it will take money the treasury would rather keep.",
+    "options": [
+      {
+        "text": "Fund the repairs",
+        "costs": {
+          "gold_pct": 2
+        },
+        "rewards": {
+          "iron_pct": 6
+        }
+      },
+      {
+        "text": "Let the owners pay",
+        "costs": {
+          "iron_pct": 5
+        },
+        "rewards": {}
+      },
+      {
+        "text": "Seize the mine for the state",
+        "costs": {
+          "gold_pct": 4
+        },
+        "rewards": {
+          "iron_pct": 8,
+          "coal": 1000
+        }
+      }
+    ]
+  },
+  "inventor_petition": {
+    "title": "The Eccentric Inventor",
+    "description": "An inventor claims her new furnace doubles steel output, and she needs only a modest grant. Her last invention exploded, but she insists that was the point.",
+    "options": [
+      {
+        "text": "Fund the furnace",
+        "costs": {
+          "gold_pct": 2,
+          "coal": 1500
+        },
+        "rewards": {
+          "steel_pct": 7
+        }
+      },
+      {
+        "text": "Buy the patent outright",
+        "costs": {
+          "gold_pct": 4
+        },
+        "rewards": {
+          "steel_pct": 8,
+          "components": 800
+        }
+      },
+      {
+        "text": "Politely decline",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "refugee_column": {
+    "title": "Refugees at the Border",
+    "description": "Thousands of families fleeing a neighbouring war have reached the frontier. They bring skills and hungry mouths in roughly equal measure.",
+    "options": [
+      {
+        "text": "Open the gates and feed them",
+        "costs": {
+          "rations_pct": 6
+        },
+        "rewards": {
+          "components": 1500,
+          "lumber": 2000
+        }
+      },
+      {
+        "text": "Admit only skilled workers",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "components": 800
+        }
+      },
+      {
+        "text": "Keep the border closed",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "minister_scandal": {
+    "title": "The Minister's Yacht",
+    "description": "A newspaper has photographed the Minister of Finance aboard a yacht nobody can explain. The opposition is demanding his head; his friends are demanding silence.",
+    "options": [
+      {
+        "text": "Sack him and seize the yacht",
+        "costs": {},
+        "rewards": {
+          "gold_pct": 2
+        }
+      },
+      {
+        "text": "Quietly pay off the paper",
+        "costs": {
+          "gold_pct": 3
+        },
+        "rewards": {
+          "consumer_goods": 1000
+        }
+      },
+      {
+        "text": "Stand by your minister",
+        "costs": {
+          "consumer_goods_pct": 3
+        },
+        "rewards": {}
+      }
+    ]
+  },
+  "harvest_festival": {
+    "title": "The Harvest Festival",
+    "description": "Citizens want a grand national festival this year. It would lift spirits across the country and empty a good number of warehouses doing it.",
+    "options": [
+      {
+        "text": "Throw the festival of the century",
+        "costs": {
+          "rations_pct": 4,
+          "consumer_goods_pct": 4
+        },
+        "rewards": {
+          "gold_pct": 3
+        }
+      },
+      {
+        "text": "A modest local fair",
+        "costs": {
+          "rations": 1000
+        },
+        "rewards": {
+          "gold_pct": 1
+        }
+      },
+      {
+        "text": "Cancel it, times are hard",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "smuggler_ring": {
+    "title": "A Smuggling Ring Uncovered",
+    "description": "Customs officers have caught a ring moving diamonds through the northern ports. The smugglers offer to cut the state in if it looks the other way.",
+    "options": [
+      {
+        "text": "Arrest them and seize the haul",
+        "costs": {
+          "ammunition": 500
+        },
+        "rewards": {
+          "diamonds": 400
+        }
+      },
+      {
+        "text": "Take the cut",
+        "costs": {},
+        "rewards": {
+          "gold_pct": 2
+        }
+      },
+      {
+        "text": "Recruit them as informants",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "silver": 400,
+          "diamonds": 150
+        }
+      }
+    ]
+  },
+  "foreign_envoy": {
+    "title": "An Envoy Bearing Gifts",
+    "description": "A foreign envoy arrives with chests of aluminium and a treaty proposal written in very small print. The gifts are real; the treaty's intentions are less clear.",
+    "options": [
+      {
+        "text": "Accept the gifts and sign",
+        "costs": {
+          "oil_pct": 5
+        },
+        "rewards": {
+          "aluminium": 3000
+        }
+      },
+      {
+        "text": "Accept the gifts, refuse the treaty",
+        "costs": {},
+        "rewards": {
+          "aluminium": 800
+        }
+      },
+      {
+        "text": "Refuse everything",
+        "costs": {},
+        "rewards": {
+          "gold_pct": 1
+        }
+      }
+    ]
+  },
+  "river_flood": {
+    "title": "The River Bursts Its Banks",
+    "description": "Spring floods have swamped farmland along the great river. Engineers can build levees now, or the state can pay out compensation when the waters recede.",
+    "options": [
+      {
+        "text": "Build levees immediately",
+        "costs": {
+          "lumber": 3000,
+          "steel": 1000
+        },
+        "rewards": {
+          "rations_pct": 4
+        }
+      },
+      {
+        "text": "Compensate the farmers",
+        "costs": {
+          "gold_pct": 2
+        },
+        "rewards": {}
+      },
+      {
+        "text": "Do nothing and hope",
+        "costs": {
+          "rations_pct": 7
+        },
+        "rewards": {}
+      }
+    ]
+  },
+  "spy_caught": {
+    "title": "A Spy in the Ministry",
+    "description": "Counter-intelligence has caught a foreign agent photographing defence plans. He offers to become a double agent in exchange for his freedom.",
+    "options": [
+      {
+        "text": "Turn him into a double agent",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "components": 1200,
+          "ammunition": 1000
+        }
+      },
+      {
+        "text": "Execute a public trial",
+        "costs": {},
+        "rewards": {
+          "ammunition": 600
+        }
+      },
+      {
+        "text": "Trade him back for gold",
+        "costs": {},
+        "rewards": {
+          "gold_pct": 2
+        }
+      }
+    ]
+  },
+  "snap_election": {
+    "title": "Calls for a Snap Election",
+    "description": "Parliament is deadlocked and the press smells blood. Calling an election would clear the air, but campaigns cost money and promises cost more.",
+    "options": [
+      {
+        "text": "Call the election",
+        "costs": {
+          "gold_pct": 3
+        },
+        "rewards": {
+          "consumer_goods_pct": 5,
+          "rations_pct": 3
+        }
+      },
+      {
+        "text": "Form an emergency coalition",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {}
+      },
+      {
+        "text": "Suspend parliament for a month",
+        "costs": {
+          "consumer_goods_pct": 5
+        },
+        "rewards": {
+          "gold_pct": 2
+        }
+      }
+    ]
+  },
+  "railway_proposal": {
+    "title": "The Great Railway",
+    "description": "Engineers propose a railway linking the mines to the capital. It would take a mountain of steel and lumber, and pay for itself for decades.",
+    "options": [
+      {
+        "text": "Build it at full scale",
+        "costs": {
+          "steel": 3000,
+          "lumber": 4000
+        },
+        "rewards": {
+          "coal_pct": 6,
+          "iron_pct": 6
+        }
+      },
+      {
+        "text": "Build a single line",
+        "costs": {
+          "steel": 1000,
+          "lumber": 1500
+        },
+        "rewards": {
+          "coal_pct": 3
+        }
+      },
+      {
+        "text": "Shelve the plans",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "plague_outbreak": {
+    "title": "Fever in the Slums",
+    "description": "A fever is spreading through the capital's poorest districts. Doctors want the markets closed; merchants want them open.",
+    "options": [
+      {
+        "text": "Close the markets and quarantine",
+        "costs": {
+          "consumer_goods_pct": 6
+        },
+        "rewards": {
+          "rations_pct": 2
+        }
+      },
+      {
+        "text": "Fund emergency hospitals",
+        "costs": {
+          "gold_pct": 3
+        },
+        "rewards": {}
+      },
+      {
+        "text": "Keep trading and hope",
+        "costs": {
+          "rations_pct": 6
+        },
+        "rewards": {
+          "gold_pct": 1
+        }
+      }
+    ]
+  },
+  "border_dispute": {
+    "title": "The Disputed Valley",
+    "description": "A neighbour claims a fertile valley on your border, citing a map older than both nations. Their troops are camped on the ridge, waiting.",
+    "options": [
+      {
+        "text": "Mobilise and hold the valley",
+        "costs": {
+          "ammunition": 2000,
+          "gasoline": 1000
+        },
+        "rewards": {
+          "rations_pct": 4
+        }
+      },
+      {
+        "text": "Buy them off",
+        "costs": {
+          "gold_pct": 3
+        },
+        "rewards": {}
+      },
+      {
+        "text": "Cede the valley",
+        "costs": {
+          "rations_pct": 5
+        },
+        "rewards": {
+          "gold_pct": 1
+        }
+      }
+    ]
+  },
+  "oil_discovery": {
+    "title": "Oil in the Marshes",
+    "description": "Surveyors have struck oil beneath a protected marshland. Drilling would make the state rich and the birdwatchers furious.",
+    "options": [
+      {
+        "text": "Drill everything",
+        "costs": {
+          "lumber": 2000
+        },
+        "rewards": {
+          "oil_pct": 8
+        }
+      },
+      {
+        "text": "Drill carefully at the edges",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "oil_pct": 4
+        }
+      },
+      {
+        "text": "Protect the marsh",
+        "costs": {},
+        "rewards": {
+          "consumer_goods": 800
+        }
+      }
+    ]
+  },
+  "bank_run": {
+    "title": "A Run on the Banks",
+    "description": "Rumours of insolvency have sent crowds to the bank doors. If the state does not act, the panic could spread to every counting house in the land.",
+    "options": [
+      {
+        "text": "Guarantee all deposits",
+        "costs": {
+          "gold_pct": 5
+        },
+        "rewards": {
+          "consumer_goods_pct": 4
+        }
+      },
+      {
+        "text": "Close the banks for a week",
+        "costs": {
+          "consumer_goods_pct": 6
+        },
+        "rewards": {}
+      },
+      {
+        "text": "Back the currency with bullion",
+        "costs": {
+          "bullion": 400
+        },
+        "rewards": {
+          "gold_pct": 2
+        }
+      }
+    ]
+  },
+  "arms_dealer": {
+    "title": "The Arms Dealer's Offer",
+    "description": "A discreet gentleman offers surplus ammunition at a fraction of the market price. He is vague about where it came from and specific about the payment.",
+    "options": [
+      {
+        "text": "Buy the full stockpile",
+        "costs": {
+          "gold_pct": 2
+        },
+        "rewards": {
+          "ammunition": 4000
+        }
+      },
+      {
+        "text": "Pay in silver instead",
+        "costs": {
+          "silver": 600
+        },
+        "rewards": {
+          "ammunition": 2500
+        }
+      },
+      {
+        "text": "Report him to the police",
+        "costs": {},
+        "rewards": {
+          "ammunition": 400
+        }
+      }
+    ]
+  },
+  "copper_boom": {
+    "title": "The Copper Rush",
+    "description": "Prospectors have found copper in the southern hills and are flooding in by the thousand. The state can tax the rush or claim the richest seams itself.",
+    "options": [
+      {
+        "text": "Tax the prospectors",
+        "costs": {},
+        "rewards": {
+          "gold_pct": 2
+        }
+      },
+      {
+        "text": "Claim the best seams",
+        "costs": {
+          "gold_pct": 2
+        },
+        "rewards": {
+          "copper_pct": 8
+        }
+      },
+      {
+        "text": "Let the free market sort it out",
+        "costs": {},
+        "rewards": {
+          "copper": 1500
+        }
+      }
+    ]
+  },
+  "power_blackout": {
+    "title": "The Lights Go Out",
+    "description": "An overloaded grid has plunged half the country into darkness. Factories are idle and the evening news is being read by candlelight.",
+    "options": [
+      {
+        "text": "Burn coal to restore power",
+        "costs": {
+          "coal_pct": 6
+        },
+        "rewards": {
+          "components": 800
+        }
+      },
+      {
+        "text": "Import emergency fuel",
+        "costs": {
+          "gold_pct": 2
+        },
+        "rewards": {}
+      },
+      {
+        "text": "Ration electricity",
+        "costs": {
+          "consumer_goods_pct": 4
+        },
+        "rewards": {}
+      }
+    ]
+  },
+  "university_request": {
+    "title": "The Grand University",
+    "description": "Scholars petition for a national university to rival the great academies abroad. It would be expensive, prestigious, and slow to pay off.",
+    "options": [
+      {
+        "text": "Build it in marble",
+        "costs": {
+          "gold_pct": 4
+        },
+        "rewards": {
+          "components_pct": 8
+        }
+      },
+      {
+        "text": "Expand the existing colleges",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "components": 1000
+        }
+      },
+      {
+        "text": "Scholars can wait",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "timber_baron": {
+    "title": "The Timber Baron",
+    "description": "A timber baron wants rights to clear the ancient northern forest. He offers a generous fee and promises to plant saplings, eventually, somewhere.",
+    "options": [
+      {
+        "text": "Sell the logging rights",
+        "costs": {},
+        "rewards": {
+          "gold_pct": 2,
+          "lumber": 2000
+        }
+      },
+      {
+        "text": "Log it as a state enterprise",
+        "costs": {
+          "gasoline": 800
+        },
+        "rewards": {
+          "lumber_pct": 8
+        }
+      },
+      {
+        "text": "Protect the old forest",
+        "costs": {},
+        "rewards": {
+          "rations": 800
+        }
+      }
+    ]
+  },
+  "silver_counterfeit": {
+    "title": "Counterfeit Coins",
+    "description": "Forged silver coins are circulating in the markets, and shopkeepers are refusing coins altogether. The mint says it can fix this, for a price.",
+    "options": [
+      {
+        "text": "Recall and reissue the coinage",
+        "costs": {
+          "silver": 800,
+          "gold_pct": 1
+        },
+        "rewards": {
+          "consumer_goods_pct": 4
+        }
+      },
+      {
+        "text": "Hunt down the forgers",
+        "costs": {
+          "ammunition": 800
+        },
+        "rewards": {
+          "silver": 500
+        }
+      },
+      {
+        "text": "Ignore it",
+        "costs": {
+          "consumer_goods_pct": 5
+        },
+        "rewards": {}
+      }
+    ]
+  },
+  "uranium_offer": {
+    "title": "Uranium for Sale",
+    "description": "A struggling foreign regime offers uranium in exchange for food. The deal would make the generals very happy and the diplomats very nervous.",
+    "options": [
+      {
+        "text": "Trade food for uranium",
+        "costs": {
+          "rations_pct": 5
+        },
+        "rewards": {
+          "uranium": 600
+        }
+      },
+      {
+        "text": "Pay gold instead",
+        "costs": {
+          "gold_pct": 2
+        },
+        "rewards": {
+          "uranium": 400
+        }
+      },
+      {
+        "text": "Decline the offer",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "factory_fire": {
+    "title": "Fire at the Munitions Works",
+    "description": "A fire has gutted the main munitions factory. Investigators suspect sabotage, but the immediate question is whether to rebuild bigger or smaller.",
+    "options": [
+      {
+        "text": "Rebuild bigger and safer",
+        "costs": {
+          "steel": 2000,
+          "gold_pct": 1
+        },
+        "rewards": {
+          "ammunition_pct": 7
+        }
+      },
+      {
+        "text": "Rebuild as it was",
+        "costs": {
+          "steel": 1000
+        },
+        "rewards": {
+          "ammunition_pct": 3
+        }
+      },
+      {
+        "text": "Move production abroad",
+        "costs": {
+          "ammunition_pct": 4
+        },
+        "rewards": {
+          "gold_pct": 1
+        }
+      }
+    ]
+  },
+  "drought": {
+    "title": "The Long Drought",
+    "description": "No rain has fallen in three months and the wells are running dry. Farmers are selling their livestock and eyeing the city reservoirs.",
+    "options": [
+      {
+        "text": "Open the city reservoirs to farms",
+        "costs": {
+          "consumer_goods_pct": 4
+        },
+        "rewards": {
+          "rations_pct": 4
+        }
+      },
+      {
+        "text": "Import grain",
+        "costs": {
+          "gold_pct": 2
+        },
+        "rewards": {
+          "rations_pct": 3
+        }
+      },
+      {
+        "text": "Let the market set prices",
+        "costs": {
+          "rations_pct": 7
+        },
+        "rewards": {
+          "gold_pct": 1
+        }
+      }
+    ]
+  },
+  "bauxite_contract": {
+    "title": "The Aluminium Contract",
+    "description": "A foreign aircraft maker wants a long-term bauxite contract. The price is good, but it would tie up a large share of your mines for years.",
+    "options": [
+      {
+        "text": "Sign the long contract",
+        "costs": {
+          "bauxite_pct": 6
+        },
+        "rewards": {
+          "gold_pct": 3
+        }
+      },
+      {
+        "text": "Refine it ourselves",
+        "costs": {
+          "bauxite_pct": 4,
+          "coal": 1000
+        },
+        "rewards": {
+          "aluminium": 2000
+        }
+      },
+      {
+        "text": "Keep the bauxite at home",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "general_coup_rumour": {
+    "title": "Whispers of a Coup",
+    "description": "Intelligence suggests a popular general is sounding out officers about 'restoring order'. He has not done anything illegal, yet.",
+    "options": [
+      {
+        "text": "Promote him to a distant post",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {}
+      },
+      {
+        "text": "Buy the army's loyalty",
+        "costs": {
+          "gold_pct": 3
+        },
+        "rewards": {
+          "ammunition": 1500
+        }
+      },
+      {
+        "text": "Arrest him before he moves",
+        "costs": {
+          "ammunition_pct": 4
+        },
+        "rewards": {
+          "gold_pct": 1
+        }
+      }
+    ]
+  },
+  "lead_pipes": {
+    "title": "Poison in the Pipes",
+    "description": "Doctors have traced a wave of illness to old lead water pipes in the capital. Replacing them is urgent, and the old lead is worth something to someone.",
+    "options": [
+      {
+        "text": "Replace every pipe now",
+        "costs": {
+          "copper": 2500,
+          "gold_pct": 1
+        },
+        "rewards": {
+          "lead": 1500
+        }
+      },
+      {
+        "text": "Replace them district by district",
+        "costs": {
+          "copper": 1000
+        },
+        "rewards": {
+          "lead": 500
+        }
+      },
+      {
+        "text": "Deny there is a problem",
+        "costs": {
+          "rations_pct": 4
+        },
+        "rewards": {}
+      }
+    ]
+  },
+  "grain_speculators": {
+    "title": "Grain Speculators",
+    "description": "Merchants are buying up the autumn grain and holding it back to push prices up.",
+    "options": [
+      {
+        "text": "Break the cartel with a state purchase",
+        "costs": {
+          "gold_pct": 3
+        },
+        "rewards": {
+          "rations_pct": 9
+        }
+      },
+      {
+        "text": "Tax their warehouses",
+        "costs": {},
+        "rewards": {
+          "gold_pct": 1
+        }
+      },
+      {
+        "text": "Look away",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "steel_union_demands": {
+    "title": "The Steelworkers' Demands",
+    "description": "The steel union wants shorter shifts and says the furnaces will go cold otherwise.",
+    "options": [
+      {
+        "text": "Grant the demands",
+        "costs": {
+          "gold_pct": 2
+        },
+        "rewards": {
+          "steel_pct": 6
+        }
+      },
+      {
+        "text": "Negotiate a smaller raise",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "steel_pct": 3
+        }
+      },
+      {
+        "text": "Break the strike",
+        "costs": {
+          "steel_pct": 4
+        },
+        "rewards": {
+          "gold_pct": 1
+        }
+      }
+    ]
+  },
+  "coastal_survey": {
+    "title": "The Coastal Survey",
+    "description": "Surveyors report a sheltered bay where a new fishing fleet could base itself.",
+    "options": [
+      {
+        "text": "Fund the harbour works",
+        "costs": {
+          "gold_pct": 3
+        },
+        "rewards": {
+          "rations_pct": 10
+        }
+      },
+      {
+        "text": "License private boats",
+        "costs": {},
+        "rewards": {
+          "rations_pct": 3
+        }
+      },
+      {
+        "text": "Shelve the plan",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "aluminium_smelter_offer": {
+    "title": "A Foreign Smelter",
+    "description": "A foreign firm offers to build a smelter if we guarantee cheap power for ten years.",
+    "options": [
+      {
+        "text": "Accept the deal",
+        "costs": {
+          "coal_pct": 4
+        },
+        "rewards": {
+          "aluminium": 1800,
+          "gold_pct": 1
+        }
+      },
+      {
+        "text": "Counter with higher fees",
+        "costs": {},
+        "rewards": {
+          "aluminium": 700
+        }
+      },
+      {
+        "text": "Decline",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "diamond_vein_rumour": {
+    "title": "Diamonds in the Hills",
+    "description": "A prospector swears he saw diamonds in a dry riverbed. Nobody else has.",
+    "options": [
+      {
+        "text": "Fund a proper dig",
+        "costs": {
+          "gold_pct": 3
+        },
+        "rewards": {
+          "diamonds": 120
+        }
+      },
+      {
+        "text": "Sell prospecting licences",
+        "costs": {},
+        "rewards": {
+          "gold_pct": 2
+        }
+      },
+      {
+        "text": "Ignore him",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "bullion_reserve_audit": {
+    "title": "Audit of the Vaults",
+    "description": "The treasury auditors want to recount the bullion reserve and report to parliament.",
+    "options": [
+      {
+        "text": "Open the vaults",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "bullion": 60
+        }
+      },
+      {
+        "text": "Delay the audit",
+        "costs": {},
+        "rewards": {
+          "gold_pct": 1
+        }
+      },
+      {
+        "text": "Replace the auditors",
+        "costs": {
+          "gold_pct": 2
+        },
+        "rewards": {
+          "bullion": 120
+        }
+      }
+    ]
+  },
+  "fuel_convoy_ambush": {
+    "title": "Fuel Convoy Ambushed",
+    "description": "Bandits hit a gasoline convoy on the northern road. Drivers are safe, the tanks are not.",
+    "options": [
+      {
+        "text": "Escort every convoy from now on",
+        "costs": {
+          "gold_pct": 2
+        },
+        "rewards": {
+          "gasoline": 1500
+        }
+      },
+      {
+        "text": "Pay the bandits off",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {}
+      },
+      {
+        "text": "Hunt them down",
+        "costs": {
+          "ammunition_pct": 4
+        },
+        "rewards": {
+          "gasoline": 800,
+          "consumer_goods_pct": 3
+        }
+      }
+    ]
+  },
+  "ammunition_recall": {
+    "title": "Faulty Ammunition Lot",
+    "description": "A batch of shells has been misfiring. The factory insists it is fine.",
+    "options": [
+      {
+        "text": "Recall and replace the lot",
+        "costs": {
+          "ammunition_pct": 3,
+          "gold_pct": 1
+        },
+        "rewards": {
+          "ammunition_pct": 8
+        }
+      },
+      {
+        "text": "Quietly retest it",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "ammunition_pct": 3
+        }
+      },
+      {
+        "text": "Ship it anyway",
+        "costs": {},
+        "rewards": {
+          "gold_pct": 1
+        }
+      }
+    ]
+  },
+  "lumber_blight": {
+    "title": "Blight in the Pine Forests",
+    "description": "Beetles are eating through the northern pine stands.",
+    "options": [
+      {
+        "text": "Fell and burn the infected stands",
+        "costs": {
+          "lumber_pct": 5
+        },
+        "rewards": {
+          "lumber_pct": 10
+        }
+      },
+      {
+        "text": "Spray the forest",
+        "costs": {
+          "gold_pct": 2
+        },
+        "rewards": {
+          "lumber_pct": 7
+        }
+      },
+      {
+        "text": "Wait it out",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "street_market_boom": {
+    "title": "The Night Markets",
+    "description": "A string of street markets has become the talk of the capital.",
+    "options": [
+      {
+        "text": "Build proper market halls",
+        "costs": {
+          "gold_pct": 3
+        },
+        "rewards": {
+          "consumer_goods_pct": 10
+        }
+      },
+      {
+        "text": "Tax the stalls",
+        "costs": {},
+        "rewards": {
+          "gold_pct": 2
+        }
+      },
+      {
+        "text": "Leave them alone",
+        "costs": {},
+        "rewards": {
+          "consumer_goods_pct": 2
+        }
+      }
+    ]
+  },
+  "river_toll_dispute": {
+    "title": "The River Toll",
+    "description": "Barge owners are refusing to pay the river toll and are blocking the locks.",
+    "options": [
+      {
+        "text": "Drop the toll",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "iron_pct": 4,
+          "coal_pct": 4
+        }
+      },
+      {
+        "text": "Enforce it with soldiers",
+        "costs": {
+          "ammunition_pct": 2
+        },
+        "rewards": {
+          "gold_pct": 2
+        }
+      },
+      {
+        "text": "Hold talks",
+        "costs": {},
+        "rewards": {
+          "gold_pct": 1
+        }
+      }
+    ]
+  },
+  "royal_wedding": {
+    "title": "A Grand Wedding",
+    "description": "A wedding between two prominent families has the whole nation talking.",
+    "options": [
+      {
+        "text": "Sponsor the celebrations",
+        "costs": {
+          "gold_pct": 3
+        },
+        "rewards": {
+          "consumer_goods_pct": 12
+        }
+      },
+      {
+        "text": "Send a modest gift",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "consumer_goods_pct": 4
+        }
+      },
+      {
+        "text": "Skip it",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "hospital_shortage": {
+    "title": "Empty Wards",
+    "description": "Nurses are leaving for the neighbouring country and wards are closing.",
+    "options": [
+      {
+        "text": "Raise nurses' pay",
+        "costs": {
+          "gold_pct": 3
+        },
+        "rewards": {
+          "rations_pct": 5,
+          "consumer_goods_pct": 5
+        }
+      },
+      {
+        "text": "Recruit from abroad",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "consumer_goods_pct": 3
+        }
+      },
+      {
+        "text": "Do nothing",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "silver_mint_contract": {
+    "title": "A Contract to Mint",
+    "description": "A neighbour wants us to strike a run of commemorative coins in silver.",
+    "options": [
+      {
+        "text": "Take the contract",
+        "costs": {
+          "silver": 400
+        },
+        "rewards": {
+          "gold_pct": 3
+        }
+      },
+      {
+        "text": "Haggle for a larger fee",
+        "costs": {
+          "silver": 400
+        },
+        "rewards": {
+          "gold_pct": 4
+        }
+      },
+      {
+        "text": "Refuse",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "component_shortage": {
+    "title": "A Chip Shortage",
+    "description": "Factories are waiting on components and some are idling.",
+    "options": [
+      {
+        "text": "Import from abroad",
+        "costs": {
+          "gold_pct": 3
+        },
+        "rewards": {
+          "components_pct": 12
+        }
+      },
+      {
+        "text": "Ration what we have",
+        "costs": {},
+        "rewards": {
+          "components_pct": 2
+        }
+      },
+      {
+        "text": "Order domestic substitutes",
+        "costs": {
+          "steel_pct": 3
+        },
+        "rewards": {
+          "components_pct": 7
+        }
+      }
+    ]
+  },
+  "farmers_march": {
+    "title": "Farmers on the Road",
+    "description": "Thousands of farmers march on the capital, angry about the price of fertilizer.",
+    "options": [
+      {
+        "text": "Subsidize fertilizer",
+        "costs": {
+          "gold_pct": 3
+        },
+        "rewards": {
+          "rations_pct": 10
+        }
+      },
+      {
+        "text": "Receive a delegation",
+        "costs": {},
+        "rewards": {
+          "rations_pct": 3
+        }
+      },
+      {
+        "text": "Disperse the march",
+        "costs": {
+          "ammunition_pct": 2
+        },
+        "rewards": {}
+      }
+    ]
+  },
+  "oil_pipeline_leak": {
+    "title": "A Leaking Pipeline",
+    "description": "A pipeline in the delta has been spilling for days. Fishermen are furious.",
+    "options": [
+      {
+        "text": "Shut it down and clean up",
+        "costs": {
+          "oil_pct": 4,
+          "gold_pct": 1
+        },
+        "rewards": {
+          "rations_pct": 4
+        }
+      },
+      {
+        "text": "Patch it quickly",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {}
+      },
+      {
+        "text": "Deny everything",
+        "costs": {},
+        "rewards": {
+          "oil_pct": 2
+        }
+      }
+    ]
+  },
+  "uranium_inspection": {
+    "title": "Inspectors at the Mine",
+    "description": "International inspectors ask to visit the uranium workings.",
+    "options": [
+      {
+        "text": "Open the gates",
+        "costs": {},
+        "rewards": {
+          "gold_pct": 1,
+          "uranium": 20
+        }
+      },
+      {
+        "text": "Admit them under escort",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "uranium": 10
+        }
+      },
+      {
+        "text": "Refuse entry",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "copper_theft": {
+    "title": "Copper Cable Thieves",
+    "description": "Thieves keep stripping copper from the rail lines.",
+    "options": [
+      {
+        "text": "Post guards on the lines",
+        "costs": {
+          "gold_pct": 2
+        },
+        "rewards": {
+          "copper_pct": 6
+        }
+      },
+      {
+        "text": "Offer a bounty",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "copper_pct": 3
+        }
+      },
+      {
+        "text": "Replace the cable with steel",
+        "costs": {
+          "steel_pct": 3
+        },
+        "rewards": {
+          "copper_pct": 5
+        }
+      }
+    ]
+  },
+  "heatwave": {
+    "title": "Heatwave",
+    "description": "Temperatures stay above forty for nine days. Farms and power stations are struggling.",
+    "options": [
+      {
+        "text": "Open emergency water reserves",
+        "costs": {
+          "gold_pct": 2
+        },
+        "rewards": {
+          "rations_pct": 7
+        }
+      },
+      {
+        "text": "Cut industrial power",
+        "costs": {},
+        "rewards": {
+          "coal_pct": 5
+        }
+      },
+      {
+        "text": "Wait for rain",
+        "costs": {
+          "rations_pct": 3
+        },
+        "rewards": {}
+      }
+    ]
+  },
+  "harbour_expansion": {
+    "title": "Berths for Bigger Ships",
+    "description": "Shipping lines ask us to deepen the harbour for the next generation of freighters.",
+    "options": [
+      {
+        "text": "Fund the dredging",
+        "costs": {
+          "gold_pct": 4
+        },
+        "rewards": {
+          "gold_pct": 7
+        }
+      },
+      {
+        "text": "Let the lines pay half",
+        "costs": {
+          "gold_pct": 2
+        },
+        "rewards": {
+          "gold_pct": 3
+        }
+      },
+      {
+        "text": "Refuse",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "nuclear_fear": {
+    "title": "Fear of the Reactors",
+    "description": "A rumour spreads that the reactors are leaking. Engineers say it is false.",
+    "options": [
+      {
+        "text": "Hold a public inspection",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "uranium": 15
+        }
+      },
+      {
+        "text": "Publish the reports",
+        "costs": {},
+        "rewards": {
+          "consumer_goods_pct": 2
+        }
+      },
+      {
+        "text": "Ban the rumour",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {}
+      }
+    ]
+  },
+  "tailor_guild": {
+    "title": "The Tailors' Guild",
+    "description": "The old tailors' guild asks for exclusive rights to supply uniforms.",
+    "options": [
+      {
+        "text": "Grant them",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "consumer_goods_pct": 5
+        }
+      },
+      {
+        "text": "Open a public tender",
+        "costs": {},
+        "rewards": {
+          "consumer_goods_pct": 2,
+          "gold_pct": 1
+        }
+      },
+      {
+        "text": "Refuse",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "gasoline_rationing": {
+    "title": "Queues at the Pumps",
+    "description": "Rumours of a shortage have drivers queuing around the block.",
+    "options": [
+      {
+        "text": "Release the strategic reserve",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "consumer_goods_pct": 6
+        }
+      },
+      {
+        "text": "Announce rationing",
+        "costs": {},
+        "rewards": {
+          "gasoline": 600
+        }
+      },
+      {
+        "text": "Do nothing",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "seed_vault": {
+    "title": "The Seed Vault",
+    "description": "Botanists propose a vault to protect seed stock against future droughts.",
+    "options": [
+      {
+        "text": "Fund it",
+        "costs": {
+          "gold_pct": 3
+        },
+        "rewards": {
+          "rations_pct": 9
+        }
+      },
+      {
+        "text": "Co-fund with a university",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "rations_pct": 4
+        }
+      },
+      {
+        "text": "Decline",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "coal_dust_lung": {
+    "title": "Coal Dust",
+    "description": "Miners' families say too many are sick. The coal owners deny it.",
+    "options": [
+      {
+        "text": "Mandate masks and ventilation",
+        "costs": {
+          "gold_pct": 2
+        },
+        "rewards": {
+          "coal_pct": 6
+        }
+      },
+      {
+        "text": "Open a clinic",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "consumer_goods_pct": 3
+        }
+      },
+      {
+        "text": "Ignore the claims",
+        "costs": {},
+        "rewards": {
+          "coal_pct": 2
+        }
+      }
+    ]
+  },
+  "lead_smelter_fine": {
+    "title": "Fine for the Lead Smelter",
+    "description": "A smelter has been dumping slag into a river. Local councils want it fined.",
+    "options": [
+      {
+        "text": "Fine them heavily",
+        "costs": {},
+        "rewards": {
+          "gold_pct": 2
+        }
+      },
+      {
+        "text": "Order a clean-up",
+        "costs": {
+          "lead_pct": 3
+        },
+        "rewards": {
+          "rations_pct": 3
+        }
+      },
+      {
+        "text": "Waive the fine",
+        "costs": {},
+        "rewards": {
+          "lead_pct": 4
+        }
+      }
+    ]
+  },
+  "arms_fair": {
+    "title": "The Arms Fair",
+    "description": "Defence firms from a dozen countries ask to exhibit in the capital.",
+    "options": [
+      {
+        "text": "Host it",
+        "costs": {
+          "gold_pct": 3
+        },
+        "rewards": {
+          "ammunition_pct": 8,
+          "steel_pct": 3
+        }
+      },
+      {
+        "text": "Send observers",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "ammunition_pct": 3
+        }
+      },
+      {
+        "text": "Decline",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "lighthouse_keepers": {
+    "title": "Lighthouse Closures",
+    "description": "Automated beacons could replace the old lighthouses and save money.",
+    "options": [
+      {
+        "text": "Automate them",
+        "costs": {
+          "components_pct": 2
+        },
+        "rewards": {
+          "gold_pct": 2
+        }
+      },
+      {
+        "text": "Keep the keepers",
+        "costs": {},
+        "rewards": {
+          "consumer_goods_pct": 2
+        }
+      },
+      {
+        "text": "Sell the sites",
+        "costs": {},
+        "rewards": {
+          "gold_pct": 1,
+          "silver": 150
+        }
+      }
+    ]
+  },
+  "flour_mill_fire": {
+    "title": "Fire at the Flour Mill",
+    "description": "The capital's largest flour mill burned overnight.",
+    "options": [
+      {
+        "text": "Rebuild at state cost",
+        "costs": {
+          "gold_pct": 3
+        },
+        "rewards": {
+          "rations_pct": 8
+        }
+      },
+      {
+        "text": "Share the cost with the owners",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "rations_pct": 4
+        }
+      },
+      {
+        "text": "Let the market decide",
+        "costs": {
+          "rations_pct": 3
+        },
+        "rewards": {}
+      }
+    ]
+  },
+  "diplomatic_gala": {
+    "title": "A Gala at the Embassy",
+    "description": "An embassy invites us to a gala where trade is discussed in side rooms.",
+    "options": [
+      {
+        "text": "Attend with a large delegation",
+        "costs": {
+          "gold_pct": 2
+        },
+        "rewards": {
+          "bullion": 40,
+          "gold_pct": 3
+        }
+      },
+      {
+        "text": "Send the minister alone",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "gold_pct": 2
+        }
+      },
+      {
+        "text": "Skip it",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "engineers_academy": {
+    "title": "An Engineers' Academy",
+    "description": "Engineers propose a school that would train a new generation of builders.",
+    "options": [
+      {
+        "text": "Fund the academy",
+        "costs": {
+          "gold_pct": 3
+        },
+        "rewards": {
+          "components_pct": 8,
+          "steel_pct": 4
+        }
+      },
+      {
+        "text": "Partner with industry",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "components_pct": 4
+        }
+      },
+      {
+        "text": "Decline",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "black_market_ammo": {
+    "title": "Black-Market Ammunition",
+    "description": "Customs seize a lorry of unmarked ammunition headed for the border.",
+    "options": [
+      {
+        "text": "Confiscate it",
+        "costs": {},
+        "rewards": {
+          "ammunition_pct": 5
+        }
+      },
+      {
+        "text": "Sell it to a friendly nation",
+        "costs": {},
+        "rewards": {
+          "gold_pct": 2
+        }
+      },
+      {
+        "text": "Trace the buyers",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "ammunition_pct": 3,
+          "silver": 200
+        }
+      }
+    ]
+  },
+  "rail_strike": {
+    "title": "Rail Workers Walk Out",
+    "description": "Drivers stop trains in a pay dispute. Freight is stuck.",
+    "options": [
+      {
+        "text": "Meet their demands",
+        "costs": {
+          "gold_pct": 2
+        },
+        "rewards": {
+          "iron_pct": 5,
+          "coal_pct": 5
+        }
+      },
+      {
+        "text": "Bring in the army to drive",
+        "costs": {
+          "ammunition_pct": 2
+        },
+        "rewards": {
+          "iron_pct": 3
+        }
+      },
+      {
+        "text": "Let it drag on",
+        "costs": {
+          "iron_pct": 3
+        },
+        "rewards": {}
+      }
+    ]
+  },
+  "tax_amnesty": {
+    "title": "A Tax Amnesty",
+    "description": "The finance ministry proposes an amnesty to bring hidden income into the open.",
+    "options": [
+      {
+        "text": "Announce it",
+        "costs": {},
+        "rewards": {
+          "gold_pct": 3
+        }
+      },
+      {
+        "text": "Add an informant reward",
+        "costs": {
+          "gold_pct": 1
+        },
+        "rewards": {
+          "gold_pct": 5
+        }
+      },
+      {
+        "text": "Reject it",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "meteor_shower": {
+    "title": "A Falling Star",
+    "description": "A meteor lands in a farmer's field. Scientists want to dig.",
+    "options": [
+      {
+        "text": "Fund the expedition",
+        "costs": {
+          "gold_pct": 2
+        },
+        "rewards": {
+          "iron_pct": 8,
+          "diamonds": 40
+        }
+      },
+      {
+        "text": "Sell viewing tickets",
+        "costs": {},
+        "rewards": {
+          "gold_pct": 1,
+          "consumer_goods_pct": 3
+        }
+      },
+      {
+        "text": "Fence it off",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "sailors_mutiny_rumour": {
+    "title": "Rumblings in the Fleet",
+    "description": "Sailors complain of poor food and late pay.",
+    "options": [
+      {
+        "text": "Pay back wages and improve rations",
+        "costs": {
+          "gold_pct": 2,
+          "rations_pct": 3
+        },
+        "rewards": {
+          "gasoline": 800
+        }
+      },
+      {
+        "text": "Hold an inspection",
+        "costs": {},
+        "rewards": {
+          "gasoline": 300
+        }
+      },
+      {
+        "text": "Warn them to keep quiet",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  },
+  "quarry_discovery": {
+    "title": "Quarry Beneath the City",
+    "description": "Builders find a rich quarry under a planned district.",
+    "options": [
+      {
+        "text": "Open the quarry",
+        "costs": {
+          "gold_pct": 2
+        },
+        "rewards": {
+          "iron_pct": 5,
+          "lead_pct": 5,
+          "copper_pct": 5
+        }
+      },
+      {
+        "text": "Sell the rights",
+        "costs": {},
+        "rewards": {
+          "gold_pct": 3
+        }
+      },
+      {
+        "text": "Build over it",
+        "costs": {},
+        "rewards": {}
+      }
+    ]
+  }
 }
