@@ -765,6 +765,25 @@ class CountryService:
                     distribution_status = None
                     food_score = None
 
+            population_needs = None
+            if is_owner and population:
+                try:
+                    from app_core.population_needs import build_population_needs
+
+                    population_needs = build_population_needs(
+                        population,
+                        rations_need,
+                        distribution_status,
+                        (growth_rate or {}).get("pop2"),
+                        cg_needed,
+                        (revenue.get("gross") or {}).get("consumer_goods", 0),
+                        (revenue.get("net") or {}).get("rations"),
+                    )
+                except Exception:
+                    logging.getLogger(__name__).exception(
+                        "population_needs failed for %s", cId
+                    )
+
             try:
                 db.execute("""
                     SELECT t.treaty_type, u.username as other_nation, u.id as other_id
@@ -873,6 +892,7 @@ class CountryService:
             "citizen_rations_need": citizen_rations_need,
             "military_rations_upkeep": military_rations_upkeep,
             "distribution_status": distribution_status,
+            "population_needs": population_needs,
             "food_score": food_score,
             "expenses": expenses,
             "revenue_daily": _scale_revenue_dict(revenue, 24),

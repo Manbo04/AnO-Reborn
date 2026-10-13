@@ -102,3 +102,20 @@ def test_starvation_after_grace_is_quarter_percent_per_tick():
     assert not p2.starvation_grace_active(now)
     left = _starving_nation(now)
     assert 10_000_000 * 0.99 < left < 10_000_000 * 0.9985
+class _RecCursor:
+    def __init__(self):
+        self.params = None
+
+    def execute(self, sql, params=None):
+        self.params = params
+
+    def fetchall(self):
+        return []
+
+
+def test_healthcare_lookup_casts_str_ids_to_int():
+    # the nation page passes the id as a str; text[] = integer broke the
+    # growth rate ("Growth rate showing 0") for every viewer
+    cur = _RecCursor()
+    p2.fetch_healthcare_users(cur, ["69697871"])
+    assert cur.params == ([69697871],)
