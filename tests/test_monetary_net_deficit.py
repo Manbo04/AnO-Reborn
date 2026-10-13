@@ -18,6 +18,7 @@ def test_monetary_net_deducts_full_building_upkeep_when_treasury_empty():
         [(1, "steel_mills", 10)],  # user_buildings: 10 steel mills = 600,000 upkeep
         [],  # load_province_cg_capacities
         [],  # rations distribution buildings
+        [],  # active directives
         [],  # military upkeep
     ]
 
@@ -60,6 +61,7 @@ def test_monetary_net_deducts_full_building_upkeep_when_upkeep_exceeds_tax_budge
         [(1, "steel_mills", 10)],  # 10 steel mills = 600,000 upkeep
         [],  # load_province_cg_capacities
         [],  # rations distribution buildings
+        [],  # active directives
         [],  # military upkeep
     ]
 
