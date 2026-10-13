@@ -9,14 +9,14 @@ def _ds(cap, eff=100, stock=1_000_000):
 def test_everything_ok():
     out = build_population_needs(
         1_000_000, 20, _ds(2_000_000), {"homes": 3_000_000, "hospitals": 2,
-                                        "hospital_cover_pct": 100}, 13, 20, 5)
+                                        "hospital_cover_pct": 100})
     assert out["problems"] == 0
     assert all(r["ok"] for r in out["rows"])
 
 
 def test_distribution_gap_reports_missing_and_buildings_with_efficiency():
     out = build_population_needs(
-        100_000_000, 2000, _ds(50_000_000, eff=50), None, None)
+        100_000_000, 2000, _ds(50_000_000, eff=50), None)
     row = next(r for r in out["rows"] if r["key"] == "distribution")
     assert not row["ok"] and row["missing"] == 50_000_000
     # food bank reaches 250k * 50% = 125k -> 400 of them

@@ -39,8 +39,7 @@ def hospitals_needed(population):
 
 
 def build_population_needs(
-    population, rations_need, distribution_status, pop2, cg_needed,
-    cg_production=None, rations_net=None,
+    population, rations_need, distribution_status, pop2,
 ):
     pop = int(population or 0)
     rows = []
@@ -51,8 +50,6 @@ def build_population_needs(
     if ds:
         hours = stock / need if need else 0
         note = f"stock lasts {hours:,.0f} hours" if need else ""
-        if rations_net is not None:
-            note += f"{', ' if note else ''}net {int(rations_net):+,}/hr"
         rows.append(_row(
             "rations", "Rations eaten per hour", "rations",
             need, stock, stock >= need,
@@ -96,13 +93,6 @@ def build_population_needs(
             "hospitals", "Hospitals", "hospitals", need_h, have_h, have_h >= need_h,
             f"Build {need_h - have_h:,} more hospitals to cut deaths to the minimum.",
             f"{pop2.get('hospital_cover_pct', 0):.0f}% of people covered",
-        ))
-
-    if cg_needed is not None and cg_production is not None:
-        rows.append(_row(
-            "consumer_goods", "Consumer goods per hour", "goods",
-            cg_needed, cg_production, cg_production >= cg_needed,
-            "Build more retail (stores/malls) or produce more consumer goods; missing goods cut tax income.",
         ))
 
     return {
