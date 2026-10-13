@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-13T18:41:20Z",
   "delivered_nonce": "5f31a2c5112e4e56bb6d489979e3d9b1",
   "kind": "bug",
-  "last_message_id": "1559589363891839049",
-  "last_player_message_at": "2026-10-13T15:31:20Z",
+  "last_message_id": "1559637189976129638",
+  "last_player_message_at": "2026-10-13T17:31:32Z",
   "messages": [
     {
       "at": "2026-10-13T15:26:20Z",
@@ -26,6 +26,26 @@
       "id": "1559589363891839049",
       "staff": true,
       "text": "The universe is frozen atm"
+    },
+    {
+      "at": "2026-10-13T17:31:32Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1559619614017585285",
+      "staff": true,
+      "text": "Lol he posted that 30 minutes after I posted this."
+    },
+    {
+      "at": "2026-10-13T18:41:22Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1559637189976129638",
+      "staff": false,
+      "text": "<@519965006867988490> i can't see the error you got. trades to lamlor go through when i test them on the live game, so i can't reproduce it yet. one thing is going out in the next deploy: amount and price now accept 5m, 1.5b or 2 000 000 (before only plain digits and commas worked). if you still get an error, send me the exact words of the message (or a screenshot) and what you typed in amount and price"
     }
   ],
   "thread_id": "1559588108658286674",
