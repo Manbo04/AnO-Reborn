@@ -277,6 +277,7 @@ def get_population_growth(cId, db=None):
     alongside those (see database.py) so a new distribution building
     shows up in the projection right away instead of up to 5 minutes late.
     """
+    cId = int(cId)  # page routes pass the id as a str; SQL ANY(%s) needs ints
     from database import reuse_or_new_cursor, query_cache
 
     cache_key = f"pop_growth_{cId}"
