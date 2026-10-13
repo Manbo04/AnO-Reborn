@@ -68,9 +68,16 @@ def deploy_info():
     payload = {
         "git_commit": os.getenv("RAILWAY_GIT_COMMIT_SHA") or os.getenv("GIT_COMMIT") or "unknown",
         "schema_compat": "ok" if schema_compat_succeeded() else "failed",
-        "boot_marker": os.getenv("ANO_BOOT_MARKER", "unknown"),
-        "start_command": "start_production.sh" if os.getenv("ANO_USE_START_SCRIPT", "1") == "1" else "procfile/gunicorn",
     }
+    # Public callers (deploy verification) only get the commit + schema flag.
+    # Internals -- boot config, raw migration error text, task freshness --
+    # need the staff diag secret (X-DIAG-SECRET), same as /_admin/* routes.
+    from app_core.admin.guards import admin_diag_authorized
+
+    if not admin_diag_authorized():
+        return payload, 200
+    payload["boot_marker"] = os.getenv("ANO_BOOT_MARKER", "unknown")
+    payload["start_command"] = "start_production.sh" if os.getenv("ANO_USE_START_SCRIPT", "1") == "1" else "procfile/gunicorn"
     failures = schema_compat_failed_steps()
     if failures: payload["schema_compat_errors"] = failures[:8]
 
@@ -110,4 +117,5 @@ def ready():
         return {"status": "ok", "checks": checks}, 200
     except Exception as e:
         current_app.logger.warning("Readiness check failed: %s", e)
-        return {"status": "not ready", "error": str(e)}, 503
+        # Details stay in the log; the public probe must not echo DB errors.
+        return {"status": "not ready"}, 503

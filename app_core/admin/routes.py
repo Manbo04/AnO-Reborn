@@ -100,7 +100,7 @@ def admin_debug_wealth():
     html += "</table>"
     return html
 
-@admin_bp.route("/admin/migrate_treaties")
+@admin_bp.route("/admin/migrate_treaties", methods=["POST"])
 @login_required
 def admin_migrate_treaties():
     denied = _require_admin_diag_or_session()
@@ -125,14 +125,19 @@ def admin_live_feed():
     except Exception as e:
         return f"Database Error: {e}", 500
 
-@admin_bp.route("/admin/debug/leviathan")
+@admin_bp.route("/admin/debug/leviathan", methods=["GET", "POST"])
 @login_required
 def debug_leviathan():
+    """GET is a read-only report. The wipe needs POST (CSRF-protected) with
+    the wipe secret in the form body -- never in the URL, where it would end
+    up in access logs, browser history and Referer headers."""
     denied = _require_admin_diag_or_session()
     if denied:
         return denied
+    if request.method == "GET" and request.args.get("pass"):
+        return "Wipe secrets are no longer accepted in the URL; POST it as form field 'pass'.", 400
     wipe_secret = (os.getenv("ADMIN_WIPE_SECRET") or "").strip()
-    pass_code = (request.args.get("pass") or "").strip()
+    pass_code = (request.form.get("pass") or "").strip() if request.method == "POST" else ""
     wipe_now = bool(wipe_secret and pass_code and hmac.compare_digest(pass_code, wipe_secret))
     wipe_provinces = bool(
         wipe_secret

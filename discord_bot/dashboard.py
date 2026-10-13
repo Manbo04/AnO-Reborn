@@ -10,7 +10,10 @@ permission bitfield Discord returns for that guild — the same bar
 discord_bot/permissions.py::is_guild_admin() uses inside Discord itself.
 """
 
+import hmac
 import os
+import secrets
+from html import escape
 
 # Discord returns the full union of scopes it's already granted this
 # user for our client_id (the game's own "identify email" login flow
@@ -36,6 +39,39 @@ app.secret_key = os.getenv("SECRET_KEY", "")
 # this, Flask sees request.url as http:// and oauthlib refuses the token
 # exchange ("OAuth 2 MUST utilize https").
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
+# The session cookie carries the Discord OAuth token: keep it off cross-site
+# requests and out of JS. (Secure only when actually served over https.)
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=bool(os.getenv("RAILWAY_PUBLIC_DOMAIN")),
+)
+
+
+def _csrf_token() -> str:
+    token = session.get("csrf_token")
+    if not token:
+        token = secrets.token_urlsafe(32)
+        session["csrf_token"] = token
+    return token
+
+
+app.jinja_env.globals["csrf_token"] = _csrf_token
+
+
+@app.before_request
+def _enforce_csrf():
+    """Every state-changing dashboard request must carry the session's CSRF
+    token (hidden form field, or X-CSRF-Token header)."""
+    if request.method in ("GET", "HEAD", "OPTIONS"):
+        return None
+    sent = request.form.get("csrf_token") or request.headers.get("X-CSRF-Token") or ""
+    expected = session.get("csrf_token") or ""
+    if not expected or not hmac.compare_digest(sent, expected):
+        return "Invalid or missing CSRF token. Reload the page and try again.", 400
+    return None
+
 
 API_BASE_URL = "https://discord.com/api"
 AUTHORIZATION_BASE_URL = API_BASE_URL + "/oauth2/authorize"
@@ -135,17 +171,30 @@ def logout():
 @app.route("/callback")
 def callback():
     if request.values.get("error"):
-        return request.values["error"], 400
-    discord = _make_session(state=session.get("oauth2_state"))
+        # Never echo query input as HTML (reflected XSS): escape + plain text.
+        return (
+            escape(request.values["error"]),
+            400,
+            {"Content-Type": "text/plain; charset=utf-8"},
+        )
+    # The state we issued in /login must come back unchanged, else a forged
+    # callback could log the victim into an attacker's Discord account.
+    expected_state = session.pop("oauth2_state", None)
+    if not expected_state or not hmac.compare_digest(
+        request.values.get("state", ""), expected_state
+    ):
+        return "Login session expired. Please start again.", 400
+    discord = _make_session(state=expected_state)
     try:
         token = discord.fetch_token(
             TOKEN_URL,
             client_secret=_client_secret(),
             authorization_response=request.url,
         )
-    except Exception as exc:
-        return f"Discord login failed: {exc}", 400
+    except Exception:
+        return "Discord login failed. Please try again.", 400
 
+    session.clear()  # fresh session after login (also rotates the CSRF token)
     session["oauth2_token"] = token
     discord = _make_session(token=token)
     me = discord.get(API_BASE_URL + "/users/@me").json()

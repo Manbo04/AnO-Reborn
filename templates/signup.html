@@ -55,7 +55,7 @@
         <h1 class="display scr" data-text="Claim your nation">Claim your nation</h1>
         <p class="hint">Pick a name the world will remember. You can design your flag, capital and currency once you're in.</p>
         {% with messages = get_flashed_messages() %}{% if messages %}<div class="notice bad" role="alert">{% for m in messages %}{{ m }}{% if not loop.last %}<br>{% endif %}{% endfor %}</div>{% endif %}{% endwith %}
-        {% if referral_invite %}<div class="notice gold" role="status">You were invited to Affairs and Order — sign up for a bonus of +5M gold and +15k lumber.</div>{% endif %}
+        {% if referral_invite %}<div class="notice gold" role="status">You were invited to Affairs and Order — verify your email and play for 2 days to unlock a bonus of +5M gold and +15k lumber.</div>{% endif %}
 {% if way != "discord" and way != "google" %}
         <div class="quick">
           <a class="qbtn discord" href="/discord"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.3 4.4A19.6 19.6 0 0 0 15.4 3l-.6 1.3a18 18 0 0 0-5.6 0L8.6 3a19.6 19.6 0 0 0-4.9 1.5C.6 9.1-.3 13.6.1 18a19.8 19.8 0 0 0 6 3l1.3-2.1c-.7-.3-1.4-.6-2-1l.5-.4a14 14 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1L18 21a19.7 19.7 0 0 0 6-3c.5-5.1-.8-9.6-3.7-13.6ZM8 15.3c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Z"/></svg>Discord</a>

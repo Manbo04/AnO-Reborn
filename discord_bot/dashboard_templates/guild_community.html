@@ -4,7 +4,7 @@
 
 <h2>Starboard</h2>
 <div class="card">
-  <form action="/dashboard/{{ guild.id }}/community/starboard" method="POST">
+  <form action="/dashboard/{{ guild.id }}/community/starboard" method="POST"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label class="checkbox">
       <input type="checkbox" name="enabled" {% if starboard_config.enabled %}checked{% endif %} />
       Enabled
@@ -27,7 +27,7 @@
 <h2>Tickets</h2>
 <div class="card">
   <p>Members open tickets in Discord with <code>/ticket open</code>; staff close with <code>/ticket close</code> inside the thread. The configured channel must already be restricted to staff via normal Discord permissions.</p>
-  <form action="/dashboard/{{ guild.id }}/community/tickets" method="POST">
+  <form action="/dashboard/{{ guild.id }}/community/tickets" method="POST"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label class="checkbox">
       <input type="checkbox" name="enabled" {% if ticket_config.enabled %}checked{% endif %} />
       Enabled
@@ -54,7 +54,7 @@
 <h2>Suggestions</h2>
 <div class="card">
   <p>Members post suggestions in Discord with <code>/suggest</code>; staff decide with <code>/suggestion approve|deny|implemented</code>.</p>
-  <form action="/dashboard/{{ guild.id }}/community/suggestions" method="POST">
+  <form action="/dashboard/{{ guild.id }}/community/suggestions" method="POST"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label class="checkbox">
       <input type="checkbox" name="enabled" {% if suggestions_config.enabled %}checked{% endif %} />
       Enabled

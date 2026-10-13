@@ -98,6 +98,12 @@ def login():
                 ), 403
 
             password = password.encode("utf-8")
+            # "Remember me": the form marks itself with remember_present so
+            # older/API posts without the field keep the long-lived session.
+            remember = (
+                request.form.get("remember_present") is None
+                or request.form.get("rememberme") is not None
+            )
 
             with get_request_cursor() as db:
                 has_verification, has_password = _detect_users_schema(db)
@@ -165,6 +171,14 @@ def login():
                         "login.html", recaptcha_site_key=recaptcha_site_key
                     ), 403
 
+                from app_core.auth import lockout
+
+                if lockout.password_locked(user[0]):
+                    flash("Too many failed login attempts. Please try again in 15 minutes.")
+                    return render_template(
+                        "login.html", recaptcha_site_key=recaptcha_site_key
+                    ), 429
+
                 try:
                     pw_field = user[4]
                     if isinstance(pw_field, bytes):
@@ -184,7 +198,10 @@ def login():
                     logger.debug("bcrypt.checkpw failed: %s", exc)
                     password_ok = False
 
+                if not password_ok:
+                    lockout.password_record_failure(user[0])
                 if password_ok:
+                    lockout.password_clear(user[0])
                     # Check if email is verified (only if verification is enabled)
                     # Only enforce email verification if email sending is configured
                     if has_verification:
@@ -239,11 +256,14 @@ def login():
                         session["pending_2fa_user_id"] = user[0]
                         session["pending_2fa_auth_type"] = "password"
                         session["pending_2fa_started_at"] = time.time()
+                        session["pending_2fa_remember"] = remember
                         session.permanent = True
                         return redirect("/login/2fa")
 
                     logger.debug("Handing off to complete_or_verify_login for user_id=%s", user[0])
-                    return complete_or_verify_login(user[0], ip, fingerprint, "password")
+                    resp = complete_or_verify_login(user[0], ip, fingerprint, "password")
+                    session.permanent = remember
+                    return resp
                 else:
                     logger.debug("Password does not match.")
                     flash("Wrong username or password")
@@ -482,7 +502,19 @@ def login_2fa():
         session.pop("pending_2fa_user_id", None)
         session.pop("pending_2fa_auth_type", None)
         session.pop("pending_2fa_started_at", None)
+        session.pop("pending_2fa_remember", None)
         flash("Please log in again.")
+        return redirect("/login")
+
+    from app_core.auth import lockout
+
+    if lockout.twofa_locked(pending_user_id):
+        # Brute-force guard: counted per account (shared store), so replaying
+        # an old pending-session cookie cannot reset it.
+        for k in ("pending_2fa_user_id", "pending_2fa_auth_type",
+                  "pending_2fa_started_at", "pending_2fa_remember"):
+            session.pop(k, None)
+        flash("Too many incorrect codes. Please try again in 15 minutes.")
         return redirect("/login")
 
     if request.method == "POST":
@@ -490,12 +522,22 @@ def login_2fa():
 
         code = (request.form.get("code") or "").strip()
         if verify_login_code(pending_user_id, code):
+            lockout.twofa_clear(pending_user_id)
             auth_type = session.pop("pending_2fa_auth_type", "password")
+            remember = session.pop("pending_2fa_remember", True)
             session.pop("pending_2fa_user_id", None)
             session.pop("pending_2fa_started_at", None)
             ip = client_ip_from_headers(request.headers, request.remote_addr)
             fingerprint = coarse_fingerprint_from_headers(request.headers)
-            return complete_or_verify_login(pending_user_id, ip, fingerprint, auth_type)
+            resp = complete_or_verify_login(pending_user_id, ip, fingerprint, auth_type)
+            session.permanent = bool(remember)
+            return resp
+        if lockout.twofa_record_failure(pending_user_id) >= lockout.TWOFA_MAX_FAILURES:
+            for k in ("pending_2fa_user_id", "pending_2fa_auth_type",
+                      "pending_2fa_started_at", "pending_2fa_remember"):
+                session.pop(k, None)
+            flash("Too many incorrect codes. Please try again in 15 minutes.")
+            return redirect("/login")
         flash("Invalid code. Please try again.")
         return render_template("login_2fa.html"), 400
 

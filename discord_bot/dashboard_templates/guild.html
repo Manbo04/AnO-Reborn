@@ -4,7 +4,7 @@
 
 <h2>Leveling</h2>
 <div class="card">
-  <form action="/dashboard/{{ guild.id }}/levels" method="POST">
+  <form action="/dashboard/{{ guild.id }}/levels" method="POST"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>XP per message
       <input type="number" min="0" name="xp_per_message" value="{{ level_config.xp_per_message }}" />
     </label>
@@ -48,7 +48,7 @@
 
 <h2>Welcome &amp; Auto-Roles</h2>
 <div class="card">
-  <form action="/dashboard/{{ guild.id }}/welcome" method="POST">
+  <form action="/dashboard/{{ guild.id }}/welcome" method="POST"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label class="checkbox">
       <input type="checkbox" name="enabled" {% if welcome_config.enabled %}checked{% endif %} />
       Enabled
@@ -85,7 +85,7 @@
       <td>{{ emoji }}</td>
       <td>{{ role_id }}</td>
       <td>
-        <form action="/dashboard/{{ guild.id }}/reactionrole/{{ message_id }}/{{ emoji | urlencode }}/delete" method="POST">
+        <form action="/dashboard/{{ guild.id }}/reactionrole/{{ message_id }}/{{ emoji | urlencode }}/delete" method="POST"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" class="btn danger">Remove</button>
         </form>
       </td>

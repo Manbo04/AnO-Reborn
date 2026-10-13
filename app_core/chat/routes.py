@@ -18,12 +18,26 @@ _MIN_SECONDS_BETWEEN_MESSAGES = 0.5
 _last_message_at = {}
 
 
+# Sustained-flood caps, counted in the shared auth counter store (Redis when
+# available) so they hold across all gunicorn workers and reconnects.
+_BURST_MAX, _BURST_WINDOW = 6, 10          # 6 messages / 10s
+_SUSTAINED_MAX, _SUSTAINED_WINDOW = 60, 600  # 60 messages / 10 min
+
+
 def _throttled(user_id):
     now = time.monotonic()
     last = _last_message_at.get(user_id, 0)
     if now - last < _MIN_SECONDS_BETWEEN_MESSAGES:
         return True
+    if len(_last_message_at) > 5000:  # keep the per-process dict bounded
+        _last_message_at.clear()
     _last_message_at[user_id] = now
+    from app_core.auth import lockout
+
+    if lockout.incr("chat_burst", user_id, _BURST_WINDOW) > _BURST_MAX:
+        return True
+    if lockout.incr("chat_sustained", user_id, _SUSTAINED_WINDOW) > _SUSTAINED_MAX:
+        return True
     return False
 
 

@@ -217,7 +217,16 @@ def verify_login_code(user_id: int, code: str) -> bool:
             logger.warning("verify_login_code: undecryptable secret for user_id=%s", user_id)
 
         if secret and pyotp.TOTP(secret).verify(code, valid_window=1):
-            return True
+            # A TOTP code is valid for ~90s (valid_window=1): refuse to accept
+            # the same code twice so a shoulder-surfed/phished code can't be
+            # replayed inside its window. Keyed on secret+code so a fresh
+            # enrollment (new secret) is never blocked by an old code.
+            import hashlib
+
+            from app_core.auth import lockout
+
+            digest = hashlib.sha256(f"{secret}:{code}".encode("utf-8")).hexdigest()
+            return lockout.claim_once("totp_used", f"{user_id}:{digest}", 120)
 
         db.execute(
             "SELECT id, code_hash FROM totp_backup_codes "

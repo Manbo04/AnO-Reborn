@@ -154,6 +154,103 @@ def apply_signup_referral_bonus(db, user_id: int) -> dict[str, int] | None:
         return None
 
 
+# milestone_days=0 in referral_milestone_payouts is the once-only marker for
+# the invitee's own signup bonus (the table's UNIQUE key makes it atomic).
+INVITEE_BONUS_MARKER = 0
+# The invitee bonus is only released after the account proved to be real:
+# verified email + this many distinct real active days.
+INVITEE_BONUS_MIN_ACTIVE_DAYS = 2
+# A "real" active day needs a nation that actually built something; a bare
+# page load by an empty throwaway account no longer counts.
+MIN_BUILDINGS_FOR_ACTIVE_DAY = 3
+SHARED_IP_MAX_ACCOUNTS = 15
+
+
+def shares_network_with_referrer(db, referrer_id: int, ip: str | None) -> bool:
+    """True if `ip` was ever used to log into the referrer's account or into
+    any account the referrer already invited (same-household / alt farming)."""
+    if not ip:
+        return False
+    # Behind Railway/Cloudflare many players can resolve to the same hop IP.
+    # An address used by lots of different accounts is a shared proxy/CGNAT,
+    # not a household, so it is no signal at all (never block on it).
+    db.execute(
+        """
+        SELECT COUNT(DISTINCT user_id) FROM login_events
+        WHERE ip = %s AND created_at > NOW() - INTERVAL '30 days'
+        """,
+        (ip,),
+    )
+    crowd = db.fetchone()
+    if crowd and int(crowd[0] or 0) > SHARED_IP_MAX_ACCOUNTS:
+        return False
+    db.execute(
+        """
+        SELECT 1 FROM login_events
+        WHERE ip = %s
+          AND (user_id = %s
+               OR user_id IN (SELECT id FROM users WHERE referred_by_user_id = %s))
+        LIMIT 1
+        """,
+        (ip, referrer_id, referrer_id),
+    )
+    return db.fetchone() is not None
+
+
+def _has_real_activity(db, user_id: int) -> bool:
+    db.execute(
+        "SELECT COALESCE(SUM(quantity), 0) FROM user_buildings WHERE user_id = %s",
+        (user_id,),
+    )
+    row = db.fetchone()
+    return bool(row) and int(row[0] or 0) >= MIN_BUILDINGS_FOR_ACTIVE_DAY
+
+
+def grant_pending_invitee_bonus(db, user_id: int) -> dict[str, int] | None:
+    """Pay the invitee signup bonus once, after the account is verified and
+    has enough real active days. Marker insert + payout share one savepoint,
+    so a failed payout rolls the marker back and is retried on a later ping
+    (never paid twice, never marked paid without being paid)."""
+    db.execute(
+        "SELECT referred_by_user_id FROM users WHERE id = %s", (user_id,)
+    )
+    row = db.fetchone()
+    if not row or not row[0]:
+        return None
+    referrer_id = int(row[0])
+    if not _user_is_verified(db, user_id):
+        return None
+    db.execute(
+        "SELECT COUNT(*) FROM referral_active_days WHERE referred_user_id = %s",
+        (user_id,),
+    )
+    days = db.fetchone()
+    if not days or int(days[0] or 0) < INVITEE_BONUS_MIN_ACTIVE_DAYS:
+        return None
+    db.execute("SAVEPOINT pending_invitee_bonus")
+    try:
+        db.execute(
+            """
+            INSERT INTO referral_milestone_payouts
+              (referrer_user_id, referred_user_id, milestone_days)
+            VALUES (%s, %s, %s)
+            ON CONFLICT DO NOTHING
+            RETURNING id
+            """,
+            (referrer_id, user_id, INVITEE_BONUS_MARKER),
+        )
+        if db.fetchone() is None:
+            db.execute("RELEASE SAVEPOINT pending_invitee_bonus")
+            return None  # already paid (or a concurrent request is paying it)
+        granted = _apply_rewards(db, user_id, INVITEE_SIGNUP_BONUS)
+        db.execute("RELEASE SAVEPOINT pending_invitee_bonus")
+        return granted
+    except Exception:
+        logger.exception("Failed deferred invitee bonus for user_id=%s", user_id)
+        db.execute("ROLLBACK TO SAVEPOINT pending_invitee_bonus")
+        return None
+
+
 def _user_is_verified(db, user_id: int) -> bool:
     db.execute(
         """
@@ -275,7 +372,11 @@ def process_referral_activity(db, user_id: int) -> None:
     """Called from hourly activity ping — track day and pay milestones."""
     try:
         ensure_referral_schema(db)
+        # Only a nation that actually built something counts as "active".
+        if not _has_real_activity(db, user_id):
+            return
         record_active_day(db, user_id)
+        grant_pending_invitee_bonus(db, user_id)
         try_grant_milestones(db, user_id)
     except Exception:
         logger.exception("Referral activity processing failed for user_id=%s", user_id)
@@ -298,7 +399,7 @@ def get_referral_dashboard(db, user_id: int) -> dict[str, Any]:
     invitees = []
     for row in db.fetchall():
         referred_id = int(row[0])
-        paid = _paid_milestones(db, user_id, referred_id)
+        paid = _paid_milestones(db, user_id, referred_id) - {INVITEE_BONUS_MARKER}
         earned = merge_rewards(
             *(MILESTONE_REWARDS.get(d, {}) for d in paid)
         )
