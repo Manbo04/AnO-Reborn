@@ -24,8 +24,8 @@ ACHIEVEMENT_QUERIES = [
     ("eco_treasury_1b",  "SELECT id FROM stats WHERE gold >= 1000000000"),
     ("eco_treasury_100b", "SELECT id FROM stats WHERE gold >= 100000000000"),
     ("eco_treasury_1t",  "SELECT id FROM stats WHERE gold >= 1000000000000"),
-    ("eco_bond_issued",  "SELECT DISTINCT issuer_id FROM bonds WHERE status != 'draft'"),
-    ("eco_bond_funded",  "SELECT DISTINCT issuer_id FROM bonds WHERE status IN ('active', 'completed', 'defaulted')"),
+    ("eco_bond_issued",  "SELECT DISTINCT issuer_id FROM bonds WHERE status != 'cancelled'"),
+    ("eco_bond_funded",  "SELECT DISTINCT issuer_id FROM bonds WHERE status IN ('active', 'repaid', 'defaulted')"),
     ("eco_currency_minted", "SELECT DISTINCT user_id FROM national_currency_conversions WHERE direction = 'mint'"),
 
     # Population — stored per-province; sum across all provinces owned by each user.
@@ -52,7 +52,7 @@ ACHIEVEMENT_QUERIES = [
         UNION
         SELECT defender FROM wars WHERE attacker_morale <= 0 AND defender_morale > 0
     """),
-    ("mil_spy_op",  "SELECT spyer FROM spyinfo GROUP BY spyer"),
+    ("mil_spy_op",  "SELECT spyer FROM spyinfo WHERE NOT intercepted GROUP BY spyer"),
     ("mil_carrier", """
         SELECT um.user_id
         FROM user_military um

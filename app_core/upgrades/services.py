@@ -62,7 +62,9 @@ def build_upgrades_page_data(db, cId):
                 prerequisite_tech_id, "an earlier technology"
             )
 
-    unlocked_ids = get_unlocked_tech_ids(db, cId)
+    # Retired (is_active=FALSE) techs stay owned but are no longer sold, so
+    # they must not inflate the page's "N of M researched" counter.
+    unlocked_ids = get_unlocked_tech_ids(db, cId) & set(tech_id_to_display_name)
 
     return tech_rows, unlocked_ids, tech_costs, tech_prereq_names
 

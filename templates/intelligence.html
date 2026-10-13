@@ -66,6 +66,18 @@
                         <td>{{ data["destroyers"] }} Destroyers</td>
                         <td>{{ data["nukes"] }} Nukes</td>
                     </tr>
+                    <tr>
+                        <td>{{ data.get("sam_batteries") if data.get("sam_batteries") is not none else "?" }} SAM Batteries</td>
+                        <td>{{ data.get("iron_domes") if data.get("iron_domes") is not none else "?" }} Iron Domes</td>
+                        <td>{{ data.get("aircraft_carriers") if data.get("aircraft_carriers") is not none else "?" }} Aircraft Carriers</td>
+                        <td>{{ data.get("counter_intel_agents") if data.get("counter_intel_agents") is not none else "?" }} Counter-Intel Agents</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td>{{ data.get("kamikaze_drones") if data.get("kamikaze_drones") is not none else "?" }} Kamikaze Drones</td>
+                        <td></td>
+                        <td>{{ data.get("cruise_missiles") if data.get("cruise_missiles") is not none else "?" }} Cruise Missiles</td>
+                    </tr>
                 </table>
             </div>
 

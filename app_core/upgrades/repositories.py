@@ -19,6 +19,7 @@ LEGACY_UPGRADE_TO_TECH = {
     "nucleartestingfacility": "nuclear_testing_facility",
     "integratedsteelmaking": "integrated_steelmaking",
     "electricarcfurnace": "electric_arc_furnace",
+    "starwarsproject": "star_wars_project",
 }
 
 TECH_TO_LEGACY_UPGRADE = {v: k for k, v in LEGACY_UPGRADE_TO_TECH.items()}

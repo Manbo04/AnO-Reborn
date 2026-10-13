@@ -366,6 +366,15 @@ UNITS = [
     "icbms",
     "nukes",
 ]
+# Units a "units" spy report also reveals. Kept out of UNITS because UNITS is
+# the combat-domain catalog (tests/test_catalog_consistency.py); these have
+# their own code paths. Each needs a spyinfo column (migration 20261013_2300).
+SPY_EXTRA_UNITS = [
+    "counter_intel_agents",
+    "aircraft_carriers",
+    "kamikaze_drones",
+    "cruise_missiles",
+]
 RESOURCES = [
     "rations",
     "oil",

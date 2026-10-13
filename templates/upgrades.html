@@ -671,7 +671,7 @@
 
                         <h3 class="templatecontentheadercenter">Nuclear Testing Facility</h3>
 
-                        <p class="templatecontentpleft">Nuclear testing facilities gives countries the ability to create nuclear warheads and establish nuclear reactors
+                        <p class="templatecontentpleft">Nuclear testing facilities gives countries the ability to create nuclear warheads
                         </p>
 
                         <ul>Costs {{ tech_costs.get("nucleartestingfacility", 0) | weight_fmt }} components</ul>
@@ -689,6 +689,36 @@
                     </div>
                     <div class="templatedivflex2left">
                         <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename='images/nucleartestingfacility.jpg') }}?v=2" />
+                    </div>
+                </div>
+
+            </div>
+            <div class="menudiv">
+
+                <div class="templatedivflex2 menuflex warflexparentcolors">
+                    <div class="templatedivflex2left">
+
+                        <h3 class="templatecontentheadercenter">Star Wars Project</h3>
+
+                        <p class="templatecontentpleft">Strategic Defense Initiative. Iron Domes detect and shoot down 25% more incoming missiles, drones and nukes. Prohibitively expensive, just like the real one.
+                        </p>
+
+                        {% if tech_prereq_names.get("starwarsproject") %}<p class="templatecontentpleft" style="margin-bottom: 4px;"><strong>Requires:</strong> {{ tech_prereq_names.get("starwarsproject") }}</p>{% endif %}
+                        <p class="templatecontentpleft text-info" style="margin-bottom: 4px;"><strong>Requires:</strong> 2 Universities nationwide</p>
+                        <ul>Costs {{ tech_costs.get("starwarsproject", 0) | weight_fmt }} {{ research_cost_resource }}</ul>
+                        <div class="purchasemilitarydiv">
+                            {% if not upgrades["starwarsproject"] %}
+                            <button type="submit" class="templatedivbutton templatecenteredbutton" formaction="/upgrades_sb/buy/starWarsProject">
+                                        <span class="material-icons-outlined">
+                                            add_circle_outline
+                                        </span>Research</button> {% endif %} {% if upgrades["starwarsproject"] %}
+                            <p class="templatecontentpleft text-success researched-badge"><span class="material-icons-outlined">check_circle</span> Researched</p>
+                            {% endif %}
+
+                        </div>
+                    </div>
+                    <div class="templatedivflex2left">
+                        <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename='images/sam_batteries.jpg') }}?v=2" />
                     </div>
                 </div>
 
