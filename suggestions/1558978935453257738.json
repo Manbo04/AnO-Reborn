@@ -2,8 +2,8 @@
   "author_id": "204961091892019200",
   "created_at": "2026-10-11T23:05:42Z",
   "kind": "suggestion",
-  "last_message_id": "1558984305290510430",
-  "last_player_message_at": "2026-10-11T23:27:02Z",
+  "last_message_id": "1559477085909811312",
+  "last_player_message_at": "2026-10-13T08:05:10Z",
   "messages": [
     {
       "at": "2026-10-11T23:05:42Z",
@@ -57,6 +57,28 @@
       "id": "1558984305290510430",
       "staff": false,
       "text": "Balance here is hard.  Sales to smaller nations should be encouaged.  Make it possible for larger nations to not need farms?"
+    },
+    {
+      "at": "2026-10-13T08:04:54Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1558978935453257738/1559477015818805299/image.png?ex=6acf37a6&is=6acde626&hm=6bd877f9e9db4b82e53c5c647652ee50a26e6b9625230525c001ae77b95c3355&"
+      ],
+      "author": "ieb",
+      "author_id": "204961091892019200",
+      "bot": false,
+      "id": "1559477015877517384",
+      "staff": false,
+      "text": "Case and point to why this might be a good idea"
+    },
+    {
+      "at": "2026-10-13T08:05:10Z",
+      "attachments": [],
+      "author": "ieb",
+      "author_id": "204961091892019200",
+      "bot": false,
+      "id": "1559477085909811312",
+      "staff": false,
+      "text": "Income is soaring"
     }
   ],
   "status": "new",

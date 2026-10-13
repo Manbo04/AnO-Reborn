@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-13T02:20:21Z",
   "delivered_nonce": "61a1cf9b107c40efabf3e4477feb949c",
   "kind": "bug",
-  "last_message_id": "1559390313993211927",
-  "last_player_message_at": "2026-10-12T22:04:08Z",
+  "last_message_id": "1559473658928308286",
+  "last_player_message_at": "2026-10-13T07:51:33Z",
   "messages": [
     {
       "at": "2026-10-12T22:04:08Z",
@@ -28,6 +28,26 @@
       "id": "1559390313993211927",
       "staff": false,
       "text": "<@204961091892019200> hey, can't open the screenshot on my side. on your nation page does the growth rate say +0.00%/hr (+0), or something else like n/a? and how many provinces / total land do you have?"
+    },
+    {
+      "at": "2026-10-13T07:50:19Z",
+      "attachments": [],
+      "author": "ieb",
+      "author_id": "204961091892019200",
+      "bot": false,
+      "id": "1559473346653982773",
+      "staff": false,
+      "text": "Growth rate\n+0.00%/hr (+0)\n\n500/260.77K\natm"
+    },
+    {
+      "at": "2026-10-13T07:51:33Z",
+      "attachments": [],
+      "author": "ieb",
+      "author_id": "204961091892019200",
+      "bot": false,
+      "id": "1559473658928308286",
+      "staff": false,
+      "text": "yoinking my province's individually\n\nTerran Praefects\nStable\nPopulation3.18M\nGrowth+28.39K/h\nHappiness100%\nProductivity50%\nCities in use10 / 75\nLand in use0 / 230\nEst. tax revenue$97.88M/day\n\nWhere to my knowledge all of them are in the green"
     }
   ],
   "thread_id": "1559325829731852419",

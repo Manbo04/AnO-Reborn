@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-13T08:18:58Z",
   "delivered_nonce": "34ca98fe66234498a3641f595881e3f2",
   "kind": "bug",
-  "last_message_id": "1559393215390683250",
+  "last_message_id": "1559480563738349612",
   "last_player_message_at": "2026-10-13T02:31:54Z",
   "messages": [
     {
@@ -126,6 +126,16 @@
       "id": "1559393215390683250",
       "staff": false,
       "text": "At least with this i can avoid being looted by AIs who somehow already have air and naval units despite the fact that there's no way to obtain the necessary materials without being boosted"
+    },
+    {
+      "at": "2026-10-13T08:19:00Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1559480563738349612",
+      "staff": false,
+      "text": "<@1043204044774183032> blockades only block the market right now, the coalition bank isn't covered, so that's how it works at the moment. whether the bank should be blockaded too is a balance call, so post it in #suggestions and it'll go on the next friday ballot. same for war pacing."
     }
   ],
   "thread_id": "1559354563922755695",
