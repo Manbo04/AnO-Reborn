@@ -25,7 +25,6 @@ if os.getenv("ENVIRONMENT") != "PROD" and not os.getenv("RAILWAY_ENVIRONMENT_NAM
 def _complete_referral_signup(db, user_id: int) -> None:
     """Link inviter from session/form and grant invitee signup bonus."""
     from app_core.referrals.service import (
-        apply_signup_referral_bonus,
         link_referrer_on_signup,
         referral_code_from_signup_request,
     )
@@ -47,11 +46,29 @@ def _complete_referral_signup(db, user_id: int) -> None:
     attach_signup_attribution(db, user_id)
     db.execute("SAVEPOINT referral_signup")
     try:
+        from app_core.referrals.service import (
+            resolve_referrer_id,
+            shares_network_with_referrer,
+        )
+        from database import client_ip_from_headers
+
+        candidate = resolve_referrer_id(db, code)
+        if candidate and shares_network_with_referrer(
+            db, candidate, client_ip_from_headers(request.headers, request.remote_addr)
+        ):
+            # Same network as the inviter (or one of their earlier invitees):
+            # treat as self-referral / alt farming. No link, no rewards.
+            logger.warning(
+                "Referral rejected (shared network): user_id=%s referrer=%s",
+                user_id, candidate,
+            )
+            code = None
         referrer_id = link_referrer_on_signup(db, user_id, code)
-        bonus = apply_signup_referral_bonus(db, user_id)
+        # The invitee's bonus is NOT paid here any more: it is released by
+        # grant_pending_invitee_bonus() once the account is verified and has
+        # real active days (see app_core/referrals/service.py).
         logger.info(
-            "Referral signup debug: user_id=%s referrer_id=%s bonus=%r",
-            user_id, referrer_id, bonus,
+            "Referral signup debug: user_id=%s referrer_id=%s", user_id, referrer_id
         )
         db.execute("RELEASE SAVEPOINT referral_signup")
     except Exception:
@@ -196,9 +213,13 @@ TOKEN_URL = API_BASE_URL + "/oauth2/token"
 def verify_recaptcha(response):
     # Allow tests and CI to skip real recaptcha validation via environment.
     # This keeps CI deterministic and avoids external network calls during tests.
+    is_prod = os.getenv("ENVIRONMENT") == "PROD" or bool(
+        os.getenv("RAILWAY_ENVIRONMENT_NAME")
+    )
     try:
-        # Prefer explicit SKIP_RECAPTCHA or CI env flags first
-        if (
+        # Prefer explicit SKIP_RECAPTCHA or CI env flags first. Never honoured
+        # in production: a stray env var must not switch the captcha off.
+        if not is_prod and (
             os.getenv("GITHUB_ACTIONS")
             or os.getenv("CI")
             or os.getenv("SKIP_RECAPTCHA")
@@ -207,7 +228,7 @@ def verify_recaptcha(response):
         # If running under Flask test mode, bypass recaptcha as well
         from flask import current_app
 
-        if getattr(current_app, "testing", False):
+        if not is_prod and getattr(current_app, "testing", False):
             return True
     except Exception:
         # If any import or check fails, fallthrough to normal behavior
@@ -215,6 +236,12 @@ def verify_recaptcha(response):
 
     secret = os.getenv("RECAPTCHA_SECRET_KEY")
     if not secret:
+        # No captcha deployed at all (no site key either): nothing to check.
+        # A site key WITHOUT a secret is a broken config -- fail closed in
+        # production instead of silently accepting every request.
+        if is_prod and os.getenv("RECAPTCHA_SITE_KEY"):
+            logger.error("reCAPTCHA site key set but RECAPTCHA_SECRET_KEY missing")
+            return False
         return True
 
     # If no response token was supplied, treat this as a failed verification
@@ -1198,6 +1225,13 @@ def verify_email():
             from database import client_ip_from_headers, coarse_fingerprint_from_headers
             from login_verification import establish_authenticated_session
 
+            from app_core.auth.totp import has_2fa_enabled
+
+            if has_2fa_enabled(user_id):
+                # The emailed link proves the email, not the second factor:
+                # verify the address but never log in past 2FA.
+                return redirect("/login?message=verified")
+
             establish_authenticated_session(
                 user_id,
                 client_ip_from_headers(request.headers, request.remote_addr),
@@ -1227,12 +1261,26 @@ def resend_verification():
     if not email:
         return error(400, "Please provide your email address.")
 
+    # Per-address cap (shared across workers): nobody can mail-bomb a victim
+    # by re-posting their address. Same neutral message as "no such account".
+    from app_core.auth import lockout
+
+    if lockout.incr("resend_verify", email, 3600) > 5:
+        return render_template(
+            "verification_pending.html",
+            email=email,
+            message=(
+                "If an account exists with this email, "
+                "a verification link has been sent."
+            ),
+        )
+
     try:
         with get_request_cursor() as cur:
             # Check if user exists and is not verified
             cur.execute(
                 """
-                SELECT id, username, is_verified FROM users WHERE email = %s
+                SELECT id, username, is_verified FROM users WHERE LOWER(email) = LOWER(%s)
             """,
                 (email,),
             )

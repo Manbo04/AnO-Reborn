@@ -5,7 +5,7 @@
 
 <h2>Add / Edit a Command</h2>
 <div class="card">
-  <form action="/dashboard/{{ guild.id }}/customcommands/save" method="POST">
+  <form action="/dashboard/{{ guild.id }}/customcommands/save" method="POST"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>Trigger (without the !) — saving an existing trigger updates it
       <input type="text" name="trigger" placeholder="e.g. rules" />
     </label>
@@ -39,7 +39,7 @@
       <td>{{ c.response_type }}</td>
       <td>{{ (c.embed_title or c.response_text or '')[:60] }}</td>
       <td>
-        <form action="/dashboard/{{ guild.id }}/customcommands/{{ c.id }}/delete" method="POST">
+        <form action="/dashboard/{{ guild.id }}/customcommands/{{ c.id }}/delete" method="POST"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" class="btn danger">Remove</button>
         </form>
       </td>

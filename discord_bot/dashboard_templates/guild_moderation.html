@@ -5,7 +5,7 @@
 
 <h2>Auto-mod Filters</h2>
 <div class="card">
-  <form action="/dashboard/{{ guild.id }}/moderation/config" method="POST">
+  <form action="/dashboard/{{ guild.id }}/moderation/config" method="POST"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>Log channel ID (auto-mod actions &amp; case log)
       <input type="text" name="log_channel_id" value="{{ mod_config.log_channel_id or '' }}" placeholder="Right-click a channel → Copy Channel ID" />
     </label>
@@ -65,7 +65,7 @@
     <tr>
       <td>{{ word }}</td>
       <td>
-        <form action="/dashboard/{{ guild.id }}/moderation/badwords/{{ word | urlencode }}/delete" method="POST">
+        <form action="/dashboard/{{ guild.id }}/moderation/badwords/{{ word | urlencode }}/delete" method="POST"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" class="btn danger">Remove</button>
         </form>
       </td>
@@ -75,7 +75,7 @@
   {% else %}
   <p>No bad words configured yet.</p>
   {% endif %}
-  <form action="/dashboard/{{ guild.id }}/moderation/badwords/add" method="POST">
+  <form action="/dashboard/{{ guild.id }}/moderation/badwords/add" method="POST"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>Add word
       <input type="text" name="word" placeholder="e.g. slur or spam phrase" />
     </label>

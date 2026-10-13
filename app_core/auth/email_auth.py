@@ -1,4 +1,5 @@
 import os
+import re
 from flask import Blueprint, request, render_template, session, redirect, flash
 from app_core.auth.passwords import hash_password, password_matches
 from database import get_request_cursor, client_ip_from_headers, coarse_fingerprint_from_headers
@@ -42,15 +43,82 @@ def _complete_email_login(user_id, is_verified, has_verification, email):
         safe_email = urllib.parse.quote(email)
         return redirect(f"/verification_pending?email={safe_email}")
 
+    from app_core.auth.totp import has_2fa_enabled
+
+    if has_2fa_enabled(user_id):
+        # Same second-factor gate as /login and the Discord/Google paths:
+        # a correct password alone must not open a 2FA-protected account.
+        import time
+
+        session.clear()
+        session["pending_2fa_user_id"] = user_id
+        session["pending_2fa_auth_type"] = "email"
+        session["pending_2fa_started_at"] = time.time()
+        session.permanent = True
+        return redirect("/login/2fa")
+
     ip = client_ip_from_headers(request.headers, request.remote_addr)
     fingerprint = coarse_fingerprint_from_headers(request.headers)
     return complete_or_verify_login(user_id, ip, fingerprint, "email")
 
 
+_USERNAME_MIN, _USERNAME_MAX = 3, 30
+_USERNAME_EXTRA_CHARS = set(" _-.'")
+_EMAIL_RE = re.compile(r"^[^@\s<>\"']+@[^@\s<>\"']+\.[^@\s<>\"']+$")
+SIGNUP_MAX_ATTEMPTS_PER_IP_PER_DAY = 10
+
+
+def validate_username(username: str) -> str | None:
+    """Return an error message, or None if the nation name is acceptable.
+    Names are rendered all over the game, so only letters/digits and a few
+    separators are allowed (no markup characters, control chars or blanks)."""
+    if not (_USERNAME_MIN <= len(username) <= _USERNAME_MAX):
+        return f"Nation name must be {_USERNAME_MIN}-{_USERNAME_MAX} characters."
+    if username != username.strip() or "  " in username:
+        return "Nation name cannot start/end with a space or contain double spaces."
+    if not all(ch.isalnum() or ch in _USERNAME_EXTRA_CHARS for ch in username):
+        return "Nation name may only contain letters, numbers, spaces and _ - . '"
+    if not any(ch.isalnum() for ch in username):
+        return "Nation name must contain a letter or number."
+    return None
+
+
+def _signup_ip_rate_limited(db) -> bool:
+    """Per-IP daily cap shared with /signup (signup_attempts table). Loopback
+    is exempt so local/test runs are not throttled. Records this attempt."""
+    from helpers import client_ip_from_request
+
+    ip = client_ip_from_request()
+    if ip and (ip.startswith("127.") or ip in ("::1", "::ffff:127.0.0.1")):
+        return False
+    db.execute("SAVEPOINT signup_rate_check")
+    try:
+        db.execute(
+            "SELECT COUNT(*) FROM signup_attempts "
+            "WHERE ip_address = %s AND attempt_time >= NOW() - INTERVAL '1 day'",
+            (ip or "unknown",),
+        )
+        row = db.fetchone()
+        if row and int(row[0] or 0) >= SIGNUP_MAX_ATTEMPTS_PER_IP_PER_DAY:
+            db.execute("RELEASE SAVEPOINT signup_rate_check")
+            return True
+        db.execute(
+            "INSERT INTO signup_attempts (ip_address, ip, attempt_time, successful) "
+            "VALUES (COALESCE(%s, 'unknown'), COALESCE(%s, 'unknown'), NOW(), FALSE)",
+            (ip, ip),
+        )
+        db.execute("RELEASE SAVEPOINT signup_rate_check")
+    except Exception:
+        # Never block signups because the counter table misbehaved.
+        logger.exception("signup rate-limit check failed")
+        db.execute("ROLLBACK TO SAVEPOINT signup_rate_check")
+    return False
+
+
 @email_auth_bp.route("/register/email", methods=["POST"])
 def register_email():
     username = request.form.get("username", "").strip()
-    email = request.form.get("email", "").strip()
+    email = request.form.get("email", "").strip().lower()
     password = request.form.get("password")
     confirmation = request.form.get("confirmation")
 
@@ -58,13 +126,29 @@ def register_email():
         flash("All fields are required.")
         return redirect("/signup")
 
-    import re
-    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+    if not verify_recaptcha(request.form.get("g-recaptcha-response")):
+        flash("Please complete the captcha check and try again.")
+        return redirect("/signup")
+
+    if not request.form.get("terms_agree"):
+        flash("You must agree to the Terms of Service and Privacy Policy.")
+        return redirect("/signup")
+
+    name_error = validate_username(username)
+    if name_error:
+        flash(name_error)
+        return redirect("/signup")
+
+    if len(email) > 100 or not _EMAIL_RE.match(email):
         flash("Invalid email format.")
         return redirect("/signup")
 
     if password != confirmation:
         flash("Passwords do not match.")
+        return redirect("/signup")
+
+    if len(password) < 8 or len(password.encode("utf-8")) > 72:
+        flash("Password must be 8-72 characters.")
         return redirect("/signup")
 
     hashed_password = hash_password(password)
@@ -79,7 +163,14 @@ def register_email():
     verification_token = None
     try:
         with get_request_cursor() as db:
-            db.execute("SELECT id FROM users WHERE username=%s OR email=%s", (username, email))
+            if _signup_ip_rate_limited(db):
+                flash("Too many signup attempts from this network. Please try again tomorrow.")
+                return redirect("/signup")
+
+            db.execute(
+                "SELECT id FROM users WHERE LOWER(username)=LOWER(%s) OR LOWER(email)=LOWER(%s)",
+                (username, email),
+            )
             if db.fetchone():
                 flash("Username or email already taken.")
                 return redirect("/signup")
@@ -169,7 +260,7 @@ def login_email():
                 select_cols.append("password")
 
             db.execute(
-                f"SELECT {', '.join(select_cols)} FROM users WHERE email=%s",
+                f"SELECT {', '.join(select_cols)} FROM users WHERE LOWER(email)=LOWER(%s)",
                 (email,),
             )
             row = db.fetchone()
@@ -182,6 +273,12 @@ def login_email():
         user_id = row_map["id"]
         is_verified = row_map.get("is_verified")
 
+        from app_core.auth import lockout
+
+        if lockout.password_locked(user_id):
+            flash("Too many failed login attempts. Please try again in 15 minutes.")
+            return redirect("/login")
+
         hash_candidates = []
         if cols["has_hash"] and row_map.get("hash"):
             hash_candidates.append(row_map["hash"])
@@ -190,6 +287,7 @@ def login_email():
 
         for stored_hash in hash_candidates:
             if password_matches(stored_hash, password):
+                lockout.password_clear(user_id)
                 return _complete_email_login(
                     user_id,
                     is_verified,
@@ -197,6 +295,7 @@ def login_email():
                     email,
                 )
 
+        lockout.password_record_failure(user_id)
         flash("Invalid email or password.")
         return redirect("/login")
     except Exception as exc:

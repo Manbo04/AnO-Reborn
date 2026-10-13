@@ -142,6 +142,19 @@ def _issue_reset_code(db, user_id, logger, client_ip):
     user_id is the right target (by email lookup, or by session + a fresh
     password check).
     """
+    # Don't overwrite a still-valid code: anyone could otherwise keep
+    # invalidating the real owner's emailed link by re-submitting their
+    # address. Re-deliver the live code instead (same 24h validity window
+    # reset_password() enforces).
+    db.execute(
+        "SELECT url_code FROM reset_codes "
+        "WHERE user_id = %s AND created_at::bigint > %s",
+        (user_id, str(int(datetime.now().timestamp()) - 86400)),
+    )
+    existing = db.fetchone()
+    if existing and existing[0]:
+        return existing[0]
+
     code = generateResetCode()
     db.execute(
         "INSERT INTO reset_codes (url_code, user_id, created_at) "
@@ -197,6 +210,15 @@ def request_password_reset():
     # accounts were stored with capitals/stray spaces and an exact match
     # silently never found them (Discord bug thread 2026-10-05).
     email = (request.form.get("email") or "").strip()
+
+    # Per-address cap across all IPs/workers: no mail-bombing a victim and no
+    # hammering of the reset-code row. Same neutral reply as a normal request.
+    from app_core.auth import lockout
+
+    if email and lockout.incr("reset_req", email.lower(), 3600) > 5:
+        flash("If an account exists with that email, a reset link has been sent.")
+        return redirect("/forgot_password")
+
     with get_request_cursor() as db:
         db.execute(
             "SELECT id FROM users WHERE LOWER(BTRIM(email)) = LOWER(%s) "

@@ -356,7 +356,7 @@ footer .flinks{display:flex;gap:16px;flex-wrap:wrap}footer a{color:var(--muted);
       {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
       <div class="lf"><input id="lu" name="username" type="text" placeholder=" " autocomplete="username" required><label for="lu">Nation name or email</label></div>
       <div class="lf"><input id="lp" name="password" type="password" placeholder=" " autocomplete="current-password" required><label for="lp">Password</label></div>
-      <div class="lrow"><label><input type="checkbox" name="rememberme" checked> Remember me</label><a href="/forgot_password">Forgot password?</a></div>
+      <div class="lrow"><input type="hidden" name="remember_present" value="1"><label><input type="checkbox" name="rememberme" checked> Remember me</label><a href="/forgot_password">Forgot password?</a></div>
       {% if recaptcha_site_key %}<div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}" data-theme="dark" style="margin-bottom:14px"></div>{% endif %}
       <button class="btn primary" type="submit" style="width:100%">Resume command ▸</button>
       <div class="lmsg" id="lmsg" aria-live="polite"></div>

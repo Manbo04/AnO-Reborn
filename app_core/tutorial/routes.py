@@ -140,6 +140,24 @@ def claim_tutorial_reward():
         if not db.fetchone():
             return jsonify({"ok": False, "error": "Nation not found"}), 404
 
+        # New nations are paid by the server-verified Command Briefing
+        # (tour.py), which derives progress from real game state. This legacy
+        # quiz endpoint trusts the client, so letting new nations use it would
+        # let anyone POST every chapter + graduation for free (and double-dip
+        # with the tour). Only established nations (old quiz) may use it.
+        from app_core.tutorial.tour import is_tour_eligible
+
+        if is_tour_eligible(db, user_id):
+            return (
+                jsonify(
+                    {
+                        "ok": False,
+                        "error": "Rewards for your nation come from the Command Briefing.",
+                    }
+                ),
+                403,
+            )
+
         rewards_to_grant: dict[str, int] = {}
         messages = []
         anything_already_claimed = False

@@ -9,6 +9,7 @@ Required environment variables:
 - EMAIL_FROM_NAME: Display name (default: Affairs and Order)
 """
 
+import html
 import os
 import smtplib
 import ssl
@@ -124,6 +125,12 @@ def send_email(to_email, subject, html_content, text_content=None):
     logger = logging.getLogger(__name__)
     config = get_email_config()
 
+    # Header-injection guard: a CR/LF in the address or subject could append
+    # extra headers (Bcc:) to the SMTP message.
+    if any(ch in str(v) for v in (to_email, subject) for ch in "\r\n"):
+        logger.error("Refusing to send email: newline in recipient/subject")
+        return False
+
     # --- Try SMTP first (Gmail / custom sender) ---
     if config["user"] and config["password"]:
         try:
@@ -196,6 +203,8 @@ def send_verification_email(to_email, username, token):
     """
     config = get_email_config()
     verify_url = f"{config['base_url']}/verify?token={token}"
+    # Nation names are player input and are interpolated into HTML below.
+    username = html.escape(str(username or ""))
 
     subject = "Affairs and Order - Welcome, please verify your email"
 
@@ -328,6 +337,7 @@ def send_password_reset_email(to_email, username, token):
     """
     config = get_email_config()
     reset_url = f"{config['base_url']}/reset_password/{token}"
+    username = html.escape(str(username or ""))
 
     subject = "Reset your Affairs and Order password"
 
