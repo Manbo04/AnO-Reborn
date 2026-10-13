@@ -1,8 +1,8 @@
 {
- "status": "needs_info",
- "reply": "hey, can't open the screenshot on my side. on your nation page does the growth rate say +0.00%/hr (+0), or something else like n/a? and how many provinces / total land do you have?",
- "nonce": "61a1cf9b107c40efabf3e4477feb949c",
- "updated_at": "2026-10-13T02:20:08Z",
+ "status": "fixed",
+ "reply": "<@204961091892019200> thanks, that helped. i ran the page for a 500 province nation on the live game and the tile shows the right number every time, so i can't reproduce your 0 directly. the one way it can show 0 is if its calculation fails halfway and the page quietly falls back to zeros (your province numbers are calculated separately, which fits). that is now fixed to retry on its own, and if it ever fails again it writes the reason to the server log instead of hiding it. live now. refresh and if you still see +0.00%/hr tell me roughly when, so i can find that moment in the log. also if your tile ever shows around -1%/hr that is rations running out, not hospitals: hospital deaths alone are only about -0.01 to -0.1%/hr",
+ "nonce": "6c789114daa544ce82eae4500185e427",
+ "updated_at": "2026-10-13T08:28:56Z",
  "branch": null,
- "summary": "Growth rate shows 0: asked player for exact display + province count"
+ "summary": "growth tile retries + logs instead of silent zero; could not reproduce on 500-province nation"
 }
