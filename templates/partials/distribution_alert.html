@@ -18,6 +18,19 @@
         {{ distribution_status.distribution_cap | commas }} citizens can be fed
         ({{ distribution_status.coverage_percent }}% of {{ population | commas }} population).
     </p>
+    {% if distribution_status.efficiency_percent < 100 %}
+    <p class="distribution-alert-line">
+        <span class="material-icons-outlined">groups</span>
+        Your nation is over its comfort size, so each distribution building only reaches
+        {{ distribution_status.efficiency_percent }}% of its normal amount.
+    </p>
+    {% endif %}
+    {% if distribution_status.starvation_grace %}
+    <p class="distribution-alert-line">
+        <span class="material-icons-outlined">verified</span>
+        Starvation is paused until 19 Oct 18:00 UTC while everyone builds up distribution.
+    </p>
+    {% endif %}
     {% if distribution_status.uncovered_population > 0 %}
     <p class="distribution-alert-line">
         <span class="material-icons-outlined">local_shipping</span>

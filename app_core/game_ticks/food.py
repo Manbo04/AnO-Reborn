@@ -236,12 +236,19 @@ def nation_distribution_status(
     rations_stockpile,
     rations_need,
     building_qty_by_name,
+    efficiency=1.0,
 ):
-    """Build template-friendly distribution summary (no DB)."""
+    """Build template-friendly distribution summary (no DB).
+
+    efficiency: share of the buildings' capacity that actually reaches people
+    (population.overcrowding_efficiency); the tick uses the same number, so
+    the page must too or it shows coverage that does not exist."""
     if not variables.FEATURE_RATIONS_DISTRIBUTION:
         return None
 
-    cap = compute_rations_distribution_cap(building_qty_by_name)
+    from app_core.game_ticks.population2 import starvation_grace_active
+
+    cap = int(compute_rations_distribution_cap(building_qty_by_name) * efficiency)
     pop = int(total_population or 0)
     need = max(int(rations_need or 0), 1)
     stock = int(rations_stockpile or 0)
@@ -258,6 +265,8 @@ def nation_distribution_status(
         "distribution_centers_suggested": dc_suggested,
         "stockpile_bottleneck": stockpile_bottleneck,
         "show_alert": cap < pop and stock > 0,
+        "efficiency_percent": int(round(efficiency * 100)),
+        "starvation_grace": starvation_grace_active(),
     }
 
 
@@ -297,13 +306,36 @@ def fetch_nation_distribution_status(db, user_id, total_population, rations_need
         row_val(r, "name", 0): int(row_val(r, "qty", 1, default=0) or 0)
         for r in db.fetchall()
     }
-    db.execute("SELECT land FROM provinces WHERE userId = %s", (user_id,))
+    db.execute(
+        "SELECT land, population, cityCount, happiness, pollution "
+        "FROM provinces WHERE userId = %s",
+        (user_id,),
+    )
     user_provinces = db.fetchall()
     total_land = sum((int(row_val(r, "land", 0, default=0) or 0) for r in user_provinces)) if user_provinces else 0
     grace_period = (len(user_provinces) <= 1) and (total_land <= 20)
-    
+
+    # Same overcrowding shrink the hourly tick applies (population.distributable_rations)
+    from app_core.game_ticks import population as pop_mod
+
+    efficiency = 1.0
+    if pop_mod.distribution_fix_active() and user_provinces:
+        rows = [
+            {
+                "userid": user_id,
+                "land": row_val(r, "land", 0, default=0),
+                "population": row_val(r, "population", 1, default=0),
+                "citycount": row_val(r, "citycount", 2, default=0),
+                "happiness": row_val(r, "happiness", 3, default=0),
+                "pollution": row_val(r, "pollution", 4, default=0),
+            }
+            for r in user_provinces
+        ]
+        nation = pop_mod.build_nation_contexts(rows)[user_id]
+        efficiency = pop_mod.overcrowding_efficiency(nation["pop"], nation["comfort"])
+
     status = nation_distribution_status(
-        total_population, rations_stockpile, rations_need, building_qty
+        total_population, rations_stockpile, rations_need, building_qty, efficiency
     )
     if status:
         status["grace_period"] = grace_period

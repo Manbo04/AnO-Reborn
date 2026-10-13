@@ -961,3 +961,19 @@ Jinja `Undefined / int` raises TypeError, so every war page 500'd for v2-theme p
 
 **What to watch**: confirm /war/<id> loads on both themes; country.html policy text
 "+N supplies per hour" is static copy only (no crash), left for the upgrades/policies cleanup.
+
+## 2026-10-13 — Starvation grace week + honest distribution display
+
+**Root cause**: the distribution fix (voted 11-1) and Pop 2.0 both went live 2026-10-12 18:00 UTC.
+Past comfort, distribution buildings reach only sqrt(comfort/pop) of their normal amount, so big
+nations dropped below rations ratio 1.0 and starvation (1%/tick x (1-ratio)) killed up to ~20%/day
+(prod: nation 781 ratio 0.565, -15.7M/hr, +1.8M/hr if fed). The nation/province pages still showed
+the raw building capacity, so players saw "enough distribution" while the tick used the shrunk one.
+
+**Fix**: no starvation deaths until 2026-10-19 18:00 UTC (`STARVATION_GRACE_END`), then
+`STARVATION_PER_TICK` 1% -> 0.25%; `nation_distribution_status` now applies the same overcrowding
+efficiency the tick uses and the alert card says so (+ grace notice). Tests added.
+
+**What to watch**: after merge confirm prod projections (get_population_growth) show no starvation
+loss; tax penalty for rations shortage (food_tax_multiplier, max -30%) is unchanged; decide before
+19 Oct whether 0.25% stays.

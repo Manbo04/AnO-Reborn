@@ -169,7 +169,16 @@ def distribute_migration(provinces, dt=DT):
 # ---------------------------------------------------------------------------
 # Nation-level step, shared by the hourly tick and the nation-page projection
 # ---------------------------------------------------------------------------
-STARVATION_PER_TICK = 0.01  # unchanged: up to 1%/tick at 0 rations coverage
+STARVATION_PER_TICK = 0.0025  # up to 0.25%/tick at 0 rations coverage (was 1%)
+# The distribution fix and Pop 2.0 went live together on 2026-10-12 18:00 UTC and
+# cut how many people big nations' distribution buildings reach. Nobody starves
+# for one week while players build up distribution.
+STARVATION_GRACE_END = variables.DISTRIBUTION_FIX_START + datetime.timedelta(days=7)
+
+
+def starvation_grace_active(now=None):
+    now = now or datetime.datetime.now(datetime.timezone.utc)
+    return now < STARVATION_GRACE_END
 
 
 def fetch_province_buildings(cur, province_ids):
@@ -248,7 +257,7 @@ def simulate_nation(
             int(b.get("hospitals", 0) or 0), home_count, food_ratio, healthcare, grace,
         )
         c, w, e = max(0, c + dc), max(0, w + dw), max(0, e + de)
-        if not starve_grace and food_ratio < 1.0:
+        if not starve_grace and not starvation_grace_active(now) and food_ratio < 1.0:
             sd = int((c + w + e) * (1.0 - max(0.0, food_ratio)) * STARVATION_PER_TICK)
             c, w, e = _scale_down(c, w, e, sd)
         state[p["id"]] = [c, w, e, home_count]
