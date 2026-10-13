@@ -1,0 +1,24 @@
+{
+  "author_id": "204961091892019200",
+  "created_at": "2026-10-12T22:04:08Z",
+  "kind": "bug",
+  "last_message_id": "1559325829731852419",
+  "last_player_message_at": "2026-10-12T22:04:08Z",
+  "messages": [
+    {
+      "at": "2026-10-12T22:04:08Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1559325829731852419/1559325829933174804/image.png?ex=6aceaad8&is=6acd5958&hm=85eb1c9d1362d71c9ed206fade815d287a75fbfa154f422f635e3fca108ea8e9&"
+      ],
+      "author": "ieb",
+      "author_id": "204961091892019200",
+      "bot": false,
+      "id": "1559325829731852419",
+      "staff": false,
+      "text": "Over the last few days my growth rate has been showing 0 the majority of the time, with sometimes it giving me the proper overview. The individual province indicators do work properly."
+    }
+  ],
+  "thread_id": "1559325829731852419",
+  "title": "Growth rate showing 0",
+  "url": "https://discord.com/channels/708006319658893385/1559325829731852419"
+}

@@ -2,8 +2,8 @@
   "author_id": "465912833352138768",
   "created_at": "2026-10-12T15:50:26Z",
   "kind": "suggestion",
-  "last_message_id": "1559248252619194429",
-  "last_player_message_at": "2026-10-12T16:55:52Z",
+  "last_message_id": "1559324469036585031",
+  "last_player_message_at": "2026-10-12T21:58:44Z",
   "messages": [
     {
       "at": "2026-10-12T15:50:26Z",
@@ -44,6 +44,76 @@
       "id": "1559248252619194429",
       "staff": false,
       "text": "Well it was for buildings and land not troops I suppose"
+    },
+    {
+      "at": "2026-10-12T18:27:47Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1559271382058016910",
+      "staff": true,
+      "text": "I mean we did try to implement no refund when selling buildings, provinces, cities etc.. but yall shot it down. 🤷‍♂️"
+    },
+    {
+      "at": "2026-10-12T18:28:18Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1559271510676471879",
+      "staff": true,
+      "text": "If that had passed maybe it would have discouraged selling off."
+    },
+    {
+      "at": "2026-10-12T18:50:33Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1559277112827973744",
+      "staff": false,
+      "text": "Sad stuff indeed that the pass failed, though a lot of people who said no have since quit because their exploit got patched anyways"
+    },
+    {
+      "at": "2026-10-12T18:50:47Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1559277171044786212",
+      "staff": false,
+      "text": "But either way standing military shouldn't contribute to war range"
+    },
+    {
+      "at": "2026-10-12T18:51:10Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1559277265609691239",
+      "staff": false,
+      "text": "I will be abusing this until it is patched but I did my responsibility as a good player to report it"
+    },
+    {
+      "at": "2026-10-12T19:01:47Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1559279940036460626",
+      "staff": false,
+      "text": "I feel like that should allow a recount"
+    },
+    {
+      "at": "2026-10-12T21:58:44Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1559324469036585031",
+      "staff": true,
+      "text": "We can if you resuggest it"
     }
   ],
   "status": "new",

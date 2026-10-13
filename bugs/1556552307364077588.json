@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-12T22:43:13Z",
   "delivered_nonce": "b213da445d7341de81ee2fcdeb4cf379",
   "kind": "bug",
-  "last_message_id": "1556581878792978457",
+  "last_message_id": "1559335671288692758",
   "last_player_message_at": "2026-10-05T06:23:44Z",
   "messages": [
     {
@@ -36,6 +36,16 @@
       "id": "1556581878792978457",
       "staff": false,
       "text": "<@218250058368417792> the reset page always shows the same \"if an account exists, a link was sent\" message so it doesn't tell you if it actually found you. two things: did you sign up with discord or with an email? discord accounts have no email on file so the email reset never sends anything, use the \"reset via discord\" button on the same page instead (it dms you the link). if you did sign up with email, check spam and make sure it's the exact email on the account. to change your password while logged in: account page, then the \"reset password\" button next to password"
+    },
+    {
+      "at": "2026-10-12T22:43:15Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1559335671288692758",
+      "staff": false,
+      "text": "<@218250058368417792> <@218250058368417792> found a real cause on our side: the reset form matched your email exactly, but signup ignores capital letters and spaces, so accounts saved with capitals (10 of them) got the 'if an account exists' message and no email was ever sent. it now matches however you type it. it's live, try again with the email on your account. if you signed up with discord use the 'reset via discord' button instead, and if nothing arrives check spam and tell me"
     }
   ],
   "thread_id": "1556552307364077588",

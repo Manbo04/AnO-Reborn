@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-12T22:43:15Z",
   "delivered_nonce": "544e70f497f249278781e6258dcc36c0",
   "kind": "bug",
-  "last_message_id": "1556988651936678049",
+  "last_message_id": "1559335679824105483",
   "last_player_message_at": "2026-10-06T11:17:02Z",
   "messages": [
     {
@@ -18,6 +18,16 @@
       "id": "1556988651936678049",
       "staff": false,
       "text": "what the hill"
+    },
+    {
+      "at": "2026-10-12T22:43:17Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1559335679824105483",
+      "staff": false,
+      "text": "<@1180720719060029500> <@1180720719060029500> found it - when you pressed 'add another resource' the new row collapsed into a tiny box and its labels piled on top of each other, like in your screenshot. rows now stack properly with a minimum width. it's live now, hard refresh the page (old css can be cached) and tell me if it still looks off"
     }
   ],
   "thread_id": "1556988651936678049",

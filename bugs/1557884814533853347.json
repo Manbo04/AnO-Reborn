@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-12T22:43:17Z",
   "delivered_nonce": "1f534808ab38470f8350c08691ba24c1",
   "kind": "bug",
-  "last_message_id": "1558545925750792278",
+  "last_message_id": "1559335686476275764",
   "last_player_message_at": "2026-10-10T15:33:45Z",
   "messages": [
     {
@@ -66,6 +66,16 @@
       "id": "1558545925750792278",
       "staff": false,
       "text": "<@465912833352138768> found it, the upkeep discount was applied in the real hourly charge but the expenses breakdown didn't show it, so it looked like nothing changed. the expenses page now shows the -30% on industrial buildings too. should be live within the hour"
+    },
+    {
+      "at": "2026-10-12T22:43:18Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1559335686476275764",
+      "staff": false,
+      "text": "<@465912833352138768> <@465912833352138768> found why it looked like nothing happened: the policy does cut upkeep of industrial and power buildings by 30% in the hourly tick, but the Expenses tab on your nation page ignored it and kept showing the full cost. it now shows the reduced numbers. live now. i checked it on a real nation, expenses drop when the policy is on (only those buildings get the cut, so the total falls by less than 30%)"
     }
   ],
   "thread_id": "1557884814533853347",

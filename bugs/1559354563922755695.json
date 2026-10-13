@@ -1,0 +1,52 @@
+{
+  "author_id": "1043204044774183032",
+  "created_at": "2026-10-12T23:58:19Z",
+  "kind": "bug",
+  "last_message_id": "1559355841793102029",
+  "last_player_message_at": "2026-10-13T00:03:24Z",
+  "messages": [
+    {
+      "at": "2026-10-12T23:58:19Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1559354563922755695",
+      "staff": false,
+      "text": "I dont know if this is a bug or feature"
+    },
+    {
+      "at": "2026-10-13T00:01:05Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1559355258499633264",
+      "staff": true,
+      "text": "https://klipy.com/gifs/sorry-oops-7"
+    },
+    {
+      "at": "2026-10-13T00:01:35Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1559355385146515488",
+      "staff": true,
+      "text": "It is a feature. You can declare on coalition mates unless you sign an mdp with them."
+    },
+    {
+      "at": "2026-10-13T00:03:24Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1559355841793102029",
+      "staff": false,
+      "text": "Bet"
+    }
+  ],
+  "thread_id": "1559354563922755695",
+  "title": "I declared war on someone in my own coalition",
+  "url": "https://discord.com/channels/708006319658893385/1559354563922755695"
+}
