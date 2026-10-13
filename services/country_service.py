@@ -775,9 +775,6 @@ class CountryService:
                         rations_need,
                         distribution_status,
                         (growth_rate or {}).get("pop2"),
-                        cg_needed,
-                        (revenue.get("gross") or {}).get("consumer_goods", 0),
-                        (revenue.get("net") or {}).get("rations"),
                     )
                 except Exception:
                     logging.getLogger(__name__).exception(
