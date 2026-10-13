@@ -170,7 +170,7 @@ def peace_offers():
             db.execute(
                 "SELECT id, attacker, defender FROM wars WHERE "
                 "(attacker=(%s) OR defender=(%s)) AND peace_offer_id=(%s) "
-                "AND peace_date IS NULL",
+                "AND peace_date IS NULL FOR UPDATE",
                 (cId, cId, offer_id),
             )
             result = db.fetchone()
@@ -219,6 +219,20 @@ def peace_offers():
                     else []
                 )
 
+                # Validate EVERY term before moving anything, so a bad or
+                # unaffordable later term can't leave an earlier one paid out
+                # while the war stays open (half-applied accept).
+                if len(amounts) != len(resources):
+                    return error(400, "Invalid peace offer data")
+                try:
+                    required_amounts = [int(a) for a in amounts]
+                except (ValueError, TypeError):
+                    return error(400, "Invalid requested resource amount")
+                if any(r < 0 for r in required_amounts):
+                    return error(400, "Invalid requested resource amount")
+                if len(set(resources)) != len(resources):
+                    return error(400, "Invalid peace offer data")
+
                 eco = AttackEconomy(cId)
                 try:
                     resource_dict = eco.get_particular_resources(resources)
@@ -231,12 +245,7 @@ def peace_offers():
                 if not isinstance(resource_dict, dict):
                     resource_dict = {}
 
-                # Validate amounts and process transfers
-                for idx, res in enumerate(resources):
-                    try:
-                        required = int(amounts[idx]) if idx < len(amounts) else 0
-                    except (ValueError, IndexError):
-                        return error(400, "Invalid requested resource amount")
+                for res, required in zip(resources, required_amounts):
                     available = resource_dict.get(res, 0)
                     if required > available:
                         return error(
@@ -247,10 +256,17 @@ def peace_offers():
                                 f"{required} > {available}"
                             ),
                         )
-                    from app_core.market import give_resource
 
-                    successful = give_resource(cId, author_id, res, required)
+                # Pay all terms inside this one transaction; any failure
+                # (e.g. the cached balance was stale) rolls everything back.
+                from app_core.market import give_resource
+
+                for res, required in zip(resources, required_amounts):
+                    if required <= 0:
+                        continue
+                    successful = give_resource(cId, author_id, res, required, cursor=db)
                     if successful is not True:
+                        rollback_db_cursor(db)
                         return error(400, successful)
 
                 # commit peace (we pass the DB cursor and real connection)
@@ -266,6 +282,13 @@ def peace_offers():
                     )
                 except Exception:
                     rollback_db_cursor(db)
+                try:
+                    from database import invalidate_user_cache
+
+                    invalidate_user_cache(cId)
+                    invalidate_user_cache(author_id)
+                except Exception:
+                    pass
                 return redirect("/peace_offers")
 
             return error(400, "No decision was made.")
@@ -303,89 +326,165 @@ def _record_peace_news(db, accepter_id, author_id, paid):
     )
 
 
+def _parse_peace_terms(form, valid_resources):
+    """Parse the demanded resources out of a peace form.
+
+    Returns (resources, amounts, error_message). Only positive whole amounts
+    are accepted: a negative demand would make the accepting side *receive*
+    resources from the author (and was one half of a free-resource exploit).
+    """
+    resources = []
+    amounts = []
+    for resource in valid_resources:
+        raw = form.get(resource, None)
+        if raw is None or str(raw).strip() == "":
+            continue
+        try:
+            amo = int(str(raw).strip().replace(",", ""))
+        except (ValueError, TypeError):
+            return None, None, "Invalid offer!"
+        if amo < 0:
+            return None, None, "Peace demands can't be negative."
+        if amo > PEACE_DEMAND_MAX:
+            return None, None, "That demand is unrealistically large."
+        if amo:
+            resources.append(resource)
+            amounts.append(amo)
+    return resources, amounts, None
+
+
+# Share of a bot's gold a single winning Loot-war attack can take (players: 10%).
+BOT_LOOT_FRACTION = 0.02
+
+# Upper bound on a single demanded amount (keeps the numbers sane in the
+# peace_offers page and in int parsing).
+PEACE_DEMAND_MAX = 10**13
+
+
 # Send peace offer
 @wars_bp.route("/send_peace_offer/<int:war_id>/<int:enemy_id>", methods=["POST"])
 @login_required
 def send_peace_offer(war_id, enemy_id):
     cId = session["user_id"]
-    if request.method == "POST":
-        resources = []
-        resources_amount = []
-        validResources = list(Economy.resources)
-        validResources.append("money")
-        try:
-            for resource in validResources:
-                amount = request.form.get(resource, None)
-                if amount:
-                    amo = int(amount)
-                    if amo:
-                        resources.append(resource)
-                        resources_amount.append(amo)
-        except (ValueError, TypeError):
-            return error(400, "Invalid offer!")
-        with get_request_cursor() as db:
-            if not war_id:
-                return error(400, "War id is invalid")
+    validResources = list(Economy.resources)
+    validResources.append("money")
+    resources, resources_amount, term_err = _parse_peace_terms(
+        request.form, validResources
+    )
+    if term_err:
+        return error(400, term_err)
+    with get_request_cursor() as db:
+        if not war_id:
+            return error(400, "War id is invalid")
+        db.execute(
+            "SELECT attacker, defender, peace_offer_id, peace_date "
+            "FROM wars WHERE id=%s FOR UPDATE",
+            (war_id,),
+        )
+        war_row = db.fetchone()
+        if not war_row:
+            return error(404, "War not found")
+        if cId not in (war_row[0], war_row[1]):
+            return error(403, "You are not a participant in this war")
+        if war_row[3]:
+            return error(400, "This war already ended")
+        # The receiver is whoever is on the other side of THIS war; never
+        # trust the enemy id in the URL.
+        enemy_id = war_row[1] if cId == war_row[0] else war_row[0]
+        resources_string = ",".join(resources)
+        amount_string = ",".join(str(a) for a in resources_amount)
+        peace_offer_id = war_row[2]
+        if not peace_offer_id:
             db.execute(
-                "SELECT attacker, defender FROM wars WHERE id=%s",
-                (war_id,),
+                (
+                    "INSERT INTO peace (author,demanded_resources,demanded_amount) "
+                    "VALUES ((%s),(%s),(%s)) RETURNING id"
+                ),
+                (cId, resources_string, amount_string),
             )
-            war_row = db.fetchone()
-            if not war_row:
-                return error(404, "War not found")
-            if cId not in (war_row[0], war_row[1]):
-                return error(403, "You are not a participant in this war")
-            resources_string = ""
-            amount_string = ""
-            if len(resources) and len(resources_amount):
-                for res, amo in zip(resources, resources_amount):
-                    if res not in validResources:
-                        return error(400, "Invalid resource")
-                    resources_string += res + ","
-                    amount_string += str(amo) + ","
-            db.execute("SELECT peace_offer_id FROM wars WHERE id=(%s)", (war_id,))
-            peace_row = db.fetchone()
-            peace_offer_id = peace_row[0] if peace_row else None
-            if not peace_offer_id:
-                db.execute(
-                    (
-                        "INSERT INTO peace (author,demanded_resources,demanded_amount) "
-                        "VALUES ((%s),(%s),(%s))"
-                    ),
-                    (cId, resources_string[:-1], amount_string[:-1]),
-                )
-                db.execute("SELECT CURRVAL('peace_id_seq')")
-                peace_id_row = db.fetchone()
-                if not peace_id_row:
-                    return error(500, "Failed to create peace offer")
-                lastrowid = peace_id_row[0]
-                db.execute(
-                    "UPDATE wars SET peace_offer_id=(%s) " "WHERE id=(%s)",
-                    (lastrowid, war_id),
-                )
-            else:
-                db.execute(
-                    (
-                        "UPDATE peace SET author=(%s),demanded_resources=(%s),"
-                        "demanded_amount=(%s)"
-                    ),
-                    (cId, resources_string[:-1], amount_string[:-1]),
-                )
-            try:
-                from app_core.discord_notify import notify_peace_offer
+            peace_id_row = db.fetchone()
+            if not peace_id_row:
+                return error(500, "Failed to create peace offer")
+            db.execute(
+                "UPDATE wars SET peace_offer_id=(%s) WHERE id=(%s)",
+                (peace_id_row[0], war_id),
+            )
+        else:
+            # Re-offer replaces the terms of THIS war's offer only.
+            db.execute(
+                (
+                    "UPDATE peace SET author=(%s),demanded_resources=(%s),"
+                    "demanded_amount=(%s) WHERE id=(%s)"
+                ),
+                (cId, resources_string, amount_string, peace_offer_id),
+            )
+        db.execute("SELECT id, username FROM users WHERE id IN (%s, %s)", (cId, enemy_id))
+        by_id = {int(row[0]): row[1] for row in db.fetchall()}
+        sender_name = by_id.get(cId, str(cId))
+        terms = ", ".join(
+            f"{a:,} {r.replace('_', ' ')}" for r, a in zip(resources, resources_amount)
+        )
+        # In-game notice for the receiver (before this they only found out via
+        # Discord or by opening /peace_offers by chance).
+        db.execute(
+            "INSERT INTO news (destination_id, message) VALUES (%s, %s)",
+            (
+                enemy_id,
+                f"🕊️ PEACE OFFER: {sender_name} has offered peace"
+                + (f", asking for {terms}" if terms else " with no demands")
+                + ". Review it on the Peace Offers page.",
+            ),
+        )
+        try:
+            from app_core.discord_notify import notify_peace_offer
 
-                db.execute(
-                    "SELECT id, username FROM users WHERE id IN (%s, %s)",
-                    (cId, enemy_id),
-                )
-                by_id = {int(row[0]): row[1] for row in db.fetchall()}
-                notify_peace_offer(
-                    by_id.get(cId, str(cId)),
-                    by_id.get(enemy_id, str(enemy_id)),
-                )
-            except Exception:
-                pass
-        return redirect("/peace_offers")
+            notify_peace_offer(
+                sender_name,
+                by_id.get(enemy_id, str(enemy_id)),
+            )
+        except Exception:
+            pass
+    return redirect("/peace_offers")
+
+
+# Surrender: the exit every war was missing besides peace offers (which the
+# other side can ignore forever) and morale reaching zero.
+@wars_bp.route("/war/<int:war_id>/surrender", methods=["POST"])
+@login_required
+def surrender_war(war_id):
+    cId = session["user_id"]
+    if request.form.get("confirm") != "yes":
+        return error(400, "Please confirm that you want to surrender.")
+    with get_db_connection() as connection:
+        db = connection.cursor()
+        # Row lock: a double-submit (or a peace accept / lethal attack racing
+        # this request) waits here and then sees the war already ended.
+        db.execute(
+            "SELECT attacker, defender, peace_date FROM wars WHERE id=%s FOR UPDATE",
+            (war_id,),
+        )
+        row = db.fetchone()
+        if not row:
+            return error(404, "This war doesn't exist")
+        if cId not in (row[0], row[1]):
+            return error(403, "You are not a participant in this war.")
+        if row[2]:
+            return error(400, "This war already ended")
+        winner_id = row[1] if cId == row[0] else row[0]
+        from attack_scripts.war_orchestrator import conclude_war
+
+        # Same ending as morale reaching zero: the other side wins and takes
+        # the standard war spoils (nothing new is minted).
+        conclude_war(db, war_id, winner_id, cId, surrendered=True)
+    try:
+        from database import invalidate_user_cache
+
+        invalidate_user_cache(cId)
+        invalidate_user_cache(winner_id)
+    except Exception:
+        pass
+    flash("You surrendered. The war is over.")
+    return redirect("/wars")
 
 
 # War details page
@@ -613,6 +712,7 @@ def repeat_attack(war_id):
         session["enemy_id"] = eId
         session["war_domain"] = None
         session["attack_units"] = attack_units.__dict__
+        _stamp_attack_session()
         return _resolve_special_attack(attack_units, eId, target)
 
     domain = entry.get("domain")
@@ -633,6 +733,7 @@ def repeat_attack(war_id):
     session["enemy_id"] = eId
     session["war_domain"] = domain
     session["attack_units"] = attack_units.__dict__
+    _stamp_attack_session()
     return redirect("/warResult")
 
 
@@ -743,6 +844,7 @@ def war_attack(war_id):
             session["enemy_id"] = eId
             session["war_domain"] = None
             session["attack_units"] = attack_units.__dict__
+            _stamp_attack_session()
             return _resolve_special_attack(attack_units, eId, target)
 
         if attack_type not in Military.ATTACK_UNITS:
@@ -775,7 +877,55 @@ def war_attack(war_id):
         session["enemy_id"] = eId
         session["war_domain"] = domain
         session["attack_units"] = attack_units.__dict__
+        _stamp_attack_session()
         return redirect("/warResult")
+
+
+def _stamp_attack_session():
+    """Mark when this attack was prepared. The attack lives in the signed
+    client-side session cookie, so a player can keep an old copy and replay
+    it; the stamp lets _claim_attack_slot() refuse any cookie that was issued
+    before the war's most recent resolved attack."""
+    session["attack_issued_at"] = time.time()
+
+
+def _claim_attack_slot(db, war_id):
+    """Atomically claim the right to resolve ONE attack for `war_id`.
+
+    Succeeds only if no attack in this war has resolved since the attack in
+    the session was prepared (see _stamp_attack_session), so each prepared
+    attack resolves at most once: double-clicks, two tabs and replays of a
+    saved cookie all lose. Postgres serializes concurrent UPDATEs of the war
+    row, so the loser re-checks against the winner's committed timestamp."""
+    try:
+        issued_at = float(session.get("attack_issued_at") or 0)
+    except (TypeError, ValueError):
+        issued_at = 0.0
+    now_ts = time.time()
+    db.execute(
+        """
+        UPDATE wars SET last_attack_resolved_at = %s
+        WHERE id = %s
+          AND peace_date IS NULL
+          AND (last_attack_resolved_at IS NULL OR last_attack_resolved_at < %s)
+        RETURNING id
+        """,
+        (now_ts, war_id, issued_at),
+    )
+    return db.fetchone() is not None
+
+
+def _enemy_in_active_war(db, war_id, user_id):
+    """The opponent of `user_id` in the still-running war `war_id`, or None
+    if the war is over/unknown or `user_id` is not one of its two sides."""
+    db.execute(
+        "SELECT attacker, defender FROM wars WHERE id=%s AND peace_date IS NULL",
+        (war_id,),
+    )
+    row = db.fetchone()
+    if not row or user_id not in (row[0], row[1]):
+        return None
+    return row[1] if user_id == row[0] else row[0]
 
 
 @wars_bp.route("/warchoose/<int:war_id>", methods=["GET", "POST"])
@@ -786,6 +936,14 @@ def warChoose(war_id):
     if request.method == "GET":
         return redirect(f"/war/{war_id}/attack")
     elif request.method == "POST":
+        # The war must be running and the caller one of its two sides; the
+        # enemy is derived from the war, never from whatever the session
+        # last held (otherwise AP of one war could be spent on a fight with
+        # someone else, and special units fired outside any war).
+        with get_request_cursor() as db:
+            enemy_id = _enemy_in_active_war(db, war_id, cId)
+        if enemy_id is None:
+            return error(400, "This war is over or you are not part of it.")
         selected_units = {}
         special_unit = request.form.get("special_unit")
 
@@ -794,6 +952,10 @@ def warChoose(war_id):
             # (two-step confirm + influence cost), never the unit-fight path.
             return redirect(f"/nuclear_strike/{war_id}")
         if special_unit:
+            # Only ballistic missiles go through the unit-fight path. Any other
+            # string used to be accepted and fired as a free strike.
+            if special_unit != "icbms":
+                return error(400, "Invalid special unit selected")
             selected_units[special_unit] = 0
             unit_amount = 1
             session["war_domain"] = None
@@ -816,7 +978,9 @@ def warChoose(war_id):
         return_error = attack_units.attach_units(selected_units, unit_amount)
         if return_error:
             return error(400, return_error)
+        session["enemy_id"] = enemy_id
         session["attack_units"] = attack_units.__dict__
+        _stamp_attack_session()
         return redirect("/waramount")
 
 
@@ -876,6 +1040,13 @@ def warAmount():
             if attack_units.war_id and session.get("war_domain"):
                 from wars.action_points import spend_action_points
                 with get_request_cursor() as db:
+                    # Validate before spending: war still running, we are in
+                    # it, and the session's enemy is that war's opponent.
+                    enemy_now = _enemy_in_active_war(db, attack_units.war_id, cId)
+                    if enemy_now is None or enemy_now != session.get("enemy_id"):
+                        return error(
+                            400, "This war is over or no longer matches your attack."
+                        )
                     ok_ap, ap_err = spend_action_points(
                         db, attack_units.war_id, cId, session["war_domain"], 3
                     )
@@ -924,18 +1095,8 @@ def _resolve_special_attack(attack_units, eId, target):
     # war's most recent attack already been resolved" gate covers
     # both paths a war's combat can be resolved through.
     if attack_units.war_id is not None:
-        now_ts = time.time()
         with get_request_cursor() as db:
-            db.execute(
-                """
-                UPDATE wars SET last_attack_resolved_at = %s
-                WHERE id = %s
-                  AND (last_attack_resolved_at IS NULL OR %s - last_attack_resolved_at >= 1)
-                RETURNING id
-                """,
-                (now_ts, attack_units.war_id, now_ts),
-            )
-            if not db.fetchone():
+            if not _claim_attack_slot(db, attack_units.war_id):
                 session.pop("attack_units", None)
                 session.pop("enemy_id", None)
                 session.pop("war_domain", None)
@@ -1157,17 +1318,7 @@ def warResult():
             # sequential attacks (which need multiple full page
             # round-trips through warChoose/warAmount first) are far
             # enough apart not to collide with this window.
-            now_ts = time.time()
-            db.execute(
-                """
-                UPDATE wars SET last_attack_resolved_at = %s
-                WHERE id = %s
-                  AND (last_attack_resolved_at IS NULL OR %s - last_attack_resolved_at >= 1)
-                RETURNING id
-                """,
-                (now_ts, war_id_for_guard, now_ts),
-            )
-            if not db.fetchone():
+            if not _claim_attack_slot(db, war_id_for_guard):
                 session.pop("attack_units", None)
                 session.pop("enemy_id", None)
                 session.pop("war_domain", None)
@@ -1271,7 +1422,23 @@ def warResult():
                                     available_resource = float(fetched[0])
                                 except Exception:
                                     available_resource = 0
-                            max_loot = int(math.floor(max(0, available_resource * 0.1)))
+                            # Bot nations refill their treasury, so raiding them
+                            # pays far less per hit than raiding a player
+                            # (and wars with them freeze the refill, see
+                            # app_core/bots/service.py).
+                            _loot_cur.execute(
+                                "SELECT auth_type FROM users WHERE id=(%s)",
+                                (defender.user_id,),
+                            )
+                            _auth_row = _loot_cur.fetchone()
+                            from app_core.bots import BOT_AUTH_TYPE
+
+                            loot_frac = (
+                                BOT_LOOT_FRACTION
+                                if _auth_row and _auth_row[0] == BOT_AUTH_TYPE
+                                else 0.1
+                            )
+                            max_loot = int(math.floor(max(0, available_resource * loot_frac)))
                             if max_loot < 0:
                                 max_loot = 0
                             loot = random.randint(0, max_loot)
@@ -1527,7 +1694,7 @@ def declare_war():
             db.execute(
                 """
                 SELECT id FROM nation_treaties 
-                WHERE status = 'active' AND treaty_type = 'non_aggression' 
+                WHERE status = 'active' AND treaty_type IN ('non_aggression', 'alliance') 
                 AND ((sender_id = %s AND recipient_id = %s) OR (sender_id = %s AND recipient_id = %s))
                 """, 
                 (attacker.id, defender.id, defender.id, attacker.id)
@@ -1622,9 +1789,9 @@ def declare_war():
             if new_war_id is not None:
                 db.execute(
                     """
-                    SELECT CASE WHEN sender_id = %s THEN recipient_id ELSE sender_id END
+                    SELECT DISTINCT CASE WHEN sender_id = %s THEN recipient_id ELSE sender_id END
                     FROM nation_treaties
-                    WHERE status = 'active' AND treaty_type = 'mutual_defense'
+                    WHERE status = 'active' AND treaty_type IN ('mutual_defense', 'alliance')
                     AND (sender_id = %s OR recipient_id = %s)
                     """,
                     (defender.id, defender.id, defender.id),
@@ -1673,10 +1840,23 @@ def join_war_as_ally(war_id):
             if ally_id in (original_attacker_id, original_defender_id):
                 return error(400, "You're already a combatant in this war.")
 
+            # Serialize on the same nation-pair lock declare_war uses, then
+            # re-check the war: two quick clicks (or a join racing a peace
+            # accept) must not both pass the "not already at war" check below
+            # and open duplicate war rows against the same aggressor.
+            lo_id = min(ally_id, original_attacker_id)
+            hi_id = max(ally_id, original_attacker_id)
+            db.execute("SELECT pg_advisory_xact_lock(%s, %s)", (lo_id, hi_id))
+            db.execute(
+                "SELECT 1 FROM wars WHERE id=%s AND peace_date IS NULL", (war_id,)
+            )
+            if not db.fetchone():
+                return error(404, "That war doesn't exist or has already ended.")
+
             db.execute(
                 """
                 SELECT id FROM nation_treaties
-                WHERE status = 'active' AND treaty_type = 'mutual_defense'
+                WHERE status = 'active' AND treaty_type IN ('mutual_defense', 'alliance')
                 AND ((sender_id = %s AND recipient_id = %s) OR (sender_id = %s AND recipient_id = %s))
                 """,
                 (ally_id, original_defender_id, original_defender_id, ally_id),
@@ -1688,7 +1868,7 @@ def join_war_as_ally(war_id):
             db.execute(
                 """
                 SELECT id FROM nation_treaties
-                WHERE status = 'active' AND treaty_type = 'non_aggression'
+                WHERE status = 'active' AND treaty_type IN ('non_aggression', 'alliance')
                 AND ((sender_id = %s AND recipient_id = %s) OR (sender_id = %s AND recipient_id = %s))
                 """,
                 (ally_id, original_attacker_id, original_attacker_id, ally_id),
@@ -1751,29 +1931,13 @@ def join_war_as_ally(war_id):
 @wars_bp.route("/defense", methods=["GET", "POST"])
 @login_required
 def defense():
-    cId = session["user_id"]
-    units = Military.get_military(cId)
-    current_defense = Military.get_defense(cId)
-
-    if request.method == "POST":
-        # Save the user's defense selection
-        selected_units = request.form.getlist("defense_units")
-        if len(selected_units) == 3:
-            defense_string = ",".join(selected_units)
-            nation = Military(cId)
-            result = nation.set_defense(defense_string)
-            if result:
-                return error(500, result)
-            # Update current defense after saving
-            current_defense = selected_units
-        else:
-            return error(400, "You must select exactly 3 unit types for defense.")
-
-    return render_template(
-        "defense.html",
-        units=units,
-        current_defense=current_defense,
-    )
+    """Retired page. Every attack declares a Ground/Naval/Air domain and the
+    defender automatically fields that domain's three unit types
+    (attack_scripts.war_orchestrator.resolve_defender_composition), so a saved
+    3-unit "defense" selection changed nothing. The page and its buttons were
+    removed rather than leaving a control that does nothing; old bookmarks
+    land on the Wars page."""
+    return redirect("/wars")
 
 
 @wars_bp.route("/wars", methods=["GET", "POST"])
@@ -1891,9 +2055,9 @@ def wars():
             try:
                 db.execute(
                     """
-                    SELECT w.id, ua.username, ud.username
+                    SELECT DISTINCT w.id, ua.username, ud.username
                     FROM wars w
-                    JOIN nation_treaties nt ON nt.status='active' AND nt.treaty_type='mutual_defense'
+                    JOIN nation_treaties nt ON nt.status='active' AND nt.treaty_type IN ('mutual_defense', 'alliance')
                         AND ((nt.sender_id = w.defender AND nt.recipient_id = %s)
                           OR (nt.recipient_id = w.defender AND nt.sender_id = %s))
                     JOIN users ua ON ua.id = w.attacker

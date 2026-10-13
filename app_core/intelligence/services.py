@@ -14,6 +14,7 @@ from .repositories import (
     get_revealed_values,
     update_revealed_spyinfo,
     has_active_embassy,
+    has_active_war,
     insert_news,
 )
 from app_core.market.repositories import get_user_resource_quantity, decrement_resource
@@ -46,6 +47,11 @@ SPY_OP_LABELS = {
 }
 
 VALID_SPY_TYPES = tuple(SPY_OP_COOLDOWNS)
+
+# Operations that destroy something of the target's. Peacetime spying is
+# recon only; these need an active war with the target (before this, anyone
+# could sabotage or assassinate any nation, at war or not, for free).
+WAR_ONLY_SPY_OPS = ("sabotage", "sabotage_strategic", "assassinate_spies")
 
 # Sabotage/assassination are capped so a single op can't cripple a nation -
 # they're meant to be felt, not devastating.
@@ -442,3 +448,28 @@ def resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=False):
 
     return True, 200, None, spy_entry
 
+
+
+def check_spy_target(db, cId, eId, spy_type):
+    """Route-level gate run before resolve_spy_operation (and before any
+    cooldown is consumed). Returns (ok, status_code, error_message, target_id).
+
+    - eId must be a real nation other than the caller;
+    - sabotage / strategic sabotage / assassination need an active war with
+      the target."""
+    try:
+        target_id = int(eId)
+    except (TypeError, ValueError):
+        return False, 400, "Invalid target nation.", None
+    if target_id < 1:
+        return False, 400, "Invalid target nation.", None
+    if target_id == int(cId):
+        return False, 400, "You can't run spy operations against yourself.", None
+    if get_username(db, target_id) is None:
+        return False, 404, "That nation doesn't exist.", None
+    if spy_type in WAR_ONLY_SPY_OPS and not has_active_war(db, cId, target_id):
+        return False, 403, (
+            f"{SPY_OP_LABELS[spy_type]} is only possible against a nation you "
+            "are at war with."
+        ), None
+    return True, 200, None, target_id

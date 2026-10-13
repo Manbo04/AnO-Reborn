@@ -216,6 +216,13 @@
 
         </form>
 
+        <h2 class="templatecontentheaderleft">Surrender</h2>
+        <p class="templatecontentpleft">Give up and end this war now. Your enemy wins and takes the usual war spoils, exactly as if your morale had broken. This cannot be undone.</p>
+        <form method="post" action="/war/{{war_id}}/surrender" onsubmit="return confirm('Surrender this war? Your enemy will take the war spoils.');">
+            <input type="hidden" name="confirm" value="yes" />
+            <button class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">flag</span>Surrender</button>
+        </form>
+
         {% endif %}
     </div>
 </div>

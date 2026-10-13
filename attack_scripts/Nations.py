@@ -840,12 +840,15 @@ class Military(Nation):
         attacker_chance += attacker_roll + attacker_unit_amount_bonuses + attacker_bonus
         defender_chance += defender_roll + defender_unit_amount_bonuses + defender_bonus
 
-        # # If there are not attackers or defenders
-        if defender_unit_amount_bonuses == 0:
-            defender_chance = 0
-        elif attacker_unit_amount_bonuses == 0:
-            attacker_chance = 0
+        # An empty side can never win. See zero_out_empty_side().
+        from attack_scripts.combat_helpers import zero_out_empty_side
 
+        attacker_chance, defender_chance = zero_out_empty_side(
+            attacker_chance,
+            defender_chance,
+            attacker_unit_amount_bonuses,
+            defender_unit_amount_bonuses,
+        )
 
         # Determine the winner using the extracted helper (keeps logic identical)
         from attack_scripts.combat_helpers import resolve_battle_outcome

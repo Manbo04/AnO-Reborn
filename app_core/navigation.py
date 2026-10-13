@@ -80,7 +80,6 @@ NAV_SECTIONS: list[dict[str, Any]] = [
                             "/war/",
                             "/declare_war",
                             "/find_targets",
-                            "/defense",
                             "/peace_offers",
                             "/intelligence",
                             "/spy",

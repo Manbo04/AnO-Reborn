@@ -6,7 +6,12 @@ from helpers import redirect_back
 from helpers import login_required, is_theme_v2_enabled
 from database import get_request_cursor
 
-from .repositories import activate_treaty, set_treaty_rejected, set_treaty_cancelled
+from .repositories import (
+    activate_treaty,
+    set_treaty_rejected,
+    set_treaty_cancelled,
+    insert_treaty_news,
+)
 from .services import list_treaties, offer_treaty as offer_treaty_service, TREATY_TYPE_LABELS
 from app_core.market.repositories import get_username
 from app_core.world_affairs.services import log_event
@@ -83,7 +88,15 @@ def accept_treaty(treaty_id):
 def reject_treaty(treaty_id):
     user_id = session.get("user_id")
     with get_request_cursor() as db:
-        set_treaty_rejected(db, treaty_id, user_id)
+        row = set_treaty_rejected(db, treaty_id, user_id)
+        if row:
+            treaty_type, sender_id, _recipient_id = row
+            label = TREATY_TYPE_LABELS.get(treaty_type, treaty_type)
+            insert_treaty_news(
+                db,
+                sender_id,
+                f"{get_username(db, user_id) or 'A nation'} declined your {label} offer.",
+            )
     flash("Treaty rejected.", "info")
     return redirect_back(url_for("treaties.view_treaties"))
 
@@ -93,6 +106,18 @@ def reject_treaty(treaty_id):
 def cancel_treaty(treaty_id):
     user_id = session.get("user_id")
     with get_request_cursor() as db:
-        set_treaty_cancelled(db, treaty_id, user_id)
+        row = set_treaty_cancelled(db, treaty_id, user_id)
+        if row:
+            treaty_type, sender_id, recipient_id = row
+            other_id = recipient_id if sender_id == user_id else sender_id
+            label = TREATY_TYPE_LABELS.get(treaty_type, treaty_type)
+            # The other side used to find out only when a war or spy action
+            # suddenly behaved differently.
+            insert_treaty_news(
+                db,
+                other_id,
+                f"{get_username(db, user_id) or 'A nation'} cancelled the {label} "
+                "between your nations.",
+            )
     flash("Treaty cancelled.", "info")
     return redirect_back(url_for("treaties.view_treaties"))

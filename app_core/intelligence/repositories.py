@@ -165,3 +165,14 @@ def update_revealed_spyinfo(db, operation_id, uncovered_objects, revealed_map):
     spyinfo_update = f"UPDATE spyinfo SET {', '.join(set_clauses)} WHERE id=%s"
     set_values.append(operation_id)
     db.execute(spyinfo_update, tuple(set_values))
+
+
+def has_active_war(db, a_id, b_id):
+    """True if the two nations are currently at war with each other."""
+    db.execute(
+        "SELECT 1 FROM wars WHERE peace_date IS NULL AND "
+        "((attacker = %s AND defender = %s) OR (attacker = %s AND defender = %s)) "
+        "LIMIT 1",
+        (a_id, b_id, b_id, a_id),
+    )
+    return db.fetchone() is not None

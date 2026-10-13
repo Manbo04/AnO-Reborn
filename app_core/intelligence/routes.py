@@ -12,6 +12,7 @@ from .services import (
     submit_spy_amount,
     resolve_spy_operation,
     get_spy_op_status,
+    check_spy_target,
 )
 
 bp = Blueprint("intelligence", __name__)
@@ -98,6 +99,10 @@ def spyResult():
         keep_private = request.form.get("keep_private") == "on"
 
         with get_request_cursor() as db:
+            ok, status_code, message, target_id = check_spy_target(db, cId, eId, spy_type)
+            if not ok:
+                return error(status_code, message)
+            eId = target_id
             ok, status_code, message, spy_entry = resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=keep_private)
 
         if not ok:

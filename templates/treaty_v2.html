@@ -6,7 +6,7 @@
 
 <div class="templatediv">
 
-    {{ game_hero('Diplomatic Treaties', badge_icon='handshake', subtitle='Form alliances and pacts with other nations. Treaties offer mutual benefits, such as preventing wars via Non-Aggression Pacts and blocking espionage via Embassies.') }}
+    {{ game_hero('Diplomatic Treaties', badge_icon='handshake', subtitle='Form alliances and pacts with other nations. Treaties offer mutual benefits, such as preventing wars via Non-Aggression Pacts, joining the defensive wars of a partner via Mutual Defense Pacts, and blocking espionage via Embassies. An Alliance counts as both a Non-Aggression and a Mutual Defense Pact.') }}
 
     <div class="templatedivcontent">
 
@@ -18,7 +18,7 @@
                 <option value="non_aggression">Non-Aggression Pact (NAP)</option>
                 <option value="mutual_defense">Mutual Defense Pact (MDP)</option>
                 <option value="embassy">Embassy</option>
-                <option value="alliance">Alliance</option>
+                <option value="alliance">Alliance (NAP + MDP combined)</option>
             </select>
             <button type="submit" class="game-btn game-btn-primary">Send Offer</button>
         </form>

@@ -220,6 +220,28 @@ def compute_morale_delta(
     return computed_morale_delta
 
 
+def zero_out_empty_side(
+    attacker_chance: float,
+    defender_chance: float,
+    attacker_unit_amount_bonuses: float,
+    defender_unit_amount_bonuses: float,
+) -> tuple:
+    """A side with no effective force gets zero chance.
+
+    The attacker check comes FIRST: an attacker with nothing usable (e.g. only
+    units whose upkeep ran out, which contribute no presence bonus) must not
+    win just because the defender also has nothing in that domain. Previously
+    the empty-defender rule ran first, so such an attack counted as a free win
+    (loot, razing, morale damage). With both sides empty the defender holds.
+
+    Returns (attacker_chance, defender_chance)."""
+    if attacker_unit_amount_bonuses == 0:
+        return 0, defender_chance
+    if defender_unit_amount_bonuses == 0:
+        return attacker_chance, 0
+    return attacker_chance, defender_chance
+
+
 def resolve_battle_outcome(
     attacker_chance: float,
     defender_chance: float,
