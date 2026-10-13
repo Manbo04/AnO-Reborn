@@ -41,3 +41,34 @@ def test_tax_drive_pays_back_less_than_its_fee_in_one_week_is_false():
     """Fee is 4h of income, boost yields 5% x 168h = 8.4h: positive but not free."""
     boost_hours = 0.05 * 24 * services.DURATION_DAYS
     assert services.COST_HOURS < boost_hours < 2 * boost_hours
+
+
+class _FakeDb:
+    """Records the params passed to execute; mimics a psycopg2 cursor."""
+
+    def __init__(self, rows=()):
+        self.rows = rows
+        self.params = None
+
+    def execute(self, sql, params=None):
+        self.params = params
+
+    def fetchall(self):
+        return self.rows
+
+
+def test_active_keys_accepts_string_user_id():
+    # The country route passes the nation id as a raw URL string. ANY(text[])
+    # against an integer column raised "integer = text" and zeroed the income
+    # page for every player (found 2026-10-13 via the live get_revenue call).
+    db = _FakeDb(rows=[(69697856, "tax_drive")])
+    keys = services.active_keys(db, "69697856")
+    assert db.params == ([69697856],)
+    assert keys == {"tax_drive"}
+
+
+def test_active_keys_batch_coerces_ids_and_skips_garbage():
+    db = _FakeDb()
+    services.active_keys_batch(db, ["12", 7, None, "x"])
+    assert db.params == ([12, 7],)
+    assert services.active_keys(db, "not-a-number") == set()

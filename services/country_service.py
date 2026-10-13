@@ -596,8 +596,19 @@ class CountryService:
                 try:
                     revenue = get_revenue(cId, db=db)
                 except Exception:
+                    # Never show an all-zero income page silently: that hid the
+                    # directives integer=text bug from players AND from logs.
+                    logging.getLogger(__name__).warning(
+                        "get_revenue on shared cursor failed for %s", cId, exc_info=True
+                    )
                     rollback_db_cursor(db)
-                    revenue = default_revenue_data()
+                    try:
+                        revenue = get_revenue(cId)
+                    except Exception:
+                        logging.getLogger(__name__).error(
+                            "get_revenue failed for %s", cId, exc_info=True
+                        )
+                        revenue = default_revenue_data()
 
                 try:
                     db.execute(
