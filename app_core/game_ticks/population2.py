@@ -186,7 +186,7 @@ def fetch_province_buildings(cur, province_ids):
         WHERE ub.province_id = ANY(%s) AND bd.name = ANY(%s)
         GROUP BY ub.province_id, bd.name
         """,
-        (list(province_ids), names),
+        ([int(p) for p in province_ids], names),
     )
     for pid, name, qty in cur.fetchall():
         out.setdefault(pid, {})[name] = int(qty or 0)
@@ -199,7 +199,7 @@ def fetch_healthcare_users(cur, user_ids):
         return set()
     cur.execute(
         "SELECT user_id, education FROM policies WHERE user_id = ANY(%s)",
-        (list(user_ids),),
+        ([int(u) for u in user_ids],),
     )
     return {
         uid

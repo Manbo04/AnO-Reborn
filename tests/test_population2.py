@@ -78,3 +78,22 @@ def test_week_sim_empty_nation_grows_and_full_nation_does_not_explode():
         s.update(pop_children=c, pop_working=w, pop_elderly=e, population=c + w + e)
     assert s["population"] > 100_000 * 1.5  # settlers fill empty homes
     assert s["population"] < 3_000_000  # but not instantly
+
+
+class _RecCursor:
+    def __init__(self):
+        self.params = None
+
+    def execute(self, sql, params=None):
+        self.params = params
+
+    def fetchall(self):
+        return []
+
+
+def test_healthcare_lookup_casts_str_ids_to_int():
+    # the nation page passes the id as a str; text[] = integer broke the
+    # growth rate ("Growth rate showing 0") for every viewer
+    cur = _RecCursor()
+    p2.fetch_healthcare_users(cur, ["69697871"])
+    assert cur.params == ([69697871],)
