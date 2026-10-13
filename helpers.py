@@ -772,6 +772,37 @@ def get_bulk_influence(user_ids):
     return results
 
 
+_NUMBER_SUFFIXES = {"k": 10**3, "m": 10**6, "b": 10**9, "t": 10**12}
+
+
+def parse_player_int(raw):
+    """Whole number from what a player typed: '10,000', '2 000 000', '5m', '1.5b'.
+
+    Economy numbers run into the billions, so players type shorthand. Anything
+    that doesn't resolve to a whole number ('1.5', '0.4') raises
+    ValueError exactly like int() used to.
+    """
+    import re
+    from decimal import Decimal, InvalidOperation
+
+    if isinstance(raw, int):
+        return raw
+    text = str(raw).strip().lower().replace(",", "").replace("_", "").replace(" ", "")
+    mult = 1
+    if text and text[-1] in _NUMBER_SUFFIXES:
+        mult = _NUMBER_SUFFIXES[text[-1]]
+        text = text[:-1]
+    if not re.fullmatch(r"-?\d+(\.\d+)?", text):
+        raise ValueError(f"not a number: {raw!r}")
+    try:
+        dec = Decimal(text) * mult
+    except InvalidOperation:
+        raise ValueError(f"not a number: {raw!r}")
+    if dec != dec.to_integral_value():
+        raise ValueError(f"not a whole number: {raw!r}")
+    return int(dec)
+
+
 def get_valid_int(field_name, default="0", min_val=1, error_invalid="Invalid value", error_min="Value must be positive"):
     from flask import request
     val_str = request.form.get(field_name, default)
