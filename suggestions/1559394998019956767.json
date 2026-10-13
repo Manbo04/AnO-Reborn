@@ -1,0 +1,53 @@
+{
+  "author_id": "1043204044774183032",
+  "created_at": "2026-10-13T02:38:59Z",
+  "kind": "suggestion",
+  "last_message_id": "1559453120864583681",
+  "last_player_message_at": "2026-10-13T06:29:57Z",
+  "messages": [
+    {
+      "at": "2026-10-13T02:38:59Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1559394998019956767",
+      "staff": false,
+      "text": "I humbly beg that the War Room cards display the Action Points available. So that you dont have to click on every card to see whether you can do anything yet and then forget and click on the same one again because they're IN NO PARTICULAR ORDER which brings me to point number 2...\n\nWar cards should be displayed in order of when they were declared. Oldest on top or newest on top, either would be fine, just so long as there's a reliable way of scrolling to the one you want. Currently it seems like they order according to score of the enemy nation, so they jump around!"
+    },
+    {
+      "at": "2026-10-13T03:02:20Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1559400873933672531",
+      "staff": false,
+      "text": "Also adding to what others have said, a war shouldn't be finished in 2 hours"
+    },
+    {
+      "at": "2026-10-13T03:03:08Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1559401074216017981",
+      "staff": false,
+      "text": "24-48 is much more reasonable pacing to allow time for both parties to act"
+    },
+    {
+      "at": "2026-10-13T06:29:57Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1559453120864583681",
+      "staff": false,
+      "text": "I probably spent a good while trying to figure out where the attack option was, normally it's displayed right on the page not on a separate one"
+    }
+  ],
+  "status": "new",
+  "thread_id": "1559394998019956767",
+  "title": "War display improvements (very necessary)",
+  "url": "https://discord.com/channels/708006319658893385/1559394998019956767"
+}

@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-13T02:20:23Z",
   "delivered_nonce": "99fff623fe94422d883458219de0f8e2",
   "kind": "bug",
-  "last_message_id": "1559351002929561611",
+  "last_message_id": "1559390320406298717",
   "last_player_message_at": "2026-10-12T23:44:10Z",
   "messages": [
     {
@@ -244,6 +244,16 @@
       "id": "1559351002929561611",
       "staff": false,
       "text": "We were told 2 weeks"
+    },
+    {
+      "at": "2026-10-13T02:20:24Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1559390320406298717",
+      "staff": false,
+      "text": "<@429129579039555584> population 2.0 went live yesterday evening, so the old rules are gone. the 2 week grace only covers people emigrating from overcrowded provinces, it doesn't stop starvation. what matters now for food is the distribution capacity of your whole nation (distribution centers, malls etc): rations only reach as many people as your distribution buildings can serve, and anyone not covered starves, up to 1% of your people per hour. at 170m people you need a lot of capacity even if every province shows distribution. deaths also depend on hospitals (each covers 1m people, fewer hospitals = more elderly/child deaths). so build more distribution buildings and hospitals. if you think the new rules are too harsh, post it in #suggestions and it goes on the next ballot. restoring lost people is a staff decision"
     }
   ],
   "thread_id": "1559339334665113691",

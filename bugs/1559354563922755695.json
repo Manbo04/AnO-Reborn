@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-13T02:20:24Z",
   "delivered_nonce": "ac62df7b1383413a8f888b9bd4ba88b2",
   "kind": "bug",
-  "last_message_id": "1559355841793102029",
-  "last_player_message_at": "2026-10-13T00:03:24Z",
+  "last_message_id": "1559393215390683250",
+  "last_player_message_at": "2026-10-13T02:31:54Z",
   "messages": [
     {
       "at": "2026-10-12T23:58:19Z",
@@ -46,6 +46,86 @@
       "id": "1559355841793102029",
       "staff": false,
       "text": "Bet"
+    },
+    {
+      "at": "2026-10-13T02:20:26Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1559390327175905284",
+      "staff": false,
+      "text": "<@1043204044774183032> that's a feature: you can declare war on coalition mates, unless you've signed an mdp with them. nothing to fix"
+    },
+    {
+      "at": "2026-10-13T02:27:00Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1559391983577993339",
+      "staff": false,
+      "text": "Cool. What about the fact that I can withdraw from coalition bank while blockaded? Is that intentional too?\n (Not that it matters since I'm a poor noob & dont have anything useful to withdraw but I'm still curious)"
+    },
+    {
+      "at": "2026-10-13T02:27:42Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1559392157071188039",
+      "staff": false,
+      "text": "??"
+    },
+    {
+      "at": "2026-10-13T02:27:47Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1559392176700653611",
+      "staff": false,
+      "text": "then.... whats the point."
+    },
+    {
+      "at": "2026-10-13T02:28:35Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1559392378501079161",
+      "staff": false,
+      "text": "Proxy warfare would be big in this game"
+    },
+    {
+      "at": "2026-10-13T02:29:33Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1559392623951880205",
+      "staff": false,
+      "text": "Biggest bank wins"
+    },
+    {
+      "at": "2026-10-13T02:29:59Z",
+      "attachments": [],
+      "author": "AndyTheHusky",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1559392732362055721",
+      "staff": false,
+      "text": "Gross"
+    },
+    {
+      "at": "2026-10-13T02:31:54Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1559393215390683250",
+      "staff": false,
+      "text": "At least with this i can avoid being looted by AIs who somehow already have air and naval units despite the fact that there's no way to obtain the necessary materials without being boosted"
     }
   ],
   "thread_id": "1559354563922755695",

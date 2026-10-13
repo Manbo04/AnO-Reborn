@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-13T02:20:21Z",
   "delivered_nonce": "61a1cf9b107c40efabf3e4477feb949c",
   "kind": "bug",
-  "last_message_id": "1559325829731852419",
+  "last_message_id": "1559390313993211927",
   "last_player_message_at": "2026-10-12T22:04:08Z",
   "messages": [
     {
@@ -18,6 +18,16 @@
       "id": "1559325829731852419",
       "staff": false,
       "text": "Over the last few days my growth rate has been showing 0 the majority of the time, with sometimes it giving me the proper overview. The individual province indicators do work properly."
+    },
+    {
+      "at": "2026-10-13T02:20:22Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1559390313993211927",
+      "staff": false,
+      "text": "<@204961091892019200> hey, can't open the screenshot on my side. on your nation page does the growth rate say +0.00%/hr (+0), or something else like n/a? and how many provinces / total land do you have?"
     }
   ],
   "thread_id": "1559325829731852419",
