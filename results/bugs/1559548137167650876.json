@@ -1,0 +1,8 @@
+{
+ "status": "fixed",
+ "reply": "you were right, it was a visual bug. the income page was failing quietly and falling back to zeros since the directives update this morning, while real production and tax kept running every hour. fixed and live now, refresh and the real numbers are back. sorry it took a few hours",
+ "nonce": "f45eeefc8df146b0acb3ce912a2a41ab",
+ "updated_at": "2026-10-13T18:40:54Z",
+ "branch": null,
+ "summary": "discord-visible reply"
+}

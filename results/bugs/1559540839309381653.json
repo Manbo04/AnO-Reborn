@@ -1,0 +1,8 @@
+{
+ "status": "not_a_bug",
+ "reply": "two things. the zero income / zero growth you saw was the income page bug, now fixed, your real numbers are back. the lost population came from the distribution change on oct 12 evening, starvation is off until oct 19 and after that it's 0.25% per hour only for people your distribution can't reach. there is now a panel on your country page, 'what your population still needs', that shows rations and the real distribution coverage, so you can see what to build before oct 19. getting the dead population back isn't something i can do, that's a staff decision, i'm passing it on to dede",
+ "nonce": "4e76f304c2d0469ba0aa90806b1e1925",
+ "updated_at": "2026-10-13T18:40:54Z",
+ "branch": null,
+ "summary": "discord-visible reply"
+}

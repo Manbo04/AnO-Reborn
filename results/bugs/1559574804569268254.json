@@ -1,0 +1,8 @@
+{
+ "status": "fixed",
+ "reply": "not frozen, it was only the income page. a bug in that page showed 0 for everything since the directives update this morning. your real production and tax kept running every hour the whole time, only the numbers on the page were wrong. fixed and live now, refresh and your real income is back. sorry for the scare",
+ "nonce": "50a222accdcf442781dc35886c5a33ab",
+ "updated_at": "2026-10-13T18:40:54Z",
+ "branch": null,
+ "summary": "discord-visible reply"
+}

@@ -1,0 +1,8 @@
+{
+ "status": "needs_info",
+ "reply": "i can't see the error you got. trades to lamlor go through when i test them on the live game, so i can't reproduce it yet. one thing is going out in the next deploy: amount and price now accept 5m, 1.5b or 2 000 000 (before only plain digits and commas worked). if you still get an error, send me the exact words of the message (or a screenshot) and what you typed in amount and price",
+ "nonce": "5f31a2c5112e4e56bb6d489979e3d9b1",
+ "updated_at": "2026-10-13T18:40:54Z",
+ "branch": null,
+ "summary": "discord-visible reply"
+}
