@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-13T18:41:15Z",
   "delivered_nonce": "626bec7d3d4e4272a3c7936fe667ae75",
   "kind": "bug",
-  "last_message_id": "1559573363490299967",
+  "last_message_id": "1559637168870396076",
   "last_player_message_at": "2026-10-13T14:27:45Z",
   "messages": [
     {
@@ -46,6 +46,16 @@
       "id": "1559573363490299967",
       "staff": false,
       "text": "Not sure because of some trades I have but it looks as if some of my resources are declining."
+    },
+    {
+      "at": "2026-10-13T18:41:17Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1559637168870396076",
+      "staff": false,
+      "text": "<@218211365062574081> thanks for the screenshot, it helped. not frozen, it was only the income page. a bug in that page showed 0 for everything since the directives update this morning. your real production and tax kept running every hour the whole time, only the numbers on the page were wrong. fixed and live now, refresh and your real income is back. sorry for the scare"
     }
   ],
   "thread_id": "1559572931141697659",

@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-13T18:41:13Z",
   "delivered_nonce": "f45eeefc8df146b0acb3ce912a2a41ab",
   "kind": "bug",
-  "last_message_id": "1559565653755691091",
+  "last_message_id": "1559637159583944856",
   "last_player_message_at": "2026-10-13T13:57:07Z",
   "messages": [
     {
@@ -46,6 +46,16 @@
       "id": "1559565653755691091",
       "staff": false,
       "text": "I believe it is actually a visual bug. I got my resources as expected on tick but the income page just says zero for everything"
+    },
+    {
+      "at": "2026-10-13T18:41:15Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1559637159583944856",
+      "staff": false,
+      "text": "<@465912833352138768> you were right, it was a visual bug. the income page was failing quietly and falling back to zeros since the directives update this morning, while real production and tax kept running every hour. fixed and live now, refresh and the real numbers are back. sorry it took a few hours"
     }
   ],
   "thread_id": "1559548137167650876",

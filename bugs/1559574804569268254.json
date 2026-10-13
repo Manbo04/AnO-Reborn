@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-13T18:41:17Z",
   "delivered_nonce": "50a222accdcf442781dc35886c5a33ab",
   "kind": "bug",
-  "last_message_id": "1559589393004634212",
+  "last_message_id": "1559637179745964055",
   "last_player_message_at": "2026-10-13T15:31:27Z",
   "messages": [
     {
@@ -40,6 +40,16 @@
       "id": "1559589393004634212",
       "staff": false,
       "text": ""
+    },
+    {
+      "at": "2026-10-13T18:41:20Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1559637179745964055",
+      "staff": false,
+      "text": "<@1180720719060029500> not frozen, it was only the income page. a bug in that page showed 0 for everything since the directives update this morning. your real production and tax kept running every hour the whole time, only the numbers on the page were wrong. fixed and live now, refresh and your real income is back. sorry for the scare"
     }
   ],
   "thread_id": "1559574804569268254",

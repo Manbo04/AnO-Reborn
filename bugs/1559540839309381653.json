@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-13T18:41:11Z",
   "delivered_nonce": "4e76f304c2d0469ba0aa90806b1e1925",
   "kind": "bug",
-  "last_message_id": "1559565167249985558",
+  "last_message_id": "1559637150125924466",
   "last_player_message_at": "2026-10-13T13:55:11Z",
   "messages": [
     {
@@ -126,6 +126,16 @@
       "id": "1559565167249985558",
       "staff": true,
       "text": "It didn't warn me about anything, its ok that is rough, but I want to know if I have to work on that and I want my dead population back"
+    },
+    {
+      "at": "2026-10-13T18:41:13Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1559637150125924466",
+      "staff": false,
+      "text": "<@1166065212537970722> two things. the zero income / zero growth you saw was the income page bug, now fixed, your real numbers are back. the lost population came from the distribution change on oct 12 evening, starvation is off until oct 19 and after that it's 0.25% per hour only for people your distribution can't reach. there is now a panel on your country page, 'what your population still needs', that shows rations and the real distribution coverage, so you can see what to build before oct 19. getting the dead population back isn't something i can do, that's a staff decision, i'm passing it on to dede"
     }
   ],
   "thread_id": "1559540839309381653",

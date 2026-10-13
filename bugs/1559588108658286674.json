@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-13T18:41:20Z",
   "delivered_nonce": "5f31a2c5112e4e56bb6d489979e3d9b1",
   "kind": "bug",
-  "last_message_id": "1559637189976129638",
-  "last_player_message_at": "2026-10-13T17:31:32Z",
+  "last_message_id": "1559652029733798024",
+  "last_player_message_at": "2026-10-13T19:40:20Z",
   "messages": [
     {
       "at": "2026-10-13T15:26:20Z",
@@ -46,6 +46,59 @@
       "id": "1559637189976129638",
       "staff": false,
       "text": "<@519965006867988490> i can't see the error you got. trades to lamlor go through when i test them on the live game, so i can't reproduce it yet. one thing is going out in the next deploy: amount and price now accept 5m, 1.5b or 2 000 000 (before only plain digits and commas worked). if you still get an error, send me the exact words of the message (or a screenshot) and what you typed in amount and price"
+    },
+    {
+      "at": "2026-10-13T18:45:25Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1559638208298356930",
+      "staff": true,
+      "text": "or picture"
+    },
+    {
+      "at": "2026-10-13T19:37:39Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1559588108658286674/1559651352471277710/image0.jpg?ex=6acfda03&is=6ace8883&hm=b758f5e256f41db6f809ab8aa0cfc72270860e576f1ca33716f5e397a699e14f&",
+        "https://cdn.discordapp.com/attachments/1559588108658286674/1559651352877989941/Screenshot_20261013_133711_Chrome.jpg?ex=6acfda03&is=6ace8883&hm=a5b1956ca3836c4fd33738011f4e8042846b947fbd4a57373049a4405a74a73f&"
+      ],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1559651353385504808",
+      "staff": true,
+      "text": ""
+    },
+    {
+      "at": "2026-10-13T19:37:43Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1559651371840569505",
+      "staff": true,
+      "text": "Just now"
+    },
+    {
+      "at": "2026-10-13T19:38:34Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1559651584940707851",
+      "staff": true,
+      "text": "Also be nice if there was a 1 trade option instead of having me put 1 in max trades."
+    },
+    {
+      "at": "2026-10-13T19:40:20Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1559652029733798024",
+      "staff": true,
+      "text": "oki"
     }
   ],
   "thread_id": "1559588108658286674",
