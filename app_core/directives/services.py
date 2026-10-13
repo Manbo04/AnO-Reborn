@@ -49,7 +49,15 @@ def _col(row, index, name):
 def active_keys_batch(db, user_ids):
     """{user_id: set(keys)} for directives that have not expired."""
     out = {}
-    ids = list(user_ids or [])
+    # Callers may hold the nation id as a string (the country route passes the
+    # raw URL segment); ANY(text[]) against an integer column raises
+    # "operator does not exist: integer = text" and zeroed the income page.
+    ids = []
+    for uid in user_ids or []:
+        try:
+            ids.append(int(uid))
+        except (TypeError, ValueError):
+            continue
     if not ids:
         return out
     db.execute(
@@ -63,6 +71,10 @@ def active_keys_batch(db, user_ids):
 
 
 def active_keys(db, user_id):
+    try:
+        user_id = int(user_id)
+    except (TypeError, ValueError):
+        return set()
     return active_keys_batch(db, [user_id]).get(user_id, set())
 
 
