@@ -1,0 +1,42 @@
+{% if population_needs and population_needs.rows %}
+<div class="pop-needs game-glass game-panel" role="status">
+    <p class="pop-needs-head">
+        <span class="material-icons-outlined">{{ 'warning' if population_needs.problems else 'verified' }}</span>
+        <strong>
+            {% if population_needs.problems %}What your population still needs ({{ population_needs.problems }} to fix){% else %}Your population has everything it needs{% endif %}
+        </strong>
+    </p>
+    {% if population_needs.starvation_grace %}
+    <p class="pop-needs-note">Nobody starves until 19 Oct 18:00 UTC. Use the time to close the gaps below.</p>
+    {% endif %}
+    <ul class="pop-needs-list">
+        {% for r in population_needs.rows %}
+        <li class="pop-needs-row {{ 'pop-needs-ok' if r.ok else 'pop-needs-bad' }}">
+            <div class="pop-needs-top">
+                <span class="material-icons-outlined">{{ 'check_circle' if r.ok else 'error' }}</span>
+                <span class="pop-needs-label">{{ r.label }}</span>
+                <span class="pop-needs-nums">{{ r.have | commas }} / {{ r.need | commas }}</span>
+            </div>
+            {% if not r.ok and r.missing %}
+            <div class="pop-needs-missing">Missing {{ r.missing | commas }} {{ r.unit }}</div>
+            {% endif %}
+            {% if r.advice %}<div class="pop-needs-advice">{{ r.advice }}</div>{% endif %}
+            {% if r.note %}<div class="pop-needs-meta">{{ r.note }}</div>{% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+<style>
+.pop-needs { margin: 12px 0; padding: 12px 14px; }
+.pop-needs-head { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; }
+.pop-needs-note, .pop-needs-meta { font-size: 12px; color: var(--text-muted); }
+.pop-needs-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+.pop-needs-row { padding: 8px 10px; border-radius: 8px; border-left: 3px solid #3fa66b; background: rgba(255,255,255,.03); }
+.pop-needs-bad { border-left-color: #e5534b; }
+.pop-needs-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pop-needs-label { flex: 1 1 140px; font-weight: 600; }
+.pop-needs-nums { font-variant-numeric: tabular-nums; word-break: break-all; }
+.pop-needs-missing { color: #e5534b; font-weight: 600; margin-top: 4px; }
+.pop-needs-advice { margin-top: 2px; font-size: 13px; }
+</style>
+{% endif %}
