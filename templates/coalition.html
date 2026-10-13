@@ -127,7 +127,7 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                         </tr>
                         <tr>
                             {% if leaders|length == 0 %}
-                                <td>Leader:</td><td>None</td>
+                                <td>Leader:</td><td>Vacant</td>
                             {% elif leaders|length == 1 %}
                                 <td>Leader:</td><td><a href="/country/id={{ leaders[0][0] }}">{{ leaders[0][1] }}</a></td>
                             {% else %}

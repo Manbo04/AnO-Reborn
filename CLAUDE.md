@@ -30,6 +30,24 @@ filling the screen.
 
 ---
 
+## 🚪 Door test (definition of done)
+
+A feature is not done until a real player can walk through the whole door. Before
+calling anything done, check all six and state the result in the PR description:
+
+1. **Reachable on mobile**: nav link/button/route exists and works at 390px, not only desktop.
+2. **Obtainable, usable, reversible**: every state has an entry AND an exit
+   (buy/sell, start/cancel, join/leave, build/destroy).
+3. **Both sides wired**: route <-> template/form/JS <-> DB column/migration <-> tick/engine <-> wiki/docs text.
+4. **Abuse pass**: double-submit, negative/huge numbers, races, self-targeting, alt accounts,
+   free resources, missing cost/cooldown/cap; ledger, validation and auth on every mutating route.
+5. **Empty/error states** render sanely (0 items, no money, missing image).
+6. **Real browser click-through** as the test account (new and old player). A DOM/grep check is not enough.
+
+If any item is unverified, say so in the PR; do not say "shipped/done".
+
+---
+
 ## ⛔ NEVER `railway up` against prod-validator
 
 `prod-validator` is the **production Postgres database** (despite the name), and
