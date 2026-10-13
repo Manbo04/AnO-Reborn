@@ -1,0 +1,52 @@
+{
+  "author_id": "218211365062574081",
+  "created_at": "2026-10-13T14:26:02Z",
+  "kind": "bug",
+  "last_message_id": "1559573363490299967",
+  "last_player_message_at": "2026-10-13T14:27:45Z",
+  "messages": [
+    {
+      "at": "2026-10-13T14:26:02Z",
+      "attachments": [],
+      "author": "hillbilly/South Appalachia/2660",
+      "author_id": "218211365062574081",
+      "bot": false,
+      "id": "1559572931141697659",
+      "staff": false,
+      "text": "article Gross Raw (Hourly)\n\nImage Monetary gross\n0\nCoalition tax\n-0\nImage Rations\n0\nImage Oil\n0  Projected: 0\nImage Coal\n0  Projected: 0\nImage Uranium\n0  Projected: 0\nImage Iron\n0  Projected: 0\nImage Lead\n0  Projected: 0\nImage Bauxite\n0  Projected: 0\nImage Copper\n0  Projected: 0\nImage Lumber\n0  Projected: 0\nImage Silver\n0  Projected: 0\nImage Diamonds\n0  Projected: 0\nImage Bullion\n0  Projected: 0\n\narticle Gross Processed (Hourly)\n\nImage Components\n0  Projected: 0\nImage Steel\n0  Projected: 0\nImage Consumer goods\n0  Projected: 0\nImage Aluminum\n0  Projected: 0\nImage Gasoline\n0  Projected: 0\nImage Ammunition\n0  Projected: 0\narticle Net Raw (Hourly)\n\nImage Monetary net\n0\nBuilding upkeep\n0\nCoalition tax\n0\nImage Rations\n0\nImage Oil\n0\nImage Coal\n0 kg\nImage Uranium\n0 kg\nImage Iron\n0 kg\nImage Lead\n0 kg\nImage Bauxite\n0 kg\nImage Copper\n0 kg\nImage Lumber\n0 kg\nImage Silver\n0 kg\nImage Diamond"
+    },
+    {
+      "at": "2026-10-13T14:26:42Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559573099308122164",
+      "staff": true,
+      "text": "Same for me after the hour tick"
+    },
+    {
+      "at": "2026-10-13T14:26:57Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559573161102807081",
+      "staff": true,
+      "text": "Nothing changed"
+    },
+    {
+      "at": "2026-10-13T14:27:45Z",
+      "attachments": [],
+      "author": "hillbilly/South Appalachia/2660",
+      "author_id": "218211365062574081",
+      "bot": false,
+      "id": "1559573363490299967",
+      "staff": false,
+      "text": "Not sure because of some trades I have but it looks as if some of my resources are declining."
+    }
+  ],
+  "thread_id": "1559572931141697659",
+  "title": "No income. Hope this screenshot helps.",
+  "url": "https://discord.com/channels/708006319658893385/1559572931141697659"
+}

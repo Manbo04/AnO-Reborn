@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-12T08:19:32Z",
   "delivered_nonce": "a82e36e32c1c4c86aa32810ce85a774d",
   "kind": "bug",
-  "last_message_id": "1559205108409966735",
-  "last_player_message_at": "2026-10-12T14:04:26Z",
+  "last_message_id": "1559561266165719101",
+  "last_player_message_at": "2026-10-13T13:39:41Z",
   "messages": [
     {
       "at": "2026-10-12T01:35:43Z",
@@ -210,6 +210,16 @@
       "id": "1559205108409966735",
       "staff": false,
       "text": "Convoy raiding"
+    },
+    {
+      "at": "2026-10-13T13:39:41Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559561266165719101",
+      "staff": true,
+      "text": "Bump"
     }
   ],
   "thread_id": "1559016687481917500",

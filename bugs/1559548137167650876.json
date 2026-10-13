@@ -1,0 +1,52 @@
+{
+  "author_id": "465912833352138768",
+  "created_at": "2026-10-13T12:47:30Z",
+  "kind": "bug",
+  "last_message_id": "1559565653755691091",
+  "last_player_message_at": "2026-10-13T13:57:07Z",
+  "messages": [
+    {
+      "at": "2026-10-13T12:47:30Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1559548137167650876",
+      "staff": false,
+      "text": "After the recent update I and a bunch of other players have 0 income on everything"
+    },
+    {
+      "at": "2026-10-13T13:22:10Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559556861378699276",
+      "staff": true,
+      "text": "This is true"
+    },
+    {
+      "at": "2026-10-13T13:45:15Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1559562667763441826",
+      "staff": false,
+      "text": "<@465912833352138768> thanks for the report. a lot of nations had their food and tax cut by the distribution change, read the full explanation here: https://discord.com/channels/708006319658893385/1448838647766847489/1559562591552934053\nstarvation is off until Oct 19 now. if your income is still 0 after the next hourly tick, send me your nation link and a screenshot of your revenue page and i'll dig into it"
+    },
+    {
+      "at": "2026-10-13T13:57:07Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1559565653755691091",
+      "staff": false,
+      "text": "I believe it is actually a visual bug. I got my resources as expected on tick but the income page just says zero for everything"
+    }
+  ],
+  "thread_id": "1559548137167650876",
+  "title": "No Income",
+  "url": "https://discord.com/channels/708006319658893385/1559548137167650876"
+}

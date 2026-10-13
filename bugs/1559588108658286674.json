@@ -1,0 +1,32 @@
+{
+  "author_id": "519965006867988490",
+  "created_at": "2026-10-13T15:26:20Z",
+  "kind": "bug",
+  "last_message_id": "1559589363891839049",
+  "last_player_message_at": "2026-10-13T15:31:20Z",
+  "messages": [
+    {
+      "at": "2026-10-13T15:26:20Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1559588108658286674",
+      "staff": true,
+      "text": "I am trying to trade with lamlor and I get an error message."
+    },
+    {
+      "at": "2026-10-13T15:31:20Z",
+      "attachments": [],
+      "author": "FikusMikus",
+      "author_id": "297362383226142720",
+      "bot": false,
+      "id": "1559589363891839049",
+      "staff": true,
+      "text": "The universe is frozen atm"
+    }
+  ],
+  "thread_id": "1559588108658286674",
+  "title": "Getting error message when trading",
+  "url": "https://discord.com/channels/708006319658893385/1559588108658286674"
+}

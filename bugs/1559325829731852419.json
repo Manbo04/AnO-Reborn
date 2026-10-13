@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-13T08:29:08Z",
   "delivered_nonce": "6c789114daa544ce82eae4500185e427",
   "kind": "bug",
-  "last_message_id": "1559473658928308286",
-  "last_player_message_at": "2026-10-13T07:51:33Z",
+  "last_message_id": "1559528485544919063",
+  "last_player_message_at": "2026-10-13T11:29:25Z",
   "messages": [
     {
       "at": "2026-10-12T22:04:08Z",
@@ -48,6 +48,80 @@
       "id": "1559473658928308286",
       "staff": false,
       "text": "yoinking my province's individually\n\nTerran Praefects\nStable\nPopulation3.18M\nGrowth+28.39K/h\nHappiness100%\nProductivity50%\nCities in use10 / 75\nLand in use0 / 230\nEst. tax revenue$97.88M/day\n\nWhere to my knowledge all of them are in the green"
+    },
+    {
+      "at": "2026-10-13T08:29:10Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1559483122528161823",
+      "staff": false,
+      "text": "<@204961091892019200> <@204961091892019200> thanks, that helped. i ran the page for a 500 province nation on the live game and the tile shows the right number every time, so i can't reproduce your 0 directly. the one way it can show 0 is if its calculation fails halfway and the page quietly falls back to zeros (your province numbers are calculated separately, which fits). that is now fixed to retry on its own, and if it ever fails again it writes the reason to the server log instead of hiding it. live now. refresh and if you still see +0.00%/hr tell me roughly when, so i can find that moment in the log. also if your tile ever shows around -1%/hr that is rations running out, not hospitals: hospital deaths alone are only about -0.01 to -0.1%/hr"
+    },
+    {
+      "at": "2026-10-13T08:46:09Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1559325829731852419/1559487396410687531/Screenshot_20261013_141329_Chrome.jpg?ex=6acf4151&is=6acdefd1&hm=828da65c7336ae366e21e06727484bf8c3679d96b0c51b4bb8cd9f46390a67a9&"
+      ],
+      "author": "L4",
+      "author_id": "1326884862346657803",
+      "bot": false,
+      "id": "1559487396729323572",
+      "staff": false,
+      "text": "My gdp is 0 for some reason lol"
+    },
+    {
+      "at": "2026-10-13T08:47:08Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1559325829731852419/1559487644029952030/image0.jpg?ex=6acf418c&is=6acdf00c&hm=8acdccf89de589f2a9a81fba62c83ba40723e6db1c40fdc425df5f493613f9c8&"
+      ],
+      "author": "L4",
+      "author_id": "1326884862346657803",
+      "bot": false,
+      "id": "1559487644310962176",
+      "staff": false,
+      "text": "And all my production"
+    },
+    {
+      "at": "2026-10-13T08:49:13Z",
+      "attachments": [],
+      "author": "ieb",
+      "author_id": "204961091892019200",
+      "bot": false,
+      "id": "1559488168128937997",
+      "staff": false,
+      "text": "It has again not worked <t:1791881280:t> Or abt 8:48 utc I think?\n(I fully refreshed the page at this time)"
+    },
+    {
+      "at": "2026-10-13T08:50:17Z",
+      "attachments": [],
+      "author": "ieb",
+      "author_id": "204961091892019200",
+      "bot": false,
+      "id": "1559488438099775549",
+      "staff": false,
+      "text": "Oh, My gdp is 0 too now"
+    },
+    {
+      "at": "2026-10-13T09:04:43Z",
+      "attachments": [],
+      "author": "ieb",
+      "author_id": "204961091892019200",
+      "bot": false,
+      "id": "1559492071591514143",
+      "staff": false,
+      "text": "And the revenue page did indeed somehow break 😭"
+    },
+    {
+      "at": "2026-10-13T11:29:25Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1559528485544919063",
+      "staff": false,
+      "text": "Same for me"
     }
   ],
   "thread_id": "1559325829731852419",

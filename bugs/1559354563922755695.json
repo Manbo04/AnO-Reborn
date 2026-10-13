@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-13T08:18:58Z",
   "delivered_nonce": "34ca98fe66234498a3641f595881e3f2",
   "kind": "bug",
-  "last_message_id": "1559480563738349612",
-  "last_player_message_at": "2026-10-13T02:31:54Z",
+  "last_message_id": "1559509934712946770",
+  "last_player_message_at": "2026-10-13T10:15:42Z",
   "messages": [
     {
       "at": "2026-10-12T23:58:19Z",
@@ -136,6 +136,16 @@
       "id": "1559480563738349612",
       "staff": false,
       "text": "<@1043204044774183032> blockades only block the market right now, the coalition bank isn't covered, so that's how it works at the moment. whether the bank should be blockaded too is a balance call, so post it in #suggestions and it'll go on the next friday ballot. same for war pacing."
+    },
+    {
+      "at": "2026-10-13T10:15:42Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1559509934712946770",
+      "staff": false,
+      "text": "suggestion: make a coalition option to select all members to auto-accept MDP/Embassy/Alliance with each other?"
     }
   ],
   "thread_id": "1559354563922755695",

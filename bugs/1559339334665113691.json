@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-13T02:20:23Z",
   "delivered_nonce": "99fff623fe94422d883458219de0f8e2",
   "kind": "bug",
-  "last_message_id": "1559390320406298717",
-  "last_player_message_at": "2026-10-12T23:44:10Z",
+  "last_message_id": "1559562784205967381",
+  "last_player_message_at": "2026-10-13T12:16:54Z",
   "messages": [
     {
       "at": "2026-10-12T22:57:48Z",
@@ -254,6 +254,46 @@
       "id": "1559390320406298717",
       "staff": false,
       "text": "<@429129579039555584> population 2.0 went live yesterday evening, so the old rules are gone. the 2 week grace only covers people emigrating from overcrowded provinces, it doesn't stop starvation. what matters now for food is the distribution capacity of your whole nation (distribution centers, malls etc): rations only reach as many people as your distribution buildings can serve, and anyone not covered starves, up to 1% of your people per hour. at 170m people you need a lot of capacity even if every province shows distribution. deaths also depend on hospitals (each covers 1m people, fewer hospitals = more elderly/child deaths). so build more distribution buildings and hospitals. if you think the new rules are too harsh, post it in #suggestions and it goes on the next ballot. restoring lost people is a staff decision"
+    },
+    {
+      "at": "2026-10-13T12:15:48Z",
+      "attachments": [],
+      "author": "𝕿𝖍𝖊_𝖐𝖆𝖎𝖘𝖊𝖗",
+      "author_id": "1166065212537970722",
+      "bot": false,
+      "id": "1559540159563960414",
+      "staff": true,
+      "text": "Same for me"
+    },
+    {
+      "at": "2026-10-13T12:16:38Z",
+      "attachments": [],
+      "author": "𝕿𝖍𝖊_𝖐𝖆𝖎𝖘𝖊𝖗",
+      "author_id": "1166065212537970722",
+      "bot": false,
+      "id": "1559540368499019789",
+      "staff": true,
+      "text": "I have tons of food and sufficient distribution, I lost 300 million peoples in like 5 hours and I'm losing like 50 million hourly"
+    },
+    {
+      "at": "2026-10-13T12:16:54Z",
+      "attachments": [],
+      "author": "𝕿𝖍𝖊_𝖐𝖆𝖎𝖘𝖊𝖗",
+      "author_id": "1166065212537970722",
+      "bot": false,
+      "id": "1559540435465273465",
+      "staff": true,
+      "text": "This morning everything was alright, slow growth but not this"
+    },
+    {
+      "at": "2026-10-13T13:45:43Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1559562784205967381",
+      "staff": false,
+      "text": "<@429129579039555584> it was starvation from the distribution fix, not your homes or distribution on paper (the page was lying about coverage, my bad). starvation is off until Oct 19 now and gentler after. people who already died are gone, sorry. details: https://discord.com/channels/708006319658893385/1448838647766847489/1559562591552934053"
     }
   ],
   "thread_id": "1559339334665113691",
