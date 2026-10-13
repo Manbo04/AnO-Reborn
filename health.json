@@ -1,21 +1,22 @@
 {
   "deploy": {
-    "checked_at": "2026-10-13T12:05:38Z",
+    "checked_at": "2026-10-13T19:28:55Z",
     "msg": "ok",
     "ok": true
   },
   "pipeline": {
-    "checked_at": "2026-10-13T12:05:38Z",
-    "msg": "ok",
-    "ok": true
+    "checked_at": "2026-10-13T19:28:55Z",
+    "msg": "last deploy job cancelled: https://github.com/Manbo04/AnO-Reborn/actions/runs/38452138388",
+    "ok": true,
+    "pending": true
   },
   "site": {
-    "checked_at": "2026-10-13T12:05:38Z",
+    "checked_at": "2026-10-13T19:28:55Z",
     "msg": "ok",
     "ok": true
   },
   "ticks": {
-    "checked_at": "2026-10-13T12:05:38Z",
+    "checked_at": "2026-10-13T19:28:55Z",
     "msg": "ok",
     "ok": true
   }
