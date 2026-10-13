@@ -53,6 +53,7 @@ from app_core.game_ticks.food import consumer_goods_distribution_capacity
 from app_core.economy.consumer_goods import (
     load_province_cg_capacities,
 )
+from app_core.directives.services import active_keys, active_keys_batch, tax_multiplier_for
 from app_core.economy.tax_formula import compute_tax_income
 
 
@@ -111,6 +112,7 @@ def calc_ti(user_id):
             consumer_goods,
             [caps_by_id.get(pid, 0.0) for pid in province_ids],
             healthcare,
+            tax_multiplier=tax_multiplier_for(active_keys(db, user_id)),
         )
         # Return (income, removed_consumer_goods) where
         # removed_consumer_goods is a positive count
@@ -442,6 +444,8 @@ def tax_income():
             ledger_rows = []  # (user_id, category, signed gold) -> revenue history
             tax_transaction_rows = []  # (colId, user_id, user_id, 'tax', amount, 'deposit')
 
+            directive_map = active_keys_batch(dbdict, all_user_ids)
+
             for user_id in all_user_ids:
                 current_money = stats_map.get(user_id)
                 if current_money is None:
@@ -472,6 +476,7 @@ def tax_income():
                     [cg_prov_cap_map.get(p[5], 0.0) for p in provinces],
                     healthcare,
                     effective_rations,
+                    tax_multiplier=tax_multiplier_for(directive_map.get(user_id)),
                 )
                 removed_consumer_goods = ti["removed_consumer_goods"]
                 money = ti["income"]

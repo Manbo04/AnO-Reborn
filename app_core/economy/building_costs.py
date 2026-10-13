@@ -251,7 +251,11 @@ def sum_cost_capped_linear(
 
 
 def land_city_purchase_cost(
-    unit: str, current_owned: int, num_purchased: int, policies: list | None = None
+    unit: str,
+    current_owned: int,
+    num_purchased: int,
+    policies: list | None = None,
+    price_multiplier: float = 1.0,
 ) -> int:
     """Gold cost of buying `num_purchased` land/cities in ONE province that
     already has `current_owned`. Single source of truth for both the
@@ -263,4 +267,4 @@ def land_city_purchase_cost(
     raw = sum_cost_capped_linear(
         base_price, increment, int(current_owned or 0), int(num_purchased), cap_threshold
     )
-    return int(apply_policy_gold_discount(unit, raw, policies))
+    return int(apply_policy_gold_discount(unit, raw, policies) * price_multiplier)

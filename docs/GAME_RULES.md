@@ -158,6 +158,18 @@ Rules:
   wars** (the Raze rate never applied until 2026-10-06: the code compared a DB row
   tuple to the string). 🔒 `tests/test_war_reparations.py`
 
+## 4b. Directives
+
+- **Directives** (`app_core/directives/`): 7-day national boosts bought with gold from
+  `/directives`. Fee = 4 hours of the nation own gross tax income (min 50,000), charged once
+  at activation; an active directive cannot be bought again until it expires. Table: `directives`.
+  - **Tax Drive**: +5% tax income. Applied through `compute_tax_income(tax_multiplier=...)`, so the
+    tick, `calc_ti` and the revenue page all agree.
+  - **Land Drive**: -10% price of land and cities, applied in `land_city_purchase_cost(price_multiplier=...)`
+    at the single-province buy route and Mass Purchase.
+  New directives belong in `services.DIRECTIVES` with their effect applied inside the shared formula,
+  never in a single page. 🔒 `tests/test_directives.py`
+
 ## 5. Accounts & security
 
 - Discord/Google-only accounts store the provider id in `users.hash` (no password).

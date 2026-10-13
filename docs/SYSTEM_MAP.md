@@ -327,6 +327,8 @@ Tables no static query touches (dynamic SQL, scripts, or dead): `coalition_membe
 | `/deploy-info` | GET | `app_core.system.routes:deploy_info` |
 | `/deposit_into_bank/<coalition_id>` | POST | `app_core.coalitions.routes:deposit_into_bank` |
 | `/devlog` | GET,POST | `app_core.community.routes:devlog` |
+| `/directives` | GET | `app_core.directives.routes:view_directives` |
+| `/directives/activate/<key>` | POST | `app_core.directives.routes:activate_directive` |
 | `/discord` | GET,POST | `signup:discord` |
 | `/discord_login/` | GET | `login:discord_login` |
 | `/discord_reset_password_page` | GET,POST | `change:discord_reset_password_page` |
