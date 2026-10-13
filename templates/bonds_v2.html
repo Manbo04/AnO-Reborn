@@ -75,6 +75,16 @@
                     <div class="ec-cell"><span class="ec-k">You earn</span><span class="ec-v ec-good">+${{ interest | fmt }}</span></div>
                     <div class="ec-act">
                         {% if b[1] == me %}
+                        <details class="ec-edit">
+                            <summary class="game-btn game-btn-secondary game-btn-sm"><span class="material-icons-outlined">edit</span>Edit</summary>
+                            <form action="/bonds/{{ b[0] }}/edit" method="post" class="ec-form" style="margin-top:8px;">
+                                <input type="hidden" name="principal" value="{{ b[3] | int }}">
+                                <label class="ec-field"><span>% per day</span><input class="game-purchase-input" type="number" name="daily_interest_rate" min="{{ status.min_rate * 100 }}" max="{{ status.max_rate * 100 }}" step="0.01" inputmode="decimal" value="{{ '%.2f' | format(b[4] * 100) }}" required></label>
+                                <label class="ec-field"><span>Days</span><input class="game-purchase-input" type="number" name="term_days" min="{{ status.min_term }}" max="{{ status.max_term }}" step="1" inputmode="numeric" value="{{ b[5] }}" required></label>
+                                <label class="ec-check"><input type="checkbox" name="auto_escrow"{% if b[6] %} checked{% endif %}> Auto-escrow principal daily</label>
+                                <button type="submit" class="game-btn game-btn-primary game-btn-sm">Save terms</button>
+                            </form>
+                        </details>
                         <form action="/bonds/{{ b[0] }}/cancel" method="post">
                             <button type="submit" class="game-btn game-btn-ghost game-btn-sm"><span class="material-icons-outlined">close</span>Cancel</button>
                         </form>
