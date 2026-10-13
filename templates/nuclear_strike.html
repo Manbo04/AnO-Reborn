@@ -73,7 +73,7 @@
             {% if plan.is_retaliation %}
             <p class="nuke-note">{{ plan.enemy_name }} nuked you first in this war, so this counts as retaliation: it costs 25% of your influence and needs no minimum.</p>
             {% else %}
-            <p class="nuke-note">A first strike costs 50% of your current influence (further launches compound) and needs at least {{ "{:,}".format(plan.min_influence) }} influence. The penalty fades over {{ plan.recovery_days }} days. Nukes can't be intercepted.</p>
+            <p class="nuke-note">A first strike costs 50% of your current influence (further launches compound) and needs at least {{ "{:,}".format(plan.min_influence) }} influence. The penalty fades over {{ plan.recovery_days }} days. The target province's Iron Domes get one shot at the warhead (up to 50% to intercept); an intercepted nuke is still spent.</p>
             {% endif %}
             {% if plan.blocked %}<p class="nuke-warn">{{ plan.blocked }}</p>{% endif %}
         </div>

@@ -977,3 +977,20 @@ efficiency the tick uses and the alert card says so (+ grace notice). Tests adde
 **What to watch**: after merge confirm prod projections (get_population_growth) show no starvation
 loss; tax penalty for rations shortage (food_tax_multiplier, max -30%) is unchanged; decide before
 19 Oct whether 0.25% stays.
+
+## 2026-10-13 — War audit fixes (peace, special units, replay, spies, bots, treaties)
+
+**Fixed**: `send_peace_offer` rewrote every war's offer (UPDATE without WHERE) and accepted negative demands; accepting peace
+paid terms one by one and could half-apply (now validated first, paid in one transaction, war row locked, receiver gets an
+in-game notice); `warChoose` accepted any `special_unit` string and any war id (now icbms only, active war, caller is a
+participant, enemy derived from the war); `/warResult` and special attacks could be replayed with a saved cookie after the
+1s window (now each prepared attack carries `attack_issued_at` and resolves once, see `_claim_attack_slot`); an attacker with
+no effective force beat an empty domain (`zero_out_empty_side`); sabotage/strategic sabotage/assassination required no war
+(route-level `check_spy_target`); AP in `warAmount` is validated against the war before it is spent; bot nations refilled gold and
+stock hourly (frozen while in/after a war for 72h, bot loot fraction 2%); `join_ally` serialised on the nation-pair lock and
+re-checks the war; cancelling/declining a treaty now notifies the other side; alliance treaties now count as NAP + MDP;
+nuke copy no longer says "can't be intercepted"; new surrender button (`/war/<id>/surrender`, shares `conclude_war` with the
+morale-zero ending); `/defense` retired (button + nav entry removed, URL redirects to /wars) because the domain override made it a no-op.
+
+**What to watch**: surrender hands the winner the normal 20%/30% war spoils (same as morale zero); sessions created before this
+deploy have no `attack_issued_at`, so an in-flight attack from a pre-deploy cookie resolves only if it is the war's first attack.

@@ -94,9 +94,9 @@
                         <select class="templateselect" style="margin: 0; padding: 6px; width: 60%; border-radius: 4px; border: 1px solid var(--border); background: var(--background); color: var(--colorOne);" name="spy_type" id="warType">
                             <option class="templateoption" value="units">Spy on unit amounts</option>
                             <option class="templateoption" value="resources">Spy on resources</option>
-                            <option class="templateoption" value="sabotage">Sabotage resources</option>
-                            <option class="templateoption" value="sabotage_strategic">Sabotage missiles &amp; nukes</option>
-                            <option class="templateoption" value="assassinate_spies">Assassinate spies</option>
+                            <option class="templateoption" value="sabotage">Sabotage resources (war only)</option>
+                            <option class="templateoption" value="sabotage_strategic">Sabotage missiles &amp; nukes (war only)</option>
+                            <option class="templateoption" value="assassinate_spies">Assassinate spies (war only)</option>
                         </select>
                     </div>
                     <div class="stat-card" style="padding: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--foregroundTwo); border-radius: 8px; border: 1px solid var(--border);">
@@ -193,6 +193,22 @@
                 <div style="display: flex; justify-content: center; margin-top: 10px;">
                     <button class="game-btn game-btn-primary game-btn-lg" type="submit">
                         <span class="material-icons-outlined">arrow_forward</span>Send Offer
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- SURRENDER -->
+        <div class="game-glass game-panel" style="padding: 20px;">
+            <h2 class="templatecontentheaderleft" style="margin-top: 0;">
+                <span class="material-icons-outlined" style="vertical-align: middle; margin-right: 6px;">flag</span>Surrender
+            </h2>
+            <p class="templatecontentpleft">Give up and end this war now. Your enemy wins and takes the usual war spoils, exactly as if your morale had broken. This cannot be undone.</p>
+            <form method="post" action="/war/{{war_id}}/surrender" onsubmit="return confirm('Surrender this war? Your enemy will take the war spoils.');">
+                <input type="hidden" name="confirm" value="yes" />
+                <div style="display: flex; justify-content: center; margin-top: 10px;">
+                    <button class="game-btn game-btn-lg" type="submit">
+                        <span class="material-icons-outlined">flag</span>Surrender
                     </button>
                 </div>
             </form>

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import secrets
+import time
 import uuid
 from typing import Dict, List, Optional
 
@@ -368,6 +369,28 @@ def ensure_coverage(conn, cur) -> Dict[str, int]:
 # --------------------------------------------------------------------------
 
 
+# A bot that is in a war, or whose last war ended less than this long ago, does
+# not refill its gold and stockpiles (armies and population still do, so it
+# stays a credible opponent). Without this a bot's hourly refill turned every
+# raid into a renewable gold/resource faucet.
+LOOT_RECOVERY_SECONDS = 72 * 3600
+
+
+def _bots_in_or_near_war(cur, ids, now=None) -> set:
+    now = time.time() if now is None else now
+    cur.execute(
+        "SELECT DISTINCT u FROM ("
+        " SELECT attacker AS u FROM wars WHERE attacker = ANY(%s)"
+        "  AND (peace_date IS NULL OR peace_date > %s)"
+        " UNION ALL"
+        " SELECT defender AS u FROM wars WHERE defender = ANY(%s)"
+        "  AND (peace_date IS NULL OR peace_date > %s)"
+        ") t",
+        (list(ids), now - LOOT_RECOVERY_SECONDS, list(ids), now - LOOT_RECOVERY_SECONDS),
+    )
+    return {r[0] for r in cur.fetchall()}
+
+
 def maintain_bots(conn, cur) -> int:
     """Refill every bot toward its target (gradually) and clamp runaway growth."""
     cur.execute(
@@ -408,26 +431,29 @@ def maintain_bots(conn, cur) -> int:
     for uid, name, qty in cur.fetchall():
         units.setdefault(uid, {})[name] = float(qty or 0)
 
+    recently_at_war = _bots_in_or_near_war(cur, ids)
+
     maintained = 0
     for row in rows:
         uid = row["user_id"]
         try:
             target = _size_from_row(row)
             cap = lambda cur_v, tgt: min(cur_v, tgt * 1.5)  # noqa: E731
+            frozen = uid in recently_at_war
 
             g_now = float(gold.get(uid, 0))
-            new_gold = (
-                profiles.regen_toward(g_now, target["gold"])
-                if g_now < target["gold"]
-                else int(cap(g_now, target["gold"]))
-            )
+            if g_now < target["gold"]:
+                new_gold = int(g_now) if frozen else profiles.regen_toward(g_now, target["gold"])
+            else:
+                new_gold = int(cap(g_now, target["gold"]))
 
             new_stock = {}
             for res, tgt in target["stock"].items():
                 now = stock.get(uid, {}).get(res, 0.0)
-                grown = (
-                    profiles.regen_toward(now, tgt) if now < tgt else int(cap(now, tgt))
-                )
+                if now < tgt:
+                    grown = int(now) if frozen else profiles.regen_toward(now, tgt)
+                else:
+                    grown = int(cap(now, tgt))
                 new_stock[res] = max(grown, int(profiles.upkeep_floor(res, tgt)))
             _set_balances(
                 cur,

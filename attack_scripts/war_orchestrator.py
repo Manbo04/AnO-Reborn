@@ -156,12 +156,26 @@ def _format_spoils(spoils):
     )
 
 
-def _record_war_end_news(db, winner_id, loser_id, spoils):
+def _record_war_end_news(db, winner_id, loser_id, spoils, surrendered=False):
     db.execute("SELECT id, username FROM users WHERE id IN (%s, %s)", (winner_id, loser_id))
     names = {row[0]: row[1] for row in db.fetchall()}
     winner_name = names.get(winner_id, "Unknown")
     loser_name = names.get(loser_id, "Unknown")
     taken = _format_spoils(spoils)
+    if surrendered:
+        winner_msg = (
+            f"🏳️ WAR OVER: {loser_name} surrendered. You won the war! "
+            + (f"Spoils of war: {taken}." if taken else "They had nothing left to loot.")
+        )
+        loser_msg = (
+            f"🏳️ WAR OVER: You surrendered to {winner_name} and lost the war. "
+            + (f"They took: {taken}." if taken else "They found nothing to loot.")
+        )
+        db.execute(
+            "INSERT INTO news (destination_id, message) VALUES (%s, %s), (%s, %s)",
+            (winner_id, winner_msg, loser_id, loser_msg),
+        )
+        return
     winner_msg = (
         f"🏳️ WAR OVER: {loser_name}'s morale broke. You won the war! "
         + (f"Spoils of war: {taken}." if taken else "They had nothing left to loot.")
@@ -205,6 +219,70 @@ def _fight_details(
         "winner_strength": [winner_strength_before, winner_strength_after],
         "loser_strength": [loser_strength_before, loser_strength_after],
     }
+
+
+def conclude_war(db, war_id, winner_id, loser_id, surrendered=False):
+    """End `war_id` with `winner_id` victorious: mark peace, move the standard
+    war spoils (20% of every resource, 30% with Looting Teams) from the loser
+    to the winner, pay out bounties on the loser and write both war-end news
+    items. Shared by the morale-zero path in persist_fight_results() and by
+    voluntary surrender. Runs on the caller's cursor/connection."""
+    # Mark peace
+    from attack_scripts.Nations import Nation, Economy
+
+    Nation.set_peace(db, db.connection, war_id)
+    # Check for Looting Teams upgrade
+    from app_core.upgrades.services import get_upgrades
+    winner_upgrades = get_upgrades(winner_id, db=db)
+    loot_multiplier = 0.3 if winner_upgrades.get("lootingteams") else 0.2
+
+    # Transfer resources from loser to winner
+    war_spoils = {}
+    for resource in Economy.resources:
+        db.execute(
+            """
+            SELECT COALESCE(ue.quantity, 0)
+            FROM resource_dictionary rd
+            LEFT JOIN user_economy ue
+                ON ue.resource_id = rd.resource_id AND ue.user_id=%s
+            WHERE rd.name=%s AND rd.is_active=TRUE
+            """,
+            (loser_id, resource),
+        )
+        resource_amount = fetchone_first(db, 0) or 0
+        transfer_amount = int(float(resource_amount) * loot_multiplier)
+        if transfer_amount > 0:
+            war_spoils[resource] = transfer_amount
+
+        # Relative take/credit (was an absolute SET from a stale
+        # read, which overwrote any change made in between).
+        taken = ledger.take_resource(db, loser_id, resource, transfer_amount)
+        ledger.credit_resources(db, winner_id, {resource: taken})
+        if taken != transfer_amount:
+            if taken > 0:
+                war_spoils[resource] = taken
+            else:
+                war_spoils.pop(resource, None)
+
+    # Pay out any open bounties on the defeated nation - this is
+    # the one unambiguous "nation X was defeated" moment in the
+    # codebase, on this same independent connection so the payout
+    # is atomic with the war's conclusion.
+    try:
+        from app_core.bounties.services import claim_bounties
+        claim_bounties(db, loser_id, winner_id)
+    except Exception:
+        logger.exception("Bounty payout failed for war_id=%s", war_id)
+
+    # Both sides get a permanent record of how the war ended and
+    # what was taken (Silent suggestion, 2026-10-04).
+    try:
+        _record_war_end_news(
+            db, winner_id, loser_id, war_spoils, surrendered=surrendered
+        )
+    except Exception:
+        logger.exception("War-end news failed for war_id=%s", war_id)
+
 
 
 def persist_fight_results(
@@ -300,62 +378,7 @@ def persist_fight_results(
             # If morale drops to zero or below, conclude the war and transfer resources
             win_label = _determine_win_label(win_type)
             if new_morale <= 0 and war_id is not None:
-                # Mark peace
-                from attack_scripts.Nations import Nation, Economy
-
-                if win_type != "Sustained" and war_id is not None:
-                    Nation.set_peace(db, db.connection, war_id)
-                # Check for Looting Teams upgrade
-                from app_core.upgrades.services import get_upgrades
-                winner_upgrades = get_upgrades(winner.user_id, db=db)
-                loot_multiplier = 0.3 if winner_upgrades.get("lootingteams") else 0.2
-
-                # Transfer resources from loser to winner
-                war_spoils = {}
-                for resource in Economy.resources:
-                    db.execute(
-                        """
-                        SELECT COALESCE(ue.quantity, 0)
-                        FROM resource_dictionary rd
-                        LEFT JOIN user_economy ue
-                            ON ue.resource_id = rd.resource_id AND ue.user_id=%s
-                        WHERE rd.name=%s AND rd.is_active=TRUE
-                        """,
-                        (loser.user_id, resource),
-                    )
-                    resource_amount = fetchone_first(db, 0) or 0
-                    transfer_amount = int(float(resource_amount) * loot_multiplier)
-                    if transfer_amount > 0:
-                        war_spoils[resource] = transfer_amount
-
-                    # Relative take/credit (was an absolute SET from a stale
-                    # read, which overwrote any change made in between).
-                    taken = ledger.take_resource(db, loser.user_id, resource, transfer_amount)
-                    ledger.credit_resources(db, winner.user_id, {resource: taken})
-                    if taken != transfer_amount:
-                        if taken > 0:
-                            war_spoils[resource] = taken
-                        else:
-                            war_spoils.pop(resource, None)
-
-                # Pay out any open bounties on the defeated nation - this is
-                # the one unambiguous "nation X was defeated" moment in the
-                # codebase, on this same independent connection so the payout
-                # is atomic with the war's conclusion.
-                try:
-                    from app_core.bounties.services import claim_bounties
-                    claim_bounties(db, loser.user_id, winner.user_id)
-                except Exception:
-                    logger.exception("Bounty payout failed for war_id=%s", war_id)
-
-                # Both sides get a permanent record of how the war ended and
-                # what was taken (Silent suggestion, 2026-10-04).
-                try:
-                    _record_war_end_news(
-                        db, winner.user_id, loser.user_id, war_spoils
-                    )
-                except Exception:
-                    logger.exception("War-end news failed for war_id=%s", war_id)
+                conclude_war(db, war_id, winner.user_id, loser.user_id)
 
             # Persist the new morale value
             db.execute(

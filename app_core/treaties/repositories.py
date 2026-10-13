@@ -95,14 +95,25 @@ def activate_treaty(db, treaty_id, user_id):
 def set_treaty_rejected(db, treaty_id, user_id):
     db.execute(
         "UPDATE nation_treaties SET status = 'rejected', updated_at = CURRENT_TIMESTAMP "
-        "WHERE id = %s AND recipient_id = %s AND status = 'pending'",
+        "WHERE id = %s AND recipient_id = %s AND status = 'pending' "
+        "RETURNING treaty_type, sender_id, recipient_id",
         (treaty_id, user_id),
     )
+    return db.fetchone()
 
 
 def set_treaty_cancelled(db, treaty_id, user_id):
     db.execute(
         "UPDATE nation_treaties SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP "
-        "WHERE id = %s AND (sender_id = %s OR recipient_id = %s) AND status IN ('pending', 'active')",
+        "WHERE id = %s AND (sender_id = %s OR recipient_id = %s) AND status IN ('pending', 'active') "
+        "RETURNING treaty_type, sender_id, recipient_id",
         (treaty_id, user_id, user_id),
+    )
+    return db.fetchone()
+
+
+def insert_treaty_news(db, user_id, message):
+    db.execute(
+        "INSERT INTO news (destination_id, message) VALUES (%s, %s)",
+        (user_id, message),
     )
