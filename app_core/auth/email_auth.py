@@ -2,7 +2,7 @@ import os
 import re
 from flask import Blueprint, request, render_template, session, redirect, flash
 from app_core.auth.passwords import hash_password, password_matches
-from database import get_request_cursor, client_ip_from_headers, coarse_fingerprint_from_headers
+from database import get_request_cursor, client_ip_from_headers, coarse_fingerprint_from_headers, keep_request_writes
 from login_verification import complete_or_verify_login
 from signup import verify_recaptcha
 import datetime
@@ -108,6 +108,7 @@ def _signup_ip_rate_limited(db) -> bool:
             (ip, ip),
         )
         db.execute("RELEASE SAVEPOINT signup_rate_check")
+        keep_request_writes()  # rejected signups (4xx) must still count toward the cap
     except Exception:
         # Never block signups because the counter table misbehaved.
         logger.exception("signup rate-limit check failed")

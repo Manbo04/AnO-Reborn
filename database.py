@@ -1219,12 +1219,36 @@ def get_request_cursor(cursor_factory=None, read_only=False):
             pass
 
 
+def rollback_request():
+    """Discard everything this request has written so far and make teardown
+    roll back instead of commit. For handlers that write, then fail but
+    answer with a redirect/flash (error() and any 4xx/5xx are handled
+    automatically by app.py's after_request)."""
+    from flask import g
+
+    g._db_rollback = True
+    conn = getattr(g, "_db_conn", None)
+    if conn is not None:
+        try:
+            conn.rollback()
+        except Exception:
+            logger.exception("rollback_request: rollback failed")
+
+
+def keep_request_writes():
+    """Opt out of error-response rollback (e.g. a handler that deliberately
+    records a failed-attempt counter and then returns 4xx)."""
+    from flask import g
+
+    g._db_keep_on_error = True
+
+
 def rollback_db_cursor(db):
     """Reset the request connection after a failed SQL statement (aborted txn)."""
     try:
         db.connection.rollback()
     except Exception:
-        pass
+        logger.warning("rollback_db_cursor: rollback failed", exc_info=True)
 
 
 def try_db_optional(db, callback, default=None):
@@ -2401,8 +2425,12 @@ def teardown_request_connection(exc=None):
         return
 
     broken = getattr(g, "_db_conn_broken", False)
+    # Set by app.py's after_request for 4xx/5xx responses (and by
+    # rollback_request()): a request that answered with an error must not
+    # persist the writes it made before failing.
+    rollback_requested = getattr(g, "_db_rollback", False)
     try:
-        if broken or exc is not None:
+        if broken or exc is not None or rollback_requested:
             try:
                 conn.rollback()
             except Exception:
@@ -2412,6 +2440,7 @@ def teardown_request_connection(exc=None):
             try:
                 conn.commit()
             except Exception:
+                logger.exception("request commit failed; rolling back and discarding connection")
                 try:
                     conn.rollback()
                 except Exception:
@@ -2420,6 +2449,7 @@ def teardown_request_connection(exc=None):
                 return
             db_pool.return_connection(conn)
     except Exception:
+        logger.exception("teardown_request_connection failed; closing connection")
         try:
             conn.close()
         except Exception:
@@ -2427,6 +2457,7 @@ def teardown_request_connection(exc=None):
     finally:
         g._db_conn = None
         g._db_conn_broken = False
+        g._db_rollback = False
 
 
 def row_val(row, *keys, default=None):
