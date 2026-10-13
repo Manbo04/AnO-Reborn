@@ -1147,7 +1147,7 @@ class BatchOperations:
             for uid in affected_user_ids:
                 invalidate_user_cache(uid)
         except Exception:
-            pass
+            logger.warning("user cache invalidation failed", exc_info=True)
 
 
 # Utility functions for common operations
@@ -1217,6 +1217,32 @@ def get_request_cursor(cursor_factory=None, read_only=False):
             cursor.close()
         except Exception:
             pass
+
+
+def mark_request_rollback():
+    """Discard this request's uncommitted writes at teardown.
+
+    Called (by app.py's after_request) for any 4xx/5xx response, so a route that
+    writes and then ``return error(...)`` no longer commits the half-applied
+    write.  Safe to call outside a request (no-op).
+    """
+    from flask import g, has_app_context
+
+    if has_app_context() and not getattr(g, "_db_keep_on_error", False):
+        g._db_rollback = True
+
+
+def keep_request_writes_on_error():
+    """Opt a request out of the rollback-on-error rule.
+
+    For the rare handler that deliberately records something (e.g. a failed
+    attempt counter) and then answers with an error status.
+    """
+    from flask import g, has_app_context
+
+    if has_app_context():
+        g._db_keep_on_error = True
+        g._db_rollback = False
 
 
 def rollback_db_cursor(db):
@@ -2401,8 +2427,9 @@ def teardown_request_connection(exc=None):
         return
 
     broken = getattr(g, "_db_conn_broken", False)
+    rollback_requested = bool(getattr(g, "_db_rollback", False))
     try:
-        if broken or exc is not None:
+        if broken or exc is not None or rollback_requested:
             try:
                 conn.rollback()
             except Exception:
@@ -2412,6 +2439,7 @@ def teardown_request_connection(exc=None):
             try:
                 conn.commit()
             except Exception:
+                logger.exception("request commit failed; rolling back")
                 try:
                     conn.rollback()
                 except Exception:
@@ -2427,6 +2455,7 @@ def teardown_request_connection(exc=None):
     finally:
         g._db_conn = None
         g._db_conn_broken = False
+        g._db_rollback = False
 
 
 def row_val(row, *keys, default=None):

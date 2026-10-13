@@ -117,7 +117,7 @@ def create_app():
         from database import ensure_schema_compat
         ensure_schema_compat()
     except Exception:
-        pass
+        logging.getLogger(__name__).exception("ensure_schema_compat failed at startup")
 
 
     try:
@@ -432,6 +432,15 @@ def create_app():
     def after_request(response):
         import logging
         logger = logging.getLogger(__name__)
+        if response.status_code >= 400:
+            # An error response must not commit writes made earlier in the
+            # same request (teardown_request_connection honours this flag).
+            try:
+                from database import mark_request_rollback
+
+                mark_request_rollback()
+            except Exception:
+                logger.exception("mark_request_rollback failed")
         try:
             from time import time
             elapsed = time() - getattr(request, "start_time", time())
