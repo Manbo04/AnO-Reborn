@@ -78,3 +78,27 @@ def test_week_sim_empty_nation_grows_and_full_nation_does_not_explode():
         s.update(pop_children=c, pop_working=w, pop_elderly=e, population=c + w + e)
     assert s["population"] > 100_000 * 1.5  # settlers fill empty homes
     assert s["population"] < 3_000_000  # but not instantly
+
+
+def _starving_nation(now):
+    prov = {
+        "id": 1, "population": 10_000_000, "pop_children": 2_000_000,
+        "pop_working": 7_000_000, "pop_elderly": 1_000_000,
+        "citycount": 0, "land": 1_000, "happiness": 50, "pollution": 0,
+    }
+    out = p2.simulate_nation([prov], {}, 0.0, False, False, now=now)
+    return sum(out[1])
+
+
+def test_no_starvation_deaths_during_grace_week():
+    now = p2.STARVATION_GRACE_END - datetime.timedelta(minutes=1)
+    assert p2.starvation_grace_active(now)
+    # food_ratio 0: births stop but nobody starves (only normal deaths, < 0.1%)
+    assert _starving_nation(now) > 10_000_000 * 0.999
+
+
+def test_starvation_after_grace_is_quarter_percent_per_tick():
+    now = p2.STARVATION_GRACE_END + datetime.timedelta(minutes=1)
+    assert not p2.starvation_grace_active(now)
+    left = _starving_nation(now)
+    assert 10_000_000 * 0.99 < left < 10_000_000 * 0.9985

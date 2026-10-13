@@ -48,3 +48,16 @@ def test_retail_upkeep_gold_per_cg_under_audit_threshold():
         if cg <= 0:
             continue
         assert upkeep / cg <= 5000, f"{name} upkeep/CG too high: {upkeep / cg}"
+
+
+def test_distribution_status_applies_overcrowding_efficiency():
+    status = nation_distribution_status(
+        total_population=100_000_000,
+        rations_stockpile=10_000_000,
+        rations_need=2000,
+        building_qty_by_name={"malls": 10},  # 50M raw
+        efficiency=0.5,
+    )
+    assert status["distribution_cap"] == 25_000_000
+    assert status["uncovered_population"] == 75_000_000
+    assert status["efficiency_percent"] == 50
