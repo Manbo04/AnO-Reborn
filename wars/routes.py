@@ -367,9 +367,9 @@ def send_peace_offer(war_id, enemy_id):
                 db.execute(
                     (
                         "UPDATE peace SET author=(%s),demanded_resources=(%s),"
-                        "demanded_amount=(%s)"
+                        "demanded_amount=(%s) WHERE id=(%s)"
                     ),
-                    (cId, resources_string[:-1], amount_string[:-1]),
+                    (cId, resources_string[:-1], amount_string[:-1], peace_offer_id),
                 )
             try:
                 from app_core.discord_notify import notify_peace_offer
