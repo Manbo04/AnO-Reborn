@@ -627,8 +627,21 @@ class CountryService:
                 try:
                     growth_rate = get_population_growth(cId, db=db)
                 except Exception:
+                    # A failed earlier query on the shared page cursor leaves its
+                    # transaction aborted, which used to make this silently show
+                    # 0.00%/hr (Discord bug "Growth rate showing 0"). Log the real
+                    # error and retry once on a fresh cursor before giving up.
+                    logging.getLogger(__name__).warning(
+                        "growth_rate on shared cursor failed for %s", cId, exc_info=True
+                    )
                     rollback_db_cursor(db)
-                    growth_rate = {"delta": 0, "percent": 0.0, "current_population": population}
+                    try:
+                        growth_rate = get_population_growth(cId)
+                    except Exception:
+                        logging.getLogger(__name__).exception(
+                            "growth_rate retry failed for %s", cId
+                        )
+                        growth_rate = {"delta": 0, "percent": 0.0, "current_population": population}
 
                 # Bond interest (Kurai, 2026-09-23): moved once a day by
                 # bond_tick, outside the hourly revenue above, so it gets its
