@@ -1,8 +1,8 @@
 {
- "status": "fixed",
- "reply": "<@519965006867988490> <@1002628734932762755> the province fix is live now. i checked it against the real game: 136 nations are boxed in by their neighbours (the exact case that crashed), and buying a province now works for the ones i tried, including yours - it finds the nearest free tile further out instead of failing. if it still errors after a refresh, tell me your nation name and i'll look at it directly",
- "nonce": "4af1fd084cfc4b5c83259e06b602ec46",
- "updated_at": "2026-10-12T22:43:00Z",
- "branch": null,
- "summary": "province purchase fix verified on prod"
+  "status": "fixed",
+  "reply": "<@519965006867988490> <@1002628734932762755> the province fix is live now. i checked it against the real game: 136 nations are boxed in by their neighbours (the exact case that crashed), and buying a province now works for the ones i tried, including yours - it finds the nearest free tile further out instead of failing. if it still errors after a refresh, tell me your nation name and i'll look at it directly",
+  "nonce": "4af1fd084cfc4b5c83259e06b602ec46",
+  "updated_at": "2026-10-13T06:19:22Z",
+  "branch": null,
+  "summary": "province purchase fix verified on prod"
 }

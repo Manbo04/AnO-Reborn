@@ -1,8 +1,8 @@
 {
- "status": "fixed",
- "reply": "yep, same bug: workers with no education record were counted as unemployed (-10 happiness every hour). that's fixed and live, your happiness should climb normally now. shout if it sticks again",
- "nonce": "cf62358d59d64d73ba5160539dda1d09",
- "updated_at": "2026-10-05T16:21:18Z",
- "branch": null,
- "summary": "happiness stuck at 3%: already fixed in master (d1e6aea)"
+  "status": "fixed",
+  "reply": "yep, same bug: workers with no education record were counted as unemployed (-10 happiness every hour). that's fixed and live, your happiness should climb normally now. shout if it sticks again",
+  "nonce": "cf62358d59d64d73ba5160539dda1d09",
+  "updated_at": "2026-10-13T06:19:22Z",
+  "branch": null,
+  "summary": "happiness stuck at 3%: already fixed in master (d1e6aea)"
 }
