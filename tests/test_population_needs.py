@@ -24,8 +24,8 @@ def test_distribution_gap_reports_missing_and_buildings_with_efficiency():
     assert out["problems"] == 1
 
 
-def test_hospitals_needed_matches_cover_rule():
+def test_hospitals_needed_matches_flat_cover_rule():
     assert hospitals_needed(0) == 0
     assert hospitals_needed(2_500_000) == 3
-    # megacity: capacity shrinks by sqrt(200M / pop)
-    assert hospitals_needed(800_000_000) == 1600
+    assert hospitals_needed(666_000_001) == 667
+    assert hospitals_needed(800_000_000) == 800
