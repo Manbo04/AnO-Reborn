@@ -125,3 +125,41 @@ def test_population_growth_updates(monkeypatch):
         f"Expected at least one execute_batch call writing to provinces or "
         f"user_economy, got: {[q[:80] for q, _ in recorded['calls']]}"
     )
+
+
+@pytest.mark.no_server
+def test_growth_projection_recomputes_instead_of_using_worker_local_cache(monkeypatch):
+    from contextlib import nullcontext
+
+    import database
+    from app_core.game_ticks import population, population2
+
+    province_rows = [(1000, 1, 0, 50, 50, 10, 0, 1000, 0)]
+    query_count = 0
+
+    def fake_cursor_factory(*args, **kwargs):
+        nonlocal query_count
+        cursor = FakeCursor(fetchone_returns=[(100_000,)])
+        cursor._queue = [province_rows, []]
+        query_count += 2
+        return nullcontext(cursor)
+
+    monkeypatch.setattr(database, "reuse_or_new_cursor", fake_cursor_factory)
+    monkeypatch.setattr(
+        database.query_cache,
+        "get",
+        lambda key: pytest.fail("growth projection used a worker-local cache"),
+    )
+    monkeypatch.setattr(
+        database.query_cache,
+        "set",
+        lambda *args, **kwargs: pytest.fail("growth projection cached a worker-local value"),
+    )
+    monkeypatch.setattr(population2, "pop2_active", lambda: False)
+    monkeypatch.setattr("variables.FEATURE_RATIONS_DISTRIBUTION", False)
+
+    first = population.get_population_growth(1)
+    second = population.get_population_growth(1)
+
+    assert first == second
+    assert query_count == 4

@@ -272,18 +272,12 @@ def get_population_growth(cId, db=None):
 
     Returns {"delta": int, "percent": float, "current_population": int,
     "per_province": {str(province_id): int delta}}.
-    Cached like get_revenue()/get_econ_statistics() since it does a
-    handful of extra queries; invalidated by invalidate_user_cache()
-    alongside those (see database.py) so a new distribution building
-    shows up in the projection right away instead of up to 5 minutes late.
+    Recomputed on every request. This is a live projection over changing
+    resource and population state; a process-local cache let load-balanced
+    requests alternate between stale snapshots from different web workers.
     """
     cId = int(cId)  # page routes pass the id as a str; SQL ANY(%s) needs ints
-    from database import reuse_or_new_cursor, query_cache
-
-    cache_key = f"pop_growth_{cId}"
-    cached = query_cache.get(cache_key)
-    if cached is not None:
-        return cached
+    from database import reuse_or_new_cursor
 
     with reuse_or_new_cursor(db, read_only=True) as active_db:
         active_db.execute(
@@ -304,7 +298,6 @@ def get_population_growth(cId, db=None):
                 "current_population": 0,
                 "per_province": {},
             }
-            query_cache.set(cache_key, result)
             return result
 
         rows = [
@@ -447,7 +440,6 @@ def get_population_growth(cId, db=None):
             "comfort": int(nation["comfort"]),
             "pop2": pop2_info,
         }
-        query_cache.set(cache_key, result)
         return result
 
 
