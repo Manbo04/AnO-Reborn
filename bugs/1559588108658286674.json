@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-13T18:41:20Z",
   "delivered_nonce": "5f31a2c5112e4e56bb6d489979e3d9b1",
   "kind": "bug",
-  "last_message_id": "1559652029733798024",
-  "last_player_message_at": "2026-10-13T19:40:20Z",
+  "last_message_id": "1560025203348606997",
+  "last_player_message_at": "2026-10-14T20:23:12Z",
   "messages": [
     {
       "at": "2026-10-13T15:26:20Z",
@@ -99,6 +99,16 @@
       "id": "1559652029733798024",
       "staff": true,
       "text": "oki"
+    },
+    {
+      "at": "2026-10-14T20:23:12Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1560025203348606997",
+      "staff": true,
+      "text": "fixed"
     }
   ],
   "thread_id": "1559588108658286674",
