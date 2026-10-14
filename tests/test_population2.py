@@ -27,11 +27,12 @@ def test_no_education_penalty_on_births():
     assert a == int(1_000_000 * 0.025 * 1.0 * 1.0 * 1.0)
 
 
-def test_hospitals_cut_deaths_and_megacity_strain():
+def test_hospitals_cover_one_million_people_each_at_any_population():
     unc, _ = p2.death_rates(0, 10_000_000, 0, False)
     cov, _ = p2.death_rates(100, 10_000_000, 0, False)
     assert unc == 0.06 and abs(cov - 0.02) < 1e-9
-    assert p2.hospital_cover(100, 400_000_000) < p2.hospital_cover(100, 100_000_000) * 4
+    assert p2.hospital_cover(667, 666_000_000) == 1.0
+    assert abs(p2.hospital_cover(8, 666_000_000) - 8_000_000 / 666_000_000) < 1e-12
     healthy, _ = p2.death_rates(0, 1_000_000, 0, True)
     assert abs(healthy - 0.06 * 0.7) < 1e-9
 

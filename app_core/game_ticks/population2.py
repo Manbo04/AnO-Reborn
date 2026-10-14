@@ -12,7 +12,6 @@ Changes made after reading the vote thread (announced with the go-live post):
  * emigration abroad after the grace period: 2%/day of the people above 120%
 """
 import datetime
-import math
 
 import variables
 
@@ -34,7 +33,6 @@ CHILD_DEATH = (0.01, 0.002)
 HEALTHCARE_POLICY_MULT = 0.7
 POLLUTION_DEATH_MULT = 0.25
 HOSPITAL_CAPACITY = 1_000_000
-MEGACITY_POP = 200_000_000
 
 MIGRATION_RATE = 0.05
 SETTLER_RATE = 0.10
@@ -87,10 +85,7 @@ def happiness_factor(happiness):
 def hospital_cover(hospitals, pop):
     if pop <= 0:
         return 1.0
-    strength = hospitals * HOSPITAL_CAPACITY
-    if pop > MEGACITY_POP:
-        strength *= math.sqrt(MEGACITY_POP / pop)
-    return min(1.0, strength / pop)
+    return min(1.0, hospitals * HOSPITAL_CAPACITY / pop)
 
 
 def death_rates(hospitals, pop, pollution, universal_healthcare):
