@@ -1,0 +1,23 @@
+{
+  "author_id": "204961091892019200",
+  "created_at": "2026-10-14T22:04:42Z",
+  "kind": "suggestion",
+  "last_message_id": "1560050747964395560",
+  "last_player_message_at": "2026-10-14T22:04:42Z",
+  "messages": [
+    {
+      "at": "2026-10-14T22:04:42Z",
+      "attachments": [],
+      "author": "ieb",
+      "author_id": "204961091892019200",
+      "bot": false,
+      "id": "1560050747964395560",
+      "staff": false,
+      "text": "Have trade deals being taken into account on the revenue page. Currently it says you might be making alot but it is all traded away. This suggestion would make it easier to get a proper overview of what happens hourly (or daily) in your nation, and help in planning production.\n\nFor trade deals that don't happen hourly divide them for the hourly/daily revenue, so you know if you need to build more?\n\nAnother option could be to make this the default, and add the option to see it without the trade deals included. This would make my life slightly easier, as all poggers suggestions"
+    }
+  ],
+  "status": "new",
+  "thread_id": "1560050747964395560",
+  "title": "revenue page",
+  "url": "https://discord.com/channels/708006319658893385/1560050747964395560"
+}
