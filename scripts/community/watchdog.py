@@ -90,12 +90,22 @@ def check_deploy(info):
     age = (now() - parse(run["updated_at"])).total_seconds() / 60
     if age < DEPLOY_GRACE_MIN:
         return True, "ok"
+    # A newer push cancels the older run (concurrency), so live may be AHEAD
+    # of the last successful run's commit. That is fine.
+    try:
+        cmp = gh_json(f"repos/{REPO}/compare/{expected}...{live}")
+        if cmp.get("status") in ("ahead", "identical"):
+            return True, "ok"
+    except Exception:
+        pass
     return False, f"live game still runs {live[:8]}, but {expected[:8]} was deployed {int(age)} min ago and never went live"
 
 
 def check_pipeline():
     runs = gh_json(f"repos/{REPO}/actions/workflows/railway-redeploy-stack.yml/runs?branch=master&per_page=30")
-    run = max(runs.get("workflow_runs", []), key=lambda r: r["created_at"], default=None)
+    # "cancelled" = superseded by a newer push (cancel-in-progress), not a failure.
+    done = [r for r in runs.get("workflow_runs", []) if r.get("conclusion") != "cancelled"]
+    run = max(done, key=lambda r: r["created_at"], default=None)
     if run and run.get("status") == "completed" and run.get("conclusion") not in ("success", "skipped"):
         return False, f"last deploy job {run['conclusion']}: {run['html_url']}"
     return True, "ok"

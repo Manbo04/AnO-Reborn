@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from psycopg2.extras import RealDictCursor
 
 from database import get_request_cursor
@@ -10,6 +12,7 @@ class AdRepository:
                 (user_id, image_url, target_url, ad_type, image_data)
             )
 
+    @lru_cache(maxsize=64)
     def get_ad_image(self, ad_id):
         """Returns (image_data_b64, image_url) for the serving route, or None."""
         with get_request_cursor(read_only=True) as db:

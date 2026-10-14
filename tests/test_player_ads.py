@@ -316,6 +316,28 @@ def test_serve_ad_image_404s_for_unknown_ad():
     assert resp.status_code == 404
 
 
+def test_ad_image_repository_caches_immutable_image_rows():
+    from app_core.ads.repositories import AdRepository
+
+    repo = AdRepository()
+    row = ("aW1hZ2U=", "/static/uploads/ads/example.png")
+    db = MagicMock()
+    db.fetchone.return_value = row
+    cursor = MagicMock()
+    cursor.__enter__.return_value = db
+
+    repo.get_ad_image.cache_clear()
+    try:
+        with patch("app_core.ads.repositories.get_request_cursor", return_value=cursor) as get_cursor:
+            assert repo.get_ad_image(987654) == row
+            assert repo.get_ad_image(987654) == row
+
+        get_cursor.assert_called_once_with(read_only=True)
+        db.execute.assert_called_once()
+    finally:
+        repo.get_ad_image.cache_clear()
+
+
 def test_set_user_password_preserves_discord_snowflake():
     from database import set_user_password
 
