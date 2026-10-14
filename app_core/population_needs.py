@@ -32,10 +32,7 @@ def hospitals_needed(population):
     pop = max(0, int(population or 0))
     if pop <= 0:
         return 0
-    per = population2.HOSPITAL_CAPACITY
-    if pop > population2.MEGACITY_POP:
-        per *= math.sqrt(population2.MEGACITY_POP / pop)
-    return int(math.ceil(pop / per))
+    return int(math.ceil(pop / population2.HOSPITAL_CAPACITY))
 
 
 def build_population_needs(
