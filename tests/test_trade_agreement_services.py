@@ -8,6 +8,8 @@ executes queries in a known, fixed order, so we just queue up what each
 fetchone()/fetchall() should return next.
 """
 
+from pathlib import Path
+
 import pytest
 
 from app_core.trade_agreements.repositories import check_resource_balance
@@ -131,6 +133,45 @@ def test_create_agreement_success():
     assert err is None
     # last execute() call should be the INSERT
     assert "INSERT INTO trade_agreements" in db.calls[-1][0]
+
+
+def test_create_agreement_accepts_amounts_above_postgres_integer_limit():
+    db = QueuedCursor([
+        (2,),              # resolve_trade_partner_id -> partner id 2
+        (1_000_000_000,),  # proposer has enough lumber
+        (7,),              # insert_agreement RETURNING id
+    ])
+    ok, err = services.create_agreement(
+        db,
+        1,
+        "2",
+        "",
+        "lumber",
+        "1000000000",
+        "rations",
+        "5000000000",
+        24,
+        1,
+        "",
+    )
+
+    assert ok is True
+    assert err is None
+    insert_sql, insert_params = db.calls[-1]
+    assert "INSERT INTO trade_agreements" in insert_sql
+    assert insert_params[2] == 1_000_000_000
+    assert insert_params[5] == 5_000_000_000
+
+
+def test_large_trade_amount_migration_widens_both_agreement_columns():
+    migration = (
+        Path(__file__).resolve().parents[1]
+        / "migrations/20261014_2200_trade_agreement_amounts_bigint.sql"
+    )
+    sql = migration.read_text().lower()
+
+    assert "alter column proposer_amount type bigint" in sql
+    assert "alter column receiver_amount type bigint" in sql
 
 
 # ---------------------------------------------------------------------------
