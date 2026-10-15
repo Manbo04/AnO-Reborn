@@ -1937,6 +1937,22 @@ def province_sell_buy(way, units, province_id):
             row = db.fetchone()
             currentUnits = row[0] if row else 0
 
+        # Targetable buildings can be sold for a 75% refund. Lock building
+        # liquidation during an active war so defenders cannot cash out the
+        # exact infrastructure an opponent is paying attack actions to destroy.
+        if way == "sell" and units not in ("land", "cityCount"):
+            db.execute(
+                "SELECT 1 FROM wars WHERE (attacker = %s OR defender = %s) "
+                "AND peace_date IS NULL LIMIT 1",
+                (cId, cId),
+            )
+            if db.fetchone():
+                return error(
+                    400,
+                    "Buildings cannot be sold while you are at war. "
+                    "Resolve the war through peace or its normal outcome first.",
+                )
+
         if units in city_units:
             slot_type = "city"
         elif units in land_units:
