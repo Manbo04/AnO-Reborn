@@ -96,9 +96,28 @@ def get_province_map_nodes():
         "gas", "cyberpunk", "jungle", "barren", "crystal", "ringed",
         "machine", "eldritch", "archipelago", "crimson",
     ]
+    def world_slots():
+        # Lay worlds out in a deterministic hex spiral. Province coordinates are
+        # translated with their world so a player's local province layout stays
+        # intact while separate nations keep enough space between their planets.
+        yield (0, 0)
+        directions = [(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)]
+        ring = 1
+        while True:
+            q, r = 0, -ring
+            for dq, dr in directions:
+                for _ in range(ring):
+                    yield (q, r)
+                    q += dq
+                    r += dr
+            ring += 1
+
     viewer_id = session.get("user_id")
     planets = []
-    for user_id, cluster_provinces in user_clusters.items():
+    slots = world_slots()
+    world_spacing = 48
+    for user_id in sorted(user_clusters, key=lambda value: (value is None, value or 0)):
+        cluster_provinces = user_clusters[user_id]
         center_x = sum(province["x"] for province in cluster_provinces) / len(cluster_provinces)
         center_y = sum(province["y"] for province in cluster_provinces) / len(cluster_provinces)
         extent = max(
@@ -109,14 +128,23 @@ def get_province_map_nodes():
         # Radius is in rendered map pixels. Leave room around the outermost
         # province so clusters read as complete planets instead of tiny badges.
         radius = min(1100, max(320, extent * 80 + 320))
+        slot_q, slot_r = next(slots)
+        world_x = slot_q * world_spacing
+        world_y = slot_r * world_spacing
+        offset_x = world_x - center_x
+        offset_y = world_y - center_y
+        for province in cluster_provinces:
+            province["x"] += offset_x
+            province["y"] += offset_y
+
         owner_name = next(
             (province["username"] for province in cluster_provinces if province["username"]),
             "Unknown nation",
         )
         rng = random.Random(user_id)
         planets.append({
-            "x": center_x,
-            "y": center_y,
+            "x": world_x,
+            "y": world_y,
             "radius": radius,
             "type": rng.choice(planet_types),
             "name": owner_name,
