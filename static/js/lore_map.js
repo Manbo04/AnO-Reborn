@@ -289,7 +289,7 @@
         const radius = Math.max(24, Number(target.radius) || 320);
         const usableWidth = Math.max(240, width - 72);
         const usableHeight = Math.max(240, height - 190);
-        scale = clamp(Math.min(usableWidth, usableHeight) / (radius * 2 + 120), 0.35, 1.2);
+        scale = clamp(Math.min(usableWidth, usableHeight) / (radius * 2 + 120), 0.12, 1.2);
         panX = -point.x * scale;
         panY = -point.y * scale;
         queueRender();
