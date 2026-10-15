@@ -1,0 +1,33 @@
+{
+  "author_id": "249007223454433292",
+  "created_at": "2026-10-15T08:49:02Z",
+  "kind": "suggestion",
+  "last_message_id": "1560220566605013045",
+  "last_player_message_at": "2026-10-15T09:19:30Z",
+  "messages": [
+    {
+      "at": "2026-10-15T08:49:02Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1560212899547324456",
+      "staff": false,
+      "text": "|| SUGGESTION\n\nPremise:\nBiomes with limited resource types for each Nation is too restrictive.\nBeyond rudimentary rations, lumber & mining, basic buildings like Schools & Retail are not possible without trade.\n\nIssue:\nIn my opinion, self-interest will drive all nations into the top few alliances in order to get the specific resources they need. Global market would just enable potential competition, since they will not progress without those vital resources. New players will have to join existing alliances to grow, whether draconic or otherwise.\n\nSuggestion:\nEnable access to all resources on all Biomes.\nFor differentiation and to incentivize trading & player interaction, give each Biome a specialization bonus instead. This would enable each nation to progress individually, with the Preferred (instead of Mandatory) Option of trading to grow faster.\nLimit each Biome to a specific Luxury Resource like Bullion, Silver or Spices that have separate effects like bonus to Happiness or are required for CG production (a bonus, not a requirement for growth).\n\neg. Desert Biomes get +25% bonus to Oil & Refineries + Silver access."
+    },
+    {
+      "at": "2026-10-15T09:19:30Z",
+      "attachments": [],
+      "author": "Kurai",
+      "author_id": "1002628734932762755",
+      "bot": false,
+      "id": "1560220566605013045",
+      "staff": true,
+      "text": "Actually a solid suggestion"
+    }
+  ],
+  "status": "new",
+  "thread_id": "1560212899547324456",
+  "title": "Change to Biome mechanics",
+  "url": "https://discord.com/channels/708006319658893385/1560212899547324456"
+}

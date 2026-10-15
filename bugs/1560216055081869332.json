@@ -1,0 +1,22 @@
+{
+  "author_id": "249007223454433292",
+  "created_at": "2026-10-15T09:01:34Z",
+  "kind": "bug",
+  "last_message_id": "1560216055081869332",
+  "last_player_message_at": "2026-10-15T09:01:34Z",
+  "messages": [
+    {
+      "at": "2026-10-15T09:01:34Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1560216055081869332",
+      "staff": false,
+      "text": "It's hard for player to check, as I cannot see the issue until it popped up suddenly yesterday.\nI can only assume it had to do with the population distribution change, and bot said efficiency is calculated per nation instead of province now.\n\nI have decent population growth. No major building purchases Until I got hit by efficiency drop that took out my power grid by lowering output from my geothermals.\nEither the death rate has gone wild and my nation is full of children or my drones are just not showing up for work."
+    }
+  ],
+  "thread_id": "1560216055081869332",
+  "title": "Suspect a Bug in Efficiency Calculations?",
+  "url": "https://discord.com/channels/708006319658893385/1560216055081869332"
+}
