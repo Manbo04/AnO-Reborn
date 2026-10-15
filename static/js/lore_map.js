@@ -218,8 +218,7 @@
         }
     }
 
-    function drawHex(q, r) {
-        const point = pointForHex(q, r);
+    function drawHex(province, point) {
         const size = HEX_SIZE * 0.82;
         ctx.beginPath();
         for (let i = 0; i < 6; i++) {
@@ -237,24 +236,18 @@
         ctx.stroke();
 
         if (scale >= 0.72) {
-            const province = provinces.find(function (item) {
-                return Number(item.x) === q && Number(item.y) === r;
-            });
-            if (province) {
-                const name = String(province.name || "Province");
-                ctx.font = "600 " + (10 / scale) + "px Inter, system-ui, sans-serif";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillStyle = "#f1f7ff";
-                const maxWidth = 64 / scale;
-                let label = name;
-                while (ctx.measureText(label).width > maxWidth && label.length > 4) {
-                    label = label.slice(0, -2) + "…";
-                }
-                ctx.fillText(label, point.x, point.y);
+            const name = String(province.name || "Province");
+            ctx.font = "600 " + (10 / scale) + "px Inter, system-ui, sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillStyle = "#f1f7ff";
+            const maxWidth = 64 / scale;
+            let label = name;
+            while (ctx.measureText(label).width > maxWidth && label.length > 4) {
+                label = label.slice(0, -2) + "…";
             }
+            ctx.fillText(label, point.x, point.y);
         }
-        return point;
     }
 
     function drawProvince(province, bounds) {
@@ -265,7 +258,7 @@
         const margin = HEX_SIZE * 1.1;
         if (point.x < bounds.left - margin || point.x > bounds.right + margin ||
             point.y < bounds.top - margin || point.y > bounds.bottom + margin) return;
-        drawHex(q, r);
+        drawHex(province, point);
     }
 
     function render() {
