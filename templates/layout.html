@@ -326,6 +326,15 @@
                         <a class="{{ 'active' if request.path.startswith('/account') else '' }}" href="/account"><span class="material-icons-outlined">
                             perm_identity
                         </span>Account</a>
+                        <a class="{{ 'active' if request.path.startswith('/world_map') else '' }}" href="/world_map"><span class="material-icons-outlined">
+                            public
+                        </span>World Map</a>
+                        <a class="{{ 'active' if request.path.startswith('/lore_map') else '' }}" href="/lore_map"><span class="material-icons-outlined">
+                            map
+                        </span>Lore Map</a>
+                        <a class="{{ 'active' if request.path.startswith('/war-board') else '' }}" href="/war-board"><span class="material-icons-outlined">
+                            campaign
+                        </span>War Board</a>
                         <a class="{{ 'active' if request.path.startswith('/mechanics') else '' }}" href="/mechanics"><span class="material-icons-outlined">
                             build
                         </span>Mechanics</a>
