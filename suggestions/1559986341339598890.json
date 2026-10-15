@@ -2,8 +2,8 @@
   "author_id": "519965006867988490",
   "created_at": "2026-10-14T17:48:46Z",
   "kind": "suggestion",
-  "last_message_id": "1560087576659107840",
-  "last_player_message_at": "2026-10-15T00:31:03Z",
+  "last_message_id": "1560277573630566482",
+  "last_player_message_at": "2026-10-15T13:06:02Z",
   "messages": [
     {
       "at": "2026-10-14T17:48:46Z",
@@ -138,6 +138,36 @@
       "id": "1560087576659107840",
       "staff": true,
       "text": "Some older pics."
+    },
+    {
+      "at": "2026-10-15T11:07:52Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1560247836434767933",
+      "staff": true,
+      "text": "what carrier is that?"
+    },
+    {
+      "at": "2026-10-15T12:34:10Z",
+      "attachments": [],
+      "author": "Mohammad",
+      "author_id": "1399018808227663973",
+      "bot": false,
+      "id": "1560269557116047382",
+      "staff": false,
+      "text": "Another war is close? 👽"
+    },
+    {
+      "at": "2026-10-15T13:06:02Z",
+      "attachments": [],
+      "author": "Mohammad",
+      "author_id": "1399018808227663973",
+      "bot": false,
+      "id": "1560277573630566482",
+      "staff": false,
+      "text": "Is it USS Abraham Lincoln?"
     }
   ],
   "status": "new",

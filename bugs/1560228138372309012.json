@@ -1,0 +1,25 @@
+{
+  "author_id": "204961091892019200",
+  "created_at": "2026-10-15T09:49:35Z",
+  "kind": "bug",
+  "last_message_id": "1560228138372309012",
+  "last_player_message_at": "2026-10-15T09:49:35Z",
+  "messages": [
+    {
+      "at": "2026-10-15T09:49:35Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1560228138372309012/1560228139047587902/image.png?ex=6ad1f32f&is=6ad0a1af&hm=9a7c67e9315cad2c0c439abc621fc8d1690db0b8d0610f59f831f9009d15c615&",
+        "https://cdn.discordapp.com/attachments/1560228138372309012/1560228139827990548/image.png?ex=6ad1f330&is=6ad0a1b0&hm=0cc2dcd0f9c47388ab60cff186a434cef52042ddbd14c41ada54614e94e94c18&"
+      ],
+      "author": "ieb",
+      "author_id": "204961091892019200",
+      "bot": false,
+      "id": "1560228138372309012",
+      "staff": false,
+      "text": "Under the other section, the wide screen page is missing some of the pages. (world map, lore map, war board)\n\nI need these cool things to look at :("
+    }
+  ],
+  "thread_id": "1560228138372309012",
+  "title": "Pc view missing hotbar options",
+  "url": "https://discord.com/channels/708006319658893385/1560228138372309012"
+}
