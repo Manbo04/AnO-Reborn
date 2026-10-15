@@ -237,7 +237,7 @@ def size_bot(
     units = army_for_strength(archetype, army_strength)
     return {
         "provinces": provinces,
-        "population_per_province": max(1, population // provinces),
+        "population_per_province": max(1, (population + provinces - 1) // provinces),
         "gold": gold_target(provinces, tier),
         "stock": {r: resource_target(r, provinces, tier) for r in resource_names},
         "units": units,
