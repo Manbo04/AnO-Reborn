@@ -2136,7 +2136,7 @@ def find_targets():
                     u.flag,
                     COALESCE(p.provinces_count, 0) AS provinces_count,
                     COALESCE(p.province_population, 0) AS population,
-                    (COALESCE(p.province_population, 0) / 1000.0 + COALESCE(mil.mil_strength, 0)) AS strength
+                    COALESCE(p.province_population, 0) / 1000.0 AS strength
                 FROM users u
                 LEFT JOIN LATERAL (
                     SELECT
@@ -2145,30 +2145,8 @@ def find_targets():
                     FROM provinces
                     WHERE userid = u.id
                 ) p ON true
-                LEFT JOIN LATERAL (
-                    SELECT COALESCE(SUM(um.quantity * CASE LOWER(ud.name)
-                        WHEN 'soldiers' THEN 1
-                        WHEN 'tanks' THEN 40
-                        WHEN 'artillery' THEN 30
-                        WHEN 'sam_batteries' THEN 35
-                        WHEN 'fighters' THEN 60
-                        WHEN 'bombers' THEN 70
-                        WHEN 'apaches' THEN 50
-                        WHEN 'destroyers' THEN 120
-                        WHEN 'cruisers' THEN 200
-                        WHEN 'submarines' THEN 150
-                        WHEN 'aircraft_carriers' THEN 250
-                        WHEN 'kamikaze_drones' THEN 5
-                        WHEN 'cruise_missiles' THEN 100
-                        WHEN 'icbms' THEN 500
-                        WHEN 'nukes' THEN 2000
-                        ELSE 0 END), 0) AS mil_strength
-                    FROM user_military um
-                    JOIN unit_dictionary ud ON um.unit_id = ud.unit_id
-                    WHERE um.user_id = u.id
-                ) mil ON true
                 WHERE u.id != %s
-                  AND (COALESCE(p.province_population, 0) / 1000.0 + COALESCE(mil.mil_strength, 0)) BETWEEN %s AND %s
+                  AND COALESCE(p.province_population, 0) / 1000.0 BETWEEN %s AND %s
                 -- AI nations first, so every player always sees their bot targets
                 ORDER BY (u.auth_type = 'bot') DESC, u.username
                 LIMIT 50

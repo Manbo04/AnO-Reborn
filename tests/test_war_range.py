@@ -46,16 +46,14 @@ def test_war_strength_units_weights():
         "nukes": 1,           # 1 * 2000 = 2000
         "spies": 50,          # 50 * 0 = 0
     }
-    # Total units = 2800.0
-    # Population 2,000,000 / 1000 = 2000.0
-    # Total = 4800.0
-    assert war_strength(2_000_000, units) == 4800.0
+    # Standing units affect combat but no longer change war eligibility.
+    assert war_strength(2_000_000, units) == 2000.0
 
 
 def test_war_strength_case_insensitivity():
     units = {"Soldiers": 50, "TANKS": 2}
-    # 50 * 1 + 2 * 40 = 130.0
-    assert war_strength(0, units) == 130.0
+    # Unit composition is independent of the population-based war score.
+    assert war_strength(0, units) == 0.0
 
 
 def test_in_war_range_constants():

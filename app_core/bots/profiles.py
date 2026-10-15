@@ -1,9 +1,8 @@
 """Pure (no DB) sizing rules for bot nations: names, armies, treasuries.
 
-A bot is sized from the human it is spawned for, so it sits inside that
-player's war range (wars/war_range.py: defender strength must be 75%-133% of
-the attacker's, strength = population/1000 + weighted units) and is worth
-beating: its stockpiles scale with province count and difficulty tier.
+A bot is sized from the human it is spawned for, so its population places it
+inside that player's war range. Military composition affects combat only;
+stockpiles scale with province count and difficulty tier.
 """
 
 from __future__ import annotations
@@ -205,8 +204,8 @@ def army_for_strength(archetype: str, army_strength: float) -> Dict[str, int]:
 
 
 def army_share_of(strength: float, army_strength: float) -> float:
-    """Military share of a nation's strength, clamped to a sane band so a
-    bot never mirrors a pure-pop or pure-army player too literally."""
+    """Army combat strength as a share of population score, clamped so bots
+    don't mirror pure-population or pure-army nations too literally."""
     if strength <= 0:
         return MIN_ARMY_SHARE
     return min(MAX_ARMY_SHARE, max(MIN_ARMY_SHARE, army_strength / strength))
@@ -227,23 +226,22 @@ def size_bot(
 ) -> dict:
     """Full target state (population, gold, stock, army) for a bot nation.
 
-    Strength splits into population (``(1 - army_share)`` of it) and units;
-    the result lands on ``target_strength`` up to unit rounding.
+    Target strength is population/1000. Army share determines military
+    composition independently of war-range strength.
     """
     provinces = max(1, int(provinces))
     army_share = min(MAX_ARMY_SHARE, max(MIN_ARMY_SHARE, float(army_share)))
     target_strength = max(1.0, float(target_strength))
-    population = int(target_strength * (1.0 - army_share) * 1000.0)
-    units = army_for_strength(archetype, target_strength * army_share)
+    population = int(target_strength * 1000.0)
+    army_strength = target_strength * army_share / (1.0 - army_share)
+    units = army_for_strength(archetype, army_strength)
     return {
         "provinces": provinces,
         "population_per_province": max(1, population // provinces),
         "gold": gold_target(provinces, tier),
         "stock": {r: resource_target(r, provinces, tier) for r in resource_names},
         "units": units,
-        "target_strength": int(
-            population / 1000.0 + sum(q * UNIT_WEIGHTS[u] for u, q in units.items())
-        ),
+        "target_strength": int(population / 1000.0),
     }
 
 
