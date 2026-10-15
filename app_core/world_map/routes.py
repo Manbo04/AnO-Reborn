@@ -152,7 +152,7 @@ def get_province_map_nodes():
             "province_count": len(cluster_provinces),
         })
 
-    planets.sort(key=lambda planet: (not planet["is_home"], planet["name"].casefold()))
+    planets.sort(key=lambda planet: (planet["is_home"], planet["name"].casefold()))
     return jsonify({"status": "success", "provinces": provinces, "planets": planets})
 
 @bp.route("/api/admin/run_migration", methods=["GET"])
