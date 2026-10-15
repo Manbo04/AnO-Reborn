@@ -1,0 +1,23 @@
+{
+  "author_id": "465912833352138768",
+  "created_at": "2026-10-15T16:00:57Z",
+  "kind": "suggestion",
+  "last_message_id": "1560321593765404883",
+  "last_player_message_at": "2026-10-15T16:00:57Z",
+  "messages": [
+    {
+      "at": "2026-10-15T16:00:57Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1560321593765404883",
+      "staff": false,
+      "text": "Add an in game mechanic that allows you to invest resource in a nation in exchange for a % return of that resource and the initial deposit repaid"
+    }
+  ],
+  "status": "new",
+  "thread_id": "1560321593765404883",
+  "title": "Resource Bonds",
+  "url": "https://discord.com/channels/708006319658893385/1560321593765404883"
+}
