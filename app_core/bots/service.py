@@ -217,9 +217,17 @@ def _resource_names() -> List[str]:
 
 
 def _size_from_row(row: dict) -> dict:
+    # Older bot rows stored population plus army points in target_strength.
+    # Derive the new range score from the stored population so an upgrade
+    # doesn't silently inflate an existing bot's population and war range.
+    target_strength = (
+        float(row["population_per_province"] or 0)
+        * int(row["provinces"] or 0)
+        / 1000.0
+    )
     return profiles.size_bot(
         provinces=row["provinces"],
-        target_strength=row["target_strength"],
+        target_strength=target_strength,
         army_share=row["army_share"],
         archetype=row["archetype"],
         tier=row["tier"],
