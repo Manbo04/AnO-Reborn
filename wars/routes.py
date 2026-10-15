@@ -1404,7 +1404,8 @@ def warResult():
                     attack_effects[0] = attack_effects[0] * 10
                 elif war_type == "Loot":
                     attack_effects[0] = attack_effects[0] * 0.2
-                    if winner == attacker.user_id:
+                    # Treasury loot is a ground raid; air and naval wins cannot seize it.
+                    if winner == attacker.user_id and is_ground_attack:
                         # Independent connection so loot survives request rollback
                         # if a later step (infra damage, template render) raises.
                         from database import get_db_connection as _loot_gdc
