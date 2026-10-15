@@ -98,9 +98,10 @@ Rules:
   automatically end after 7 days if still active (hourly tick). Concludes as
   white peace with no reparations or winner, and notifies both combatants via
   news. 🔒 `tests/test_war_expiry.py`
-- **Attacker battle morale**: When an attacker loses a combat engagement, the
-  attacker suffers 0 morale loss. Defenders who lose continue to suffer normal
-  morale penalties. 🔒 `tests/test_war_morale.py`
+- **Battle morale**: The losing side in every combat engagement loses morale,
+  whether it is the attacker or defender. The morale hit scales with the loser’s
+  force composition, the victor’s relative strength, and battle outcome. 🔒
+  `tests/test_war_morale.py`
 - **Army size manpower cap** (`app_core/military/manpower.py`): Total army manpower
   across all owned units (including troops currently fighting) cannot exceed
   `MANPOWER_SHARE = 10%` of working-age population (`pop_working`, fallback `population`).

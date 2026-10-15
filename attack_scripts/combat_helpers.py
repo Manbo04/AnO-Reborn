@@ -178,20 +178,15 @@ def compute_morale_delta(
     winner_is_defender: bool,
     win_type: float,
 ) -> int:
-    """Compute the morale delta for the loser based on unit composition.
+    """Compute morale loss for a defeated side based on its force and its victor.
 
-    A failed attack no longer costs the attacker morale: when the attacker
-    loses (winner_is_defender is True), returns 0.
-    When the defender loses (winner_is_defender is False), returns clamped 1..200.
+    Both attackers and defenders lose morale when they lose. The stronger the
+    winning side relative to the combined forces, the larger the morale hit.
     """
-    if winner_is_defender:
-        return 0
-
     attacker_strength = compute_strength(attacker_units)
     defender_strength = compute_strength(defender_units)
-
-    advantage = attacker_strength / (attacker_strength + defender_strength + 1e-9)
-    advantage_factor = advantage
+    winner_strength = defender_strength if winner_is_defender else attacker_strength
+    advantage_factor = winner_strength / (attacker_strength + defender_strength + 1e-9)
 
     base_loser_value = 0.0
     for unit_name, count in (loser_units or {}).items():
