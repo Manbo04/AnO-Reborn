@@ -34,10 +34,10 @@ def test_bot_strength_lands_near_target():
         assert s["target_strength"] == int(_strength(s))
 
 
-def test_army_share_splits_strength_between_population_and_units():
+def test_army_share_changes_units_without_changing_war_range_population():
     low, high = _size(share=0.2), _size(share=0.6)
     assert high["units"]["tanks"] > low["units"]["tanks"]
-    assert high["population_per_province"] < low["population_per_province"]
+    assert high["population_per_province"] == low["population_per_province"]
 
 
 def test_army_share_is_clamped():

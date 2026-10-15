@@ -63,9 +63,8 @@ def ensure_schema(cur) -> None:
 def fetch_humans(cur) -> List[Dict]:
     """Recently active human nations with their war strength.
 
-    Strength is the game's own (wars/war_range.py): population/1000 plus
-    weighted units, so a bot built to a human's number is in that human's
-    declarable range by construction.
+    War-range strength is population/1000. Military is tracked only to give
+    bots a comparable combat force; it does not affect target eligibility.
     """
     from wars.war_range import unit_weight_case_sql
 
@@ -106,7 +105,7 @@ def fetch_humans(cur) -> List[Dict]:
     out = []
     for uid, cnt, pop, army in rows:
         pop, army = float(pop or 0), float(army or 0)
-        strength = pop / 1000.0 + army
+        strength = pop / 1000.0
         out.append(
             {
                 "id": uid,
@@ -119,15 +118,20 @@ def fetch_humans(cur) -> List[Dict]:
 
 
 def fetch_bots(cur) -> List[Dict]:
-    """Bots with their *target* strength.
+    """Bots with their target population-based war-range strength.
 
-    The live number dips whenever a bot loses a battle; coverage must not read
-    that as "out of range" and spawn replacements for a bot that is about to
-    regenerate, so it works from the stored target instead.
+    Use target population rather than current population so ordinary combat
+    losses don't trigger duplicate bot spawning while the bot regenerates.
     """
-    cur.execute("SELECT user_id, provinces, target_strength FROM bot_nations")
+    cur.execute(
+        "SELECT user_id, provinces, population_per_province FROM bot_nations"
+    )
     return [
-        {"id": r[0], "provinces": int(r[1]), "strength": float(r[2] or 0)}
+        {
+            "id": r[0],
+            "provinces": int(r[1]),
+            "strength": float(r[1] or 0) * float(r[2] or 0) / 1000.0,
+        }
         for r in cur.fetchall()
     ]
 
@@ -213,9 +217,17 @@ def _resource_names() -> List[str]:
 
 
 def _size_from_row(row: dict) -> dict:
+    # Older bot rows stored population plus army points in target_strength.
+    # Derive the new range score from the stored population so an upgrade
+    # doesn't silently inflate an existing bot's population and war range.
+    target_strength = (
+        float(row["population_per_province"] or 0)
+        * int(row["provinces"] or 0)
+        / 1000.0
+    )
     return profiles.size_bot(
         provinces=row["provinces"],
-        target_strength=row["target_strength"],
+        target_strength=target_strength,
         army_share=row["army_share"],
         archetype=row["archetype"],
         tier=row["tier"],
