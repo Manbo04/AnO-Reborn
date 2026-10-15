@@ -127,7 +127,7 @@ def get_province_map_nodes():
         )
         # Radius is in rendered map pixels. Leave room around the outermost
         # province so clusters read as complete planets instead of tiny badges.
-        radius = min(1100, max(320, extent * 80 + 320))
+        radius = min(1350, max(360, extent * 120 + 360))
         slot_q, slot_r = next(slots)
         world_x = slot_q * world_spacing
         world_y = slot_r * world_spacing
