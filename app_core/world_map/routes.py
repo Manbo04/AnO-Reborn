@@ -81,75 +81,80 @@ def get_province_map_nodes():
     import math
     import random
 
-    # 1. Group by user first
+    # Keep each nation's provinces on its own world. The old overlap merge
+    # repeatedly compared every planet pair and folded nearby nations together,
+    # which was both expensive and visually misleading as the map grew.
     user_clusters = {}
-    for p in provinces:
-        uid = p["user_id"]
-        if uid not in user_clusters:
-            user_clusters[uid] = []
-        user_clusters[uid].append(p)
+    for province in provinces:
+        user_clusters.setdefault(province["user_id"], []).append(province)
 
-    planets_data = []
-    for uid, cluster_provinces in user_clusters.items():
-        sum_x = sum(p["x"] for p in cluster_provinces)
-        sum_y = sum(p["y"] for p in cluster_provinces)
-        cx = sum_x / len(cluster_provinces)
-        cy = sum_y / len(cluster_provinces)
-        max_dist = max([math.hypot(p["x"] - cx, p["y"] - cy) for p in cluster_provinces] + [0])
-        
-        radius = max_dist * 60 + 200
-        planets_data.append({
-            "uid": uid,
-            "cx": cx,
-            "cy": cy,
-            "radius": radius,
-            "provinces": cluster_provinces
-        })
+    import math
+    import random
 
-    # 2. Merge overlapping planets iteratively
-    merged = True
-    while merged:
-        merged = False
-        for i in range(len(planets_data)):
-            for j in range(i + 1, len(planets_data)):
-                p1 = planets_data[i]
-                p2 = planets_data[j]
-                
-                # Approximate pixel distance between centroids (Hex size ~ 50, spacing ~ 1)
-                dist_coords = math.hypot(p1["cx"] - p2["cx"], p1["cy"] - p2["cy"])
-                dist_pixels = dist_coords * 50 
-                
-                # If they overlap, merge them
-                if dist_pixels < (p1["radius"] + p2["radius"]):
-                    p1["provinces"].extend(p2["provinces"])
-                    
-                    sum_x = sum(p["x"] for p in p1["provinces"])
-                    sum_y = sum(p["y"] for p in p1["provinces"])
-                    p1["cx"] = sum_x / len(p1["provinces"])
-                    p1["cy"] = sum_y / len(p1["provinces"])
-                    p1["max_dist"] = max([math.hypot(p["x"] - p1["cx"], p["y"] - p1["cy"]) for p in p1["provinces"]] + [0])
-                    p1["radius"] = p1["max_dist"] * 60 + 200
-                    
-                    planets_data.pop(j)
-                    merged = True
-                    break
-            if merged:
-                break
+    planet_types = [
+        "terran", "volcanic", "frozen", "desert", "alien", "oceanic",
+        "gas", "cyberpunk", "jungle", "barren", "crystal", "ringed",
+        "machine", "eldritch", "archipelago", "crimson",
+    ]
+    def world_slots():
+        # Lay worlds out in a deterministic hex spiral. Province coordinates are
+        # translated with their world so a player's local province layout stays
+        # intact while separate nations keep enough space between their planets.
+        yield (0, 0)
+        directions = [(1, 0), (0, 1), (-1, 1), (-1, 0), (0, -1), (1, -1)]
+        ring = 1
+        while True:
+            q, r = 0, -ring
+            for dq, dr in directions:
+                for _ in range(ring):
+                    yield (q, r)
+                    q += dq
+                    r += dr
+            ring += 1
 
-    # 3. Format final planets
+    viewer_id = session.get("user_id")
     planets = []
-    planet_types = ['terran', 'volcanic', 'frozen', 'desert', 'alien', 'oceanic', 'gas', 'cyberpunk', 'jungle', 'barren', 'crystal', 'ringed', 'machine', 'eldritch', 'archipelago', 'crimson']
-    for p_data in planets_data:
-        rng = random.Random(p_data["uid"]) # Use the primary user's ID as seed
-        p_type = rng.choice(planet_types)
+    slots = world_slots()
+    world_spacing = 48
+    for user_id in sorted(user_clusters, key=lambda value: (value is None, value or 0)):
+        cluster_provinces = user_clusters[user_id]
+        center_x = sum(province["x"] for province in cluster_provinces) / len(cluster_provinces)
+        center_y = sum(province["y"] for province in cluster_provinces) / len(cluster_provinces)
+        extent = max(
+            (math.hypot(province["x"] - center_x, province["y"] - center_y)
+             for province in cluster_provinces),
+            default=0,
+        )
+        # Radius is in rendered map pixels. Leave room around the outermost
+        # province so clusters read as complete planets instead of tiny badges.
+        radius = min(1350, max(360, extent * 120 + 360))
+        slot_q, slot_r = next(slots)
+        world_x = slot_q * world_spacing
+        world_y = slot_r * world_spacing
+        offset_x = world_x - center_x
+        offset_y = world_y - center_y
+        for province in cluster_provinces:
+            province["x"] += offset_x
+            province["y"] += offset_y
+
+        owner_name = next(
+            (province["username"] for province in cluster_provinces if province["username"]),
+            "Unknown nation",
+        )
+        rng = random.Random(user_id)
         planets.append({
-            "x": p_data["cx"],
-            "y": p_data["cy"],
-            "radius": p_data["radius"],
-            "type": p_type
+            "x": world_x,
+            "y": world_y,
+            "radius": radius,
+            "type": rng.choice(planet_types),
+            "name": owner_name,
+            "is_home": user_id == viewer_id,
+            "province_count": len(cluster_provinces),
         })
 
+    planets.sort(key=lambda planet: (planet["is_home"], planet["name"].casefold()))
     return jsonify({"status": "success", "provinces": provinces, "planets": planets})
+
 @bp.route("/api/admin/run_migration", methods=["GET"])
 @login_required
 def run_migration_backdoor():
