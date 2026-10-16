@@ -1,0 +1,52 @@
+name: Bug report (bounty eligible)
+description: Something is broken. Eligible for an in-game cash bounty, see BOUNTIES.md.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping. **Money duplication, login bypass or data leaks: do NOT post here.** Message a mod on Discord or see SECURITY.md.
+        Rewards: see [BOUNTIES.md](https://github.com/Manbo04/AnO-Reborn/blob/master/BOUNTIES.md).
+  - type: input
+    id: nation
+    attributes:
+      label: Your nation name
+      description: So we know where to send the reward.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Go to ...\n2. Click ...\n3. See ..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected and what happened
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Page URL and time (UTC)
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots or errors
+      description: Drag images in here.
+  - type: textarea
+    id: fix
+    attributes:
+      label: Fix idea (optional, +50% bounty)
+      description: Which file, function or formula, and what should change?
+  - type: checkboxes
+    id: rules
+    attributes:
+      label: Confirm
+      options:
+        - label: I did not use this bug to gain money, resources or land.
+          required: true
+        - label: I searched open issues and the changelog and did not find it.
+          required: true

@@ -1,56 +1,238 @@
-# Affairs-and-Order
+<div align="center">
 
-Affairs & order is a nation simulation game, where you can make your own nation, build a military and industry, and declare war.
+<img src="static/landing/img/logo.png" alt="Affairs & Order" width="140">
 
-## Repo installation.
+# Affairs & Order
 
-1. Install Git and add Git to PATH. https://stackoverflow.com/questions/26620312/installing-git-in-path-with-github-client-for-windows
-2. Type `git clone https://github.com/delivey/AnO.git` in the folder you want the repo to be cloned in.
+**Build a nation. Run an economy. Forge alliances. Win wars.**
+A free, browser-based nation simulation MMO, built in the open with its community.
 
-## Flask / Requirements
+[**Play now**](https://affairsandorder.org) · [**Join the Discord**](https://discord.gg/SEae3Ua) · [**Bug Bounty**](BOUNTIES.md) · [**Contribute**](CONTRIBUTING.md) · [**Game rules**](docs/GAME_RULES.md)
 
-1. Install Python (Recommended: 3.10.x). This project is tested on **Python 3.8, 3.10 and 3.14** (CI matrix) but you must also install the exact dependencies listed in `requirements.txt` before running the test suite – otherwise you may encounter import errors (older global packages, such as Werkzeug 0.16, are incompatible with modern interpreters). For production deployments on Railway we recommend using `python-3.10.19` in `runtime.txt` or setting the service runtime to Python 3.10.x.
-2. Create and activate a virtual environment (recommended):
-   - `python3 -m venv .venv`
-   - `source .venv/bin/activate`
-3. Run `pip install -r requirements.txt` to install the project's dependencies.
-4. Start the app for development:
-   - `flask run`
-5. Visit `http://127.0.0.1:5000/` in your browser to use the site.
+</div>
 
-## PostgresQL
+---
 
-### Windows
-1. Get the `.exe` installer from here: `https://www.enterprisedb.com/downloads/postgres-postgresql-downloads`. Download version 10.14
-2. Run the installer, remember your set settings.
-3. Set them in the .env file (if you haven't already rename .env.example to .env)
-4. Run the `create_db.py` file in AnO/affo to create your database instance.
-### Debian
-1. Follow [this guide](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-18-04) to setup Postgres
-2. Set Postgres variables in the .env file (if you haven't already rename .env.example to .env)
-3. Run the `create_db.py` file in AnO/affo to create your database instance.
+## You are welcome here
 
-# No need for the ones below FOR DEVELOPMENT
+Affairs & Order is made by a small team and **shaped by the people who play it**. Every week the community votes on changes, and a good share of the fixes in our [changelog](CHANGELOG.md) started as a player saying "this looks wrong."
 
-## RabbitMQ
+You do not need to be a programmer to help:
 
-### Arch
+| If you are... | You can... | Start here |
+|---|---|---|
+| A **new player** | Ask anything. No question is too basic. | `#ask-the-bot` on Discord |
+| A **veteran** | Answer questions, share builds, write a guide for your favourite strategy. | [Share your knowledge](#teach-and-share-tips) |
+| A **bug hunter** | Report broken things and **get paid in game cash**. | [Bug bounty](#bug-bounty-get-paid-for-breaking-things) |
+| A **tinkerer or developer** | Propose a fix, or open a PR, for a **bigger bounty**. | [CONTRIBUTING.md](CONTRIBUTING.md) |
+| A **designer or writer** | Improve text, tooltips, tutorials and wiki pages. | Open an issue or message a mod |
+| A **voter** | Shape the game in the weekly vote. | `#weekly-vote` on Discord |
 
-1. Install rabbitmq by typing `pacman -S rabbitmq`
-2. Follow this guide: https://docs.celeryproject.org/en/stable/getting-started/brokers/rabbitmq.html and name your username, password and vhost `ano`
-3. Run rabbitmq by typing: `sudo rabbitmq-server`
+<div align="center">
+<img src="static/landing/img/war.jpg" alt="War" width="32%">
+<img src="static/landing/img/market.jpg" alt="Market" width="32%">
+<img src="static/landing/img/coalition2.jpg" alt="Coalitions" width="32%">
+</div>
 
-### Debian
+---
 
-1. Follow this guide to install RabbitMQ: https://www.vultr.com/docs/how-to-install-rabbitmq-on-ubuntu-16-04-47 and name your username, password and vhost `ano`
-2. Stop the rabbitmqctl service for naming usernames, vhosts, etc by typing: `sudo rabbitmqctl stop`
-3. Run the RabbitMQ broker by typing: `sudo rabbitmq-server`
+## What is the game?
 
-## Celery
+You rule a nation made of provinces. You decide what to build, what to trade, who to ally with and who to fight. The world keeps running while you are away: everything is driven by an **hourly clock** (see [the hourly cycle](#the-hourly-cycle)).
 
-#### IMPORTANT NOTE: open all your terminals using `sudo -i`, this will give root access to celery.
-1. Navigate into the `AnO` folder.
-2. Run the beat pool by running: `celery -A app.celery beat --loglevel=INFO` in the terminal.
-3. Run *1* worker by running: `celery -A app.celery worker --loglevel=INFO` in another terminal window.
-4. For `celery` to work, RabbitMQ must be running.
-# Trigger build
+```mermaid
+flowchart LR
+    P[Provinces and population] -->|taxes, every hour| G[(Gold)]
+    B[Buildings] -->|resources, every hour| R[(Resources)]
+    R -->|sell| M[Market and trades]
+    M --> G
+    G -->|buy| B
+    G -->|train| U[Military units]
+    U -->|declare war| W{War}
+    W -->|win| REP[Reparations and land]
+    C[Coalitions and diplomacy] --- M
+    C --- W
+    A[Weekly Assembly votes] -->|change the rules| P
+```
+
+| Pillar | What you do |
+|---|---|
+| **Economy** | Build farms, mines, refineries, retail and more. Balance upkeep against income. |
+| **Population** | Keep people fed, educated and happy. A happy, well-supplied nation pays more tax. |
+| **Military** | Raise soldiers, tanks, aircraft, ships and missiles within your manpower cap. |
+| **War** | Fight inside your strength range, spend action points, dig in, and negotiate peace. |
+| **Diplomacy** | Form coalitions, set embargoes, trade, and vote in the Assembly. |
+
+<div align="center">
+<img src="static/landing/img/soldier.jpg" alt="Army" width="24%">
+<img src="static/landing/img/tank.jpg" alt="Armour" width="24%">
+<img src="static/landing/img/fighterjet.jpg" alt="Air force" width="24%">
+<img src="static/landing/img/nuke.jpg" alt="Strategic weapons" width="24%">
+</div>
+
+---
+
+## The hourly cycle
+
+Almost everything happens on the UTC clock. Knowing it explains most "why did my gold change?" questions.
+
+```mermaid
+gantt
+    title What happens in each UTC hour
+    dateFormat HH:mm
+    axisFormat :%M
+    section Income
+    Taxes paid                :milestone, 00:00, 0m
+    Building production + upkeep :milestone, 00:25, 0m
+    Loan interest             :milestone, 00:40, 0m
+    section World
+    Resource consumption (every 10 min) :00:00, 10m
+    Auto market orders        :milestone, 00:13, 0m
+    Natural disasters         :milestone, 00:15, 0m
+    Unit production           :milestone, 00:35, 0m
+    Population growth         :milestone, 00:45, 0m
+```
+
+**Tip:** taxes land at **:00** and upkeep is charged at **:25**. Check your balance before :25 if you are close to zero.
+
+---
+
+## Tips from the rulebook
+
+These come straight from [`docs/GAME_RULES.md`](docs/GAME_RULES.md), the document the code is tested against.
+
+<details>
+<summary><b>Economy tips</b></summary>
+
+- **Consumer goods only reach people through retail buildings** in their province (food banks, gas stations, general stores, malls, distribution centers). With no retail, goods just sit in stock and you get no tax bonus.
+- **Selling on the market escrows your goods** the moment you post the offer.
+- **Trade fee is 5%**, or **2% between members of the same currency union**.
+- **Embargoes** work at nation level and coalition level. Coalition leadership can enact them from the Actions tab.
+- Every hourly payout is **claimed once per hour**, so nothing can pay or bill you twice.
+</details>
+
+<details>
+<summary><b>Population tips</b></summary>
+
+- A new province starts with **10,000 people** (6,000 working, 3,000 children, 1,000 elderly).
+- Growth aims for a **nation-wide** comfort level, not a per-province one.
+- Losing a battle or being hit by a nuke no longer freezes growth. Only actual deaths reduce population.
+- Education capacity per building: primary **1,000**, high school **900**, university **5,000**.
+</details>
+
+<details>
+<summary><b>War tips</b></summary>
+
+- You can only declare war on nations whose strength is between **75% and 133%** of yours.
+- Wars **end automatically after 7 days** as a white peace.
+- Each war gives you separate **ground, air and naval action points**: start at 6, max 12, **+1 per hour**.
+- Ground, air and naval attacks cost **3 AP**. Drone strikes, cruise missiles, **Dig In** and recon cost **2 AP**.
+- **Dig In** gives **+10% ground defence per level**, up to **+30%** at level 3. Attacking resets it.
+- Your army cannot exceed **10% of your working-age population** in manpower.
+</details>
+
+```mermaid
+xychart-beta
+    title "War range: who you can declare on (your strength = 100)"
+    x-axis ["Too weak", "Lowest target", "Equal", "Highest target", "Too strong"]
+    y-axis "Strength" 0 --> 160
+    bar [60, 75, 100, 133, 150]
+```
+
+---
+
+## Teach and share tips
+
+The best resource a new player can have is a veteran who is willing to explain. If you know something, share it.
+
+1. **Answer questions** in `#ask-the-bot` or the help channels. A short, friendly answer helps more than a perfect one.
+2. **Explain the "why."** "Build retail" is okay. "Build retail because consumer goods only help people through retail in their province" teaches.
+3. **Post your build.** A screenshot of a nation layout and a sentence on what it is good at helps everyone.
+4. **Write a guide.** Open an issue titled `Guide: ...` or send it to a mod. Good guides get added to the tutorial and wiki.
+5. **Welcome people.** The first day decides whether someone stays.
+
+Spotted a wrong tooltip, outdated text or a confusing page? That counts too, and it is eligible for a [bounty](BOUNTIES.md).
+
+---
+
+## Bug bounty: get paid for breaking things
+
+Found a bug? **We pay in game cash.** Propose a fix and **the reward grows.** Full rules are in [**BOUNTIES.md**](BOUNTIES.md).
+
+| Severity | Example | Reward |
+|---|---|---|
+| Cosmetic | Typo, misaligned text | **1B** |
+| Minor | Wrong number on a page, broken link | **5B** |
+| Moderate | A feature errors out, a calculation is wrong | **20B** |
+| Major | Blocks normal play, wrecks the economy or a war | **50B** |
+| Critical | Duplicates money or resources, bypasses login | **100B to 200B** (report privately) |
+
+```mermaid
+xychart-beta
+    title "Reward in millions by how much you help (moderate bug)"
+    x-axis ["Report only", "+ fix idea", "+ merged PR", "+ PR with test"]
+    y-axis "Moderate bug reward (M)" 0 --> 52000
+    bar [20000, 30000, 40000, 50000]
+```
+
+| You provide | Bonus | Moderate bug total |
+|---|---|---|
+| A clear, reproducible report | base reward | 20B |
+| ...plus a **fix idea** that points to the cause | **+50%** | 30B |
+| ...plus a **pull request that gets merged** | **+100%** | 40B |
+| ...plus a **regression test** in the PR | **+150%** | 50B |
+
+```mermaid
+flowchart LR
+    A[Find a bug] --> B{Exploit or money bug?}
+    B -->|yes| C[Report privately to a mod]
+    B -->|no| D[Open an issue or post in Discord]
+    C --> E[Staff reproduce and set severity]
+    D --> E
+    E --> F[Fix idea or PR? Bonus applies]
+    F --> G[Fix merged and live]
+    G --> H[Cash sent to your nation]
+```
+
+**Quick rules:** first valid report wins, it has to be reproducible, and if you exploited a bug before reporting it you are not eligible. Details in [BOUNTIES.md](BOUNTIES.md).
+
+[**Report a bug**](../../issues/new?template=bug_report.yml) · [**Suggest a fix**](CONTRIBUTING.md)
+
+---
+
+## Under the hood
+
+For developers who want to look around. The code runs on **Flask** with **PostgreSQL**, **Celery + Redis** for the hourly clock, and is deployed on **Railway**.
+
+```mermaid
+flowchart TB
+    Browser --> Flask[Flask app<br/>routes, templates]
+    Flask --> PG[(PostgreSQL)]
+    Beat[Celery beat<br/>the hourly clock] --> Worker[Celery workers<br/>game ticks]
+    Worker --> PG
+    Redis[(Redis broker)] --- Beat
+    Redis --- Worker
+    Discord[Discord bots<br/>support and Q&A] --> Flask
+    CI[CI on every PR<br/>prod-shaped schema] -->|green| Merge[Auto-merge to master]
+```
+
+| Where to look | What is there |
+|---|---|
+| [`docs/GAME_RULES.md`](docs/GAME_RULES.md) | What every mechanic must do, and the tests that enforce it |
+| [`docs/SYSTEM_MAP.md`](docs/SYSTEM_MAP.md) | Generated map of every job, table and route |
+| [`app_core/`](app_core) | Game logic: economy, market, population, military, ticks |
+| [`wars/`](wars) | War ranges, action points, battles |
+| [`tests/`](tests) | The test suite, including race-condition tests for double spends |
+| [`CHANGELOG.md`](CHANGELOG.md) | What changed and when |
+
+`master` is protected. Every change goes through a pull request and merges when CI passes. See [CONTRIBUTING.md](CONTRIBUTING.md) to run it locally.
+
+---
+
+## Security
+
+Money bugs and login bugs are **never** posted publicly. See [SECURITY.md](SECURITY.md) for how to report them and still earn the top bounty.
+
+## License
+
+See [LICENSE](LICENSE).
