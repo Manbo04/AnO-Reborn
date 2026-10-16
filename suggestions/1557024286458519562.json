@@ -3,7 +3,7 @@
   "ballot_id": "2026-10-09",
   "created_at": "2026-10-06T13:38:38Z",
   "kind": "suggestion",
-  "last_message_id": "1558279393443323977",
+  "last_message_id": "1560691617839456467",
   "last_player_message_at": "2026-10-10T00:45:58Z",
   "messages": [
     {
@@ -98,6 +98,16 @@
       "id": "1558279393443323977",
       "staff": false,
       "text": "WAH\nInvestments are BONDS by the way"
+    },
+    {
+      "at": "2026-10-16T16:31:17Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1560691617839456467",
+      "staff": false,
+      "text": "<@1180720719060029500> the vote is in: **8 yes / 3 no**. Your suggestion passed, it's queued to be built. You'll get a ping here when it's live."
     }
   ],
   "poll_message_id": "1558148265365602366",

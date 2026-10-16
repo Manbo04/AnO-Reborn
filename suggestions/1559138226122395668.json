@@ -3,7 +3,7 @@
   "ballot_id": "2026-10-16",
   "created_at": "2026-10-12T09:38:40Z",
   "kind": "suggestion",
-  "last_message_id": "1559333011319955459",
+  "last_message_id": "1560691702308675667",
   "last_player_message_at": "2026-10-12T22:32:40Z",
   "messages": [
     {
@@ -235,6 +235,16 @@
       "id": "1559333011319955459",
       "staff": false,
       "text": "Other option is to start the war at less points (maybe 1/3, or 1/4), and increase time for each turn. DnS wars typically took 2-3 days at the least, and because each action type had a cap of 12 points, and you only regenerated 1 per 2 hours, you could \"bank\" 24 hours of action, so you wouldn't cap yourself if someone attacked just as you went to bed, and it also took longer for wars to be won, allowing for more of a fair chance. \n\nTbh, I wouldn't even mind a war starting at 0 action points, or maybe tie in the action points at start to different war types, maybe something like a Blitzkrieg lets you start with both sides having half of cap, but in exchange your side has a debuff which gets worse over time to simulate stretched and underprepared supply lines etc."
+    },
+    {
+      "at": "2026-10-16T16:31:38Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1560691702308675667",
+      "staff": false,
+      "text": "<@307290318590705667> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1560691700299604090\nVoting closes <t:1792771200:F>. If Yes wins, it gets built."
     }
   ],
   "poll_message_id": "1560691700299604090",

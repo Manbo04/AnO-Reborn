@@ -3,7 +3,7 @@
   "ballot_id": "2026-10-16",
   "created_at": "2026-10-15T08:49:02Z",
   "kind": "suggestion",
-  "last_message_id": "1560286555942289519",
+  "last_message_id": "1560691738899783783",
   "last_player_message_at": "2026-10-15T13:41:43Z",
   "messages": [
     {
@@ -55,6 +55,16 @@
       "id": "1560286555942289519",
       "staff": true,
       "text": "That resource is critical early"
+    },
+    {
+      "at": "2026-10-16T16:31:46Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1560691738899783783",
+      "staff": false,
+      "text": "<@249007223454433292> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1560691736928456726\nVoting closes <t:1792771200:F>. If Yes wins, it gets built."
     }
   ],
   "poll_message_id": "1560691736928456726",

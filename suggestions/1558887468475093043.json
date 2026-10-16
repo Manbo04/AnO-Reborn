@@ -3,7 +3,7 @@
   "ballot_id": "2026-10-16",
   "created_at": "2026-10-11T17:02:15Z",
   "kind": "suggestion",
-  "last_message_id": "1558904233380814982",
+  "last_message_id": "1560691684310913076",
   "last_player_message_at": "2026-10-11T17:02:15Z",
   "messages": [
     {
@@ -25,6 +25,16 @@
       "id": "1558904233380814982",
       "staff": false,
       "text": "<@176063647880052737> the target list is working, it just moves a lot. how it works: your strength = population/1000 + your units. targets are nations at 75%-133% of that, recalculated live every time you open the page.\nyour numbers right now (10-11):\n- population 106.07M -> 106,070 + 11,861 soldiers = about 117.9k strength\n- your window: 88.4k to 156.8k\n- in range: South Appalachia 150.9k, Chelovka 145.6k, Lerslen 140.0k, Aurelia 138.6k (that is your 4)\n- just outside: Maignalis 190k (too strong), celess mob 87.6k (a hair too weak)\nnations bunch up right on both edges of your window, so a small change in your pop/army or theirs (growth, losses, building units) pushes them in or out. that is why you saw 0, then 3, then 6-8, then 4. it is the same for everyone looking at you: you show up for anyone whose own window includes 117.9k."
+    },
+    {
+      "at": "2026-10-16T16:31:33Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1560691684310913076",
+      "staff": false,
+      "text": "<@176063647880052737> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1560691682511691788\nVoting closes <t:1792771200:F>. If Yes wins, it gets built."
     }
   ],
   "poll_message_id": "1560691682511691788",

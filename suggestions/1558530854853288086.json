@@ -3,7 +3,7 @@
   "ballot_id": "2026-10-16",
   "created_at": "2026-10-10T17:25:11Z",
   "kind": "suggestion",
-  "last_message_id": "1558794497456873564",
+  "last_message_id": "1560691664622977025",
   "last_player_message_at": "2026-10-11T10:52:49Z",
   "messages": [
     {
@@ -165,6 +165,16 @@
       "id": "1558794497456873564",
       "staff": false,
       "text": "Have an idea on making different sizes of school as well as schools that serve 2 levels at once"
+    },
+    {
+      "at": "2026-10-16T16:31:29Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1560691664622977025",
+      "staff": false,
+      "text": "<@519965006867988490> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1560691661892358186\nVoting closes <t:1792771200:F>. If Yes wins, it gets built."
     }
   ],
   "poll_message_id": "1560691661892358186",

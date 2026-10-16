@@ -3,7 +3,7 @@
   "ballot_id": "2026-10-16",
   "created_at": "2026-10-12T15:50:26Z",
   "kind": "suggestion",
-  "last_message_id": "1560565951215304716",
+  "last_message_id": "1560691710047166655",
   "last_player_message_at": "2026-10-16T08:11:56Z",
   "messages": [
     {
@@ -135,6 +135,16 @@
       "id": "1560565951215304716",
       "staff": false,
       "text": "Maybe the ones who would vote against it already left the game? 🤔"
+    },
+    {
+      "at": "2026-10-16T16:31:39Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1560691710047166655",
+      "staff": false,
+      "text": "<@465912833352138768> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1560691707979505825\nVoting closes <t:1792771200:F>. If Yes wins, it gets built."
     }
   ],
   "poll_message_id": "1560691707979505825",

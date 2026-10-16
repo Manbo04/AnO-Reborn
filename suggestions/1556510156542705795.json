@@ -3,7 +3,7 @@
   "ballot_id": "2026-10-09",
   "created_at": "2026-10-05T03:35:39Z",
   "kind": "suggestion",
-  "last_message_id": "1558148244385570918",
+  "last_message_id": "1560691597920960525",
   "last_player_message_at": "2026-10-05T05:13:01Z",
   "messages": [
     {
@@ -51,6 +51,16 @@
       "id": "1558148244385570918",
       "staff": false,
       "text": "<@465912833352138768> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1558148241701212213\nVoting closes <t:1792166400:F>. If Yes wins, it gets built."
+    },
+    {
+      "at": "2026-10-16T16:31:13Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1560691597920960525",
+      "staff": false,
+      "text": "<@465912833352138768> the vote is in: **11 yes / 2 no**. Your suggestion passed, it's queued to be built. You'll get a ping here when it's live."
     }
   ],
   "poll_message_id": "1558148241701212213",

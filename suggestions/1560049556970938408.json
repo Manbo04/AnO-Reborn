@@ -3,7 +3,7 @@
   "ballot_id": "2026-10-16",
   "created_at": "2026-10-14T21:59:58Z",
   "kind": "suggestion",
-  "last_message_id": "1560049556970938408",
+  "last_message_id": "1560691728867135600",
   "last_player_message_at": "2026-10-14T21:59:58Z",
   "messages": [
     {
@@ -15,6 +15,16 @@
       "id": "1560049556970938408",
       "staff": false,
       "text": "There needs to be a better balance on equipment.  Right now many smaller nations have no access to planes or navy.  This situation did not stop Vietnam or Afghanistan  from defending themselves and defeating America or Russia. It will also cause many new people to leave when they are raiding by forces they have no hope of dealing with."
+    },
+    {
+      "at": "2026-10-16T16:31:44Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1560691728867135600",
+      "staff": false,
+      "text": "<@176063647880052737> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1560691727319433261\nVoting closes <t:1792771200:F>. If Yes wins, it gets built."
     }
   ],
   "poll_message_id": "1560691727319433261",
