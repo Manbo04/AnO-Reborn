@@ -54,8 +54,12 @@
     }
   ],
   "poll_message_id": "1558148241701212213",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1556510156542705795",
   "title": "Make Drones, Missiles, Nukes Lower Moral And Use Supply",
-  "url": "https://discord.com/channels/708006319658893385/1556510156542705795"
+  "url": "https://discord.com/channels/708006319658893385/1556510156542705795",
+  "votes": {
+    "no": 2,
+    "yes": 11
+  }
 }

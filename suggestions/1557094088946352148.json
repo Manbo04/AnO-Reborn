@@ -78,8 +78,12 @@
     }
   ],
   "poll_message_id": "1558148268008153152",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1557094088946352148",
   "title": "Let us see our own orders in the Market",
-  "url": "https://discord.com/channels/708006319658893385/1557094088946352148"
+  "url": "https://discord.com/channels/708006319658893385/1557094088946352148",
+  "votes": {
+    "no": 1,
+    "yes": 13
+  }
 }

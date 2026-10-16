@@ -1,5 +1,6 @@
 {
   "author_id": "465912833352138768",
+  "ballot_id": "2026-10-16",
   "created_at": "2026-10-11T15:49:25Z",
   "kind": "suggestion",
   "last_message_id": "1558960532264845373",
@@ -26,7 +27,8 @@
       "text": "It is my understanding that there is no war history atm."
     }
   ],
-  "status": "new",
+  "poll_message_id": "1560691674592706673",
+  "status": "voting",
   "thread_id": "1558869140003881021",
   "title": "Show Buildings Lost In War History",
   "url": "https://discord.com/channels/708006319658893385/1558869140003881021"

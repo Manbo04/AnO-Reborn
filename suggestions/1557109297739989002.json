@@ -58,8 +58,12 @@
     }
   ],
   "poll_message_id": "1558148276560072837",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1557109297739989002",
   "title": "Add a mass delete button to the province page",
-  "url": "https://discord.com/channels/708006319658893385/1557109297739989002"
+  "url": "https://discord.com/channels/708006319658893385/1557109297739989002",
+  "votes": {
+    "no": 1,
+    "yes": 16
+  }
 }

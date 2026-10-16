@@ -101,8 +101,12 @@
     }
   ],
   "poll_message_id": "1558148265365602366",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1557024286458519562",
   "title": "Affairs and More Order (UI) - Sidebar/Topbar",
-  "url": "https://discord.com/channels/708006319658893385/1557024286458519562"
+  "url": "https://discord.com/channels/708006319658893385/1557024286458519562",
+  "votes": {
+    "no": 3,
+    "yes": 8
+  }
 }

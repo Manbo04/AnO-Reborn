@@ -60,8 +60,12 @@
     }
   ],
   "poll_message_id": "1558148284554420305",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1557523286643056750",
   "title": "add i for information on building cards",
-  "url": "https://discord.com/channels/708006319658893385/1557523286643056750"
+  "url": "https://discord.com/channels/708006319658893385/1557523286643056750",
+  "votes": {
+    "no": 0,
+    "yes": 16
+  }
 }

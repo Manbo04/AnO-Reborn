@@ -140,8 +140,12 @@
     }
   ],
   "poll_message_id": "1558148246470271199",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1556575967575801867",
   "title": "New provinces should take population from old ones",
-  "url": "https://discord.com/channels/708006319658893385/1556575967575801867"
+  "url": "https://discord.com/channels/708006319658893385/1556575967575801867",
+  "votes": {
+    "no": 4,
+    "yes": 8
+  }
 }

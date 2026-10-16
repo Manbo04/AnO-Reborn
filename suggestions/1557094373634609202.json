@@ -28,8 +28,12 @@
     }
   ],
   "poll_message_id": "1558148273892761601",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1557094373634609202",
   "title": "Trades in trade menu's",
-  "url": "https://discord.com/channels/708006319658893385/1557094373634609202"
+  "url": "https://discord.com/channels/708006319658893385/1557094373634609202",
+  "votes": {
+    "no": 0,
+    "yes": 14
+  }
 }

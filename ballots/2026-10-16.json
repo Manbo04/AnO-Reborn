@@ -1,0 +1,135 @@
+{
+  "channel_id": "1556457101025353888",
+  "closes_at": "2026-10-23T16:00:00Z",
+  "header_message_id": "1560691651012337778",
+  "id": "2026-10-16",
+  "items": [
+    {
+      "message_id": "1560691652774076477",
+      "question": "Should the market's 'my offers' page show past trades (most recent 250), filterable by resource, price and date?",
+      "suggestion_id": "1558204357139365929"
+    },
+    {
+      "message_id": "1560691656762724425",
+      "question": "Should there be a daily login bonus that rewards players for logging in each day?",
+      "suggestion_id": "1558235511330447380"
+    },
+    {
+      "message_id": "1560691661892358186",
+      "question": "Should school capacities be changed to more realistic, larger numbers (in multiples of 5,000), with more primary schools needed per high school?",
+      "suggestion_id": "1558530854853288086"
+    },
+    {
+      "message_id": "1560691665683882049",
+      "question": "Should the starter tutorial be reworked to cover nation, provinces, food/distribution, consumer goods and trade first (war moved to a separate tutorial), be repeatable without rewards, and be skippable?",
+      "suggestion_id": "1558820444964913322"
+    },
+    {
+      "message_id": "1560691669865865350",
+      "question": "Should the game add calculators for land cost, city cost and building cost (all buildings) that show total cost between a starting and target amount?",
+      "suggestion_id": "1558845302289604698"
+    },
+    {
+      "message_id": "1560691674592706673",
+      "question": "Should the war history show which buildings were destroyed in each attack?",
+      "suggestion_id": "1558869140003881021"
+    },
+    {
+      "message_id": "1560691679248261132",
+      "question": "Should the war guide explain combat details (how soldiers, support and morale decide battles) more thoroughly?",
+      "suggestion_id": "1558884996264103966"
+    },
+    {
+      "message_id": "1560691682511691788",
+      "question": "Should war targets be easier to see, so that nations can reliably find who they can attack and who can attack them?",
+      "suggestion_id": "1558887468475093043"
+    },
+    {
+      "message_id": "1560691685707743383",
+      "question": "Should players be able to opt out of the coalition shared bank pot so their personal deposits stay separate and private from members with banking permissions?",
+      "suggestion_id": "1558896941574651974"
+    },
+    {
+      "message_id": "1560691688631177368",
+      "question": "Should the game add a public war history page showing every nation's past wars, who won, and what was lost or destroyed?",
+      "suggestion_id": "1558959685174824970"
+    },
+    {
+      "message_id": "1560691691512406170",
+      "question": "Should the farm land-based food bonus taper off at high land amounts instead of growing linearly with land?",
+      "suggestion_id": "1558978935453257738"
+    },
+    {
+      "message_id": "1560691694423376055",
+      "question": "Should coalition members be able to join each other's defensive wars without a separate MDP, and should the truce delay for joining a coalition member's defensive war be removed?",
+      "suggestion_id": "1559071206043418755"
+    },
+    {
+      "message_id": "1560691697304871095",
+      "question": "Should the World Assembly get the proposed new options (resolution durations, tiered sanctions) described in this suggestion?",
+      "suggestion_id": "1559129249040957450"
+    },
+    {
+      "message_id": "1560691700299604090",
+      "question": "Should wars be changed so they cannot end (e.g. via a one-sided collapse) in under 24 hours?",
+      "suggestion_id": "1559138226122395668"
+    },
+    {
+      "message_id": "1560691704661545094",
+      "question": "Should consumer goods (CG) production be reworked as described in this suggestion?",
+      "suggestion_id": "1559170346626842675"
+    },
+    {
+      "message_id": "1560691707979505825",
+      "question": "Should selling military units be discouraged, e.g. by removing standing military from the score calculation?",
+      "suggestion_id": "1559231782514335815"
+    },
+    {
+      "message_id": "1560691711255126028",
+      "question": "Should war cards in the War Room show available Action Points and be sorted by declaration date (instead of enemy score)?",
+      "suggestion_id": "1559394998019956767"
+    },
+    {
+      "message_id": "1560691714019033140",
+      "question": "Cheaper education buildings",
+      "suggestion_id": "1559702694103617556"
+    },
+    {
+      "message_id": "1560691717588647967",
+      "question": "Show education needs",
+      "suggestion_id": "1559895638093602906"
+    },
+    {
+      "message_id": "1560691720734249072",
+      "question": "Make provinces/buildings show how many people they employ",
+      "suggestion_id": "1559905033951387790"
+    },
+    {
+      "message_id": "1560691723959672873",
+      "question": "Add vacation mode to protect nation when life gets busy",
+      "suggestion_id": "1559986341339598890"
+    },
+    {
+      "message_id": "1560691727319433261",
+      "question": "War Equipment",
+      "suggestion_id": "1560049556970938408"
+    },
+    {
+      "message_id": "1560691733900165201",
+      "question": "revenue page",
+      "suggestion_id": "1560050747964395560"
+    },
+    {
+      "message_id": "1560691736928456726",
+      "question": "Change to Biome mechanics",
+      "suggestion_id": "1560212899547324456"
+    },
+    {
+      "message_id": "1560691740032372780",
+      "question": "Resource Bonds",
+      "suggestion_id": "1560321593765404883"
+    }
+  ],
+  "opened_at": "2026-10-16T16:31:25Z",
+  "tallied": false
+}

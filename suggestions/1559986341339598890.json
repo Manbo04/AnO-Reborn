@@ -1,9 +1,10 @@
 {
   "author_id": "519965006867988490",
+  "ballot_id": "2026-10-16",
   "created_at": "2026-10-14T17:48:46Z",
   "kind": "suggestion",
-  "last_message_id": "1560586797568884737",
-  "last_player_message_at": "2026-10-16T09:34:46Z",
+  "last_message_id": "1560619519238742058",
+  "last_player_message_at": "2026-10-16T11:44:48Z",
   "messages": [
     {
       "at": "2026-10-14T17:48:46Z",
@@ -210,9 +211,30 @@
       "id": "1560586797568884737",
       "staff": false,
       "text": "good lord"
+    },
+    {
+      "at": "2026-10-16T11:41:35Z",
+      "attachments": [],
+      "author": "Mohammad",
+      "author_id": "1399018808227663973",
+      "bot": false,
+      "id": "1560618708559339601",
+      "staff": false,
+      "text": "Dayummmm yall spend time organising the bullets you got from the pirates?"
+    },
+    {
+      "at": "2026-10-16T11:44:48Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1560619519238742058",
+      "staff": false,
+      "text": "So this is what the Emperor was up to during this time"
     }
   ],
-  "status": "new",
+  "poll_message_id": "1560691723959672873",
+  "status": "voting",
   "thread_id": "1559986341339598890",
   "title": "Add vacation mode to protect nation when life gets busy",
   "url": "https://discord.com/channels/708006319658893385/1559986341339598890"

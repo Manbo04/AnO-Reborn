@@ -28,8 +28,12 @@
     }
   ],
   "poll_message_id": "1558148252346359829",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1556655602455810138",
   "title": "Expose Important Information To The User",
-  "url": "https://discord.com/channels/708006319658893385/1556655602455810138"
+  "url": "https://discord.com/channels/708006319658893385/1556655602455810138",
+  "votes": {
+    "no": 0,
+    "yes": 15
+  }
 }

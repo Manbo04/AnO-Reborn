@@ -1,5 +1,6 @@
 {
   "author_id": "1180720719060029500",
+  "ballot_id": "2026-10-16",
   "created_at": "2026-10-11T12:35:55Z",
   "kind": "suggestion",
   "last_message_id": "1558820444964913322",
@@ -16,7 +17,8 @@
       "text": "Right now the tutorial makes you do things that you can't easily do, and bars you from proceeding if you haven't completed prior steps.\n\nLike how you can't go further unless you've built a grocery store.\n\nA better tutorial for me would go like this:\n\n1. introduce them first to their nation\n2. explain provinces, cities, land...\n3. have them set up a province; build the necessary things to sustain a population, like fishery/farm, power plant and distri center. explain food and distribution mechanics while at it.\n4. (???) have them build one, more easily-accessed CG-producing building. Explain CGs and their benefits, as well as their relation with distribution\n5. introduce them to trade mechanics... have them buy some rations.\n\ntldr: explain most relevant things, apart from military and war, which is a separate thing. military and the like can be in a separate tutorial where the player is pulled into a mock war. this way they can get a grip on the mechanics.\n\nsome other things i'd like:\n* **the tutorial can be repeated**. however repeats and beyond will not be rewarded.\n* the \"tutorial\" and \"mechanics\" page in \"other\" can be consolidated into a solid \"encyclopedia\" for players' reading\n* **most importantly, the tutorial can be opted out of**\n\ni admit that this suggestion is pretty rushed, so anyone can add their thoughts on how this can improve. ***the goal is to improve pacing and intuitiveness so that new players stay.***"
     }
   ],
-  "status": "new",
+  "poll_message_id": "1560691665683882049",
+  "status": "voting",
   "thread_id": "1558820444964913322",
   "title": "Improved starter tutorial",
   "url": "https://discord.com/channels/708006319658893385/1558820444964913322"

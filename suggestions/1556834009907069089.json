@@ -40,8 +40,12 @@
     }
   ],
   "poll_message_id": "1558148262437978175",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1556834009907069089",
   "title": "Add \"Donate\" bank deposit option",
-  "url": "https://discord.com/channels/708006319658893385/1556834009907069089"
+  "url": "https://discord.com/channels/708006319658893385/1556834009907069089",
+  "votes": {
+    "no": 0,
+    "yes": 15
+  }
 }

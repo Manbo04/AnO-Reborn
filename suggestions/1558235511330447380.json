@@ -1,5 +1,6 @@
 {
   "author_id": "1455068968401375403",
+  "ballot_id": "2026-10-16",
   "created_at": "2026-10-09T21:51:36Z",
   "kind": "suggestion",
   "last_message_id": "1558588746880913449",
@@ -26,7 +27,8 @@
       "text": "This will help new players get started if they're not being boosted by friends too"
     }
   ],
-  "status": "new",
+  "poll_message_id": "1560691656762724425",
+  "status": "voting",
   "thread_id": "1558235511330447380",
   "title": "Login bonus",
   "url": "https://discord.com/channels/708006319658893385/1558235511330447380"

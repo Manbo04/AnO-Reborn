@@ -78,8 +78,12 @@
     }
   ],
   "poll_message_id": "1558148254959534258",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1556666480668713020",
   "title": "Allow us to use suffixes for amounts of resources.",
-  "url": "https://discord.com/channels/708006319658893385/1556666480668713020"
+  "url": "https://discord.com/channels/708006319658893385/1556666480668713020",
+  "votes": {
+    "no": 0,
+    "yes": 15
+  }
 }

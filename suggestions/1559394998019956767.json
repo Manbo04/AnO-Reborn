@@ -1,5 +1,6 @@
 {
   "author_id": "1043204044774183032",
+  "ballot_id": "2026-10-16",
   "created_at": "2026-10-13T02:38:59Z",
   "kind": "suggestion",
   "last_message_id": "1559453120864583681",
@@ -46,7 +47,8 @@
       "text": "I probably spent a good while trying to figure out where the attack option was, normally it's displayed right on the page not on a separate one"
     }
   ],
-  "status": "new",
+  "poll_message_id": "1560691711255126028",
+  "status": "voting",
   "thread_id": "1559394998019956767",
   "title": "War display improvements (very necessary)",
   "url": "https://discord.com/channels/708006319658893385/1559394998019956767"

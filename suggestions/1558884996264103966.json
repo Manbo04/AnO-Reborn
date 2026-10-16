@@ -1,5 +1,6 @@
 {
   "author_id": "176063647880052737",
+  "ballot_id": "2026-10-16",
   "created_at": "2026-10-11T16:52:25Z",
   "kind": "suggestion",
   "last_message_id": "1558919275547463823",
@@ -66,7 +67,8 @@
       "text": "okey, noted."
     }
   ],
-  "status": "new",
+  "poll_message_id": "1560691679248261132",
+  "status": "voting",
   "thread_id": "1558884996264103966",
   "title": "War",
   "url": "https://discord.com/channels/708006319658893385/1558884996264103966"

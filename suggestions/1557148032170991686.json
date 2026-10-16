@@ -48,8 +48,12 @@
     }
   ],
   "poll_message_id": "1558148280695922790",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1557148032170991686",
   "title": "Loan fee",
-  "url": "https://discord.com/channels/708006319658893385/1557148032170991686"
+  "url": "https://discord.com/channels/708006319658893385/1557148032170991686",
+  "votes": {
+    "no": 1,
+    "yes": 9
+  }
 }

@@ -1,5 +1,6 @@
 {
   "author_id": "519965006867988490",
+  "ballot_id": "2026-10-16",
   "created_at": "2026-10-10T17:25:11Z",
   "kind": "suggestion",
   "last_message_id": "1558794497456873564",
@@ -166,7 +167,8 @@
       "text": "Have an idea on making different sizes of school as well as schools that serve 2 levels at once"
     }
   ],
-  "status": "new",
+  "poll_message_id": "1560691661892358186",
+  "status": "voting",
   "thread_id": "1558530854853288086",
   "title": "Change school numbers to reflect real world numbers",
   "url": "https://discord.com/channels/708006319658893385/1558530854853288086"

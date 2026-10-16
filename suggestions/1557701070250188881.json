@@ -58,8 +58,12 @@
     }
   ],
   "poll_message_id": "1558148288509911092",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1557701070250188881",
   "title": "Higher education pops should be able to substitute lower education ones",
-  "url": "https://discord.com/channels/708006319658893385/1557701070250188881"
+  "url": "https://discord.com/channels/708006319658893385/1557701070250188881",
+  "votes": {
+    "no": 1,
+    "yes": 15
+  }
 }
