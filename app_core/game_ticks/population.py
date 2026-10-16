@@ -69,7 +69,7 @@ def calc_education_graduation(pop_children, policies, primary_buildings, hs_buil
     
     true_primary_capacity = primary_buildings * 1000
     hs_capacity = hs_buildings * 900
-    uni_capacity = uni_buildings * 5000
+    uni_capacity = uni_buildings * 500
     
     primary_capacity = true_primary_capacity
     grace_until = None

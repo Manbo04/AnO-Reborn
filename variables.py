@@ -935,6 +935,8 @@ PROVINCE_UNIT_PRICES = {
     "aerodomes_resource": {"aluminium": 60000, "steel": 250000},
     "admin_buildings_price": 50000000,
     "admin_buildings_resource": {"steel": 135000, "aluminium": 110000},
+    "sam_batteries_price": 30000,
+    "sam_batteries_resource": {"components": 4000, "steel": 15000, "aluminium": 5000},
     "silos_price": 350000000,
     "silos_resource": {"steel": 1080000, "aluminium": 480000},
     "drone_sites_price": 15000000,
