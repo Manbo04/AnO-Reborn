@@ -2,8 +2,8 @@
   "author_id": "519965006867988490",
   "created_at": "2026-10-14T17:48:46Z",
   "kind": "suggestion",
-  "last_message_id": "1560377648046284801",
-  "last_player_message_at": "2026-10-15T19:43:41Z",
+  "last_message_id": "1560483799295598743",
+  "last_player_message_at": "2026-10-16T02:45:30Z",
   "messages": [
     {
       "at": "2026-10-14T17:48:46Z",
@@ -178,6 +178,28 @@
       "id": "1560377648046284801",
       "staff": false,
       "text": "i support this"
+    },
+    {
+      "at": "2026-10-16T02:44:07Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1560483451495387208",
+      "staff": true,
+      "text": "No, its the George Washington. I typically operate in the 7th fleet, around the Pacific Ocean. \n\nI was briefly assigned to the 5th Fleet out of Bahrain for some anti piracy duties under the Lincoln but it was a temporary assignment."
+    },
+    {
+      "at": "2026-10-16T02:45:30Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1559986341339598890/1560483799467298846/FB_IMG_1620516419187.jpg?ex=6ad2e14a&is=6ad18fca&hm=c4d146bbb35a6f0e9abea9e05ff519a02f7d7b319ddf8262f2ff9a9d56518566&"
+      ],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1560483799295598743",
+      "staff": true,
+      "text": "Some of the \"goods\" we liberated from pirates and smugglers over a month long period."
     }
   ],
   "status": "new",

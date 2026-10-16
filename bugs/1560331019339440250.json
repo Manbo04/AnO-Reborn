@@ -2,8 +2,8 @@
   "author_id": "249007223454433292",
   "created_at": "2026-10-15T16:38:24Z",
   "kind": "bug",
-  "last_message_id": "1560352384612302899",
-  "last_player_message_at": "2026-10-15T18:03:18Z",
+  "last_message_id": "1560490707133796434",
+  "last_player_message_at": "2026-10-16T03:12:57Z",
   "messages": [
     {
       "at": "2026-10-15T16:38:24Z",
@@ -48,6 +48,16 @@
       "id": "1560352384612302899",
       "staff": false,
       "text": "<:Wheeze:1031648828841021511>"
+    },
+    {
+      "at": "2026-10-16T03:12:57Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1560490707133796434",
+      "staff": false,
+      "text": "Voting huh? 👻 \\"
     }
   ],
   "thread_id": "1560331019339440250",
