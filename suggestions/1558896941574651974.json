@@ -3,8 +3,8 @@
   "ballot_id": "2026-10-16",
   "created_at": "2026-10-11T17:39:53Z",
   "kind": "suggestion",
-  "last_message_id": "1560691687569756211",
-  "last_player_message_at": "2026-10-11T17:39:53Z",
+  "last_message_id": "1560784914939650049",
+  "last_player_message_at": "2026-10-16T22:42:01Z",
   "messages": [
     {
       "at": "2026-10-11T17:39:53Z",
@@ -25,6 +25,16 @@
       "id": "1560691687569756211",
       "staff": false,
       "text": "<@297362383226142720> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1560691685707743383\nVoting closes <t:1792771200:F>. If Yes wins, it gets built."
+    },
+    {
+      "at": "2026-10-16T22:42:01Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1560784914939650049",
+      "staff": true,
+      "text": "This one doesnt make sense to me... i am all for members having their own personal accounts, but dont hide them from bankers. Bankers need to to know what members have so they can ensure there is enough in the bank. Otherwise we could be issuing grants and suddenly realize there isn't enough for a personal account withdrawal. \n\nIn a sense this is already in place, members have personal deposit and donate to coalition. The only thing is it isnt hiding the numbers. \n\nOr am I misunderstanding what this is asking?"
     }
   ],
   "poll_message_id": "1560691685707743383",
