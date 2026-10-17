@@ -3,8 +3,8 @@
   "ballot_id": "2026-10-16",
   "created_at": "2026-10-14T21:59:58Z",
   "kind": "suggestion",
-  "last_message_id": "1560691728867135600",
-  "last_player_message_at": "2026-10-14T21:59:58Z",
+  "last_message_id": "1560828921425952849",
+  "last_player_message_at": "2026-10-17T01:36:53Z",
   "messages": [
     {
       "at": "2026-10-14T21:59:58Z",
@@ -25,6 +25,16 @@
       "id": "1560691728867135600",
       "staff": false,
       "text": "<@176063647880052737> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1560691727319433261\nVoting closes <t:1792771200:F>. If Yes wins, it gets built."
+    },
+    {
+      "at": "2026-10-17T01:36:53Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1560828921425952849",
+      "staff": false,
+      "text": "I agree in principle, but perhaps a relook at war mechanics as a whole?\n\nIf something closer to realism (imo) then winning or losing is all on ground troops. Just like Vietnam. Air and Ships soften  ground troops and provide cover/intel to prepare for ground attacks. I mean someone hit me with planes and looted money... Those some beam me up tech right there."
     }
   ],
   "poll_message_id": "1560691727319433261",
