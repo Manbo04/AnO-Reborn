@@ -2,8 +2,8 @@
   "author_id": "249007223454433292",
   "created_at": "2026-10-18T02:59:37Z",
   "kind": "bug",
-  "last_message_id": "1561212128898056342",
-  "last_player_message_at": "2026-10-18T02:59:37Z",
+  "last_message_id": "1561572870155407402",
+  "last_player_message_at": "2026-10-19T02:53:04Z",
   "messages": [
     {
       "at": "2026-10-18T02:59:37Z",
@@ -16,6 +16,36 @@
       "id": "1561212128898056342",
       "staff": false,
       "text": "I had 1 million CG yesterday. Daily net consumption from Revenue page as per screenshot.\n\nToday I have 407t CG left"
+    },
+    {
+      "at": "2026-10-19T02:42:04Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1561570101034090608",
+      "staff": false,
+      "text": "down to 180t now"
+    },
+    {
+      "at": "2026-10-19T02:52:48Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1561572801503043757",
+      "staff": false,
+      "text": "I even have Iron missing!! 😰  I had 22m iron yesterday for +1000 pumpjacks. had 255.\n\nbought some yesterday, I remember buying 645 (because I like round final numbers). revenue page only shows me buying 600 in the log.\n\ntoday I bought another 200. totalling to 1100. I'm short of iron for the other 155 more pumpjacks scheduled.\n\nI trade oil for iron and should be having More Iron, not less!"
+    },
+    {
+      "at": "2026-10-19T02:53:04Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1561572870155407402",
+      "staff": false,
+      "text": "I don't produce steel"
     }
   ],
   "thread_id": "1561212128898056342",
