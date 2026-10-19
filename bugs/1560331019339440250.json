@@ -2,7 +2,7 @@
   "author_id": "249007223454433292",
   "created_at": "2026-10-15T16:38:24Z",
   "kind": "bug",
-  "last_message_id": "1560490707133796434",
+  "last_message_id": "1561769307233452166",
   "last_player_message_at": "2026-10-16T03:12:57Z",
   "messages": [
     {
@@ -58,6 +58,16 @@
       "id": "1560490707133796434",
       "staff": false,
       "text": "Voting huh? 👻 \\"
+    },
+    {
+      "at": "2026-10-19T15:53:39Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1561769307233452166",
+      "staff": false,
+      "text": "Hi <@249007223454433292>,\n\nThanks for reporting this and bringing it up!\n\n**Why this happened previously:**\nUnder the previous war range calculation (`wars/war_range.py`), war strength factored in standing military units alongside population (`population / 1000 + unit weights`). This allowed players to manipulate their effective strength bracket by purchasing or liquidating military units right before declaring war, enabling declarations against nations that appeared well outside normal brackets.\n\n**The Fix:**\nFollowing the community vote in suggestion thread <#1559231782514335815>, this has been officially resolved and deployed to production:\n- **PR #209** (*\"Remove standing units from war range scoring\"*) has been merged. War strength eligibility is now calculated **strictly from population** (`population / 1000.0`, with the standard 75%–133% range). Standing military units now exclusively determine battle/combat outcomes, but never target eligibility.\n- In addition, **PR #211** (*\"Prevent building liquidation during active wars\"*) was deployed to prevent asset liquidation mid-conflict.\n\nWar range is now strictly population-based and cannot be manipulated by buying or selling units. Thank you for your patience and for helping make the system fairer!"
     }
   ],
   "thread_id": "1560331019339440250",

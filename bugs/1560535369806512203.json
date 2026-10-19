@@ -2,8 +2,8 @@
   "author_id": "307290318590705667",
   "created_at": "2026-10-16T06:10:25Z",
   "kind": "bug",
-  "last_message_id": "1560598217723224106",
-  "last_player_message_at": "2026-10-16T10:20:09Z",
+  "last_message_id": "1561776222965604395",
+  "last_player_message_at": "2026-10-19T16:21:07Z",
   "messages": [
     {
       "at": "2026-10-16T06:10:25Z",
@@ -54,6 +54,36 @@
       "id": "1560598217723224106",
       "staff": false,
       "text": "Know what is going on?"
+    },
+    {
+      "at": "2026-10-19T15:52:45Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1561769080510357629",
+      "staff": false,
+      "text": "Hey <@307290318590705667>, we checked into your nation's logs and balance history! Here is what's happening with your iron:\n\n**1. Steel Mill Consumption (~2.89M iron / day)**\nYour nation (**Grand Duchy of Bion**) operates **1,800 Steel Mills**. Each steel mill consumes 67 iron/hr (and 38 coal/hr) to manufacture steel:\n• 1,800 mills × 67 iron/hr = **120,600 iron/hr**\n• Over 24 hours, that is **2,894,400 iron/day** (~2.89M iron/day) continuously consumed to sustain your steel production (feeding your market orders and your 17,000/hr steel trade agreement to Maignalis). Over ~2 days, that accounts for ~5.8M iron.\n\n**2. Why Iron \"Reappeared\" (Coalition Transfers & Escrow Refunds)**\n• **Incoming Ally Transfers:** Your coalition partners have been transferring large batches of iron directly to your nation to keep your 1,800 steel mills supplied:\n  - Oct 16: **Centauri Republic** sent you 5,000,000 iron & **Maignalis** sent you 5,000,000 iron\n  - Oct 17: **Centauri Republic** sent you 3,000,000 iron\n  - Oct 18: **Centauri Republic** sent you 6,000,000 iron\n• **Market / Trade Escrow:** When market sell orders or direct trades are posted, the offered iron is held in escrow. If an offer is cancelled, delisted, or expires, that full escrowed amount is refunded directly back into your nation's inventory all at once.\n\nIn short, your iron isn't disappearing to a bug—it's being converted into steel by your mills, and the reappearing amounts are incoming bulk transfers from your allies (or trade escrows being released). Everything is working as intended! Let us know if you have any questions!"
+    },
+    {
+      "at": "2026-10-19T16:19:58Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1561775930228211815",
+      "staff": false,
+      "text": "The iron and coal mines in the province produce all the resources required for the steel mills"
+    },
+    {
+      "at": "2026-10-19T16:21:07Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1561776222965604395",
+      "staff": false,
+      "text": "The iron received from members is for building more steel mills"
     }
   ],
   "thread_id": "1560535369806512203",
