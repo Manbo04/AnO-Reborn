@@ -31,6 +31,7 @@ from database import (
     row_val,
 )
 import os
+import logging
 import math
 from action_loop import build_structure, ActionLoopError
 from app_core.coalitions.repositories import can_manage_province_builds
@@ -2162,6 +2163,11 @@ def province_sell_buy(way, units, province_id):
                         wantedUnits,
                     )
                 except BuildingPurchaseError as exc:
+                    logger = logging.getLogger(__name__)
+                    logger.info(
+                        "Building purchase error for user %s, province %s (%s x%s): %s",
+                        cId, province_id, units, wantedUnits, exc,
+                    )
                     return error(400, str(exc))
 
         if way == "buy":
@@ -2360,7 +2366,31 @@ def mass_purchase_preview():
         )
         db.execute("SELECT gold FROM stats WHERE id = %s", (cId,))
         gold_row = db.fetchone()
-    gold = int(gold_row[0] or 0) if gold_row else 0
+        gold = int(gold_row[0] or 0) if gold_row else 0
+
+        affordable = result["total_gold"] <= gold
+        missing_resources = {}
+        resources_needed = result.get("resources") or {}
+        if resources_needed:
+            from app_core.economy.building_purchase import _resource_id_map
+            res_map = _resource_id_map(db)
+            for res_name, needed_qty in resources_needed.items():
+                res_id = res_map.get(res_name)
+                if not res_id:
+                    continue
+                db.execute(
+                    "SELECT COALESCE(quantity, 0) FROM user_economy WHERE user_id = %s AND resource_id = %s",
+                    (cId, res_id),
+                )
+                r_row = db.fetchone()
+                have_qty = int(r_row[0]) if r_row else 0
+                if have_qty < needed_qty:
+                    affordable = False
+                    missing_resources[res_name] = {
+                        "needed": needed_qty,
+                        "have": have_qty,
+                        "missing": needed_qty - have_qty,
+                    }
 
     return jsonify(
         {
@@ -2369,7 +2399,8 @@ def mass_purchase_preview():
             "provinces": len(result["plan"]),
             "resources": result["resources"],
             "gold": gold,
-            "affordable": result["total_gold"] <= gold,
+            "affordable": affordable,
+            "missing_resources": missing_resources,
         }
     )
 
@@ -2438,6 +2469,7 @@ def _mass_buy_buildings(db, cId, unit, mode, quantity, province_ids):
     )
     owned = result["owned"]
     bought_in, total_spent, failures = 0, 0, []
+    logger = logging.getLogger(__name__)
     for p in result["plan"]:
         db.execute("SAVEPOINT mass_buy_building")
         try:
@@ -2447,6 +2479,10 @@ def _mass_buy_buildings(db, cId, unit, mode, quantity, province_ids):
             total_spent += res["gold_spent"]
         except BuildingPurchaseError as exc:
             db.execute("ROLLBACK TO SAVEPOINT mass_buy_building")
+            logger.info(
+                "Mass buy of %s x%s in province %s (user %s) skipped: %s",
+                unit, p["num"], p["id"], cId, exc,
+            )
             failures.append(f"{p['name']}: {exc}")
     if owned and not result["plan"]:
         failures.append("every selected province is already at that amount")
@@ -2523,12 +2559,32 @@ def mass_purchase_buy():
             f"{len(owned)} selected provinces (spent {total_spent:,} gold)."
         )
     if failures:
-        # Cap how many per-province errors get flashed.
-        shown = failures[:8]
-        more = len(failures) - len(shown)
+        # Group identical error messages across provinces so players get a clear, concise reason
+        # why fewer buildings than requested were built (e.g. insufficient iron for pumpjacks).
+        reason_to_provinces = {}
+        for f in failures:
+            if ": " in f:
+                prov_name, reason = f.split(": ", 1)
+                reason_to_provinces.setdefault(reason, []).append(prov_name)
+            else:
+                reason_to_provinces.setdefault(f, [])
+
+        grouped_messages = []
+        for reason, provs in reason_to_provinces.items():
+            if provs:
+                if len(provs) <= 3:
+                    p_str = ", ".join(provs)
+                else:
+                    p_str = f"{len(provs)} provinces ({', '.join(provs[:2])}, and {len(provs) - 2} more)"
+                grouped_messages.append(f"{p_str}: {reason}")
+            else:
+                grouped_messages.append(reason)
+
+        shown = grouped_messages[:8]
+        more = len(grouped_messages) - len(shown)
         msg = ("Skipped -- " if bought_in else "") + "; ".join(shown)
         if more > 0:
-            msg += f"; and {more} more"
+            msg += f"; and {more} more reasons"
         # "error" makes the toast sticky (see layout.html) -- ieb read the
         # per-province skip reasons too slowly before a 5s toast vanished.
         flash(msg, "error")
