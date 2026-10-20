@@ -411,10 +411,45 @@ class CountryService:
                 technology_rows = []
                 target_has_nuclear_facility = False
 
-            # Calculate CG need from already-fetched population
-            cg_needed = (
-                math.ceil(population / variables.CONSUMER_GOODS_PER) if population else 0
-            )
+            # Calculate CG need using demographic demand when enabled, matching the hourly tax tick
+            if variables.FEATURE_DEMOGRAPHIC_CONSUMPTION and provinces:
+                from app_core.economy.consumer_goods import province_cg_need
+                from database import row_val
+
+                has_demographic_data = all(
+                    row_val(prov, "pop_children", 7) is not None
+                    and row_val(prov, "pop_working", 8) is not None
+                    and row_val(prov, "pop_elderly", 9) is not None
+                    for prov in provinces
+                )
+                if population > 0 and sum(
+                    (row_val(prov, "pop_children", 7, default=0) or 0)
+                    + (row_val(prov, "pop_working", 8, default=0) or 0)
+                    + (row_val(prov, "pop_elderly", 9, default=0) or 0)
+                    for prov in provinces
+                ) == 0:
+                    has_demographic_data = False
+
+                healthcare = bool(
+                    policies.get(f"education{variables.POLICY_UNIVERSAL_HEALTHCARE}")
+                    or policies.get(variables.POLICY_UNIVERSAL_HEALTHCARE)
+                    or (variables.POLICY_UNIVERSAL_HEALTHCARE in policies if isinstance(policies, (list, tuple, set)) else False)
+                )
+                cg_needed = math.ceil(sum(
+                    province_cg_need(
+                        row_val(prov, "population", 2, default=0) or 0,
+                        row_val(prov, "pop_children", 7),
+                        row_val(prov, "pop_working", 8),
+                        row_val(prov, "pop_elderly", 9),
+                        healthcare,
+                        has_demographic_data,
+                    )
+                    for prov in provinces
+                ))
+            else:
+                cg_needed = (
+                    math.ceil(population / variables.CONSUMER_GOODS_PER) if population else 0
+                )
 
             total_cities = sum(prov[3] if prov[3] else 0 for prov in provinces)
             total_land = sum(prov[4] if prov[4] else 0 for prov in provinces)

@@ -1298,6 +1298,8 @@ def create_app():
         return value.replace("_", " ").title()
     # --- END RESTORED FILTERS ---
 
+    app.jinja_env.globals["game_asset_path"] = game_ui.game_asset_path
+
     from extensions import socketio
     from app_core.chat.routes import register_chat_routes, register_chat_socketio_handlers
     from app_core.community.routes import register_community_routes

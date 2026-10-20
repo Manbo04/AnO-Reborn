@@ -290,13 +290,17 @@ class AdminRepository:
                     break
             if not found:
                 new_x, new_y = 0, 0
+        if not user_coords:
+            pop, pop_c, pop_w, pop_e = 1000000, 300000, 600000, 100000
+        else:
+            pop, pop_c, pop_w, pop_e = 10000, 3000, 6000, 1000
 
         db.execute(
             "INSERT INTO provinces "
-            "(userId, provinceName, pop_children, pop_working, pop_elderly, "
+            "(userId, provinceName, population, pop_children, pop_working, pop_elderly, "
             "coordinate_x, coordinate_y) "
-            "VALUES (%s, %s, 3000, 6000, 1000, %s, %s)",
-            (target_user_id, province_name, new_x, new_y),
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+            (target_user_id, province_name, pop, pop_c, pop_w, pop_e, new_x, new_y),
         )
 
     @staticmethod

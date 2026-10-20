@@ -1,0 +1,21 @@
+{% macro net_resource_card(res_key, label, rev_data, is_daily=False, is_oil=False) %}
+    {% set net_val = rev_data.get('net', {}).get(res_key, 0) %}
+    {% set gross_val = rev_data.get('gross', {}).get(res_key, 0) %}
+    {% set factory_val = rev_data.get('factory_consumption', {}).get(res_key, 0) %}
+    {% set trade_val = rev_data.get('trade_agreements_flow', {}).get(res_key, 0) %}
+    {% set mil_val = rev_data.get('military_upkeep', {}).get(res_key, 0) %}
+    {% set has_breakdown = (gross_val != 0 or factory_val != 0 or trade_val != 0 or mil_val != 0) %}
+    <div class="templatedivflex2left stat-card" {% if has_breakdown %}data-tippy-content="<strong>{{ label }} Breakdown ({{ 'Daily' if is_daily else 'Hourly' }}):</strong><br>&bull; Gross production: +{% if is_oil %}{{ gross_val | fmt }}{% else %}{{ gross_val | weight_fmt }}{% endif %}<br>{% if factory_val %}&bull; Factory consumption: -{% if is_oil %}{{ factory_val | fmt }}{% else %}{{ factory_val | weight_fmt }}{% endif %}<br>{% endif %}{% if trade_val %}&bull; Trade agreements: {% if trade_val > 0 %}+{% endif %}{% if is_oil %}{{ trade_val | fmt }}{% else %}{{ trade_val | weight_fmt }}{% endif %}<br>{% endif %}{% if mil_val %}&bull; Military upkeep: -{% if is_oil %}{{ mil_val | fmt }}{% else %}{{ mil_val | weight_fmt }}{% endif %}<br>{% endif %}&bull; Net: {% if is_oil %}{{ net_val | fmt }}{% else %}{{ net_val | weight_fmt }}{% endif %}"{% endif %}>
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', res_key)) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ label }}</strong>
+        <span class="stat-value {% if net_val < 0 %}text-danger{% elif net_val > 0 %}text-success{% endif %}">{% if net_val > 0 %}+{% endif %}{% if is_oil %}{{ net_val | fmt }}{% else %}{{ net_val | weight_fmt }}{% endif %}</span>
+        {% if factory_val %}
+        <small class="muted" style="display: block; font-size: 0.75rem; margin-top: 2px;">-{% if is_oil %}{{ factory_val | fmt }}{% else %}{{ factory_val | weight_fmt }}{% endif %} factories</small>
+        {% endif %}
+        {% if trade_val %}
+        <small class="muted" style="display: block; font-size: 0.75rem; margin-top: 2px;">{% if trade_val > 0 %}+{% endif %}{% if is_oil %}{{ trade_val | fmt }}{% else %}{{ trade_val | weight_fmt }}{% endif %} trade</small>
+        {% endif %}
+        {% if mil_val %}
+        <small class="muted" style="display: block; font-size: 0.75rem; margin-top: 2px;">-{% if is_oil %}{{ mil_val | fmt }}{% else %}{{ mil_val | weight_fmt }}{% endif %} military</small>
+        {% endif %}
+    </div>
+{% endmacro %}

@@ -1,6 +1,7 @@
 """Shared building purchase — gold + resources from PROVINCE_UNIT_PRICES."""
 from __future__ import annotations
 
+import logging
 import os
 
 from app_core.economy.biome_buildings import is_mine_allowed_in_biome
@@ -12,6 +13,8 @@ from app_core.economy.building_costs import (
 )
 import variables
 from app_core.economy import ledger
+
+logger = logging.getLogger(__name__)
 
 
 class BuildingPurchaseError(Exception):
@@ -128,19 +131,29 @@ def purchase_building(
 
     if total_gold > gold_before:
         shortfall = total_gold - gold_before
-        raise BuildingPurchaseError(
+        err = (
             f"Not enough money: need {total_gold:,} gold, you have {gold_before:,} "
             f"(missing {shortfall:,})."
         )
+        logger.info(
+            "Building purchase rejected: user %s, province %s (%s x%s): %s",
+            user_id, province_id, name, quantity, err,
+        )
+        raise BuildingPurchaseError(err)
 
     slot_type = get_slot_type(name)
     if slot_type and not skip_slot_check:
         free_slots = get_free_slots(db, province_id, slot_type)
         if free_slots < quantity:
-            raise BuildingPurchaseError(
+            err = (
                 f"Not enough {slot_type} slots: {free_slots} free, needs {quantity}. "
                 f"Buy more {slot_type} or demolish an existing building."
             )
+            logger.info(
+                "Building purchase rejected: user %s, province %s (%s x%s): %s",
+                user_id, province_id, name, quantity, err,
+            )
+            raise BuildingPurchaseError(err)
 
     res_map = _resource_id_map(db)
     for resource, per_unit in resources_data.items():
@@ -157,10 +170,15 @@ def purchase_building(
         current = int(row[0]) if row else 0
         if current < qty:
             missing = qty - current
-            raise BuildingPurchaseError(
+            err = (
                 f"Not enough {resource}: need {qty:,}, you have {current:,} "
                 f"(missing {missing:,}). Produce or buy on the market."
             )
+            logger.info(
+                "Building purchase rejected: user %s, province %s (%s x%s): %s",
+                user_id, province_id, name, quantity, err,
+            )
+            raise BuildingPurchaseError(err)
 
     for resource, per_unit in resources_data.items():
         qty = int(per_unit) * quantity

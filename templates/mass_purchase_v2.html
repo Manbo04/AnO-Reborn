@@ -181,7 +181,13 @@
                     Object.keys(data.resources || {}).forEach(function (r) {
                         parts.push(fmt(data.resources[r]) + ' ' + r.replace(/_/g, ' '));
                     });
-                    if (!data.affordable) parts.push('you have ' + fmt(data.gold) + ' gold');
+                    if (data.missing_resources && Object.keys(data.missing_resources).length > 0) {
+                        Object.keys(data.missing_resources).forEach(function (r) {
+                            var m = data.missing_resources[r];
+                            parts.push('missing ' + fmt(m.missing) + ' ' + r.replace(/_/g, ' ') + ' (have ' + fmt(m.have) + ')');
+                        });
+                    }
+                    if (data.total_cost > data.gold) parts.push('you have ' + fmt(data.gold) + ' gold');
                     unitsEl.textContent = parts.join(' · ');
                 })
                 .catch(function () { preview.hidden = true; });
