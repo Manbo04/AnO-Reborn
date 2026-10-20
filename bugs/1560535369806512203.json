@@ -2,8 +2,8 @@
   "author_id": "307290318590705667",
   "created_at": "2026-10-16T06:10:25Z",
   "kind": "bug",
-  "last_message_id": "1561776222965604395",
-  "last_player_message_at": "2026-10-19T16:21:07Z",
+  "last_message_id": "1562095685426221152",
+  "last_player_message_at": "2026-10-20T13:30:33Z",
   "messages": [
     {
       "at": "2026-10-16T06:10:25Z",
@@ -84,6 +84,66 @@
       "id": "1561776222965604395",
       "staff": false,
       "text": "The iron received from members is for building more steel mills"
+    },
+    {
+      "at": "2026-10-20T13:05:25Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1562089360566779975",
+      "staff": false,
+      "text": "<@307290318590705667> Update on the iron and revenue tracking:\n\nYou were completely right that the revenue page was confusing because manufacturing consumption was omitted from the Net breakdown!\n\n**What was happening:**\n• Your 1,800 Steel Mills consume **120,600 kg/hr (~2.89M iron/day)** as raw inputs (67 kg iron each per hour).\n• Previously, the Revenue page only showed gross mine output and building operating costs (gold), but did *not* fold factory consumption or trade agreement flows into the resource Net cards. That made it appear as though iron was disappearing or numbers didn't reconcile.\n\n**What we just deployed:**\n1. **Factory Consumption Tracking:** Manufacturing input consumption (like iron/coal for steel mills, bauxite for aluminium, copper for components) is now calculated and folded directly into Net resource production.\n2. **Interactive Revenue Breakdown Tooltips:** On your country overview page, hovering over any resource (or tapping on mobile) now displays a breakdown card showing:\n   • Production from mines (+)\n   • Factory consumption (-)\n   • Active trade agreement flows (+/-)\n   • Military upkeep (-)\n   • Final Net Hourly & Daily balance\n   • Direct subtext tag (e.g. ).\n\nYou can now see the exact flow of iron from your mines into your mills without any mystery!"
+    },
+    {
+      "at": "2026-10-20T13:12:41Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1562091186640920677",
+      "staff": false,
+      "text": "Does either the gross or net show exactly how much I make an hour with costs already factored in?"
+    },
+    {
+      "at": "2026-10-20T13:13:58Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1562091509656854542",
+      "staff": false,
+      "text": "Only major thing I want to see on the revenue page is hourly outputs with costs and profits already added  together so I know exactly what I make"
+    },
+    {
+      "at": "2026-10-20T13:15:37Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1562091927162065008",
+      "staff": false,
+      "text": "<@307290318590705667> Yes, **Net** is exactly that number!\n\n• **Net:** Shows your **exact hourly gain or loss with all costs, deductions, and inputs factored in**. If Net says +10,000, your inventory increases by 10,000 each hour. If it says -5,000, it decreases by 5,000. It factors in:\n  - Mine & building output (+)\n  - Factory consumption / raw manufacturing inputs (-) (e.g. the 120.6t iron consumed by your 1,800 steel mills)\n  - Active trade agreement flows (+/-)\n  - Military maintenance upkeep (-)\n  - Building operating costs / upkeep in gold (-)\n\n• **Gross:** Shows only raw baseline extraction *before* any expenses, factory inputs, upkeep, or trade flows are deducted.\n\nSo **Net** is always your true hourly bottom line!"
+    },
+    {
+      "at": "2026-10-20T13:22:28Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1562093650710896734",
+      "staff": false,
+      "text": "<@307290318590705667> And one handy tip: on your country page, you can also toggle between **Hourly** and **Daily (24h)** right above those Net resource cards, so you can see your exact hourly bottom line as well as your full daily net with all profits, inputs, and costs added together! 📊"
+    },
+    {
+      "at": "2026-10-20T13:30:33Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1562095685426221152",
+      "staff": false,
+      "text": "👍"
     }
   ],
   "thread_id": "1560535369806512203",

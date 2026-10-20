@@ -2,7 +2,7 @@
   "author_id": "249007223454433292",
   "created_at": "2026-10-15T09:01:34Z",
   "kind": "bug",
-  "last_message_id": "1560216055081869332",
+  "last_message_id": "1562093039952855101",
   "last_player_message_at": "2026-10-15T09:01:34Z",
   "messages": [
     {
@@ -14,6 +14,16 @@
       "id": "1560216055081869332",
       "staff": false,
       "text": "It's hard for player to check, as I cannot see the issue until it popped up suddenly yesterday.\nI can only assume it had to do with the population distribution change, and bot said efficiency is calculated per nation instead of province now.\n\nI have decent population growth. No major building purchases Until I got hit by efficiency drop that took out my power grid by lowering output from my geothermals.\nEither the death rate has gone wild and my nation is full of children or my drones are just not showing up for work."
+    },
+    {
+      "at": "2026-10-20T13:20:03Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1562093039952855101",
+      "staff": false,
+      "text": "<@249007223454433292> Hey Celess! Here is what was happening behind the scenes with efficiency and power output:\n\n**1. How Workforce Efficiency Works:**\n• Under the workforce system, each building requires a certain number of working adults (`jobs_needed`).\n• If a nation's available working population is lower than total jobs needed across all buildings (`jobs_available < jobs_needed`), an `efficiency_multiplier` (< 1.0) is applied to all building outputs—including power plants like Geothermals.\n• If a power grid is operating near capacity, having geothermals produce at slightly reduced output can cause total energy production to dip below total consumption, triggering a blackout.\n\n**2. The Demographic Skew Bug:**\n• What triggered this recently was the province population issue: newly added provinces were inadvertently spawning with only 10,000 citizens and skewed age distributions, temporarily dragging on national workforce ratios and retail coverage.\n\n**3. Current Status:**\n• We deployed fixes for starter population (1,000,000 pop) and ensured all province additions properly allocate working-age citizens (60% working / 30% children / 10% elderly).\n• We checked your nation's live workforce status: your nation currently has **74.4M working adults** against **520,000 jobs needed**, so your workforce efficiency is sitting at the maximum **100% (1.0x)** with zero penalties.\n\nYour power grid and building outputs are fully stable at maximum efficiency!"
     }
   ],
   "thread_id": "1560216055081869332",

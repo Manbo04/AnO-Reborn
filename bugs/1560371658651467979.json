@@ -2,7 +2,7 @@
   "author_id": "465912833352138768",
   "created_at": "2026-10-15T19:19:53Z",
   "kind": "bug",
-  "last_message_id": "1560375949051170878",
+  "last_message_id": "1562089410864877729",
   "last_player_message_at": "2026-10-15T19:36:56Z",
   "messages": [
     {
@@ -116,6 +116,16 @@
       "id": "1560375949051170878",
       "staff": false,
       "text": "like 1"
+    },
+    {
+      "at": "2026-10-20T13:05:37Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1562089410864877729",
+      "staff": false,
+      "text": "<@465912833352138768> Hey JoshMD! We audited the combat logs and combat engine for this air attack:\n\n**1. The 60 Bombers Claim:**\n• Database records confirm Rughzhenhaide had **0 bombers** and **7 fighters** at the time of the battle.\n• They lost 1 fighter (leaving 6). The claim of having 60 bombers was just psychological warfare in chat.\n• The fight loss happened because the combat roll RNG range was large enough that a bad roll on your side allowed a much smaller force to win the individual skirmish roll.\n\n**2. Bug Fix Deployed:**\nWhile auditing this, we discovered and fixed an issue in the casualty engine:\n• When an attacker sent a single unit type (e.g. 79 fighters) against a defender fielding multiple unit types (e.g. fighters + bombers + helicopters), the engine previously used `zip(winner_units, loser_units)` which truncated after the 1st unit type, causing secondary unit types to take 0 casualties.\n• We have rewritten the casualty calculations so that all fielded unit types are evaluated independently and suffer proportional losses regardless of force composition.\n\nThank you for reporting this!"
     }
   ],
   "thread_id": "1560371658651467979",

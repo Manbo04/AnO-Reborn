@@ -2,7 +2,7 @@
   "author_id": "204961091892019200",
   "created_at": "2026-10-15T09:49:35Z",
   "kind": "bug",
-  "last_message_id": "1560228138372309012",
+  "last_message_id": "1562089446739026052",
   "last_player_message_at": "2026-10-15T09:49:35Z",
   "messages": [
     {
@@ -17,6 +17,16 @@
       "id": "1560228138372309012",
       "staff": false,
       "text": "Under the other section, the wide screen page is missing some of the pages. (world map, lore map, war board)\n\nI need these cool things to look at :("
+    },
+    {
+      "at": "2026-10-20T13:05:46Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1562089446739026052",
+      "staff": false,
+      "text": "<@204961091892019200> Hey ieb! We added **World Map** (`/world_map`), **Lore Map** (`/lore_map`), and **War Board** (`/war-board`) to the desktop navigation bar under the **Other** dropdown (as well as the mobile navigation drawer). They are live in production now—enjoy the cool views! 🗺️⚔️"
     }
   ],
   "thread_id": "1560228138372309012",

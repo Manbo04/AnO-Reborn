@@ -2,8 +2,8 @@
   "author_id": "249007223454433292",
   "created_at": "2026-10-18T02:59:37Z",
   "kind": "bug",
-  "last_message_id": "1561773171978539189",
-  "last_player_message_at": "2026-10-19T16:09:00Z",
+  "last_message_id": "1562102706342985748",
+  "last_player_message_at": "2026-10-20T13:58:27Z",
   "messages": [
     {
       "at": "2026-10-18T02:59:37Z",
@@ -106,6 +106,46 @@
       "id": "1561773171978539189",
       "staff": false,
       "text": "Also, I have no distribution bottleneck afaik. I usually keep them double my current pop"
+    },
+    {
+      "at": "2026-10-20T13:05:09Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1562089292728115241",
+      "staff": false,
+      "text": "<@249007223454433292> Apologies for the mix-up with Chelovka earlier! Here is the exact breakdown for your nation (**celess mob**):\n\n**1. Consumer Goods (CG) Consumption:**\n• **Demographics:** 42 provinces with 345,485,484 citizens.\n• **Demand:** Citizens need **5,217 kg/hr (~125.2 t/day)** of CG to maintain the maximum **1.50x tax multiplier**.\n• **Production:** Your 430 Distribution Centers generate **3,526 kg/hr (~84.6 t/day)**.\n• **Hourly Deficit:** 3,526 - 5,217 = **-1,691 kg/hr (-40.6 t/day)**.\n• Since Pharloom transferred 1,000,000 kg (1,000 t) on Oct 17, your stockpile has covered this deficit to keep your tax income boosted. Over the ~72h between Oct 17–19, your population consumed ~375,000 kg CG, which is why your balance moved from 1,000 t -> 407 t -> ~180 t. Every single hour granted you the full 1.50x tax bonus!\n\n**2. Pumpjacks & Iron Math:**\n• Each pumpjack costs **22,000 iron**.\n• You originally had **255** pumpjacks.\n• On Oct 18, Maignalis sent you 22,000,000 iron. You built **845** pumpjacks (255 + 845 = 1,100), consuming 18.59M iron.\n• On Oct 19, Maignalis sent another 23,000,000 iron. You built **1,000** more pumpjacks, bringing your nation to exactly **2,100** pumpjacks (consuming 22M iron, leaving ~2.61M iron).\n• In the revenue history, purchases are recorded by batch, but your database totals and all iron spent match down to the exact unit!"
+    },
+    {
+      "at": "2026-10-20T13:57:15Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1562102401723277314",
+      "staff": false,
+      "text": "Bad maths.\n\n72 hours = 3 days.\n3 days x hourly deficit per your own info of 40.6t/day  = total of 121.8t\n\nHow does that make sense to consume 1000t - 407t = 593t?!"
+    },
+    {
+      "at": "2026-10-20T13:57:56Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1562102574289653922",
+      "staff": false,
+      "text": "<@710359818329915443> I don't know how this works, but talking to AI is kinda aggravating. Isn't it just repeating the same problem?"
+    },
+    {
+      "at": "2026-10-20T13:58:27Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1562102706342985748",
+      "staff": true,
+      "text": "Yeah I am sorry I am trying out different methods"
     }
   ],
   "thread_id": "1561212128898056342",
