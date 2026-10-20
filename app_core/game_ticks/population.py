@@ -989,9 +989,9 @@ def apply_workforce_hiring_and_debuffs(user_id):
             # If jobs_available < jobs_needed: production efficiency reduced
             if jobs_needed > 0:
                 employment_ratio = jobs_available / jobs_needed
-                # Min efficiency 20% (PRODUCTION_EFFICIENCY_MIN)
-                efficiency_multiplier = max(
-                    variables.PRODUCTION_EFFICIENCY_MIN, employment_ratio
+                # Min efficiency 20% (PRODUCTION_EFFICIENCY_MIN), capped at 100%
+                efficiency_multiplier = min(
+                    1.0, max(variables.PRODUCTION_EFFICIENCY_MIN, employment_ratio)
                 )
             else:
                 efficiency_multiplier = 1.0
