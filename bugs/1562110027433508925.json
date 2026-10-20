@@ -2,7 +2,7 @@
   "author_id": "1326884862346657803",
   "created_at": "2026-10-20T14:27:33Z",
   "kind": "bug",
-  "last_message_id": "1562110027433508925",
+  "last_message_id": "1562129353846952067",
   "last_player_message_at": "2026-10-20T14:27:33Z",
   "messages": [
     {
@@ -14,6 +14,16 @@
       "id": "1562110027433508925",
       "staff": false,
       "text": "Couldn't declare on nations available in the war range as per search bar"
+    },
+    {
+      "at": "2026-10-20T15:44:20Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1562129353846952067",
+      "staff": false,
+      "text": "<@1326884862346657803> Thanks for the sharp catch!\n\n**Why this happened:**\nWhen PR #209 decoupled target eligibility from standing military units (making war range strictly population-based: `population / 1000.0`), the Countries search bar (`CountryRepository.get_countries_paginated`) still had the legacy query joining `user_military` and adding unit weights to calculate `strength`.\nAs a result, a nation whose military inflated their search-score into your bracket would show up in the search bar under the War Range filter, but clicking to declare war failed with *\"That nation is outside your war range\"* because the war declaration engine evaluates actual population strength.\n\n**The Fix:**\n- Fixed in **PR #213** (*\"Fix war range search calculation, coalition bank tab redirects, and malls balance\"*) and deployed live to production.\n- `CountryRepository` now calculates `strength` strictly from `population / 1000.0`, matching `wars.war_range` with 100% precision.\n- Any nation appearing under your War Range search filter is now genuinely in your declaration bracket.\n\nThank you for reporting this!"
     }
   ],
   "thread_id": "1562110027433508925",
