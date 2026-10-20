@@ -1779,7 +1779,7 @@ def deposit_into_bank(coalition_id):
         flash("Deposited into your personal bank account.", "success")
     else:
         flash("Donated to alliance bank reserves.", "success")
-    return redirect(f"/coalition/{coalition_id}")
+    return redirect(f"/coalition/{coalition_id}#bank")
 
 
 # Function for withdrawing a resource from the bank
@@ -1804,7 +1804,7 @@ def withdraw(resource, amount, user_id, coalition_id, actor_id=None):
         row = db.fetchone()
         if not row:
             flash(f"Your coalition doesn't have enough {resource}.", "warning")
-            return redirect(f"/coalition/{coalition_id}")
+            return redirect(f"/coalition/{coalition_id}#bank")
         new_resource = row[0]
 
         current_app.logger.info(
@@ -1898,7 +1898,7 @@ def withdraw_from_bank(coalition_id):
                 "request. Use Request Withdrawal instead.",
                 "warning",
             )
-            return redirect(f"/coalition/{coalition_id}")
+            return redirect(f"/coalition/{coalition_id}#bank")
 
     resources = ["money"] + variables.RESOURCES
 
@@ -1933,7 +1933,7 @@ def withdraw_from_bank(coalition_id):
             return result
 
     _invalidate_bank_caches(coalition_id)
-    return redirect(f"/coalition/{coalition_id}")
+    return redirect(f"/coalition/{coalition_id}#bank")
 
 
 # Route for members withdrawing from their personal deposited balance
@@ -1967,7 +1967,7 @@ def withdraw_personal_from_bank(coalition_id):
 
     if not withdrew_resources:
         flash("No resources specified to withdraw.", "warning")
-        return redirect(f"/coalition/{coalition_id}")
+        return redirect(f"/coalition/{coalition_id}#bank")
 
     with get_request_cursor() as db:
         for name, amount in withdrew_resources:
@@ -1991,7 +1991,7 @@ def withdraw_personal_from_bank(coalition_id):
 
             if not row:
                 flash(f"You have no personal deposit of {name} to withdraw.", "warning")
-                return redirect(f"/coalition/{coalition_id}")
+                return redirect(f"/coalition/{coalition_id}#bank")
 
             deposited, withdrawn = row
             available = max(0, deposited - withdrawn)
@@ -2000,14 +2000,14 @@ def withdraw_personal_from_bank(coalition_id):
                     f"You can only withdraw up to your personal balance of {available:,} {name}.",
                     "warning",
                 )
-                return redirect(f"/coalition/{coalition_id}")
+                return redirect(f"/coalition/{coalition_id}#bank")
 
             update_statement = f"UPDATE colBanks SET {name}={name}-%s WHERE colId=%s AND {name}>=%s RETURNING {name}"
             db.execute(update_statement, (amount, coalition_id, amount))
             b_row = db.fetchone()
             if not b_row:
                 flash(f"The alliance bank does not have enough {name} in vault.", "warning")
-                return redirect(f"/coalition/{coalition_id}")
+                return redirect(f"/coalition/{coalition_id}#bank")
 
             db.execute(
                 """
@@ -2046,7 +2046,7 @@ def withdraw_personal_from_bank(coalition_id):
 
     _invalidate_bank_caches(coalition_id)
     flash("Successfully withdrew from your personal bank account.", "success")
-    return redirect(f"/coalition/{coalition_id}")
+    return redirect(f"/coalition/{coalition_id}#bank")
 
 
 # Route for coalition leadership to adjust / deduct a member's personal bank balance
@@ -2072,7 +2072,7 @@ def adjust_personal_bank(coalition_id):
             target_uid = int(target_uid_raw)
         except (TypeError, ValueError):
             flash("Invalid member selected.", "warning")
-            return redirect(f"/coalition/{coalition_id}")
+            return redirect(f"/coalition/{coalition_id}#bank")
 
         # Ensure target member is actually in the coalition
         db.execute(
@@ -2081,12 +2081,12 @@ def adjust_personal_bank(coalition_id):
         )
         if not db.fetchone():
             flash("Target player is not a member of this coalition.", "warning")
-            return redirect(f"/coalition/{coalition_id}")
+            return redirect(f"/coalition/{coalition_id}#bank")
 
         _VALID_BANK_COLUMNS = frozenset(["money"] + variables.RESOURCES)
         if resource not in _VALID_BANK_COLUMNS:
             flash(f"Invalid resource: {resource}", "warning")
-            return redirect(f"/coalition/{coalition_id}")
+            return redirect(f"/coalition/{coalition_id}#bank")
 
         try:
             amount = int(amount_raw)
@@ -2094,7 +2094,7 @@ def adjust_personal_bank(coalition_id):
                 raise ValueError()
         except (TypeError, ValueError):
             flash("Amount must be a non-negative integer.", "warning")
-            return redirect(f"/coalition/{coalition_id}")
+            return redirect(f"/coalition/{coalition_id}#bank")
 
         db.execute("SELECT username FROM users WHERE id=%s", (target_uid,))
         urow = db.fetchone()
@@ -2120,7 +2120,7 @@ def adjust_personal_bank(coalition_id):
                     f"Cannot deduct {amount:,} {resource}; {target_username} only has {current_available:,} personal balance.",
                     "warning",
                 )
-                return redirect(f"/coalition/{coalition_id}")
+                return redirect(f"/coalition/{coalition_id}#bank")
             new_available = current_available - amount
             diff = amount
         elif action_type == "set":
@@ -2128,7 +2128,7 @@ def adjust_personal_bank(coalition_id):
             diff = abs(new_available - current_available)
         else:
             flash("Invalid action type.", "warning")
-            return redirect(f"/coalition/{coalition_id}")
+            return redirect(f"/coalition/{coalition_id}#bank")
 
         if not row:
             if new_available > 0:
@@ -2180,7 +2180,7 @@ def adjust_personal_bank(coalition_id):
         f"Successfully updated {target_username}'s personal {resource} balance to {new_available:,}.",
         "success",
     )
-    return redirect(f"/coalition/{coalition_id}")
+    return redirect(f"/coalition/{coalition_id}#bank")
 
 
 # Route for requesting a resource from the coalition bank
@@ -2229,7 +2229,7 @@ def request_from_bank(coalition_id):
                 )
 
     _invalidate_bank_caches(coalition_id)
-    return redirect(f"/coalition/{coalition_id}")
+    return redirect(f"/coalition/{coalition_id}#bank")
 
 
 # Route for removing a request for a resource from the coalition bank
@@ -2264,7 +2264,7 @@ def remove_bank_request(bankId):
         db.execute("DELETE FROM colBanksRequests WHERE id=(%s)", (bankId,))
 
     _invalidate_bank_caches(coalition_id)
-    return redirect("/my_coalition")
+    return redirect(f"/coalition/{coalition_id}#bank")
 
 
 # Route for accepting a bank request from the coalition bank
@@ -2314,7 +2314,7 @@ def accept_bank_request(bankId):
                 "withdrawal requests. Another banker has to approve it.",
                 "warning",
             )
-            return redirect(f"/coalition/{coalition_id}")
+            return redirect(f"/coalition/{coalition_id}#bank")
 
         # Verify the requester is still in the coalition
         db.execute(f"SELECT role FROM {_members_tbl()} WHERE userid=%s AND colid=%s", (user_id, coalition_id))
@@ -2328,7 +2328,7 @@ def accept_bank_request(bankId):
         db.execute("DELETE FROM colBanksRequests WHERE id=(%s)", (bankId,))
 
     _invalidate_bank_caches(coalition_id)
-    return redirect("/my_coalition")
+    return redirect(f"/coalition/{coalition_id}#bank")
 
 
 def set_tax_rate(coalition_id):
@@ -2358,7 +2358,7 @@ def set_tax_rate(coalition_id):
             (tax_rate, coalition_id),
         )
 
-    return redirect(f"/coalition/{coalition_id}")
+    return redirect(f"/coalition/{coalition_id}#tax")
 
 
 # Route for offering another coalition a treaty

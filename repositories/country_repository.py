@@ -1,7 +1,6 @@
 from database import get_request_cursor
 from psycopg2.extras import RealDictCursor
 from influence_formula import influence_subquery_sql
-from wars.war_range import unit_weight_case_sql
 
 class CountryRepository:
     @staticmethod
@@ -38,7 +37,7 @@ class CountryRepository:
                         COALESCE(p.provinces_count, 0) AS provinces_count,
                         u.join_number,
                         COALESCE(inf.influence, 0) AS influence,
-                        (COALESCE(p.province_population, 0) / 1000.0 + COALESCE(mil.mil_strength, 0)) AS strength,
+                        (COALESCE(p.province_population, 0) / 1000.0) AS strength,
                         COALESCE(EXTRACT(EPOCH FROM (CASE WHEN u.date ~ '^\\d{{4}}-\\d{{2}}-\\d{{2}}' THEN u.date ELSE '1970-01-01' END)::timestamp)::bigint, 0) AS unix
                     FROM users u
                     JOIN user_ids ui ON u.id = ui.id
@@ -50,12 +49,6 @@ class CountryRepository:
                         FROM provinces
                         WHERE userid = u.id
                     ) p ON true
-                    LEFT JOIN LATERAL (
-                        SELECT COALESCE(SUM(um.quantity * {unit_weight_case_sql()}), 0) AS mil_strength
-                        FROM user_military um
-                        JOIN unit_dictionary ud ON um.unit_id = ud.unit_id
-                        WHERE um.user_id = u.id
-                    ) mil ON true
                     LEFT JOIN {influence_subquery_sql("SELECT id FROM user_ids")} inf
                         ON inf.user_id = u.id
                     LEFT JOIN {coalition_src} cm ON cm.userid = u.id
