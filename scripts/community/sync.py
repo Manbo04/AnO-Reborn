@@ -461,7 +461,7 @@ def ensure_vote_channel(state):
             "name": VOTE_CHANNEL_NAME,
             "type": 0,
             "parent_id": ann.get("parent_id"),
-            "topic": "Every Friday: one poll per new suggestion. Yes wins = it gets built. "
+            "topic": "Every Friday: one poll per new suggestion. Yes wins = it is approved and queued for the team to implement. "
             "Discuss in the suggestion's own thread (link under each poll).",
             "permission_overwrites": overwrites,
         },
@@ -517,7 +517,7 @@ def open_ballot(q, state, items, closes_at, intro, announce=True):
             send(rec["thread_id"],
                  (f"<@{author}> " if author else "") +
                  f"this is now up for the community vote: {link}\n"
-                 f"Voting closes <t:{int(closes_at.timestamp())}:F>. If Yes wins, it gets built.",
+                 f"Voting closes <t:{int(closes_at.timestamp())}:F>. If Yes wins, it is approved and queued for the team to implement.",
                  ping_users=[author] if author else [])
     q.save(ballot, "ballots", ballot_id + ".json")
     state["open_ballot"] = ballot_id
@@ -527,7 +527,7 @@ def open_ballot(q, state, items, closes_at, intro, announce=True):
          f"<@&{HUMAN_ROLE}> this week's vote is open in <#{vote_ch}>: "
          f"{len(items)} proposal{'s' if len(items) != 1 else ''}. "
          f"Voting closes <t:{int(closes_at.timestamp())}:F>. "
-         "Whatever wins gets built, whatever loses doesn't.",
+         "Whatever wins is approved and queued for the team to implement, whatever loses doesn't.",
          ping_roles=[HUMAN_ROLE])
     return ballot
 
@@ -570,7 +570,7 @@ def tally_ballot(q, state):
         (passed if ok else failed).append((item, rec))
         if rec.get("kind") != "proposal" and rec.get("thread_id"):
             author = rec.get("author_id")
-            verdict = ("passed, it's queued to be built. You'll get a ping here when it's live."
+            verdict = ("passed, it's approved and queued for the team to implement."
                        if ok else "didn't pass this time, so it won't be added.")
             send(rec["thread_id"],
                  (f"<@{author}> " if author else "") +
@@ -586,7 +586,7 @@ def tally_ballot(q, state):
 
     text = ["**Vote results are in.** Thanks to everyone who voted."]
     if passed:
-        text += ["", "**Passed (will be built):**"] + [line(i) for i, _ in passed]
+        text += ["", "**Passed (approved, awaiting the team):**"] + [line(i) for i, _ in passed]
     if failed:
         text += ["", f"**Didn't pass** (needs more Yes than No, and at least {MIN_VOTES} votes):"]
         text += [line(i) for i, _ in failed]
@@ -613,7 +613,7 @@ def weekly_staff_digest(q, state):
     lines.append(f"Bugs fixed: {len(fixed)}" + "".join(f"\n- {t}" for t in fixed[:25]))
     lines.append(f"Voted features built: {len(built)}" + "".join(f"\n- {t}" for t in built[:25]))
     if waiting:
-        lines.append(f"Passed, still being built: {len(waiting)}" + "".join(f"\n- {t}" for t in waiting[:25]))
+        lines.append(f"Passed, awaiting implementation: {len(waiting)}" + "".join(f"\n- {t}" for t in waiting[:25]))
     send(STAFF_CHAT, "\n".join(lines))
     state["last_digest_at"] = iso(now())
 
@@ -700,7 +700,7 @@ def main():
             if items:
                 open_ballot(q, state, items, closes,
                             "**New weekly vote.** One poll per suggestion posted since the last vote. "
-                            "Yes wins = it gets built. Discuss in each suggestion's thread.")
+                            "Yes wins = it is approved and queued for the team to implement. Discuss in each suggestion's thread.")
             else:
                 print("no new suggestions this week")
             weekly_staff_digest(q, state)
