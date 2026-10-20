@@ -1564,16 +1564,23 @@ def _nearest_free_hex(start_coords, occupied_coords, max_rings=500):
     raise RuntimeError("No free hex available for a new province")
 
 
-def create_province_record(db, user_id: int, name: str) -> int:
+def create_province_record(db, user_id: int, name: str, is_starter: bool = None) -> int:
     """Place a new province on a free hex next to the owner (or anywhere for a first
     province), insert it and invalidate the owner's caches. Caller handles payment
-    and locking. Returns the new province id."""
+    and locking. Returns the new province id.
+    
+    Starter provinces (first province for a new player) begin with 1,000,000 population
+    (60% working / 30% children / 10% elderly). Subsequent provinces purchased by
+    existing nations start with 10,000 population (community vote)."""
     # Find an available adjacent hex coordinate for the new province
     db.execute("SELECT coordinate_x, coordinate_y FROM provinces WHERE coordinate_x IS NOT NULL AND coordinate_y IS NOT NULL")
     occupied_coords = set(db.fetchall())
 
     db.execute("SELECT coordinate_x, coordinate_y FROM provinces WHERE userId = %s AND coordinate_x IS NOT NULL AND coordinate_y IS NOT NULL", (user_id,))
     user_coords = set(db.fetchall())
+
+    if is_starter is None:
+        is_starter = len(user_coords) == 0
 
     hex_directions = [(1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1), (0, 1)]
     new_x, new_y = None, None
@@ -1604,19 +1611,19 @@ def create_province_record(db, user_id: int, name: str) -> int:
         # coordinate index -> "unexpected error" on buying a province).
         new_x, new_y = _nearest_free_hex(user_coords, occupied_coords)
 
-    # Split the starting 10,000 population across age brackets
-    # (60% working / 30% children / 10% elderly) instead of
-    # dumping it all into pop_children -- a new nation used to
-    # start 100% "children," which zeroed its tax income under
-    # the age-weighted tax system and skewed consumer-goods need.
+    if is_starter:
+        pop, pop_c, pop_w, pop_e = 1000000, 300000, 600000, 100000
+    else:
+        pop, pop_c, pop_w, pop_e = 10000, 3000, 6000, 1000
+
     db.execute(
         (
             "INSERT INTO provinces "
             "(userId, provinceName, population, pop_children, pop_working, pop_elderly, "
             "coordinate_x, coordinate_y) "
-            "VALUES (%s, %s, 10000, 3000, 6000, 1000, %s, %s) RETURNING id"
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id"
         ),
-        (user_id, name, new_x, new_y),
+        (user_id, name, pop, pop_c, pop_w, pop_e, new_x, new_y),
     )
     row = db.fetchone()
     province_id = row["id"] if isinstance(row, dict) else row[0]

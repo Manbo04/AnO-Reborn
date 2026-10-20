@@ -354,6 +354,7 @@ def get_revenue(cId, db=None):
         # Per-building (upkeep, net effect) in tick order; applied against
         # the simulated treasury once the tax projection is known.
         upkeep_queue = []
+        factory_consumption = defaultdict(float)
 
         for province in provinces:
             buildings = proinfra_by_id.get(province)
@@ -485,8 +486,7 @@ def get_revenue(cId, db=None):
                         amount *= 0.75
 
                     total = build_count * amount
-                    # Only subtract upkeep from net if building operates
-                    upkeep_op["net"][resource] -= total
+                    factory_consumption[resource] += total
 
         # Reuse already-fetched province data for tax income calculation.
         # province_rows is (id, land, productivity, population, pop_children,
@@ -591,6 +591,15 @@ def get_revenue(cId, db=None):
             for resource, delta in upkeep_op["net"].items():
                 revenue["net"][resource] += delta
 
+        # Deduct factory consumption (raw and processed resources consumed as inputs
+        # by manufacturing buildings, e.g. iron/coal for steel mills, bauxite for aluminium
+        # refineries, copper/steel/aluminium for component factories). Unconditionally
+        # subtracted from net so players always see their true resource consumption even
+        # if treasury was tight during page render.
+        for resource, amount in factory_consumption.items():
+            if resource in revenue["net"]:
+                revenue["net"][resource] -= amount
+
         # Pension-crisis gold penalty (see workforce block above) -- a flat
         # per-tick gold cost the real tick deducts once elderly population
         # exceeds PENSION_CRISIS_RATIO of the working population. `net` only
@@ -625,6 +634,46 @@ def get_revenue(cId, db=None):
                 continue  # folded into the rations recompute below
             if resource in revenue["net"]:
                 revenue["net"][resource] -= amount
+
+        # Active trade agreements flow (hourly incoming and outgoing resources).
+        # Transfers occur every interval_hours, so rate is normalized to per hour.
+        trade_agreements_flow = defaultdict(float)
+        try:
+            db.execute(
+                """
+                SELECT proposer_id, proposer_resource, proposer_amount,
+                       receiver_id, receiver_resource, receiver_amount,
+                       COALESCE(interval_hours, 1)
+                FROM trade_agreements
+                WHERE status = 'active'
+                  AND (max_executions IS NULL OR max_executions = 0 OR execution_count < max_executions)
+                  AND (proposer_id = %s OR receiver_id = %s)
+                """,
+                (cId, cId),
+            )
+            for row in (db.fetchall() or []):
+                p_id, p_res, p_amt, r_id, r_res, r_amt, interval = row
+                hours = max(1, int(interval or 1))
+                p_amt = float(p_amt or 0)
+                r_amt = float(r_amt or 0)
+
+                # Normalize resource names (e.g. gold -> money, spaces to underscores)
+                p_clean = "money" if p_res in ("gold", "money") else str(p_res or "").strip().lower().replace(" ", "_")
+                r_clean = "money" if r_res in ("gold", "money") else str(r_res or "").strip().lower().replace(" ", "_")
+                if p_clean in ("consumer_goods", "consumergoods"):
+                    p_clean = "consumer_goods"
+                if r_clean in ("consumer_goods", "consumergoods"):
+                    r_clean = "consumer_goods"
+
+                if int(p_id) == int(cId):
+                    trade_agreements_flow[p_clean] -= p_amt / hours
+                    trade_agreements_flow[r_clean] += r_amt / hours
+                elif int(r_id) == int(cId):
+                    trade_agreements_flow[r_clean] -= r_amt / hours
+                    trade_agreements_flow[p_clean] += p_amt / hours
+        except Exception:
+            rollback_db_cursor(db)
+            trade_agreements_flow = defaultdict(float)
 
         # Reuse already-fetched data for CG need calculation
         total_population = sum(row[3] or 0 for row in province_rows)
@@ -672,6 +721,31 @@ def get_revenue(cId, db=None):
         )
         revenue["net"]["rations"] = new_rations - current_rations
 
+        # Fold active trade agreements into revenue["net"]
+        for resource, flow in trade_agreements_flow.items():
+            if resource in revenue["net"]:
+                revenue["net"][resource] += flow
+            else:
+                revenue["net"][resource] = flow
+
+        for resource, val in revenue["net"].items():
+            if isinstance(val, float) and val.is_integer():
+                revenue["net"][resource] = int(val)
+            elif isinstance(val, float):
+                revenue["net"][resource] = round(val, 2)
+
+        # Clean factory consumption and trade agreements flow for presentation
+        clean_factory_consumption = {
+            res: (int(amt) if isinstance(amt, float) and amt.is_integer() else round(amt, 2))
+            for res, amt in factory_consumption.items()
+            if amt > 0
+        }
+        clean_trade_flow = {
+            res: (int(amt) if isinstance(amt, float) and amt.is_integer() else round(amt, 2))
+            for res, amt in trade_agreements_flow.items()
+            if round(amt, 4) != 0
+        }
+
         # Filter to only show resources with positive gross production
         # or non-zero net (for special cases like rations)
         # Keep `gross_theoretical` present so templates can always access it
@@ -686,6 +760,8 @@ def get_revenue(cId, db=None):
             # before adding more units (player-reported: couldn't tell how
             # much rations production to add on top of an existing army).
             "military_upkeep": dict(military_upkeep),
+            "factory_consumption": clean_factory_consumption,
+            "trade_agreements_flow": clean_trade_flow,
         }
         if "coalition_tax" in revenue:
             filtered_revenue["coalition_tax"] = revenue["coalition_tax"]

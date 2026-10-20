@@ -1,8 +1,9 @@
 {% extends"layout.html"%} {% block title %} {{ username }} {% endblock %}{% block body_class %} page-country game-page-v2{% if cId|string == "1" %} nation-cyberpunk-theme{% elif cId|string == "69697588" %} nation-forge-theme{% elif cId|string == "69697644" %} nation-bloodshed-theme{% elif cId|string == "781" %} nation-imperial-theme{% elif cId|string == "69697657" %} nation-frost-theme{% elif cId|string == "69697637" %} nation-nebula-theme{% endif %}{% endblock %}
 {% from 'macros/game_ui.html' import game_button, game_hero, render_nation_name %}
+{% from 'macros/revenue.html' import net_resource_card %}
 {% block og_title %}{{ username }} · Affairs and Order{% endblock %}
-{% block og_description %}{{ username }} — {{ "{:,}".format(population) }} population · {{ provinceCount }} province{{ 's' if provinceCount != 1 else '' }}{% if leader_name %} · Led by {{ leader_name }}{% endif %}{% if colName %} · {{ colName }}{% endif %}{% endblock %}
-{% block og_image %}{{ url_for('social_cards.country_card', cid=cId, _external=True) }}{% endblock %}
+{% block og_description %}{{ username }} — {{ "{:,}".format(population) if population is defined and population is not none else '0' }} population · {{ provinceCount|default(0) }} province{{ 's' if (provinceCount|default(0)) != 1 else '' }}{% if leader_name %} · Led by {{ leader_name }}{% endif %}{% if colName %} · {{ colName }}{% endif %}{% endblock %}
+{% block og_image %}{% if cId is defined and cId is not none %}{{ url_for('social_cards.country_card', cid=cId, _external=True) }}{% endif %}{% endblock %}
 {% block og_image_width %}1200{% endblock %}
 {% block og_image_height %}630{% endblock %}
 {% block twitter_title %}{{ self.og_title() }}{% endblock %}
@@ -829,6 +830,27 @@
                 {{ revenue_daily['gross_theoretical'].get(resource, 0) | fmt }}
                 <small class="muted" title="Projected (applies productivity & rounding): {{ revenue_daily['gross'].get(resource, 0) | fmt }}">&nbsp;Projected: {{ revenue_daily['gross'].get(resource, 0) | fmt }}</small>
             {% endmacro %}
+            {% macro net_resource_card(res_key, label, rev_data, is_daily=False, is_oil=False) %}
+                {% set net_val = rev_data.get('net', {}).get(res_key, 0) %}
+                {% set gross_val = rev_data.get('gross', {}).get(res_key, 0) %}
+                {% set factory_val = rev_data.get('factory_consumption', {}).get(res_key, 0) %}
+                {% set trade_val = rev_data.get('trade_agreements_flow', {}).get(res_key, 0) %}
+                {% set mil_val = rev_data.get('military_upkeep', {}).get(res_key, 0) %}
+                {% set has_breakdown = (gross_val != 0 or factory_val != 0 or trade_val != 0 or mil_val != 0) %}
+                <div class="templatedivflex2left stat-card" {% if has_breakdown %}data-tippy-content="<strong>{{ label }} Breakdown ({{ 'Daily' if is_daily else 'Hourly' }}):</strong><br>&bull; Gross production: +{% if is_oil %}{{ gross_val | fmt }}{% else %}{{ gross_val | weight_fmt }}{% endif %}<br>{% if factory_val %}&bull; Factory consumption: -{% if is_oil %}{{ factory_val | fmt }}{% else %}{{ factory_val | weight_fmt }}{% endif %}<br>{% endif %}{% if trade_val %}&bull; Trade agreements: {% if trade_val > 0 %}+{% endif %}{% if is_oil %}{{ trade_val | fmt }}{% else %}{{ trade_val | weight_fmt }}{% endif %}<br>{% endif %}{% if mil_val %}&bull; Military upkeep: -{% if is_oil %}{{ mil_val | fmt }}{% else %}{{ mil_val | weight_fmt }}{% endif %}<br>{% endif %}&bull; Net: {% if is_oil %}{{ net_val | fmt }}{% else %}{{ net_val | weight_fmt }}{% endif %}"{% endif %}>
+                    <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', res_key)) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ label }}</strong>
+                    <span class="stat-value {% if net_val < 0 %}text-danger{% elif net_val > 0 %}text-success{% endif %}">{% if net_val > 0 %}+{% endif %}{% if is_oil %}{{ net_val | fmt }}{% else %}{{ net_val | weight_fmt }}{% endif %}</span>
+                    {% if factory_val %}
+                    <small class="muted" style="display: block; font-size: 0.75rem; margin-top: 2px;">-{% if is_oil %}{{ factory_val | fmt }}{% else %}{{ factory_val | weight_fmt }}{% endif %} factories</small>
+                    {% endif %}
+                    {% if trade_val %}
+                    <small class="muted" style="display: block; font-size: 0.75rem; margin-top: 2px;">{% if trade_val > 0 %}+{% endif %}{% if is_oil %}{{ trade_val | fmt }}{% else %}{{ trade_val | weight_fmt }}{% endif %} trade</small>
+                    {% endif %}
+                    {% if mil_val %}
+                    <small class="muted" style="display: block; font-size: 0.75rem; margin-top: 2px;">-{% if is_oil %}{{ mil_val | fmt }}{% else %}{{ mil_val | weight_fmt }}{% endif %} military</small>
+                    {% endif %}
+                </div>
+            {% endmacro %}
 
             {# Revenue history: gold actually gained/spent by the hourly ticks
                (nation_revenue_history ledger), self-contained block. #}
@@ -984,9 +1006,14 @@
                                 article
                                 </span>Net Raw <small class="font-normal-sub">(Hourly)</small></h2>
 <div class="stat-grid">
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'money')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Monetary net</strong>
-        <span class="stat-value {% if revenue['net']['money'] < 0 %}text-danger{% elif revenue['net']['money'] > 0 %}text-success{% endif %}">{% if revenue['net']['money'] > 0 %}+{% endif %}{{ revenue["net"]["money"] | fmt }}</span>
+    {% set m_net = revenue['net'].get('money', 0) %}
+    {% set m_trade = revenue.get('trade_agreements_flow', {}).get('money', 0) %}
+    <div class="templatedivflex2left stat-card" {% if m_trade %}data-tippy-content="Monetary net includes {% if m_trade > 0 %}+{% endif %}{{ m_trade | fmt }} from active trade agreements."{% endif %}>
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'money')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Monetary net</strong>
+        <span class="stat-value {% if m_net < 0 %}text-danger{% elif m_net > 0 %}text-success{% endif %}">{% if m_net > 0 %}+{% endif %}{{ m_net | fmt }}</span>
+        {% if m_trade %}
+        <small class="muted" style="display: block; font-size: 0.75rem; margin-top: 2px;">{% if m_trade > 0 %}+{% endif %}{{ m_trade | fmt }} trade</small>
+        {% endif %}
     </div>
     <div class="templatedivflex2left stat-card" data-tippy-content="Total hourly operating costs for all active buildings in your provinces. Deducted every tick.">
         <strong class="stat-label">Building upkeep</strong>
@@ -1003,88 +1030,55 @@
         <span class="stat-value">{% if bond_interest.received %}<span class="text-success">+{{ bond_interest.received | fmt }}</span>{% endif %}{% if bond_interest.received and bond_interest.paid %} / {% endif %}{% if bond_interest.paid %}<span class="text-danger">-{{ bond_interest.paid | fmt }}</span>{% endif %}</span>
     </div>
     {% endif %}
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Rations</strong>
-        <span class="stat-value">{{ revenue["net"]["rations"] | fmt }}</span>
-        {% set mil_rations = revenue.get("military_upkeep", {}).get("rations", 0) %}
-        {% if mil_rations %}
-        <small class="muted" title="Already subtracted above. Your army/navy/air force is eating this much of your rations production every hour.">&nbsp;includes -{{ mil_rations | fmt }} to military upkeep</small>
+    {% set rat_net = revenue['net'].get('rations', 0) %}
+    {% set rat_gross = revenue['gross'].get('rations', 0) %}
+    {% set rat_mil = revenue.get('military_upkeep', {}).get('rations', 0) %}
+    {% set rat_trade = revenue.get('trade_agreements_flow', {}).get('rations', 0) %}
+    <div class="templatedivflex2left stat-card" {% if rat_gross or rat_mil or rat_trade %}data-tippy-content="<strong>Rations Breakdown (Hourly):</strong><br>&bull; Gross: +{{ rat_gross | fmt }}<br>{% if rat_mil %}&bull; Military upkeep: -{{ rat_mil | fmt }}<br>{% endif %}{% if rat_trade %}&bull; Trade agreements: {% if rat_trade > 0 %}+{% endif %}{{ rat_trade | fmt }}<br>{% endif %}&bull; Net: {{ rat_net | fmt }}"{% endif %}>
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Rations</strong>
+        <span class="stat-value">{{ rat_net | fmt }}</span>
+        {% if rat_mil %}
+        <small class="muted" style="display: block; font-size: 0.75rem; margin-top: 2px;">-{{ rat_mil | fmt }} military</small>
+        {% endif %}
+        {% if rat_trade %}
+        <small class="muted" style="display: block; font-size: 0.75rem; margin-top: 2px;">{% if rat_trade > 0 %}+{% endif %}{{ rat_trade | fmt }} trade</small>
         {% endif %}
     </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'oil')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Oil</strong>
-        <span class="stat-value">{{ revenue["net"]["oil"] | fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'coal')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Coal</strong>
-        <span class="stat-value">{{ revenue["net"]["coal"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'uranium')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Uranium</strong>
-        <span class="stat-value">{{ revenue["net"]["uranium"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'iron')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Iron</strong>
-        <span class="stat-value">{{ revenue["net"]["iron"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lead')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Lead</strong>
-        <span class="stat-value">{{ revenue["net"]["lead"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'bauxite')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Bauxite</strong>
-        <span class="stat-value">{{ revenue["net"]["bauxite"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'copper')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Copper</strong>
-        <span class="stat-value">{{ revenue["net"]["copper"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lumber')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Lumber</strong>
-        <span class="stat-value">{{ revenue["net"]["lumber"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'silver')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Silver</strong>
-        <span class="stat-value">{{ revenue["net"]["silver"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'diamonds')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Diamonds</strong>
-        <span class="stat-value">{{ revenue["net"]["diamonds"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'bullion')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Bullion</strong>
-        <span class="stat-value">{{ revenue["net"]["bullion"] | weight_fmt }}</span>
-    </div>
+    {{ net_resource_card('oil', 'Oil', revenue, is_daily=False, is_oil=True) }}
+    {{ net_resource_card('coal', 'Coal', revenue, is_daily=False) }}
+    {{ net_resource_card('uranium', 'Uranium', revenue, is_daily=False) }}
+    {{ net_resource_card('iron', 'Iron', revenue, is_daily=False) }}
+    {{ net_resource_card('lead', 'Lead', revenue, is_daily=False) }}
+    {{ net_resource_card('bauxite', 'Bauxite', revenue, is_daily=False) }}
+    {{ net_resource_card('copper', 'Copper', revenue, is_daily=False) }}
+    {{ net_resource_card('lumber', 'Lumber', revenue, is_daily=False) }}
+    {{ net_resource_card('silver', 'Silver', revenue, is_daily=False) }}
+    {{ net_resource_card('diamonds', 'Diamonds', revenue, is_daily=False) }}
+    {{ net_resource_card('bullion', 'Bullion', revenue, is_daily=False) }}
 </div>
                     <br>
                     <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
                                 article
                                 </span>Net Processed <small class="font-normal-sub">(Hourly)</small></h2>
 <div class="stat-grid">
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'components')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Components</strong>
-        <span class="stat-value">{{ revenue["net"]["components"] | weight_fmt }}</span>
+    {{ net_resource_card('components', 'Components', revenue, is_daily=False) }}
+    {{ net_resource_card('steel', 'Steel', revenue, is_daily=False) }}
+    {% set cg_net = revenue['net'].get('consumer_goods', 0) %}
+    {% set cg_gross = revenue['gross'].get('consumer_goods', 0) %}
+    {% set cg_trade = revenue.get('trade_agreements_flow', {}).get('consumer_goods', 0) %}
+    <div class="templatedivflex2left stat-card" {% if cg_gross or citizen_cg_need or cg_trade %}data-tippy-content="<strong>Consumer Goods Breakdown (Hourly):</strong><br>&bull; Gross production: +{{ cg_gross | weight_fmt }}<br>{% if citizen_cg_need %}&bull; Citizen need: -{{ citizen_cg_need | weight_fmt }}<br>{% endif %}{% if cg_trade %}&bull; Trade agreements: {% if cg_trade > 0 %}+{% endif %}{{ cg_trade | weight_fmt }}<br>{% endif %}&bull; Net: {{ cg_net | weight_fmt }}"{% endif %}>
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'consumer_goods')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Consumer goods</strong>
+        <span class="stat-value">{{ cg_net | weight_fmt }}</span>
+        {% if citizen_cg_need %}
+        <small class="muted" style="display: block; font-size: 0.75rem; margin-top: 2px;">-{{ citizen_cg_need | weight_fmt }} citizen need</small>
+        {% endif %}
+        {% if cg_trade %}
+        <small class="muted" style="display: block; font-size: 0.75rem; margin-top: 2px;">{% if cg_trade > 0 %}+{% endif %}{{ cg_trade | weight_fmt }} trade</small>
+        {% endif %}
     </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'steel')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Steel</strong>
-        <span class="stat-value">{{ revenue["net"]["steel"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'consumer_goods')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Consumer goods</strong>
-        <span class="stat-value">{{ revenue["net"]["consumer_goods"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'aluminium')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Aluminum</strong>
-        <span class="stat-value">{{ revenue["net"]["aluminium"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'gasoline')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Gasoline</strong>
-        <span class="stat-value">{{ revenue["net"]["gasoline"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'ammunition')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Ammunition</strong>
-        <span class="stat-value">{{ revenue["net"]["ammunition"] | weight_fmt }}</span>
-    </div>
+    {{ net_resource_card('aluminium', 'Aluminum', revenue, is_daily=False) }}
+    {{ net_resource_card('gasoline', 'Gasoline', revenue, is_daily=False) }}
+    {{ net_resource_card('ammunition', 'Ammunition', revenue, is_daily=False) }}
 </div>
 
                 </div>
@@ -1198,9 +1192,18 @@
                                 article
                                 </span>Net Raw <small class="font-normal-sub">(Daily)</small></h2>
 <div class="stat-grid">
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'money')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Monetary net</strong>
-        <span class="stat-value">{{ revenue_daily["net"]["money"] | fmt }}</span>
+    {% set m_net_d = revenue_daily['net'].get('money', 0) %}
+    {% set m_trade_d = revenue_daily.get('trade_agreements_flow', {}).get('money', 0) %}
+    <div class="templatedivflex2left stat-card" {% if m_trade_d %}data-tippy-content="Monetary net includes {% if m_trade_d > 0 %}+{% endif %}{{ m_trade_d | fmt }} from active trade agreements (Daily)."{% endif %}>
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'money')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Monetary net</strong>
+        <span class="stat-value {% if m_net_d < 0 %}text-danger{% elif m_net_d > 0 %}text-success{% endif %}">{% if m_net_d > 0 %}+{% endif %}{{ m_net_d | fmt }}</span>
+        {% if m_trade_d %}
+        <small class="muted" style="display: block; font-size: 0.75rem; margin-top: 2px;">{% if m_trade_d > 0 %}+{% endif %}{{ m_trade_d | fmt }} trade</small>
+        {% endif %}
+    </div>
+    <div class="templatedivflex2left stat-card" data-tippy-content="Total daily operating costs for all active buildings in your provinces. Deducted every tick.">
+        <strong class="stat-label">Building upkeep</strong>
+        <span class="stat-value {% if revenue_daily.get('building_upkeep', 0) > 0 %}text-danger{% endif %}">{% if revenue_daily.get("building_upkeep", 0) > 0 %}-{% endif %}{{ revenue_daily.get("building_upkeep", 0) | fmt }}</span>
     </div>
     <div class="templatedivflex2left stat-card">
         <strong class="stat-label">Coalition tax</strong>
@@ -1213,84 +1216,56 @@
         <span class="stat-value">{% if bond_interest.received %}<span class="text-success">+{{ bond_interest.received | fmt }}</span>{% endif %}{% if bond_interest.received and bond_interest.paid %} / {% endif %}{% if bond_interest.paid %}<span class="text-danger">-{{ bond_interest.paid | fmt }}</span>{% endif %}</span>
     </div>
     {% endif %}
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Rations</strong>
-        <span class="stat-value">{{ revenue_daily["net"]["rations"] | fmt }}</span>
+    {% set rat_net_d = revenue_daily['net'].get('rations', 0) %}
+    {% set rat_gross_d = revenue_daily['gross'].get('rations', 0) %}
+    {% set rat_mil_d = revenue_daily.get('military_upkeep', {}).get('rations', 0) %}
+    {% set rat_trade_d = revenue_daily.get('trade_agreements_flow', {}).get('rations', 0) %}
+    <div class="templatedivflex2left stat-card" {% if rat_gross_d or rat_mil_d or rat_trade_d %}data-tippy-content="<strong>Rations Breakdown (Daily):</strong><br>&bull; Gross: +{{ rat_gross_d | fmt }}<br>{% if rat_mil_d %}&bull; Military upkeep: -{{ rat_mil_d | fmt }}<br>{% endif %}{% if rat_trade_d %}&bull; Trade agreements: {% if rat_trade_d > 0 %}+{% endif %}{{ rat_trade_d | fmt }}<br>{% endif %}&bull; Net: {{ rat_net_d | fmt }}"{% endif %}>
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'rations')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Rations</strong>
+        <span class="stat-value">{{ rat_net_d | fmt }}</span>
+        {% if rat_mil_d %}
+        <small class="muted" style="display: block; font-size: 0.75rem; margin-top: 2px;">-{{ rat_mil_d | fmt }} military</small>
+        {% endif %}
+        {% if rat_trade_d %}
+        <small class="muted" style="display: block; font-size: 0.75rem; margin-top: 2px;">{% if rat_trade_d > 0 %}+{% endif %}{{ rat_trade_d | fmt }} trade</small>
+        {% endif %}
     </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'oil')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Oil</strong>
-        <span class="stat-value">{{ revenue_daily["net"]["oil"] | fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'coal')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Coal</strong>
-        <span class="stat-value">{{ revenue_daily["net"]["coal"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'uranium')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Uranium</strong>
-        <span class="stat-value">{{ revenue_daily["net"]["uranium"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'iron')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Iron</strong>
-        <span class="stat-value">{{ revenue_daily["net"]["iron"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lead')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Lead</strong>
-        <span class="stat-value">{{ revenue_daily["net"]["lead"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'bauxite')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Bauxite</strong>
-        <span class="stat-value">{{ revenue_daily["net"]["bauxite"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'copper')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Copper</strong>
-        <span class="stat-value">{{ revenue_daily["net"]["copper"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'lumber')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Lumber</strong>
-        <span class="stat-value">{{ revenue_daily["net"]["lumber"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'silver')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Silver</strong>
-        <span class="stat-value">{{ revenue_daily["net"]["silver"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'diamonds')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Diamonds</strong>
-        <span class="stat-value">{{ revenue_daily["net"]["diamonds"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'bullion')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Bullion</strong>
-        <span class="stat-value">{{ revenue_daily["net"]["bullion"] | weight_fmt }}</span>
-    </div>
+    {{ net_resource_card('oil', 'Oil', revenue_daily, is_daily=True, is_oil=True) }}
+    {{ net_resource_card('coal', 'Coal', revenue_daily, is_daily=True) }}
+    {{ net_resource_card('uranium', 'Uranium', revenue_daily, is_daily=True) }}
+    {{ net_resource_card('iron', 'Iron', revenue_daily, is_daily=True) }}
+    {{ net_resource_card('lead', 'Lead', revenue_daily, is_daily=True) }}
+    {{ net_resource_card('bauxite', 'Bauxite', revenue_daily, is_daily=True) }}
+    {{ net_resource_card('copper', 'Copper', revenue_daily, is_daily=True) }}
+    {{ net_resource_card('lumber', 'Lumber', revenue_daily, is_daily=True) }}
+    {{ net_resource_card('silver', 'Silver', revenue_daily, is_daily=True) }}
+    {{ net_resource_card('diamonds', 'Diamonds', revenue_daily, is_daily=True) }}
+    {{ net_resource_card('bullion', 'Bullion', revenue_daily, is_daily=True) }}
 </div>
                     <br>
                     <h2 class="templatecontentheaderleft" style="margin-top: 0;"><span class="material-icons-outlined">
                                 article
                                 </span>Net Processed <small class="font-normal-sub">(Daily)</small></h2>
 <div class="stat-grid">
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'components')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Components</strong>
-        <span class="stat-value">{{ revenue_daily["net"]["components"] | weight_fmt }}</span>
+    {{ net_resource_card('components', 'Components', revenue_daily, is_daily=True) }}
+    {{ net_resource_card('steel', 'Steel', revenue_daily, is_daily=True) }}
+    {% set cg_net_d = revenue_daily['net'].get('consumer_goods', 0) %}
+    {% set cg_gross_d = revenue_daily['gross'].get('consumer_goods', 0) %}
+    {% set cg_trade_d = revenue_daily.get('trade_agreements_flow', {}).get('consumer_goods', 0) %}
+    {% set cg_need_d = (cg_needed * 24) if cg_needed else 0 %}
+    <div class="templatedivflex2left stat-card" {% if cg_gross_d or cg_need_d or cg_trade_d %}data-tippy-content="<strong>Consumer Goods Breakdown (Daily):</strong><br>&bull; Gross production: +{{ cg_gross_d | weight_fmt }}<br>{% if cg_need_d %}&bull; Citizen need: -{{ cg_need_d | weight_fmt }}<br>{% endif %}{% if cg_trade_d %}&bull; Trade agreements: {% if cg_trade_d > 0 %}+{% endif %}{{ cg_trade_d | weight_fmt }}<br>{% endif %}&bull; Net: {{ cg_net_d | weight_fmt }}"{% endif %}>
+        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'consumer_goods')) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> Consumer goods</strong>
+        <span class="stat-value">{{ cg_net_d | weight_fmt }}</span>
+        {% if cg_need_d %}
+        <small class="muted" style="display: block; font-size: 0.75rem; margin-top: 2px;">-{{ cg_need_d | weight_fmt }} citizen need</small>
+        {% endif %}
+        {% if cg_trade_d %}
+        <small class="muted" style="display: block; font-size: 0.75rem; margin-top: 2px;">{% if cg_trade_d > 0 %}+{% endif %}{{ cg_trade_d | weight_fmt }} trade</small>
+        {% endif %}
     </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'steel')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Steel</strong>
-        <span class="stat-value">{{ revenue_daily["net"]["steel"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'consumer_goods')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Consumer goods</strong>
-        <span class="stat-value">{{ revenue_daily["net"]["consumer_goods"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'aluminium')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Aluminum</strong>
-        <span class="stat-value">{{ revenue_daily["net"]["aluminium"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'gasoline')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Gasoline</strong>
-        <span class="stat-value">{{ revenue_daily["net"]["gasoline"] | weight_fmt }}</span>
-    </div>
-    <div class="templatedivflex2left stat-card">
-        <strong class="stat-label"><img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', 'ammunition')) }}" class="resource resourcesmall" style="vertical-align middle; margin-right 5px;" /> Ammunition</strong>
-        <span class="stat-value">{{ revenue_daily["net"]["ammunition"] | weight_fmt }}</span>
-    </div>
+    {{ net_resource_card('aluminium', 'Aluminum', revenue_daily, is_daily=True) }}
+    {{ net_resource_card('gasoline', 'Gasoline', revenue_daily, is_daily=True) }}
+    {{ net_resource_card('ammunition', 'Ammunition', revenue_daily, is_daily=True) }}
 </div>
 
                 </div>

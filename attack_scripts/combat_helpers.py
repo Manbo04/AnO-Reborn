@@ -302,22 +302,15 @@ def compute_unit_casualties(
     winner_pairs = []
     loser_pairs = []
 
-    from itertools import zip_longest
-
-    # zip_longest: a ground attack can send 4 unit types (helicopters join)
-    # against a 3-unit defence; plain zip would drop the extra unit's losses.
-    for w_unit, l_unit in zip_longest(winner_units_list, loser_units_list):
-        w_sent = (winner_units.get(w_unit, 0) or 0) if w_unit is not None else 0
-        l_sent = (loser_units.get(l_unit, 0) or 0) if l_unit is not None else 0
-
-        # Casualties scale with the size of the force committed: the winner
-        # loses a small share (more if the fight was close), the loser a large
-        # share that grows with how decisive the defeat was.
+    for w_unit in winner_units_list:
+        w_sent = winner_units.get(w_unit, 0) or 0
         if w_sent > 0:
             w_frac = min(WINNER_MAX_LOSS_FRAC, WINNER_LOSS_PER_POINT * winner_casulties)
             w_cas = min(w_sent, max(1, round(w_sent * w_frac * _rng.uniform(0.7, 1.3))))
             winner_pairs.append((w_unit, w_cas))
 
+    for l_unit in loser_units_list:
+        l_sent = loser_units.get(l_unit, 0) or 0
         if l_sent > 0:
             l_frac = min(LOSER_MAX_LOSS_FRAC, LOSER_LOSS_PER_POINT * win_type)
             l_cas = min(l_sent, max(1, round(l_sent * l_frac * _rng.uniform(0.8, 1.2))))

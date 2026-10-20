@@ -149,7 +149,7 @@ def ensure_starter_province(db, user_id: int) -> None:
             nation = (row["username"] if isinstance(row, dict) else row[0]) if row else ""
             name = f"{nation} Capital".strip()[:40] if nation else "Capital"
             from province import create_province_record
-            create_province_record(db, user_id, name)
+            create_province_record(db, user_id, name, is_starter=True)
         db.execute("RELEASE SAVEPOINT starter_province")
     except Exception as exc:
         try:
