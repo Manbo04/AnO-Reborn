@@ -152,7 +152,7 @@ every writer listed there can create or destroy value.
 | task_runs | `app_core/game_ticks/bond_tick.py`<br>`app_core/game_ticks/common.py`<br>`app_core/game_ticks/disasters.py`<br>`app_core/game_ticks/loan_interest.py`<br>`app_core/game_ticks/maintenance.py`<br>`app_core/game_ticks/population.py`<br>`app_core/game_ticks/revenue.py`<br>`app_core/game_ticks/taxes.py`<br>`app_core/game_ticks/unit_production.py` | `app_core/system/routes.py` |
 | tech_dictionary | `add_projects.py` | `action_loop.py`<br>`app_core/game_engine/routes.py`<br>`app_core/game_ticks/revenue.py`<br>`app_core/main/routes.py`<br>`app_core/military/iron_dome.py`<br>`app_core/upgrades/repositories.py`<br>`countries.py`<br>`province.py`<br>`services/country_service.py`<br>`wars/routes.py` |
 | totp_backup_codes | `app_core/auth/totp.py` | -- |
-| trade_agreements | `app_core/trade_agreements/repositories.py` | `app_core/game_ticks/maintenance.py` |
+| trade_agreements | `app_core/trade_agreements/repositories.py` | `app_core/game_ticks/maintenance.py`<br>`countries.py` |
 | trade_events | `helpers.py` | -- |
 | trades | `app_core/market/repositories.py`<br>`countries.py`<br>`repositories/country_repository.py` | `app_core/admin/repositories.py` |
 | treaties | `app_core/coalitions/routes.py` | -- |
