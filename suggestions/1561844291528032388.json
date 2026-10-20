@@ -2,8 +2,8 @@
   "author_id": "218061971809894400",
   "created_at": "2026-10-19T20:51:36Z",
   "kind": "suggestion",
-  "last_message_id": "1561859603791216732",
-  "last_player_message_at": "2026-10-19T21:52:27Z",
+  "last_message_id": "1561988311503999027",
+  "last_player_message_at": "2026-10-20T06:23:53Z",
   "messages": [
     {
       "at": "2026-10-19T20:51:36Z",
@@ -24,6 +24,16 @@
       "id": "1561859603791216732",
       "staff": false,
       "text": "I assume trades are automated or resources are traded internally by alliance member"
+    },
+    {
+      "at": "2026-10-20T06:23:53Z",
+      "attachments": [],
+      "author": "Kurai",
+      "author_id": "1002628734932762755",
+      "bot": false,
+      "id": "1561988311503999027",
+      "staff": true,
+      "text": "What resources you're trying to buy/sell? Pretty sure I flooded the market couple of days ago with all Raws"
     }
   ],
   "status": "new",
