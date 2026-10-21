@@ -603,7 +603,7 @@ INFRA = {  # Display values — synced to NEW_INFRA engine values (units/hr per 
     "banks_money": 100000,
     "malls_plus": {"consumer_goods": 30},
     "malls_effect": [{"pollution": 9}],
-    "malls_money": 60000,
+    "malls_money": 150000,
     "industrial_district_plus": {"consumer_goods": 50},
     "industrial_district_effect": [{"pollution": 15}],
     "industrial_district_money": 85000,
