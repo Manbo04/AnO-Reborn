@@ -81,7 +81,7 @@ Rules:
 
 - Growth toward a **nation-wide** comfort level (`nation_comfort`), not per province.
 - Population growth freeze is completely removed (voted 2026-10-10). Losing a battle or being nuked no longer freezes growth; only actual deaths reduce population.
-- New provinces start with 10,000 population (split 60% working / 30% children / 10% elderly: 6,000 working, 3,000 children, 1,000 elderly).
+- A nation's first (starter) province starts with 1,000,000 population (600,000 working / 300,000 children / 100,000 elderly). Provinces bought later start with 10,000 (6,000 working / 3,000 children / 1,000 elderly).
 - The age split (`pop_children/working/elderly`) is rescaled by the DB trigger
   `trg_sync_province_population` when only `population` changes. **Never set both**
   `population` and the age columns in one UPDATE — the trigger then recomputes

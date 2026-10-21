@@ -326,12 +326,6 @@
                         <a class="{{ 'active' if request.path.startswith('/account') else '' }}" href="/account"><span class="material-icons-outlined">
                             perm_identity
                         </span>Account</a>
-                        <a class="{{ 'active' if request.path.startswith('/world_map') else '' }}" href="/world_map"><span class="material-icons-outlined">
-                            public
-                        </span>World Map</a>
-                        <a class="{{ 'active' if request.path.startswith('/lore_map') else '' }}" href="/lore_map"><span class="material-icons-outlined">
-                            map
-                        </span>Lore Map</a>
                         <a class="{{ 'active' if request.path.startswith('/war-board') else '' }}" href="/war-board"><span class="material-icons-outlined">
                             campaign
                         </span>War Board</a>
@@ -354,7 +348,7 @@
                         </span>Lore Map</a>
                         <a class="{{ 'active' if request.path.startswith('/wars') else '' }}" href="/wars"><span class="material-icons-outlined">
                             military_tech
-                        </span>War Board</a>
+                        </span>Wars</a>
                         {% if FEATURE_STORE or session.get('user_id') in admin_user_ids %}
                         <a class="{{ 'active' if request.path.startswith('/store') else '' }}" href="/store"><span class="material-icons-outlined">
                             storefront
@@ -427,12 +421,6 @@
         <a class="menubara" href="/account"><span class="material-icons-outlined">
                 perm_identity
             </span>Account</a>
-        <a class="menubara" href="/world_map"><span class="material-icons-outlined">
-                public
-            </span>World Map</a>
-        <a class="menubara" href="/lore_map"><span class="material-icons-outlined">
-                map
-            </span>Lore Map</a>
         <a class="menubara" href="/war-board"><span class="material-icons-outlined">
                 campaign
             </span>War Board</a>
@@ -455,7 +443,7 @@
             </span>Lore Map</a>
         <a class="menubara" href="/wars"><span class="material-icons-outlined">
                 military_tech
-            </span>War Board</a>
+            </span>Wars</a>
         {% if FEATURE_STORE or session.get('user_id') in admin_user_ids %}
         <a class="menubara" href="/store"><span class="material-icons-outlined">
                 storefront

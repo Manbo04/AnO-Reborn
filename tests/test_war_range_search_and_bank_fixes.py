@@ -4,13 +4,10 @@ import variables
 pytestmark = pytest.mark.no_server
 
 
-def test_malls_upkeep_rebalanced():
-    """Verify retail malls upkeep was rebalanced from $150,000 to $60,000 (ratio $2,000 / CG)."""
-    assert variables.INFRA["malls_money"] == 60_000
-    assert variables.NEW_INFRA["malls"]["money"] == 60_000
-    cg = variables.NEW_INFRA["malls"]["plus"]["consumer_goods"]
-    assert cg == 30
-    assert variables.NEW_INFRA["malls"]["money"] / cg == 2000.0
+def test_malls_upkeep_unchanged():
+    """Malls upkeep stays $150,000 (the 60k cut was not requested and was reverted)."""
+    assert variables.INFRA["malls_money"] == 150_000
+    assert variables.NEW_INFRA["malls"]["money"] == 150_000
 
 
 def test_workforce_efficiency_multiplier_clamped(monkeypatch):
