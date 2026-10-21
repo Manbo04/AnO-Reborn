@@ -3,8 +3,8 @@
   "ballot_id": "2026-10-16",
   "created_at": "2026-10-11T17:39:53Z",
   "kind": "suggestion",
-  "last_message_id": "1562292075200913419",
-  "last_player_message_at": "2026-10-21T02:30:56Z",
+  "last_message_id": "1562569924931620925",
+  "last_player_message_at": "2026-10-21T20:55:01Z",
   "messages": [
     {
       "at": "2026-10-11T17:39:53Z",
@@ -55,6 +55,66 @@
       "id": "1562292075200913419",
       "staff": true,
       "text": "Ok i can see that. But dont hide the numbers, so we know what we need to keep for them to be able to withdraw."
+    },
+    {
+      "at": "2026-10-21T20:44:33Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1562567292158607475",
+      "staff": false,
+      "text": "It wouldnt matter, if you literally couldn't withdraw member deposited funds"
+    },
+    {
+      "at": "2026-10-21T20:45:08Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1562567440024469566",
+      "staff": false,
+      "text": "Like, only donations and taxes could be withdrawn by bankers"
+    },
+    {
+      "at": "2026-10-21T20:45:47Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1562567602247565343",
+      "staff": false,
+      "text": "I dont think i agree, because people will quit the game and their stuff will moulder in alliance banks for all eternity, but i think thats what he's suggesting"
+    },
+    {
+      "at": "2026-10-21T20:46:28Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1562567774717354115",
+      "staff": false,
+      "text": "My suggestion is that coalition balance should be separate from member balances"
+    },
+    {
+      "at": "2026-10-21T20:46:33Z",
+      "attachments": [],
+      "author": "Cario",
+      "author_id": "1043204044774183032",
+      "bot": false,
+      "id": "1562567797014532197",
+      "staff": false,
+      "text": "Both displayed"
+    },
+    {
+      "at": "2026-10-21T20:55:01Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1562569924931620925",
+      "staff": true,
+      "text": "Ooh I hadnt thought of that. <@710359818329915443> If this passes, will there be safeguards in case the member leaves? Like after a month of inactivity it gets donated to the coalition or something?"
     }
   ],
   "poll_message_id": "1560691685707743383",
