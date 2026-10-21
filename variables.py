@@ -1039,7 +1039,7 @@ NEW_INFRA = {  # (NEW INFRA)
     "malls": {
         "plus": {"consumer_goods": 30},
         "eff": {"pollution": 9},
-        "money": 60000,
+        "money": 150000,
     },
     "industrial_district": {
         "plus": {"consumer_goods": 50},
