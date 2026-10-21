@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-21T11:41:37Z",
   "delivered_nonce": "173a37a727f40f31fbc868a8e86108f9",
   "kind": "bug",
-  "last_message_id": "1562095685426221152",
+  "last_message_id": "1562430662840025189",
   "last_player_message_at": "2026-10-20T13:30:33Z",
   "messages": [
     {
@@ -146,6 +146,16 @@
       "id": "1562095685426221152",
       "staff": false,
       "text": "👍"
+    },
+    {
+      "at": "2026-10-21T11:41:38Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1562430662840025189",
+      "staff": false,
+      "text": "<@307290318590705667> <@307290318590705667> a correction on what the bot said above. the example it gave (120.6t of iron eaten by your steel mills) was never checked against your nation, so ignore that number. i also can't yet say where your iron went. buying pumpjacks costs a lot of iron each, so a big purchase can empty it, but i haven't matched your drop to any purchase. i'm checking your iron over a few hourly ticks against your Net figure and i'll post the result here"
     }
   ],
   "thread_id": "1560535369806512203",

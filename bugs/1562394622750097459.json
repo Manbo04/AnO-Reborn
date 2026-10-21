@@ -1,0 +1,136 @@
+{
+  "author_id": "249007223454433292",
+  "created_at": "2026-10-21T09:18:25Z",
+  "kind": "bug",
+  "last_message_id": "1562399960367104082",
+  "last_player_message_at": "2026-10-21T09:39:38Z",
+  "messages": [
+    {
+      "at": "2026-10-21T09:18:25Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1562394622750097459/1562394622938972261/image.png?ex=6ad9d4e1&is=6ad88361&hm=6af5938ec6c3241476935e1c717468fdc29dc15b6cf86ca7078d04000b71ec63&"
+      ],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1562394622750097459",
+      "staff": false,
+      "text": "2026-10-21 09:14    Deposit    celess mob    Money    1,430,342,338    —"
+    },
+    {
+      "at": "2026-10-21T09:18:34Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1562394657802166303",
+      "staff": false,
+      "text": "my money is missing?"
+    },
+    {
+      "at": "2026-10-21T09:22:08Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1562395554703736933",
+      "staff": true,
+      "text": "checking rn"
+    },
+    {
+      "at": "2026-10-21T09:22:24Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1562395623280611359",
+      "staff": false,
+      "text": "I withdrew from bank, and personal deposited again. went straight into coalition reserves"
+    },
+    {
+      "at": "2026-10-21T09:22:47Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1562395718864338985",
+      "staff": true,
+      "text": "yep I can see everything give me a couple of minutes"
+    },
+    {
+      "at": "2026-10-21T09:22:52Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1562395742335668326",
+      "staff": false,
+      "text": "I put in a few other things too, just the money is the one that got sucked into coalition"
+    },
+    {
+      "at": "2026-10-21T09:23:08Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1562395807720808540",
+      "staff": false,
+      "text": "can confirm this happened to me as well"
+    },
+    {
+      "at": "2026-10-21T09:26:21Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1562394622750097459/1562396616189546506/Screenshot_2026-10-21_at_12.26.03.png?ex=6ad9d6bd&is=6ad8853d&hm=848b18cde640cff743df7cbf99f337500c64edaf410c97328e7d806d5f84fa9d&"
+      ],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1562396616479088650",
+      "staff": true,
+      "text": "sorry the server dashboard is down"
+    },
+    {
+      "at": "2026-10-21T09:26:27Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1562396642517319722",
+      "staff": true,
+      "text": "so I cant directly change anything"
+    },
+    {
+      "at": "2026-10-21T09:39:19Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1562399880239124532",
+      "staff": false,
+      "text": "oops"
+    },
+    {
+      "at": "2026-10-21T09:39:34Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1562399941941268481",
+      "staff": false,
+      "text": "well i mean the money still exists, it seems to be a bug with the personal deposit system"
+    },
+    {
+      "at": "2026-10-21T09:39:38Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1562399960367104082",
+      "staff": false,
+      "text": "so its not urgent or anything"
+    }
+  ],
+  "thread_id": "1562394622750097459",
+  "title": "Bank Deposit Gone",
+  "url": "https://discord.com/channels/708006319658893385/1562394622750097459"
+}

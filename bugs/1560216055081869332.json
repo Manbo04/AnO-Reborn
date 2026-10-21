@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-21T11:41:33Z",
   "delivered_nonce": "a8c5402d119020091605a3fa50329839",
   "kind": "bug",
-  "last_message_id": "1562093039952855101",
+  "last_message_id": "1562430649413927034",
   "last_player_message_at": "2026-10-15T09:01:34Z",
   "messages": [
     {
@@ -26,6 +26,16 @@
       "id": "1562093039952855101",
       "staff": false,
       "text": "<@249007223454433292> Hey Celess! Here is what was happening behind the scenes with efficiency and power output:\n\n**1. How Workforce Efficiency Works:**\n• Under the workforce system, each building requires a certain number of working adults (`jobs_needed`).\n• If a nation's available working population is lower than total jobs needed across all buildings (`jobs_available < jobs_needed`), an `efficiency_multiplier` (< 1.0) is applied to all building outputs—including power plants like Geothermals.\n• If a power grid is operating near capacity, having geothermals produce at slightly reduced output can cause total energy production to dip below total consumption, triggering a blackout.\n\n**2. The Demographic Skew Bug:**\n• What triggered this recently was the province population issue: newly added provinces were inadvertently spawning with only 10,000 citizens and skewed age distributions, temporarily dragging on national workforce ratios and retail coverage.\n\n**3. Current Status:**\n• We deployed fixes for starter population (1,000,000 pop) and ensured all province additions properly allocate working-age citizens (60% working / 30% children / 10% elderly).\n• We checked your nation's live workforce status: your nation currently has **74.4M working adults** against **520,000 jobs needed**, so your workforce efficiency is sitting at the maximum **100% (1.0x)** with zero penalties.\n\nYour power grid and building outputs are fully stable at maximum efficiency!"
+    },
+    {
+      "at": "2026-10-21T11:41:35Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1562430649413927034",
+      "staff": false,
+      "text": "<@249007223454433292> <@249007223454433292> correction on my earlier reply here. i blamed the new-province 10k population thing for your efficiency drop, but i never checked that against your nation, so don't take it as the answer. your drop is still unexplained. i'm going to pull your province and population numbers from before and after it happened and compare them. i'll post what i find here, not another guess"
     }
   ],
   "thread_id": "1560216055081869332",

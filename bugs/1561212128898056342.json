@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-21T11:41:38Z",
   "delivered_nonce": "ac196849eb71a5d2b47aba9245beae82",
   "kind": "bug",
-  "last_message_id": "1562135632695009493",
-  "last_player_message_at": "2026-10-20T16:09:17Z",
+  "last_message_id": "1562456616190742569",
+  "last_player_message_at": "2026-10-21T13:24:46Z",
   "messages": [
     {
       "at": "2026-10-18T02:59:37Z",
@@ -228,6 +228,26 @@
       "id": "1562135632695009493",
       "staff": false,
       "text": "thats 7.8 days."
+    },
+    {
+      "at": "2026-10-21T11:41:40Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1562430670175998005",
+      "staff": false,
+      "text": "<@249007223454433292> <@249007223454433292> you were right to push back. the first answer here was explaining it away. i measured the tax tick removing about 127,000 consumer goods a day for you, and that doesn't cover what you actually lost (about 7.8 days of stock gone, you said). so there is another drain that i haven't found yet. dede is working on it. keep your numbers, they help. i'll post here when i know where it goes"
+    },
+    {
+      "at": "2026-10-21T13:24:46Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1562456616190742569",
+      "staff": false,
+      "text": "Were they by chance stolen in war?"
     }
   ],
   "thread_id": "1561212128898056342",
