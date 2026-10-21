@@ -1,8 +1,8 @@
 {
  "status": "needs_info",
- "reply": "<@249007223454433292> you were right to push back. the first answer here was explaining it away. i measured the tax tick removing about 127,000 consumer goods a day for you, and that doesn't cover what you actually lost (about 7.8 days of stock gone, you said). so there is another drain that i haven't found yet. dede is working on it. keep your numbers, they help. i'll post here when i know where it goes",
- "nonce": "ac196849eb71a5d2b47aba9245beae82",
- "updated_at": "2026-10-21T11:40:51Z",
+ "reply": "good question <@465912833352138768>, and it's a real thing in the game: when a war ends, the loser has 20% of every resource taken by the winner (30% if they have Looting Teams), consumer goods included. celess, open your news page and look for a war-ended / \"Spoils of war\" entry from the last few days, it lists exactly what was taken. if it's there, that's a big part of the missing goods. if there's nothing there, it's something else and i keep looking",
+ "nonce": "2d05c9ac531ea8cfb6ec83f5f7575379",
+ "updated_at": "2026-10-21T18:13:24Z",
  "branch": null,
  "summary": "correction of earlier bot reply"
 }
