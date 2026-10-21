@@ -1,0 +1,8 @@
+{
+ "status": "needs_info",
+ "reply": "<@465912833352138768> my earlier reply had two wrong things. the casualty fix i mentioned was for a different case (one unit type attacking a mixed force), it doesn't explain your fight. the real reason a bigger air force can lose: unit count only adds a small bonus (count / 150) on top of a big random roll, so a much smaller force can still win a round. that's how combat works right now, it's not a bug in this fight, but it is a balance problem and i'm taking it to dede as one",
+ "nonce": "1bf0bbb01a626d4da3a1e3124c13187c",
+ "updated_at": "2026-10-21T11:40:51Z",
+ "branch": null,
+ "summary": "correction of earlier bot reply"
+}

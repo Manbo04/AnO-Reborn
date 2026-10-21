@@ -1,0 +1,8 @@
+{
+ "status": "needs_info",
+ "reply": "<@307290318590705667> a correction on what the bot said above. the example it gave (120.6t of iron eaten by your steel mills) was never checked against your nation, so ignore that number. i also can't yet say where your iron went. buying pumpjacks costs a lot of iron each, so a big purchase can empty it, but i haven't matched your drop to any purchase. i'm checking your iron over a few hourly ticks against your Net figure and i'll post the result here",
+ "nonce": "173a37a727f40f31fbc868a8e86108f9",
+ "updated_at": "2026-10-21T11:40:51Z",
+ "branch": null,
+ "summary": "correction of earlier bot reply"
+}
