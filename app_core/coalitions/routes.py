@@ -1666,11 +1666,17 @@ def deposit_into_bank(coalition_id):
     # "alliance": Deposited directly into coalition bank reserves as donation / payment.
     #             Does NOT credit member's personal withdrawable balance.
     # "personal": Deposited into member's personal balance (withdrawable without banker approval).
+    # Fail closed: a donation cannot be undone by the player, so it is never
+    # the default. A request without an explicit destination is rejected
+    # (e.g. a stale page or a script) instead of silently donating.
     dest = (
         request.form.get("deposit_destination")
         or request.form.get("deposit_type")
-        or "alliance"
+        or ""
     ).lower().strip()
+    if dest not in ("alliance", "personal"):
+        flash("Choose Personal Deposit or Donate to Alliance, then try again.", "warning")
+        return redirect(f"/coalition/{coalition_id}#bank")
     is_personal = (dest == "personal")
 
     resources = ["money"] + variables.RESOURCES

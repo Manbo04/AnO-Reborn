@@ -496,13 +496,13 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
                     </div>
                     <div class="templatedivflex2 divflex2center" style="gap: 8px; flex-wrap: wrap;">
                         <div class="templatedivflex2left">
-                            <button formaction="/deposit_into_bank/{{ colId }}" name="deposit_destination" value="alliance" onclick="return confirm('Donate these resources to alliance reserves? They cannot be withdrawn personally.');" class="templatedivbutton templatecenteredbutton" type="submit" title="Donate directly to Alliance Reserves (for contributions, loans, debt repayment). Cannot be withdrawn personally.">
-                                <span class="material-icons-outlined">volunteer_activism</span>Donate to Alliance
+                            <button formaction="/deposit_into_bank/{{ colId }}" name="deposit_destination" value="personal" onclick="return confirm('Deposit these resources into your Personal Account? You can withdraw them later.');" class="templatedivbutton templatecenteredbutton" type="submit" title="Deposit into your personal account. Can be withdrawn by you without banker approval.">
+                                <span class="material-icons-outlined">account_balance_wallet</span>Personal Deposit
                             </button>
                         </div>
                         <div class="templatedivflex2left">
-                            <button formaction="/deposit_into_bank/{{ colId }}" name="deposit_destination" value="personal" onclick="return confirm('Deposit these resources into your Personal Account? You can withdraw them later.');" class="templatedivbutton templatecenteredbutton" type="submit" title="Deposit into your personal account. Can be withdrawn by you without banker approval.">
-                                <span class="material-icons-outlined">account_balance_wallet</span>Personal Deposit
+                            <button formaction="/deposit_into_bank/{{ colId }}" name="deposit_destination" value="alliance" onclick="return confirm('Donate these resources to the alliance reserves? This is a gift: you cannot take it back yourself (only alliance leadership can return it). Use Personal Deposit if you want to withdraw it later.');" class="templatedivbutton templatecenteredbutton" type="submit" title="Donate directly to Alliance Reserves (for contributions, loans, debt repayment). Cannot be withdrawn personally.">
+                                <span class="material-icons-outlined">volunteer_activism</span>Donate to Alliance
                             </button>
                         </div>
                         <div class="templatedivflex2left">
