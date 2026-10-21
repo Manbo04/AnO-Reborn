@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-21T18:13:41Z",
   "delivered_nonce": "2d05c9ac531ea8cfb6ec83f5f7575379",
   "kind": "bug",
-  "last_message_id": "1562456616190742569",
+  "last_message_id": "1562529335506894912",
   "last_player_message_at": "2026-10-21T13:24:46Z",
   "messages": [
     {
@@ -248,6 +248,16 @@
       "id": "1562456616190742569",
       "staff": false,
       "text": "Were they by chance stolen in war?"
+    },
+    {
+      "at": "2026-10-21T18:13:43Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1562529335506894912",
+      "staff": false,
+      "text": "<@249007223454433292> good question <@465912833352138768>, and it's a real thing in the game: when a war ends, the loser has 20% of every resource taken by the winner (30% if they have Looting Teams), consumer goods included. celess, open your news page and look for a war-ended / \"Spoils of war\" entry from the last few days, it lists exactly what was taken. if it's there, that's a big part of the missing goods. if there's nothing there, it's something else and i keep looking"
     }
   ],
   "thread_id": "1561212128898056342",
