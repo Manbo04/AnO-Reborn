@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-22T21:33:46Z",
   "delivered_nonce": "c3878b1ade704b52a29756878e9d243f",
   "kind": "bug",
-  "last_message_id": "1562854988546445383",
+  "last_message_id": "1562942072451760222",
   "last_player_message_at": "2026-10-22T15:47:45Z",
   "messages": [
     {
@@ -86,6 +86,16 @@
       "id": "1562854988546445383",
       "staff": true,
       "text": "nope did not, again its probably the providers making issues"
+    },
+    {
+      "at": "2026-10-22T21:33:48Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1562942072451760222",
+      "staff": false,
+      "text": "<@465912833352138768> it's not a food-per-pop change, consumption is still 1 ration per 50,000 working people (children 1.3x, elderly 0.8x) and that hasn't been touched. the number is rations spoilage. every hour, 2% of your rations above a safe buffer rots, and the buffer is 14 days of what your people eat plus 2M per distribution building. the revenue page now includes that loss in the net figure, and the tick really takes it, so it isn't only visual. the math: 1.47B lost an hour at 2% means about 73.5B rations sitting above your buffer. if your stockpile is around that size, this is exactly it. production is still being added on top, and the net shows negative because the rot is bigger than what you add. the stockpile loses about 2% of the surplus every hour, so it shrinks fast at first and settles near the buffer. more distribution buildings raise the buffer. I couldn't read your actual stockpile (our database access is down with the Railway outage), so tell me your rations total and I'll check it against this"
     }
   ],
   "thread_id": "1562819733785681980",
