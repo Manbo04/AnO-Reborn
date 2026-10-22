@@ -40,10 +40,13 @@ def national_efficiency_multiplier(db, user_id):
         (user_id,),
     )
     demo_row = db.fetchone() or {}
-    jobs_available = int(
+    from app_core.economy.workforce import jobs_available as _jobs_available
+
+    jobs_available = _jobs_available(
         (_val(demo_row, "edu_none", 1) or 0)
         + (_val(demo_row, "edu_highschool", 2) or 0)
-        + (_val(demo_row, "edu_college", 3) or 0)
+        + (_val(demo_row, "edu_college", 3) or 0),
+        _val(demo_row, "total_pop_working", 0) or 0,
     ) if demo_row else 0
 
     db.execute(

@@ -438,10 +438,15 @@ def generate_province_revenue():  # Runs each hour
                             },
                         )
 
-                        jobs_available = (
-                            demo["edu_none"] + demo["edu_highschool"] + demo["edu_college"]
+                        from app_core.economy.workforce import (
+                            jobs_available as _jobs_available,
                         )
+
                         total_pop_working = demo["total_pop_working"]
+                        jobs_available = _jobs_available(
+                            demo["edu_none"] + demo["edu_highschool"] + demo["edu_college"],
+                            total_pop_working,
+                        )
                         total_pop_elderly = demo["total_pop_elderly"]
 
                         building_counts = user_building_counts.get(uid, {})
