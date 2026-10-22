@@ -975,7 +975,9 @@ def apply_workforce_hiring_and_debuffs(user_id):
 
             # For now: jobs available = workers available (simplified hiring)
             # Future: could implement education requirement matching
-            jobs_available = total_working
+            from app_core.economy.workforce import jobs_available as _jobs_available
+
+            jobs_available = _jobs_available(total_working, total_pop_working)
 
             # Calculate unemployment rate
             unemployment_rate = calc_unemployment_rate(total_pop_working, jobs_available)

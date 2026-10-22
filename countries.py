@@ -316,7 +316,11 @@ def get_revenue(cId, db=None):
                 edu_none = int(wf_row[2] or 0)
                 edu_highschool = int(wf_row[3] or 0)
                 edu_college = int(wf_row[4] or 0)
-                jobs_available = edu_none + edu_highschool + edu_college
+                from app_core.economy.workforce import jobs_available as _jobs_available
+
+                jobs_available = _jobs_available(
+                    edu_none + edu_highschool + edu_college, total_pop_working
+                )
 
                 jobs_needed = 0
                 for building_name, matrix_data in (
