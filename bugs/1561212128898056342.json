@@ -4,8 +4,8 @@
   "delivered_at": "2026-10-21T18:13:41Z",
   "delivered_nonce": "2d05c9ac531ea8cfb6ec83f5f7575379",
   "kind": "bug",
-  "last_message_id": "1562529335506894912",
-  "last_player_message_at": "2026-10-21T13:24:46Z",
+  "last_message_id": "1562645220557070467",
+  "last_player_message_at": "2026-10-22T01:54:13Z",
   "messages": [
     {
       "at": "2026-10-18T02:59:37Z",
@@ -258,6 +258,128 @@
       "id": "1562529335506894912",
       "staff": false,
       "text": "<@249007223454433292> good question <@465912833352138768>, and it's a real thing in the game: when a war ends, the loser has 20% of every resource taken by the winner (30% if they have Looting Teams), consumer goods included. celess, open your news page and look for a war-ended / \"Spoils of war\" entry from the last few days, it lists exactly what was taken. if it's there, that's a big part of the missing goods. if there's nothing there, it's something else and i keep looking"
+    },
+    {
+      "at": "2026-10-22T01:37:44Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1562641075074637826",
+      "staff": false,
+      "text": "to clarify, my nation's stock of CGs went from 1m to 407k in about 12-24 hours (I'm not sure of the specific time). assuming your net processed (daily) from revenue is correct (and it seems to be from counting population usage & generation from Distribution Centers) \n\n-48k (rounded for simplicity) * per day (assuming 24hours which is the exaggerated upper limit - I check a few times a day) =  -48k. not -593k."
+    },
+    {
+      "at": "2026-10-22T01:39:34Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1562641535600959580",
+      "staff": false,
+      "text": "I was raided on 15th. War started and ended very quickly (no timestamps on the log, just dates). 1m CGs was sent to me on 17th. No wars on 18th 19th"
+    },
+    {
+      "at": "2026-10-22T01:43:07Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1562642430405124131",
+      "staff": false,
+      "text": "Another bug.\n\nI was just sent 1,500,000 steel. Its in my log. But I only have 1,204,380 in my stockpile.\nIs there espionage to steal stuff with no record? I just logged in so I didn't even have a chance to spend anything."
+    },
+    {
+      "at": "2026-10-22T01:43:52Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1562642616288542731",
+      "staff": false,
+      "text": "and I'm also getting random bits of alum and ammo and components. I neither produce nor trade for them."
+    },
+    {
+      "at": "2026-10-22T01:51:10Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1561212128898056342/1562644454106726430/image.png?ex=6adabd8e&is=6ad96c0e&hm=2503679a954c5f0d51c81edb2b5ba038a4450058231fb86cd6b1a23f2cdd4b76&"
+      ],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1562644455041933433",
+      "staff": false,
+      "text": "this is depressing. so I tried to bank the 1,204,380 into coalition bank for safekeeping and now half is gone"
+    },
+    {
+      "at": "2026-10-22T01:51:41Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1562644585820201042",
+      "staff": false,
+      "text": "you can check my logs, I have not even built Anything yet."
+    },
+    {
+      "at": "2026-10-22T01:53:05Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1562644934874501222",
+      "staff": false,
+      "text": "<@710359818329915443> can you look into this please? can't even play around without stuff disappearing into thin air"
+    },
+    {
+      "at": "2026-10-22T01:53:48Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1562645116076949505",
+      "staff": true,
+      "text": "https://discord.com/channels/708006319658893385/1562394622750097459/1562396616479088650"
+    },
+    {
+      "at": "2026-10-22T01:53:53Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1562645138302304287",
+      "staff": true,
+      "text": "Cant rn"
+    },
+    {
+      "at": "2026-10-22T01:54:01Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1562645170799911044",
+      "staff": true,
+      "text": "Server control fully down"
+    },
+    {
+      "at": "2026-10-22T01:54:08Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1562645202747785359",
+      "staff": false,
+      "text": "oops"
+    },
+    {
+      "at": "2026-10-22T01:54:13Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1562645220557070467",
+      "staff": true,
+      "text": "Cant do anything till they fix it"
     }
   ],
   "thread_id": "1561212128898056342",

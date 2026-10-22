@@ -1,0 +1,24 @@
+{
+  "author_id": "1326884862346657803",
+  "created_at": "2026-10-22T06:51:59Z",
+  "kind": "bug",
+  "last_message_id": "1562720158865162270",
+  "last_player_message_at": "2026-10-22T06:51:59Z",
+  "messages": [
+    {
+      "at": "2026-10-22T06:51:59Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1562720158865162270/1562720159033073714/image.png?ex=6adb040f&is=6ad9b28f&hm=918b447e3046fc637a6fc4b9fcc2bd8ae9bf348610b58dc2d4eabc882298d4ca&"
+      ],
+      "author": "L4",
+      "author_id": "1326884862346657803",
+      "bot": false,
+      "id": "1562720158865162270",
+      "staff": false,
+      "text": ""
+    }
+  ],
+  "thread_id": "1562720158865162270",
+  "title": "'Better Together' achievement doesn't get updated",
+  "url": "https://discord.com/channels/708006319658893385/1562720158865162270"
+}
