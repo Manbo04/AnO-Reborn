@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-22T11:43:12Z",
   "delivered_nonce": "4f57cbe4f31170f6e50117cb5ec30b3f",
   "kind": "bug",
-  "last_message_id": "1562430649413927034",
+  "last_message_id": "1562793455099445322",
   "last_player_message_at": "2026-10-15T09:01:34Z",
   "messages": [
     {
@@ -36,6 +36,16 @@
       "id": "1562430649413927034",
       "staff": false,
       "text": "<@249007223454433292> <@249007223454433292> correction on my earlier reply here. i blamed the new-province 10k population thing for your efficiency drop, but i never checked that against your nation, so don't take it as the answer. your drop is still unexplained. i'm going to pull your province and population numbers from before and after it happened and compare them. i'll post what i find here, not another guess"
+    },
+    {
+      "at": "2026-10-22T11:43:14Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1562793455099445322",
+      "staff": false,
+      "text": "<@249007223454433292> found a real cause, and it matches what you described. efficiency was counting only people with an education record as workers. working-age people who never got one (new provinces, population that moved between age groups) were not counted, so a growing nation could lose efficiency with no visible reason, and then power, then everything that needs power. the unemployment number already counted them correctly, efficiency did not. now both count them the same way. it's merged and goes live with the next deploy (paused right now, our host Railway is down). i haven't been able to check your exact numbers yet, so i can't say for sure this was all of your drop. after the deploy, look at your efficiency again and tell me here if it's still low"
     }
   ],
   "thread_id": "1560216055081869332",

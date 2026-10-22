@@ -1,0 +1,22 @@
+{
+  "author_id": "465912833352138768",
+  "created_at": "2026-10-22T13:27:40Z",
+  "kind": "bug",
+  "last_message_id": "1562819733785681980",
+  "last_player_message_at": "2026-10-22T13:27:40Z",
+  "messages": [
+    {
+      "at": "2026-10-22T13:27:40Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1562819733785681980",
+      "staff": false,
+      "text": "The revenue page says I am losing 1.47b rations a tick. When I should be positive by a very large amount. This appears to just be visual as I did not lose 1.47b rations this tick."
+    }
+  ],
+  "thread_id": "1562819733785681980",
+  "title": "Visual bug: Incorrect Food Income",
+  "url": "https://discord.com/channels/708006319658893385/1562819733785681980"
+}

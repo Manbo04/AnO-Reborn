@@ -4,7 +4,7 @@
   "delivered_at": "2026-10-22T11:37:25Z",
   "delivered_nonce": "9acc7a56d7f239cafddf43bf3661d662",
   "kind": "bug",
-  "last_message_id": "1562720158865162270",
+  "last_message_id": "1562791997838991453",
   "last_player_message_at": "2026-10-22T06:51:59Z",
   "messages": [
     {
@@ -18,6 +18,16 @@
       "id": "1562720158865162270",
       "staff": false,
       "text": ""
+    },
+    {
+      "at": "2026-10-22T11:37:27Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1562791997838991453",
+      "staff": false,
+      "text": "<@1326884862346657803> found why Better Together never unlocked: the check looked at an old, unused member list instead of the one coalitions actually use, so nobody could ever get it. fixed in code and merged. it goes live with the next deploy (deploys are paused right now because Railway, our host, is having an outage). after that it unlocks for everyone already in a coalition within about 30 minutes, and for new joiners on the same 30 minute check. if it still shows Locked an hour after the deploy, tell me here"
     }
   ],
   "thread_id": "1562720158865162270",
