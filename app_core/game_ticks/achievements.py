@@ -1,5 +1,5 @@
 import os
-from database import get_db_cursor
+from database import get_db_cursor, get_coalition_members_table
 from psycopg2.extras import execute_batch
 from app_core.game_ticks.locks import try_pg_advisory_lock
 
@@ -62,7 +62,10 @@ ACHIEVEMENT_QUERIES = [
     """),
 
     # Diplomacy
-    ("dip_coalition", "SELECT user_id FROM coalition_members"),
+    # Live membership is coalitions_legacy/coalitions (colid, userid); the old
+    # coalition_members table exists but nothing writes to it, so this
+    # achievement never unlocked. {members_tbl} is resolved at run time.
+    ("dip_coalition", "SELECT userid FROM {members_tbl}"),
     ("dip_treaty", "SELECT sender_id FROM nation_treaties UNION SELECT recipient_id FROM nation_treaties"),
 
     # Fun
@@ -99,6 +102,11 @@ def check_achievements():
         total_new_unlocks = 0
 
         for key, query in ACHIEVEMENT_QUERIES:
+            if "{members_tbl}" in query:
+                members_tbl = get_coalition_members_table()
+                if members_tbl not in ("coalitions_legacy", "coalitions"):
+                    continue
+                query = query.replace("{members_tbl}", members_tbl)
             sp = f"sp_ach_{key}"
             db.execute(f"SAVEPOINT {sp}")
             try:
