@@ -1,0 +1,8 @@
+{
+ "status": "needs_info",
+ "reply": "found why Better Together never unlocked: the check looked at an old, unused member list instead of the one coalitions actually use, so nobody could ever get it. fixed in code and merged. it goes live with the next deploy (deploys are paused right now because Railway, our host, is having an outage). after that it unlocks for everyone already in a coalition within about 30 minutes, and for new joiners on the same 30 minute check. if it still shows Locked an hour after the deploy, tell me here",
+ "nonce": "9acc7a56d7f239cafddf43bf3661d662",
+ "updated_at": "2026-10-22T11:37:13Z",
+ "branch": null,
+ "summary": "discord-visible reply"
+}
