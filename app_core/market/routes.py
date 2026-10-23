@@ -401,7 +401,7 @@ def sell_market_offer(offer_id):
         # a sell offer used to pay the seller bank gold nobody had put up.
         if offer_type != "buy":
             return error(400, "That is a sell offer; use Buy to fill it.")
-        if buyer_id == cId:
+        if buyer_id == seller_id:
             return error(400, "That is your own offer. Cancel it from My Offers instead.")
 
         blockade_err = check_user_blockaded_market(db, seller_id)
