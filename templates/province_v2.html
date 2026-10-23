@@ -202,7 +202,7 @@
                             </div>
                             <div class="templatedivflex2right">
 
-                                {{ game_button('Purchase', icon='business', formaction='/buy/cityCount/' ~ province['id'], id='citiesbutton') }}
+                                {{ game_button('Buy Cities', icon='business', formaction='/buy/cityCount/' ~ province['id'], id='citiesbutton', confirm="return confirm('Buy ' + (document.getElementById('citiesamount').value || 0) + ' CITIES (not land)? Purchases cannot be undone.');") }}
 
                             </div>
                         </div>
@@ -267,7 +267,7 @@
                             </div>
                             <div class="templatedivflex2right">
 
-                                {{ game_button('Purchase', icon='landscape', formaction='/buy/land/' ~ province['id']) }}
+                                {{ game_button('Buy Land', icon='landscape', formaction='/buy/land/' ~ province['id'], confirm="return confirm('Buy ' + (document.getElementById('landamount').value || 0) + ' LAND (not cities)? Purchases cannot be undone.');") }}
 
                             </div>
                         </div>

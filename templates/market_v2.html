@@ -9,9 +9,9 @@
 {% macro res_icon(r) %}<img alt="" class="game-icon-sm" src="{{ url_for('static', filename=game_asset_path('resources', r)) if r != 'copper_plates' else url_for('static', filename='images/rescopper_plates.png') }}?v=2" />{% endmacro %}
 
 {% macro book_row(o, side) %}
-<div class="mb-row tag-{{ o.tag }}{% if o.coalition_embargo_blocked %} mb-row-embargoed{% endif %}" title="{{ o.embargo_reason if o.coalition_embargo_blocked else o.tag_label }}">
+<div class="mb-row tag-{{ o.tag }}{% if o.coalition_embargo_blocked %} mb-row-embargoed{% endif %}{% if o.mine %} mb-row-mine{% endif %}" title="{{ o.embargo_reason if o.coalition_embargo_blocked else o.tag_label }}">
     <div class="mb-nation">
-        <a href="/country/id={{ o.user_id }}" title="{{ o.username }}">{{ o.username }}</a>
+        <a href="/country/id={{ o.user_id }}" title="{{ o.username }}">{{ o.username }}</a>{% if o.mine %} <span class="mb-tag" style="background: rgba(59,130,246,0.2); border: 1px solid #3b82f6;">Yours</span>{% endif %}
         {% if resource == 'all' %}<span class="mb-res">{{ res_icon(o.resource) }}{{ res_label(o.resource) }}</span>{% endif %}
     </div>
     <div class="mb-amount"><span class="mb-cell-label">Amount</span>{{ o.amount | commas }}</div>
@@ -25,6 +25,11 @@
         {% endif %}
         {% if o.currency_id %}<span class="mb-orig" title="{{ o.price | commas }} {{ o.currency_label }} each">{{ o.price | commas }} {{ o.currency_label }} each</span>{% endif %}
     </div>
+    {% if o.mine %}
+    <form method="POST" action="/delete_offer/{{ o.offer_id }}" class="mb-trade" onsubmit="return confirm('Cancel this offer? The escrowed {{ 'resources' if o.type == 'sell' else 'payment' }} is refunded.');">
+        <button type="submit" class="game-btn game-btn-sm">Cancel offer</button>
+    </form>
+    {% else %}
     <form method="POST" class="mb-trade market-purchase-form">
         <span class="market-input-wrap">
             <input class="game-purchase-input market-purchase-input" autocomplete="off" inputmode="numeric" name="amount_{{ o.offer_id }}" type="text" placeholder="Amount" aria-label="Amount to {{ 'buy' if side == 'ask' else 'sell' }}" data-unit-price="{{ o.price }}" data-max-amount="{{ o.amount }}" data-fee-percent="{{ o.fee_percent }}"{% if o.currency_id %} data-currency-label="{{ o.currency_label }}"{% endif %} {% if o.coalition_embargo_blocked %}disabled{% else %}required{% endif %}/>
@@ -37,6 +42,7 @@
         <button type="submit" formaction="/sell_offer/{{ o.offer_id }}" class="game-btn game-btn-primary game-btn-sm" {% if o.coalition_embargo_blocked %}disabled title="{{ o.embargo_reason }}" style="opacity:0.5;cursor:not-allowed;"{% endif %}>Sell</button>
         {% endif %}
     </form>
+    {% endif %}
 </div>
 {% endmacro %}
 
