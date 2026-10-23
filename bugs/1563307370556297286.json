@@ -1,0 +1,24 @@
+{
+  "author_id": "307290318590705667",
+  "created_at": "2026-10-23T21:45:21Z",
+  "kind": "bug",
+  "last_message_id": "1563307370556297286",
+  "last_player_message_at": "2026-10-23T21:45:21Z",
+  "messages": [
+    {
+      "at": "2026-10-23T21:45:21Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1563307370556297286/1563307370996572241/image.png?ex=6add26f2&is=6adbd572&hm=5946955d2f772ae957f310879f1baea40b1eb2df58a88fa69979ddc479ac3b6b&"
+      ],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1563307370556297286",
+      "staff": false,
+      "text": "Fixed the distribution in a few of my provinces and they are still losing people.\nBefore one of the updates I cleared 10m an hour, pretty sure I have over double the mills and yet my income drops"
+    }
+  ],
+  "thread_id": "1563307370556297286",
+  "title": "Provinces Losing Pop Despite full distribution/Resource income dropping despite building more mines",
+  "url": "https://discord.com/channels/708006319658893385/1563307370556297286"
+}

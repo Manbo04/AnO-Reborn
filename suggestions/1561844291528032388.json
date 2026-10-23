@@ -3,7 +3,7 @@
   "ballot_id": "2026-10-23",
   "created_at": "2026-10-19T20:51:36Z",
   "kind": "suggestion",
-  "last_message_id": "1561988311503999027",
+  "last_message_id": "1563254477991977093",
   "last_player_message_at": "2026-10-20T06:23:53Z",
   "messages": [
     {
@@ -35,6 +35,16 @@
       "id": "1561988311503999027",
       "staff": true,
       "text": "What resources you're trying to buy/sell? Pretty sure I flooded the market couple of days ago with all Raws"
+    },
+    {
+      "at": "2026-10-23T18:15:11Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1563254477991977093",
+      "staff": false,
+      "text": "<@218061971809894400> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1563254474594721802\nVoting closes <t:1793376000:F>. If Yes wins, it gets built."
     }
   ],
   "poll_message_id": "1563254474594721802",

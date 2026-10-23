@@ -3,8 +3,8 @@
   "ballot_id": "2026-10-23",
   "created_at": "2026-10-20T16:14:51Z",
   "kind": "suggestion",
-  "last_message_id": "1562988708901167177",
-  "last_player_message_at": "2026-10-23T00:39:07Z",
+  "last_message_id": "1563255304198684746",
+  "last_player_message_at": "2026-10-23T18:18:28Z",
   "messages": [
     {
       "at": "2026-10-20T16:14:51Z",
@@ -45,6 +45,56 @@
       "id": "1562988708901167177",
       "staff": true,
       "text": "<@710359818329915443> dont add this to the vote until I get this fine tuned and ready."
+    },
+    {
+      "at": "2026-10-23T18:15:13Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1563254488083472415",
+      "staff": false,
+      "text": "<@519965006867988490> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1563254485579735131\nVoting closes <t:1793376000:F>. If Yes wins, it gets built."
+    },
+    {
+      "at": "2026-10-23T18:18:01Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1563255191766171700",
+      "staff": true,
+      "text": "<@710359818329915443> <:uh:950859882507173908>"
+    },
+    {
+      "at": "2026-10-23T18:18:16Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1563255252717666428",
+      "staff": true,
+      "text": "Yeah dont worry"
+    },
+    {
+      "at": "2026-10-23T18:18:24Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1563255285844549804",
+      "staff": true,
+      "text": "Gonna remove in a bit"
+    },
+    {
+      "at": "2026-10-23T18:18:28Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1563255304198684746",
+      "staff": true,
+      "text": "Been swamped with work"
     }
   ],
   "poll_message_id": "1563254485579735131",

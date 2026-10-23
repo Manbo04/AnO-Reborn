@@ -3,7 +3,7 @@
   "ballot_id": "2026-10-23",
   "created_at": "2026-10-23T05:27:42Z",
   "kind": "suggestion",
-  "last_message_id": "1563141933839159389",
+  "last_message_id": "1563254491715993783",
   "last_player_message_at": "2026-10-23T10:47:58Z",
   "messages": [
     {
@@ -27,6 +27,16 @@
       "id": "1563141933839159389",
       "staff": false,
       "text": "* Alternatively, keep hiding it free, but hide only the amount of resource from the WA."
+    },
+    {
+      "at": "2026-10-23T18:15:14Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1563254491715993783",
+      "staff": false,
+      "text": "<@1180720719060029500> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1563254489530507395\nVoting closes <t:1793376000:F>. If Yes wins, it gets built."
     }
   ],
   "poll_message_id": "1563254489530507395",

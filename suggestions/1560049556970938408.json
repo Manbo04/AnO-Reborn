@@ -3,7 +3,7 @@
   "ballot_id": "2026-10-16",
   "created_at": "2026-10-14T21:59:58Z",
   "kind": "suggestion",
-  "last_message_id": "1560828921425952849",
+  "last_message_id": "1563254451907727456",
   "last_player_message_at": "2026-10-17T01:36:53Z",
   "messages": [
     {
@@ -35,6 +35,16 @@
       "id": "1560828921425952849",
       "staff": false,
       "text": "I agree in principle, but perhaps a relook at war mechanics as a whole?\n\nIf something closer to realism (imo) then winning or losing is all on ground troops. Just like Vietnam. Air and Ships soften  ground troops and provide cover/intel to prepare for ground attacks. I mean someone hit me with planes and looted money... Those some beam me up tech right there."
+    },
+    {
+      "at": "2026-10-23T18:15:05Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1563254451907727456",
+      "staff": false,
+      "text": "<@176063647880052737> the vote is in: **9 yes / 1 no**. Your suggestion passed, it's queued to be built. You'll get a ping here when it's live."
     }
   ],
   "poll_message_id": "1560691727319433261",
