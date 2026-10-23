@@ -2,8 +2,8 @@
   "author_id": "519965006867988490",
   "created_at": "2026-10-20T16:14:51Z",
   "kind": "suggestion",
-  "last_message_id": "1562253289746079775",
-  "last_player_message_at": "2026-10-20T23:56:49Z",
+  "last_message_id": "1562988708901167177",
+  "last_player_message_at": "2026-10-23T00:39:07Z",
   "messages": [
     {
       "at": "2026-10-20T16:14:51Z",
@@ -34,6 +34,16 @@
       "id": "1562253289746079775",
       "staff": true,
       "text": "Add recruitment office to turn manpower into trained recruits over time. Idea from Ieb suggestion of reserve base to train units. \n\nIncrease food intake by all units. Not just troops. A ship still needs to feed its sailors. Thanks to Chelovka.  \n\nPossibly adding a training time (could be implemented into recruitment office or by adding training facilities) with policies allowing for draft (rapid training with poor stats) to full training (longer but troops/sailors emerge with higher stats and in theory less likely to die) Idea courtesy of Chelovka. \n\nTie manpower/recruits/troops/pilots/sailors to population and a costly war that sees thousands if not millions of military dying actually affect population. If 1 soldier dies, 1 population dies. Courtesy of AndythHusky\n\n\nMore ideas to come."
+    },
+    {
+      "at": "2026-10-23T00:39:07Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1562988708901167177",
+      "staff": true,
+      "text": "<@710359818329915443> dont add this to the vote until I get this fine tuned and ready."
     }
   ],
   "status": "new",
