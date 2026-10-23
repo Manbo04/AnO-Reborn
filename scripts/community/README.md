@@ -6,7 +6,7 @@ Players decide balance and features; bugs get fixed without Dede in the loop.
   branch by `.github/workflows/community-sync.yml` (`sync.py`, the only code with the
   Discord token, stored as the `DISCORD_BOT_TOKEN` Actions secret).
 - A Claude cloud routine (prompt: `ROBOT_PROMPT.md`, see claude.ai/code/routines) reads
-  the queue every few hours: fixes bugs, triages new suggestions, builds voted ones,
+  the queue every few hours: fixes bugs, triages new suggestions, leaves voted ones for the team to implement,
   pushes `claude/robot-*` branches and writes replies to `results/` on the queue branch.
 - `.github/workflows/robot-automerge.yml` merges a robot branch into master once CI
   passes on it (deploys via Railway like any push).
