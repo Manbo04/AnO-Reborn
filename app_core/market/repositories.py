@@ -302,14 +302,15 @@ def get_active_resources(db):
     )
     return [row[0] for row in db.fetchall()]
 
-def get_resource_book(db, resource, exclude_user_id):
-    """Every open offer for ``resource`` ('all' = every resource) except the
-    viewer's own (those live on /my_offers). Sorting is done by the caller on
-    the gold-normalised price, which SQL can't see."""
-    params = [exclude_user_id]
+def get_resource_book(db, resource):
+    """Every open offer for ``resource`` ('all' = every resource), the
+    viewer's own included (shown as "Yours" so players can see where their
+    offer sits). Sorting is done by the caller on the gold-normalised price,
+    which SQL can't see."""
+    params = []
     resource_clause = ""
     if resource != "all":
-        resource_clause = "AND o.resource = %s"
+        resource_clause = "WHERE o.resource = %s"
         params.append(resource)
     db.execute(
         f"""
@@ -317,7 +318,7 @@ def get_resource_book(db, resource, exclude_user_id):
                o.offer_id, u.username, o.currency_id
         FROM offers o
         INNER JOIN users u ON o.user_id = u.id
-        WHERE o.user_id <> %s {resource_clause}
+        {resource_clause}
         ORDER BY o.offer_id
         LIMIT 3000
         """,

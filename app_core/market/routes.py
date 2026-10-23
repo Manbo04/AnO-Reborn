@@ -96,6 +96,7 @@ def _book_row(row, cId, ctx):
         "fee_percent": pct,
         "coalition_embargo_blocked": is_col_embargoed,
         "embargo_reason": "Trade blocked by coalition embargo" if is_col_embargoed else "",
+        "mine": user_id == cId,
     }
 
 
@@ -140,7 +141,7 @@ def market():
         if per_side not in MARKET_PER_SIDE_CHOICES:
             per_side = 25
 
-        rows = get_resource_book(db, resource, cId)
+        rows = get_resource_book(db, resource)
         currency_ids = {row[7] for row in rows if row[7]}
         my_currency = currency_balances(db, cId)
         ctx = {
@@ -267,6 +268,8 @@ def buy_market_offer(offer_id):
         # "from" a buy offer used to hand out bank resources nobody had put up.
         if offer_type != "sell":
             return error(400, "That is a buy offer; use Sell to fill it.")
+        if seller_id == cId:
+            return error(400, "That is your own offer. Cancel it from My Offers instead.")
 
         blockade_err = check_user_blockaded_market(db, cId)
         if blockade_err:
@@ -398,6 +401,8 @@ def sell_market_offer(offer_id):
         # a sell offer used to pay the seller bank gold nobody had put up.
         if offer_type != "buy":
             return error(400, "That is a sell offer; use Buy to fill it.")
+        if buyer_id == cId:
+            return error(400, "That is your own offer. Cancel it from My Offers instead.")
 
         blockade_err = check_user_blockaded_market(db, seller_id)
         if blockade_err:
