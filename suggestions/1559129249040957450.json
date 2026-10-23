@@ -616,8 +616,12 @@
     }
   ],
   "poll_message_id": "1560691697304871095",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1559129249040957450",
   "title": "New, better WA options",
-  "url": "https://discord.com/channels/708006319658893385/1559129249040957450"
+  "url": "https://discord.com/channels/708006319658893385/1559129249040957450",
+  "votes": {
+    "no": 3,
+    "yes": 6
+  }
 }

@@ -140,8 +140,12 @@
     }
   ],
   "poll_message_id": "1560691704661545094",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1559170346626842675",
   "title": "CG REWORK!!",
-  "url": "https://discord.com/channels/708006319658893385/1559170346626842675"
+  "url": "https://discord.com/channels/708006319658893385/1559170346626842675",
+  "votes": {
+    "no": 1,
+    "yes": 4
+  }
 }

@@ -244,8 +244,12 @@
     }
   ],
   "poll_message_id": "1560691723959672873",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1559986341339598890",
   "title": "Add vacation mode to protect nation when life gets busy",
-  "url": "https://discord.com/channels/708006319658893385/1559986341339598890"
+  "url": "https://discord.com/channels/708006319658893385/1559986341339598890",
+  "votes": {
+    "no": 0,
+    "yes": 13
+  }
 }

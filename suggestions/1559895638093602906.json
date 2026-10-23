@@ -61,8 +61,12 @@
     }
   ],
   "poll_message_id": "1560691717588647967",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1559895638093602906",
   "title": "Show education needs",
-  "url": "https://discord.com/channels/708006319658893385/1559895638093602906"
+  "url": "https://discord.com/channels/708006319658893385/1559895638093602906",
+  "votes": {
+    "no": 0,
+    "yes": 12
+  }
 }

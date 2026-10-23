@@ -78,8 +78,12 @@
     }
   ],
   "poll_message_id": "1560691679248261132",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1558884996264103966",
   "title": "War",
-  "url": "https://discord.com/channels/708006319658893385/1558884996264103966"
+  "url": "https://discord.com/channels/708006319658893385/1558884996264103966",
+  "votes": {
+    "no": 1,
+    "yes": 9
+  }
 }

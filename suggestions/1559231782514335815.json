@@ -148,8 +148,12 @@
     }
   ],
   "poll_message_id": "1560691707979505825",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1559231782514335815",
   "title": "Remove Score From Standing MIlitary",
-  "url": "https://discord.com/channels/708006319658893385/1559231782514335815"
+  "url": "https://discord.com/channels/708006319658893385/1559231782514335815",
+  "votes": {
+    "no": 2,
+    "yes": 9
+  }
 }

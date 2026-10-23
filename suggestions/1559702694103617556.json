@@ -148,8 +148,12 @@
     }
   ],
   "poll_message_id": "1560691714019033140",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1559702694103617556",
   "title": "Cheaper education buildings",
-  "url": "https://discord.com/channels/708006319658893385/1559702694103617556"
+  "url": "https://discord.com/channels/708006319658893385/1559702694103617556",
+  "votes": {
+    "no": 0,
+    "yes": 10
+  }
 }

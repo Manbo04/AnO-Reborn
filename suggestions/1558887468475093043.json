@@ -38,8 +38,12 @@
     }
   ],
   "poll_message_id": "1560691682511691788",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1558887468475093043",
   "title": "War target",
-  "url": "https://discord.com/channels/708006319658893385/1558887468475093043"
+  "url": "https://discord.com/channels/708006319658893385/1558887468475093043",
+  "votes": {
+    "no": 0,
+    "yes": 9
+  }
 }

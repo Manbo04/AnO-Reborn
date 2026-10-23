@@ -248,8 +248,12 @@
     }
   ],
   "poll_message_id": "1560691700299604090",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1559138226122395668",
   "title": "Wars are too fast",
-  "url": "https://discord.com/channels/708006319658893385/1559138226122395668"
+  "url": "https://discord.com/channels/708006319658893385/1559138226122395668",
+  "votes": {
+    "no": 1,
+    "yes": 9
+  }
 }

@@ -28,8 +28,12 @@
     }
   ],
   "poll_message_id": "1560691652774076477",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1558204357139365929",
   "title": "Add transaction history",
-  "url": "https://discord.com/channels/708006319658893385/1558204357139365929"
+  "url": "https://discord.com/channels/708006319658893385/1558204357139365929",
+  "votes": {
+    "no": 0,
+    "yes": 8
+  }
 }

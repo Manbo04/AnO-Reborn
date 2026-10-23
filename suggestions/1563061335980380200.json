@@ -1,5 +1,6 @@
 {
   "author_id": "1180720719060029500",
+  "ballot_id": "2026-10-23",
   "created_at": "2026-10-23T05:27:42Z",
   "kind": "suggestion",
   "last_message_id": "1563141933839159389",
@@ -28,7 +29,8 @@
       "text": "* Alternatively, keep hiding it free, but hide only the amount of resource from the WA."
     }
   ],
-  "status": "new",
+  "poll_message_id": "1563254489530507395",
+  "status": "voting",
   "thread_id": "1563061335980380200",
   "title": "Cost to hiding foreign aid.",
   "url": "https://discord.com/channels/708006319658893385/1563061335980380200"

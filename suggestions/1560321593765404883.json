@@ -28,8 +28,12 @@
     }
   ],
   "poll_message_id": "1560691740032372780",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1560321593765404883",
   "title": "Resource Bonds",
-  "url": "https://discord.com/channels/708006319658893385/1560321593765404883"
+  "url": "https://discord.com/channels/708006319658893385/1560321593765404883",
+  "votes": {
+    "no": 0,
+    "yes": 10
+  }
 }

@@ -38,8 +38,12 @@
     }
   ],
   "poll_message_id": "1560691727319433261",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1560049556970938408",
   "title": "War Equipment",
-  "url": "https://discord.com/channels/708006319658893385/1560049556970938408"
+  "url": "https://discord.com/channels/708006319658893385/1560049556970938408",
+  "votes": {
+    "no": 1,
+    "yes": 9
+  }
 }

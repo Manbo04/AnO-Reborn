@@ -2,7 +2,7 @@
   "author_id": "1180720719060029500",
   "created_at": "2026-10-23T00:38:00Z",
   "kind": "bug",
-  "last_message_id": "1562988429740875926",
+  "last_message_id": "1563247779889942632",
   "last_player_message_at": "2026-10-23T00:38:00Z",
   "messages": [
     {
@@ -16,6 +16,16 @@
       "id": "1562988429740875926",
       "staff": false,
       "text": "personal deposit and donate to alliance seem to have swapped places. pressing \"personal deposit\" makes the resources disappear kinda ... tldr, they are both broken. needs fixing"
+    },
+    {
+      "at": "2026-10-23T17:48:34Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1563247779889942632",
+      "staff": false,
+      "text": "<@1180720719060029500> the bank deposit buttons are fixed and live. Personal Deposit is now the first button (and what Enter does), it goes into your personal balance and you can withdraw it yourself anytime. Donate to Alliance is the second one, asks you to confirm, and a donation can't be taken back by you (only alliance leadership can return it). A deposit with no button chosen is now rejected instead of silently becoming a donation. The \"swap\" you saw is that reorder. I checked the log: personal deposits since the fix are all crediting the personal balance correctly. If a personal deposit still vanishes for you, send me the time and I'll trace it."
     }
   ],
   "thread_id": "1562988429740875926",

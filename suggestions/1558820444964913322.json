@@ -28,8 +28,12 @@
     }
   ],
   "poll_message_id": "1560691665683882049",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1558820444964913322",
   "title": "Improved starter tutorial",
-  "url": "https://discord.com/channels/708006319658893385/1558820444964913322"
+  "url": "https://discord.com/channels/708006319658893385/1558820444964913322",
+  "votes": {
+    "no": 0,
+    "yes": 9
+  }
 }

@@ -38,8 +38,12 @@
     }
   ],
   "poll_message_id": "1560691656762724425",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1558235511330447380",
   "title": "Login bonus",
-  "url": "https://discord.com/channels/708006319658893385/1558235511330447380"
+  "url": "https://discord.com/channels/708006319658893385/1558235511330447380",
+  "votes": {
+    "no": 1,
+    "yes": 8
+  }
 }

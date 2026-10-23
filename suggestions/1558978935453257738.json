@@ -93,8 +93,12 @@
     }
   ],
   "poll_message_id": "1560691691512406170",
-  "status": "voting",
+  "status": "failed",
   "thread_id": "1558978935453257738",
   "title": "Farm production",
-  "url": "https://discord.com/channels/708006319658893385/1558978935453257738"
+  "url": "https://discord.com/channels/708006319658893385/1558978935453257738",
+  "votes": {
+    "no": 7,
+    "yes": 3
+  }
 }

@@ -28,8 +28,12 @@
     }
   ],
   "poll_message_id": "1560691720734249072",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1559905033951387790",
   "title": "Make provinces/buildings show how many people they employ",
-  "url": "https://discord.com/channels/708006319658893385/1559905033951387790"
+  "url": "https://discord.com/channels/708006319658893385/1559905033951387790",
+  "votes": {
+    "no": 0,
+    "yes": 12
+  }
 }

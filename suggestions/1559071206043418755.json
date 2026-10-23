@@ -38,8 +38,12 @@
     }
   ],
   "poll_message_id": "1560691694423376055",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1559071206043418755",
   "title": "Suggestions for coalition defence",
-  "url": "https://discord.com/channels/708006319658893385/1559071206043418755"
+  "url": "https://discord.com/channels/708006319658893385/1559071206043418755",
+  "votes": {
+    "no": 1,
+    "yes": 8
+  }
 }

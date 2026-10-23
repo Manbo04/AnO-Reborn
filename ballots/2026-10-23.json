@@ -1,0 +1,40 @@
+{
+  "channel_id": "1556457101025353888",
+  "closes_at": "2026-10-30T16:00:00Z",
+  "header_message_id": "1563254468026310667",
+  "id": "2026-10-23",
+  "items": [
+    {
+      "message_id": "1563254469079076977",
+      "question": "Stop sending me back to a section's \"main page\"",
+      "suggestion_id": "1561375947590991984"
+    },
+    {
+      "message_id": "1563254474594721802",
+      "question": "Add a Market Bot",
+      "suggestion_id": "1561844291528032388"
+    },
+    {
+      "message_id": "1563254480554688555",
+      "question": "Personal offers visable",
+      "suggestion_id": "1561873542516178985"
+    },
+    {
+      "message_id": "1563254485579735131",
+      "question": "War economy balance",
+      "suggestion_id": "1562137033877758103"
+    },
+    {
+      "message_id": "1563254489530507395",
+      "question": "Cost to hiding foreign aid.",
+      "suggestion_id": "1563061335980380200"
+    },
+    {
+      "message_id": "1563254492907175999",
+      "question": "Undo option",
+      "suggestion_id": "1563092403886358611"
+    }
+  ],
+  "opened_at": "2026-10-23T18:15:08Z",
+  "tallied": false
+}

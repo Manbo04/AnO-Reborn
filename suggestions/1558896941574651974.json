@@ -118,8 +118,12 @@
     }
   ],
   "poll_message_id": "1560691685707743383",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1558896941574651974",
   "title": "Safe Personal Deposit opt-out",
-  "url": "https://discord.com/channels/708006319658893385/1558896941574651974"
+  "url": "https://discord.com/channels/708006319658893385/1558896941574651974",
+  "votes": {
+    "no": 3,
+    "yes": 7
+  }
 }

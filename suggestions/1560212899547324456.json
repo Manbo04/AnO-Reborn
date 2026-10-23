@@ -68,8 +68,12 @@
     }
   ],
   "poll_message_id": "1560691736928456726",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1560212899547324456",
   "title": "Change to Biome mechanics",
-  "url": "https://discord.com/channels/708006319658893385/1560212899547324456"
+  "url": "https://discord.com/channels/708006319658893385/1560212899547324456",
+  "votes": {
+    "no": 4,
+    "yes": 5
+  }
 }

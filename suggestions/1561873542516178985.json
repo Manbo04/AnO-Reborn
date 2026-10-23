@@ -1,8 +1,9 @@
 {
   "author_id": "176063647880052737",
+  "ballot_id": "2026-10-23",
   "created_at": "2026-10-19T22:47:50Z",
   "kind": "suggestion",
-  "last_message_id": "1561873542516178985",
+  "last_message_id": "1563247785048936510",
   "last_player_message_at": "2026-10-19T22:47:50Z",
   "messages": [
     {
@@ -14,9 +15,20 @@
       "id": "1561873542516178985",
       "staff": false,
       "text": "All personal offers should be visible on the overall market to avoid confusiion"
+    },
+    {
+      "at": "2026-10-23T17:48:35Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1563247785048936510",
+      "staff": false,
+      "text": "<@176063647880052737> done: your own offers now show up in the main market list, marked Yours, with a Cancel offer button (it refunds the escrow). Live now."
     }
   ],
-  "status": "new",
+  "poll_message_id": "1563254480554688555",
+  "status": "voting",
   "thread_id": "1561873542516178985",
   "title": "Personal offers visable",
   "url": "https://discord.com/channels/708006319658893385/1561873542516178985"

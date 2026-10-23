@@ -58,8 +58,12 @@
     }
   ],
   "poll_message_id": "1560691688631177368",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1558959685174824970",
   "title": "War history",
-  "url": "https://discord.com/channels/708006319658893385/1558959685174824970"
+  "url": "https://discord.com/channels/708006319658893385/1558959685174824970",
+  "votes": {
+    "no": 1,
+    "yes": 8
+  }
 }

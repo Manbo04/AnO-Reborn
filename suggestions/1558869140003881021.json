@@ -38,8 +38,12 @@
     }
   ],
   "poll_message_id": "1560691674592706673",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1558869140003881021",
   "title": "Show Buildings Lost In War History",
-  "url": "https://discord.com/channels/708006319658893385/1558869140003881021"
+  "url": "https://discord.com/channels/708006319658893385/1558869140003881021",
+  "votes": {
+    "no": 0,
+    "yes": 10
+  }
 }
