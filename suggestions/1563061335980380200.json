@@ -1,0 +1,25 @@
+{
+  "author_id": "1180720719060029500",
+  "created_at": "2026-10-23T05:27:42Z",
+  "kind": "suggestion",
+  "last_message_id": "1563061335980380200",
+  "last_player_message_at": "2026-10-23T05:27:42Z",
+  "messages": [
+    {
+      "at": "2026-10-23T05:27:42Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1563061335980380200/1563061336122851448/image.png?ex=6adc41ce&is=6adaf04e&hm=68bf732fd1262be4ea5f1112b67d891f6a8ab286cd213d8fe937ea7e38b0262b&"
+      ],
+      "author": "Andy",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1563061335980380200",
+      "staff": false,
+      "text": "In CyberNations, it costs people money, per resource, to hide foreign aid. \n\nBecause you can't just hide a billion kilograms of food. You have to bribe, spend money to keep quiet.\n\nTo this end:\n\n* Add a base cost per kg/ton/money unit of foreign aid to hide, and +% cost for every kg/t of raw resource past a certain point."
+    }
+  ],
+  "status": "new",
+  "thread_id": "1563061335980380200",
+  "title": "Cost to hiding foreign aid.",
+  "url": "https://discord.com/channels/708006319658893385/1563061335980380200"
+}
