@@ -1,0 +1,63 @@
+{
+  "author_id": "710359818329915443",
+  "created_at": "2026-10-24T18:44:31Z",
+  "kind": "suggestion",
+  "last_message_id": "1563633284670558389",
+  "last_player_message_at": "2026-10-24T19:20:25Z",
+  "messages": [
+    {
+      "at": "2026-10-24T18:44:31Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1563624248763883550",
+      "staff": true,
+      "text": "Live now: aggressor cant surrender or offer peace in the first 24h, the 3 day truce only locks out whoever started the last war, allies with a Mutual Defense pact can join an active defensive war during truce. Feedback so far says some of this needs another pass, so lets settle it here instead of chat. Questions: 1) Should surrender need BOTH sides to agree (with terms: status quo, resources, gold, military limits) or stay one-sided? 2) Should allies be able to join through a truce, and if yes what limits stop abuse (war range, one ally war per aggressor, pact age)? 3) Nukes: cost, silo count, one volley per war, 24h/day cap, iron dome cap (currently 50% vs nukes). Reply with what you want and why, the most agreed ideas go into Fridays #weekly-vote. Nothing gets built before the vote."
+    },
+    {
+      "at": "2026-10-24T18:53:05Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1563626403830825081",
+      "staff": true,
+      "text": "<:pepewokepngemoji:1485933568596119592>"
+    },
+    {
+      "at": "2026-10-24T19:07:53Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1563630129790591037",
+      "staff": false,
+      "text": "1) if yes, there could be two options, conditional surrender and unconditional surrender, with the latter incurring heavy penalties like a military size cap or decreased overall manpower\n2) yes, absolutely, but this should not apply to counters since the game still classifies them as offensive wars (e.g. if my ally gets attacked and i join the war through an mdp, the allies of the aggressor should not be able to counter me if they are outside of my war range because countering a counter doesnt make sense)\n3) one volley per war is probably a good idea, also i think nukes deal too much radiation damage (if you look at most irl nukes the effects of radiation are minimal in the short term and only manifest in the long term in those who were around or near the blast radius), its not like chernobyl where a lot of radioactive particles were released"
+    },
+    {
+      "at": "2026-10-24T19:14:02Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1563631674217078939",
+      "staff": false,
+      "text": "and also as suggested several times before, it shouldnt be possible to end a war in 10 minutes"
+    },
+    {
+      "at": "2026-10-24T19:20:25Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1563633284670558389",
+      "staff": false,
+      "text": "1. Both sides should need to agree to a surrender, as is standard in natsims as well as real life.\n2. Defender should not be able to attack again instantly after a war. Instead wars shouldn't end so quickly that defenders can't react and respond.\n3. Allies should be able to join DURING an ongoing war not after it's conclusion. Also if an ally is already in a 3 day truce they should not be able to join.\n4. MDP should not be unlimited war range otherwise the side with the single largest nation always wins making everyone else useless."
+    }
+  ],
+  "status": "new",
+  "thread_id": "1563624248763883550",
+  "title": "[Discussion] War rules after the hit-and-run fix: surrender, allies, nukes",
+  "url": "https://discord.com/channels/708006319658893385/1563624248763883550"
+}
