@@ -3,8 +3,8 @@
   "ballot_id": "2026-10-23",
   "created_at": "2026-10-23T07:31:09Z",
   "kind": "suggestion",
-  "last_message_id": "1563254495255859213",
-  "last_player_message_at": "2026-10-23T17:51:09Z",
+  "last_message_id": "1563316308563595486",
+  "last_player_message_at": "2026-10-23T22:20:52Z",
   "messages": [
     {
       "at": "2026-10-23T07:31:09Z",
@@ -45,6 +45,16 @@
       "id": "1563254495255859213",
       "staff": false,
       "text": "<@307290318590705667> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1563254492907175999\nVoting closes <t:1793376000:F>. If Yes wins, it gets built."
+    },
+    {
+      "at": "2026-10-23T22:20:52Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1563316308563595486",
+      "staff": false,
+      "text": "To clarify I was asking for a brief window to undo something. The confirmation button works well"
     }
   ],
   "poll_message_id": "1563254492907175999",

@@ -2,8 +2,8 @@
   "author_id": "307290318590705667",
   "created_at": "2026-10-23T21:45:21Z",
   "kind": "bug",
-  "last_message_id": "1563307370556297286",
-  "last_player_message_at": "2026-10-23T21:45:21Z",
+  "last_message_id": "1563328216658223105",
+  "last_player_message_at": "2026-10-23T23:08:12Z",
   "messages": [
     {
       "at": "2026-10-23T21:45:21Z",
@@ -16,6 +16,46 @@
       "id": "1563307370556297286",
       "staff": false,
       "text": "Fixed the distribution in a few of my provinces and they are still losing people.\nBefore one of the updates I cleared 10m an hour, pretty sure I have over double the mills and yet my income drops"
+    },
+    {
+      "at": "2026-10-23T23:06:46Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1563327855646089217",
+      "staff": false,
+      "text": "What is your housing % at? Only thing I can think of is you are close to 100% housing so pop growth is less then death"
+    },
+    {
+      "at": "2026-10-23T23:07:42Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1563328093924630589",
+      "staff": false,
+      "text": "Says I have 2.49b homes"
+    },
+    {
+      "at": "2026-10-23T23:07:55Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1563328146957410375",
+      "staff": false,
+      "text": "<:daveyjuice:1521722224342597632>"
+    },
+    {
+      "at": "2026-10-23T23:08:12Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1563328216658223105",
+      "staff": false,
+      "text": "Homes / hospitals\n\n10% full (2.49B homes, 6 hospitals, 2% covered)"
     }
   ],
   "thread_id": "1563307370556297286",
