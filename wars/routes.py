@@ -386,6 +386,18 @@ def send_peace_offer(war_id, enemy_id):
             return error(404, "War not found")
         if cId not in (war_row[0], war_row[1]):
             return error(403, "You are not a participant in this war")
+            # The aggressor can't end the war in its first 24h (hit-and-run).
+            db.execute("SELECT start_date FROM wars WHERE id=%s", (war_id,))
+            started = db.fetchone()
+            if (
+                cId == war_row[0]
+                and started
+                and started[0]
+                and time.time() - float(started[0]) < AGGRESSOR_LOCK_SECONDS
+            ):
+                return error(
+                    403, "The aggressor can't offer peace in the first 24 hours of a war."
+                )
         if war_row[3]:
             return error(400, "This war already ended")
         # The receiver is whoever is on the other side of THIS war; never
@@ -447,6 +459,8 @@ def send_peace_offer(war_id, enemy_id):
     return redirect("/peace_offers")
 
 
+AGGRESSOR_LOCK_SECONDS = 24 * 3600  # aggressor can't surrender/offer peace before this
+
 # Surrender: the exit every war was missing besides peace offers (which the
 # other side can ignore forever) and morale reaching zero.
 @wars_bp.route("/war/<int:war_id>/surrender", methods=["POST"])
@@ -460,7 +474,8 @@ def surrender_war(war_id):
         # Row lock: a double-submit (or a peace accept / lethal attack racing
         # this request) waits here and then sees the war already ended.
         db.execute(
-            "SELECT attacker, defender, peace_date FROM wars WHERE id=%s FOR UPDATE",
+            "SELECT attacker, defender, peace_date, start_date FROM wars "
+            "WHERE id=%s FOR UPDATE",
             (war_id,),
         )
         row = db.fetchone()
@@ -468,6 +483,17 @@ def surrender_war(war_id):
             return error(404, "This war doesn't exist")
         if cId not in (row[0], row[1]):
             return error(403, "You are not a participant in this war.")
+        # Hit-and-run guard: the aggressor can't bail out of its own war for
+        # the first 24h, so the defender always gets a window to respond.
+        if (
+            cId == row[0]
+            and row[3]
+            and time.time() - float(row[3]) < AGGRESSOR_LOCK_SECONDS
+            and not row[2]
+        ):
+            return error(
+                403, "The aggressor can't surrender in the first 24 hours of a war."
+            )
         if row[2]:
             return error(400, "This war already ended")
         winner_id = row[1] if cId == row[0] else row[0]
@@ -1729,17 +1755,19 @@ def declare_war():
             )
             if not in_war_range(attacker_strength, defender_strength):
                 return error(400, format_war_range_error(attacker_strength))
-            # Check most recent peace date between the two nations
+            # Truce (3 days) only locks out the aggressor of the last war, so a
+            # defender can always hit back (hit-and-run fix, 2026-10-24).
             db.execute(
                 (
-                    "SELECT MAX(peace_date) FROM wars WHERE ((attacker=%s "
-                    "AND defender=%s) OR (attacker=%s AND defender=%s))"
+                    "SELECT peace_date, attacker FROM wars WHERE peace_date IS NOT NULL "
+                    "AND ((attacker=%s AND defender=%s) OR (attacker=%s AND defender=%s)) "
+                    "ORDER BY peace_date DESC LIMIT 1"
                 ),
                 (attacker.id, defender.id, defender.id, attacker.id),
             )
-            current_peace = db.fetchone()
-            if current_peace and current_peace[0]:
-                if (current_peace[0] + 259200) > time.time():
+            last_peace = db.fetchone()
+            if last_peace and last_peace[0] and last_peace[1] == attacker.id:
+                if (last_peace[0] + 259200) > time.time():
                     return error(
                         403, "You can't declare war because truce has not expired!"
                     )
@@ -1885,15 +1913,7 @@ def join_war_as_ally(war_id):
             if db.fetchone():
                 return error(400, "You're already at war with this nation!")
 
-            db.execute(
-                "SELECT MAX(peace_date) FROM wars WHERE ((attacker=%s AND defender=%s) "
-                "OR (attacker=%s AND defender=%s))",
-                (ally_id, original_attacker_id, original_attacker_id, ally_id),
-            )
-            current_peace = db.fetchone()
-            if current_peace and current_peace[0]:
-                if (current_peace[0] + 259200) > time.time():
-                    return error(403, "You can't join this war because a truce with the aggressor has not expired!")
+            # No truce check: allies may always join a defensive war.
 
             db.execute("SELECT username FROM users WHERE id=(%s)", (ally_id,))
             ally_row = db.fetchone()
