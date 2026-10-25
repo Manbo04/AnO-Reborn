@@ -57,7 +57,9 @@ def pick_domain(units: Dict[str, int], ap: Dict[str, int], rng=random) -> Option
 def should_accept_peace(
     *, war_age: float, bot_morale: float, has_demands: bool
 ) -> bool:
-    if has_demands:
+    from wars.rules import WAR_MIN_DURATION_SECONDS
+
+    if has_demands or war_age < WAR_MIN_DURATION_SECONDS:
         return False
     return war_age >= PEACE_AFTER or bot_morale <= PEACE_MORALE
 
@@ -105,6 +107,10 @@ def _handle_peace(
     row = cur.fetchone()
     if not row or row[0] != human_id:
         return False  # not the human's offer, or already gone
+    from wars.rules import war_age_ok
+
+    if not war_age_ok(war["start_date"], now):
+        return False  # too early to end the war: leave the offer pending
     accept = should_accept_peace(
         war_age=now - float(war["start_date"] or now),
         bot_morale=bot_morale,
