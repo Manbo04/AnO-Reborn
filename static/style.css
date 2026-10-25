@@ -12944,20 +12944,22 @@ body.page-provinces .game-province-card-thumb img {
 .province-status-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: var(--game-space-md, 16px);
+    gap: 10px;
     width: 100%;
-    margin: var(--game-space-md, 16px) 0;
+    margin: 10px 0;
+    align-content: start;
 }
 
 .province-status-card {
     display: flex;
     flex-direction: column;
-    gap: var(--game-space-sm, 8px);
-    padding: var(--game-space-md, 16px);
+    gap: 4px;
+    padding: 10px 14px;
     border-radius: var(--game-radius-md, 12px);
     border: 1px solid var(--border);
     background: var(--foregroundThree);
-    min-height: 72px;
+    min-height: 0;
+    height: auto;
 }
 
 .province-status-card__head {
@@ -13017,11 +13019,7 @@ body.page-provinces .game-province-card-thumb img {
 @media (min-width: 768px) {
     .province-status-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        align-items: stretch;
-    }
-
-    .province-status-card {
-        height: 100%;
+        align-items: start;
     }
 }
 
