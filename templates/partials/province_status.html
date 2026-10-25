@@ -6,16 +6,18 @@
         </div>
     </div>
 
-    <div class="province-status-card {% if enough_rations %}province-status-card--ok{% else %}province-status-card--bad{% endif %}">
+    {% set nation_short = nation_distribution and nation_distribution.coverage_percent is defined and nation_distribution.coverage_percent < 100 %}
+    {% set rations_ok = enough_rations and not nation_short %}
+    <div class="province-status-card {% if rations_ok %}province-status-card--ok{% else %}province-status-card--bad{% endif %}">
         <div class="province-status-card__head">
-            <span class="material-icons-outlined">{% if enough_rations %}check_circle{% else %}cancel{% endif %}</span>
-            <span>{% if enough_rations %}Your citizens have rations{% else %}Your citizens do not have rations{% endif %}</span>
+            <span class="material-icons-outlined">{% if rations_ok %}check_circle{% else %}cancel{% endif %}</span>
+            <span>{% if rations_ok %}Your citizens have rations{% elif enough_rations %}Rations in stock, but distribution only reaches {{ nation_distribution.coverage_percent }}% of your people{% else %}Your citizens do not have rations{% endif %}</span>
         </div>
         {% if distribution_capacity is not none %}
         <p class="province-status-card__detail">
             National ration distribution serves {{ distribution_capacity | commas }} population
             {% if nation_distribution and nation_distribution.uncovered_population > 0 %}
-            ({{ nation_distribution.uncovered_population | commas }} citizens unserved)
+            ({{ nation_distribution.uncovered_population | commas }} citizens unserved, same shortfall in every province)
             {% endif %}
         </p>
         {% endif %}

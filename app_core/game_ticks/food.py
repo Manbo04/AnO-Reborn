@@ -254,7 +254,7 @@ def nation_distribution_status(
     stock = int(rations_stockpile or 0)
     uncovered = max(0, pop - cap)
     coverage_pct = min(100, int(100 * cap / pop)) if pop > 0 else 100
-    dc_cap = variables.RATIONS_DISTRIBUTION_PER_BUILDING["food_banks"]
+    dc_cap = variables.RATIONS_DISTRIBUTION_PER_BUILDING["distribution_centers"]
     dc_suggested = (uncovered + dc_cap - 1) // dc_cap if uncovered > 0 else 0
     stockpile_bottleneck = stock >= need and cap < pop
     return {
