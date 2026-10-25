@@ -591,3 +591,50 @@ def test_bots_in_or_near_war_flags_active_and_recent_only(world):
 def test_nuke_copy_no_longer_claims_it_cannot_be_intercepted():
     for rel in ("templates/nuclear_strike.html", "templates/mechanics/war.html"):
         assert "can't be intercepted" not in (ROOT / rel).read_text()
+
+
+def test_joinable_wars_list_hides_wars_the_ally_cannot_join(world):
+    """/wars only lists wars the join endpoint would accept (same check)."""
+    from wars.routes import _ally_join_block
+
+    with get_db_connection() as conn:
+        db = conn.cursor()
+        _treaty(db, world["c"], world["b"], "mutual_defense")
+        conn.commit()
+        # eligible: listed
+        assert _ally_join_block(db, world["c"], world["a"]) is None
+    page = _client_as(world["c"]).get("/wars")
+    assert page.status_code == 200
+    assert f"/wars/{world['war_ab']}/join_ally".encode() in page.data
+
+    # C/D's war just ended -> C is in a truce: hidden, and the join refuses
+    _q("UPDATE wars SET peace_date=%s WHERE id=%s", (time.time() - 60, world["war_cd"]))
+    with get_db_connection() as conn:
+        assert _ally_join_block(conn.cursor(), world["c"], world["a"])[0] == 403
+    page = _client_as(world["c"]).get("/wars")
+    assert f"/wars/{world['war_ab']}/join_ally".encode() not in page.data
+
+
+def test_joinable_wars_list_hides_out_of_range_wars(world):
+    from wars.routes import _ally_join_block
+
+    with get_db_connection() as conn:
+        db = conn.cursor()
+        _treaty(db, world["c"], world["b"], "mutual_defense")
+        for uid, pop in ((world["c"], 10_000_000), (world["a"], 1_000_000)):
+            db.execute(
+                "INSERT INTO provinces (userid, provincename, population) "
+                "VALUES (%s, 'rangetest', %s)",
+                (uid, pop),
+            )
+        conn.commit()
+    try:
+        with get_db_connection() as conn:
+            assert _ally_join_block(conn.cursor(), world["c"], world["a"])[0] == 400
+        page = _client_as(world["c"]).get("/wars")
+        assert f"/wars/{world['war_ab']}/join_ally".encode() not in page.data
+    finally:
+        _q(
+            "DELETE FROM provinces WHERE provincename='rangetest' AND userid = ANY(%s)",
+            ([world["a"], world["c"]],),
+        )

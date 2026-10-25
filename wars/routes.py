@@ -1933,6 +1933,38 @@ def declare_war():
     return redirect("/wars")
 
 
+def _ally_join_block(db, ally_id, aggressor_id):
+    """Why `ally_id` can't join a war against `aggressor_id` as an ally, as
+    (status, message), or None when it can. Shared by join_war_as_ally() and
+    the "Wars You Can Join" list so the list never offers a war that the
+    join would refuse.
+
+    * War range: MDP joins respect it (no unlimited range). This also covers
+      the aggressor's allies countering a joined ally: that ally's join row
+      has the aggressor as its defender, so they come through here and can
+      only counter allies inside their range.
+    * Truce: a nation that fought any war ending in the last TRUCE_SECONDS
+      can't jump into another war as an ally.
+    """
+    from wars.war_range import (
+        get_user_war_strength,
+        in_war_range,
+        format_war_range_error,
+    )
+
+    ally_strength = get_user_war_strength(db, ally_id)
+    if not in_war_range(ally_strength, get_user_war_strength(db, aggressor_id)):
+        return 400, format_war_range_error(ally_strength)
+    db.execute(
+        "SELECT 1 FROM wars WHERE peace_date IS NOT NULL AND peace_date > %s "
+        "AND (attacker=%s OR defender=%s) LIMIT 1",
+        (time.time() - war_rules.TRUCE_SECONDS, ally_id, ally_id),
+    )
+    if db.fetchone():
+        return 403, "You can't join a war while you're in an active truce."
+    return None
+
+
 @wars_bp.route("/wars/<int:war_id>/join_ally", methods=["POST"])
 @login_required
 def join_war_as_ally(war_id):
@@ -2000,33 +2032,9 @@ def join_war_as_ally(war_id):
             if db.fetchone():
                 return error(400, "You're already at war with this nation!")
 
-            # MDP joins respect war range (no unlimited range). This also
-            # covers the aggressor's allies countering a joined ally: that
-            # ally's join row has the aggressor as its defender, so they come
-            # through here and can only counter allies inside their range.
-            from wars.war_range import (
-                get_user_war_strength,
-                in_war_range,
-                format_war_range_error,
-            )
-
-            ally_strength = get_user_war_strength(db, ally_id)
-            if not in_war_range(
-                ally_strength, get_user_war_strength(db, original_attacker_id)
-            ):
-                return error(400, format_war_range_error(ally_strength))
-
-            # A nation in an active truce (any war it fought that ended in the
-            # last TRUCE_SECONDS) can't jump into another war as an ally.
-            db.execute(
-                "SELECT 1 FROM wars WHERE peace_date IS NOT NULL AND peace_date > %s "
-                "AND (attacker=%s OR defender=%s) LIMIT 1",
-                (time.time() - war_rules.TRUCE_SECONDS, ally_id, ally_id),
-            )
-            if db.fetchone():
-                return error(
-                    403, "You can't join a war while you're in an active truce."
-                )
+            block = _ally_join_block(db, ally_id, original_attacker_id)
+            if block:
+                return error(*block)
 
             db.execute("SELECT username FROM users WHERE id=(%s)", (ally_id,))
             ally_row = db.fetchone()
@@ -2191,7 +2199,7 @@ def wars():
             try:
                 db.execute(
                     """
-                    SELECT DISTINCT w.id, ua.username, ud.username
+                    SELECT DISTINCT w.id, ua.username, ud.username, w.attacker
                     FROM wars w
                     JOIN nation_treaties nt ON nt.status='active' AND nt.treaty_type IN ('mutual_defense', 'alliance')
                         AND ((nt.sender_id = w.defender AND nt.recipient_id = %s)
@@ -2207,7 +2215,12 @@ def wars():
                     """,
                     (cId, cId, cId, cId, cId, cId),
                 )
-                joinable_wars = db.fetchall()
+                # Ended wars are already excluded above; hide the ones the
+                # join would refuse (war range, active truce) too.
+                joinable_wars = [
+                    jw for jw in db.fetchall()
+                    if _ally_join_block(db, cId, jw[3]) is None
+                ]
             except Exception:
                 rollback_db_cursor(db)
                 joinable_wars = []

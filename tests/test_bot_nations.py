@@ -125,10 +125,16 @@ def test_names_unique_and_labelled():
 
 
 def test_war_ai_peace_rules():
-    assert war_ai.should_accept_peace(
-        war_age=13 * 3600, bot_morale=90, has_demands=False
+    from wars.rules import WAR_MIN_DURATION_SECONDS
+
+    old = WAR_MIN_DURATION_SECONDS
+    assert war_ai.should_accept_peace(war_age=old, bot_morale=90, has_demands=False)
+    assert war_ai.should_accept_peace(war_age=old, bot_morale=40, has_demands=False)
+    # the 24h minimum war duration applies to bots too, even at low morale
+    assert not war_ai.should_accept_peace(war_age=60, bot_morale=40, has_demands=False)
+    assert not war_ai.should_accept_peace(
+        war_age=13 * 3600, bot_morale=10, has_demands=False
     )
-    assert war_ai.should_accept_peace(war_age=60, bot_morale=40, has_demands=False)
     assert not war_ai.should_accept_peace(war_age=60, bot_morale=90, has_demands=False)
     assert not war_ai.should_accept_peace(
         war_age=99 * 3600, bot_morale=10, has_demands=True
