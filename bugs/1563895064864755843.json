@@ -1,0 +1,76 @@
+{
+  "author_id": "616524068987863060",
+  "created_at": "2026-10-25T12:40:39Z",
+  "kind": "bug",
+  "last_message_id": "1563927547551424659",
+  "last_player_message_at": "2026-10-25T14:49:43Z",
+  "messages": [
+    {
+      "at": "2026-10-25T12:40:39Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1563895064864755843/1563895065187848192/IMG_4577.png?ex=6adf4a47&is=6addf8c7&hm=591725acfc92e24e065f48ec03f9a29601cb8c45fd27330f0070fa837d62c630&",
+        "https://cdn.discordapp.com/attachments/1563895064864755843/1563895065653542982/IMG_4578.png?ex=6adf4a47&is=6addf8c7&hm=c39bedfad8437e1f62db119213e71c76e7a63f7c3107ca892d3f5d937c3e6f34&",
+        "https://cdn.discordapp.com/attachments/1563895064864755843/1563895066068516894/IMG_4579.png?ex=6adf4a47&is=6addf8c7&hm=dc6f8facd9442163d3d2d2d3fd7dea8bd8c4708f6834ac282c3f9dc2155455c1&"
+      ],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1563895064864755843",
+      "staff": false,
+      "text": "behold my model province. total output was always 145% until recently i noticed that in all of my provinces (including this one, which has a ton of education buildings) it fell to 126% exactly, even though nothing changed and no buildings were added or removed. according to the energy balance, the workforce efficiency is now 86% instead of 100%, but no indication is given as to why this happens. this seems to apply universally regardless of how many education buildings there are in a province (i.e. both in provinces with only a few primary schools and in this one with 15, total output is still 126%)"
+    },
+    {
+      "at": "2026-10-25T12:49:08Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1563897200663334913",
+      "staff": false,
+      "text": "its dropped to 124% nationwide now"
+    },
+    {
+      "at": "2026-10-25T14:31:05Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1563922858994827356",
+      "staff": false,
+      "text": "Well something did happen, you lost over 100m pop or in other words 20% so you no longer have enough people to work"
+    },
+    {
+      "at": "2026-10-25T14:47:19Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1563926941470564524",
+      "staff": false,
+      "text": "ive already reached pre-war levels"
+    },
+    {
+      "at": "2026-10-25T14:49:32Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1563927499707125772",
+      "staff": false,
+      "text": "Population maybe but the majority of deaths would of been working age so you need to wait for your kids to grow up"
+    },
+    {
+      "at": "2026-10-25T14:49:43Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1563927547551424659",
+      "staff": false,
+      "text": "Like what is your percentages for each age group"
+    }
+  ],
+  "thread_id": "1563895064864755843",
+  "title": "Workforce efficiency decreasing",
+  "url": "https://discord.com/channels/708006319658893385/1563895064864755843"
+}
