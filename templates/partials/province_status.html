@@ -11,7 +11,7 @@
     <div class="province-status-card {% if rations_ok %}province-status-card--ok{% else %}province-status-card--bad{% endif %}">
         <div class="province-status-card__head">
             <span class="material-icons-outlined">{% if rations_ok %}check_circle{% else %}cancel{% endif %}</span>
-            <span>{% if rations_ok %}Your citizens have rations{% elif enough_rations %}Rations in stock, but distribution only reaches {{ nation_distribution.coverage_percent }}% of your people{% else %}Your citizens do not have rations{% endif %}</span>
+            <span>{% if rations_ok %}Your citizens have rations{% elif enough_rations %}Distribution reaches only {{ nation_distribution.coverage_percent }}% of your people{% else %}Your citizens do not have rations{% endif %}</span>
         </div>
         {% if distribution_capacity is not none %}
         <p class="province-status-card__detail">
