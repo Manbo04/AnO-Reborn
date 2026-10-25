@@ -105,7 +105,9 @@ def rations_needed(cId, db=None):
         
         active_db.execute(query, (cId,))
         total_needed = active_db.fetchone()
-        ans = int(total_needed[0]) if total_needed and total_needed[0] else 0
+        from database import row_val
+
+        ans = int(row_val(total_needed, "coalesce", 0, default=0) or 0) if total_needed else 0
         return ans if ans > 0 else 1
 
 
