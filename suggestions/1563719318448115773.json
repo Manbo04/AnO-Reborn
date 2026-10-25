@@ -1,0 +1,133 @@
+{
+  "author_id": "429129579039555584",
+  "created_at": "2026-10-25T01:02:18Z",
+  "kind": "suggestion",
+  "last_message_id": "1563722353676910675",
+  "last_player_message_at": "2026-10-25T01:14:21Z",
+  "messages": [
+    {
+      "at": "2026-10-25T01:02:18Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1563719318448115773",
+      "staff": false,
+      "text": "If something is ass or good or something is missing or needs to be edited say it nukes are tuff n stuff so I just thought about how to implement nuclear wars a bit better mechanically"
+    },
+    {
+      "at": "2026-10-25T01:02:24Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1563719346004688939",
+      "staff": false,
+      "text": "**1. Replace Individual Nuclear Launches with a Nuclear Strike Option**\n\n* Remove the ability to launch nuclear weapons individually.\n* Introduce a “Fire All” button that launches the player’s entire available nuclear arsenal at the selected opponent.\n* This option can only be used once per war, making the decision to launch a major commitment rather than something players can do repeatedly.\n\n**2. Add Automatic Nuclear Retaliation**\n\n* Add a toggle that automatically launches a retaliatory nuclear strike if an opponent uses nuclear weapons against you.\n* Retaliatory launches must be calculated after accounting for silos and nuclear delivery units destroyed in the incoming strike. Only surviving units and the nuclear stockpile remaining after the attack should contribute to retaliation.\n* This ensures that retaliation depends on the defender’s surviving capabilities rather than their pre-attack arsenal."
+    },
+    {
+      "at": "2026-10-25T01:02:42Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1563719422684954807",
+      "staff": false,
+      "text": "**3. Rework Nuclear Capacity and Production**\n\nRework nuclear silos and nuclear-capable bases so that they provide storage and deployment capacity rather than producing nuclear weapons themselves.\n\n* Nuclear Silos: Provide capacity for Armed Nuclear Missiles. Silos no longer produce missiles independently.\n* Naval Bases: Provide a very small capacity for Armed Nuclear Submarines.\n* Air Bases: Provide a very small capacity for Armed Nuclear Bombers.\n* The capacity provided by naval and air bases should be particularly small, requiring a really large amount of bases to provide even a single nuclear submarine or bomber.\n\n**4. Introduce a Nuclear Weapons Facility**\n\nIntroduce a new building called the Nuclear Weapons Facility, responsible for manufacturing and arming nuclear weapons over time.\n\n* The facility gradually produces and arms nuclear units, converting available nuclear capacity into usable capacity (making them like how drones are made over time).\n* Production should be hella hella slow, requiring hella hella time to build a hella hella stockpile.\n* The facility should have hella construction and operating costs, making nuclear armament a long-term investment being the biggest expense in the whole nuke system.\n* Production must be limited by available capacity. Armed Nuclear Missiles cannot exceed the capacity provided by nuclear silos, while Armed Nuclear Submarines and Armed Nuclear Bombers cannot exceed the capacity provided by naval and air bases, respectively.\n* The facility should support the production of all three nuclear delivery systems: Armed Nuclear Missiles, Armed Nuclear Submarines, and Armed Nuclear Bombers.\n* Nuclear weapons should not be generated automatically by silos or bases. The Nuclear Weapons Facility should be the primary means of building and arming the nuclear arsenal the bases and silos just provide capacity."
+    },
+    {
+      "at": "2026-10-25T01:02:57Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1563719482827083920",
+      "staff": false,
+      "text": "**5. Introduce Armed Nuclear Submarines and Bombers**\n\nIntroduce two new nuclear-capable units in the special units menu:\n\n* Armed Nuclear Submarines\n* Armed Nuclear Bombers\n\nThese units would function mechanically like nuclear weapons but be represented as nuclear ready military units.\n\n* Naval bases should provide capacity for Armed Nuclear Submarines, while air bases should provide capacity for Armed Nuclear Bombers.\n* Capacity should be low enough that players need large amounts of bases to have cap for even a single bomber or sub.\n* Both units should be significantly more expensive to build and maintain than constructing nuclear silos and producing Armed Nuclear Missiles.\n* To prevent the game just filling in more expensive submarine or bomber units against your will you should have to manually build whatever the tick makes every tick (if you make less than one a tick it just stops when one is produced) HOWEVER we should be allowed a toggle next to each unit that lets the game auto buy each unit when it has been produced this also stops building them all last second to avoid upkeep costs as you will need to build it as you get it either manually or through the toggle\n* Both units should be manufactured and armed through the Nuclear Weapons Facility, with production restricted by the capacity provided by their respective bases.\n\n**6. Limit Destruction During the Initial Nuclear Salvo**\n\nTo ensure that nuclear warfare does not immediately eliminate the defender’s ability to retaliate, introduce limits on how much of the opponent’s nuclear infrastructure and arsenal can be destroyed during the initial salvo.\n\n* Nuclear Silos/Missiles: Limit destruction to a maximum of 50% during the initial salvo.\n* Armed Nuclear Submarines and Bombers: Limit destruction to a maximum of 20% during the initial salvo."
+    },
+    {
+      "at": "2026-10-25T01:03:12Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1563719546886422529",
+      "staff": false,
+      "text": "**7. Introduce a actual Political Penalty for Nuclear Warfare**\n\nReplace the current influence penalty with a substantial, flat percentage reduction in influence for choosing the nuclear option.\n\n* The penalty should be severe enough to effectively cut the player off from the WA for a period of time."
+    },
+    {
+      "at": "2026-10-25T01:03:20Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1563719580743110689",
+      "staff": false,
+      "text": "Ideally nukes should completely decimate both sides in the exchange and take a substantial amount of time to make a large stockpile time then money should be the limiters imo"
+    },
+    {
+      "at": "2026-10-25T01:08:07Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1563720785426784311",
+      "staff": true,
+      "text": "On 2, I feel retaliation strikes should be sent when a launch is spotted. \n\nHypothetical scenario, if Russia launches nukes at the US, the US will see them through their satellites and early detection networks and launch retaliations asap, before the russian nukes land. \n\nSo waiting until their nukes land and see what silos and nukes survive is kinda pointless when we can launch in retaliation asap. \n\nWe could instead add a project called early detection network that allows instant retaliation launches in response to a nuclear attack against them."
+    },
+    {
+      "at": "2026-10-25T01:10:10Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1563721298939609221",
+      "staff": false,
+      "text": "Would it make sense to make it a building or something that allows so and so nukes to be launched instantly without waiting to be struck first"
+    },
+    {
+      "at": "2026-10-25T01:11:01Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1563721515063709899",
+      "staff": false,
+      "text": "A detection coverage %"
+    },
+    {
+      "at": "2026-10-25T01:11:23Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1563721607115972860",
+      "staff": false,
+      "text": "That goes up as you build radar arrays satellites etc?"
+    },
+    {
+      "at": "2026-10-25T01:12:08Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1563721794555482225",
+      "staff": false,
+      "text": "The % covered will fire regardless of if they get hit in the initial blast"
+    },
+    {
+      "at": "2026-10-25T01:14:21Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1563722353676910675",
+      "staff": false,
+      "text": "Also give an espionage option to sabotage nuclear weapons facilities"
+    }
+  ],
+  "status": "new",
+  "thread_id": "1563719318448115773",
+  "title": "Changes/additions to nuke mechanics",
+  "url": "https://discord.com/channels/708006319658893385/1563719318448115773"
+}
