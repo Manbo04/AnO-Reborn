@@ -69,6 +69,22 @@ def test_food_stats_with_realdict_cursor():
     assert isinstance(score, float)
 
 
+def test_rations_needed_reads_dict_row_from_sum_query():
+    # Regression: the SUM() row from a RealDictCursor has no key 0, so
+    # total_needed[0] raised KeyError and the whole province-page food block
+    # silently fell back to "serves 0 population".
+    from tasks import rations_needed
+
+    cursor = RealDictFakeCursor(
+        {
+            "from policies": lambda sql, params: (RealDictRow({"education": []}), []),
+            "from provinces": lambda sql, params: (RealDictRow({"coalesce": 7}), []),
+            "default": lambda sql, params: (None, []),
+        }
+    )
+    assert rations_needed(99, db=cursor) == 7
+
+
 def test_consumer_goods_distribution_capacity_with_realdict_cursor():
     cursor = RealDictFakeCursor(
         {
