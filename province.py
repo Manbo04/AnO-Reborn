@@ -814,18 +814,27 @@ def province(pId):
         )
 
 
+def _default_province_image():
+    """The stock banner, served for provinces without an upload. Short public
+    lifetime: a province that uploads later must not keep the stock image for
+    long, but crawlers/page loads must not re-download 209KB every time."""
+    from flask import current_app, send_from_directory
+
+    response = send_from_directory(current_app.static_folder, "images/province.jpg")
+    response.headers["Cache-Control"] = "public, max-age=300"
+    return response
+
+
 @bp.route("/province-image/<int:pId>")
 def serve_province_image(pId):
     """Serve a province's custom banner image (public, like country flags)."""
     import base64
     import time as time_module
 
-    from flask import Response, send_from_directory, current_app
+    from flask import Response
 
     if not provinces_has_image_data():
-        return send_from_directory(
-            current_app.static_folder, "images/province.jpg"
-        )
+        return _default_province_image()
 
     cache_key = f"province_image_{pId}"
     if not hasattr(serve_province_image, "_cache"):
@@ -835,7 +844,7 @@ def serve_province_image(pId):
         body, mimetype, cached_at = cached
         if time_module.time() - cached_at < 300:
             response = Response(body, mimetype=mimetype)
-            response.headers["Cache-Control"] = "public, max-age=3600"
+            response.headers["Cache-Control"] = "public, max-age=300"
             return response
         del serve_province_image._cache[cache_key]
 
@@ -847,9 +856,7 @@ def serve_province_image(pId):
         row = db.fetchone()
 
     if not row or not row[0]:
-        return send_from_directory(
-            current_app.static_folder, "images/province.jpg"
-        )
+        return _default_province_image()
 
     try:
         image_data = base64.b64decode(row[0])
@@ -869,12 +876,10 @@ def serve_province_image(pId):
                 time_module.time(),
             )
         response = Response(image_data, mimetype=mimetype)
-        response.headers["Cache-Control"] = "public, max-age=3600"
+        response.headers["Cache-Control"] = "public, max-age=300"
         return response
     except Exception:
-        return send_from_directory(
-            current_app.static_folder, "images/province.jpg"
-        )
+        return _default_province_image()
 
 
 @bp.route("/province/<int:pId>/image", methods=["POST"])
