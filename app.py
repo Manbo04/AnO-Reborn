@@ -76,6 +76,9 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 from app_core.identity_diagnostics import install_outgoing_cookie_diagnostic
 install_outgoing_cookie_diagnostic(app)
 
+PUBLIC_IMAGE_PREFIXES = ("/media/banner/", "/ads/image/", "/province-image/")
+
+
 def resolve_cache_control(path, status_code, existing):
     """The Cache-Control this app's after_request should put on a response.
 
@@ -106,6 +109,16 @@ def resolve_cache_control(path, status_code, existing):
         # Flag images are identical for every viewer and change rarely; letting
         # browsers/CDNs keep them 10 min stops re-downloading them on every page.
         return "public, max-age=600, must-revalidate"
+    if (
+        path.startswith(PUBLIC_IMAGE_PREFIXES)
+        and status_code < 400
+        and (existing or "").lower().startswith("public")
+    ):
+        # Ad banners and province images are identical for every viewer and the
+        # views already pick their own public lifetime. Overwriting it with
+        # max-age=5 made every page view re-download them (82% of web egress,
+        # 2026-10). The session interface keeps cookies off public responses.
+        return existing
     return "private, max-age=5, must-revalidate"
 
 

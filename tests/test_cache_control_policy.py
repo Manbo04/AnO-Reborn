@@ -64,3 +64,44 @@ def test_ordinary_pages_stay_private():
     assert resolve_cache_control("/my_country", 200, None) == (
         "private, max-age=5, must-revalidate"
     )
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["/media/banner/10", "/ads/image/10", "/province-image/5"],
+)
+def test_public_image_views_keep_their_own_public_lifetime(path):
+    """These views pick a public max-age themselves; the blanket max-age=5
+    used to overwrite it, so every page view re-downloaded ~235KB banners."""
+    existing = "public, max-age=604800, immutable"
+    assert resolve_cache_control(path, 200, existing) == existing
+
+
+@pytest.mark.parametrize("status", [302, 304])
+def test_public_image_redirect_and_not_modified_keep_public(status):
+    existing = "public, max-age=3600"
+    assert resolve_cache_control("/province-image/5", status, existing) == existing
+
+
+@pytest.mark.parametrize("status", [403, 404, 500])
+def test_public_image_errors_are_not_publicly_cacheable(status):
+    result = resolve_cache_control(
+        "/media/banner/10", status, "public, max-age=604800, immutable"
+    )
+    assert result == "private, max-age=5, must-revalidate"
+
+
+def test_public_image_without_own_header_stays_private():
+    assert resolve_cache_control("/media/banner/10", 200, None) == (
+        "private, max-age=5, must-revalidate"
+    )
+    assert resolve_cache_control("/media/banner/10", 200, "private") == (
+        "private, max-age=5, must-revalidate"
+    )
+
+
+def test_other_routes_cannot_opt_into_public_caching():
+    """Only the image prefixes may keep a view-set public header."""
+    assert resolve_cache_control("/nation/16", 200, "public, max-age=999") == (
+        "private, max-age=5, must-revalidate"
+    )
