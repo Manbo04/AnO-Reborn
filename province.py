@@ -842,9 +842,9 @@ def serve_province_image(pId):
     cached = serve_province_image._cache.get(cache_key)
     if cached is not None:
         body, mimetype, cached_at = cached
-        if time_module.time() - cached_at < 300:
+        if time_module.time() - cached_at < 60:
             response = Response(body, mimetype=mimetype)
-            response.headers["Cache-Control"] = "public, max-age=300"
+            response.headers["Cache-Control"] = "public, max-age=60"
             return response
         del serve_province_image._cache[cache_key]
 
@@ -876,7 +876,7 @@ def serve_province_image(pId):
                 time_module.time(),
             )
         response = Response(image_data, mimetype=mimetype)
-        response.headers["Cache-Control"] = "public, max-age=300"
+        response.headers["Cache-Control"] = "public, max-age=60"
         return response
     except Exception:
         return _default_province_image()
