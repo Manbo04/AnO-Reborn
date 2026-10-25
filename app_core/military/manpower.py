@@ -102,6 +102,7 @@ def get_user_manpower_data(db, user_id: int) -> dict:
         population = 0
 
     cap = calc_manpower_cap(pop_working, population)
+    cap = penalized_manpower_cap(cap, get_active_manpower_penalties(db, user_id))
 
     # Query 2: user military units
     db.execute(
@@ -128,3 +129,24 @@ def get_user_manpower_data(db, user_id: int) -> dict:
         "population": population,
         "units": units,
     }
+
+
+def get_active_manpower_penalties(db, user_id: int) -> list:
+    """Factors of the nation's active post-war manpower-cap penalties
+    (unconditional surrender, wars/rules.py)."""
+    import time
+
+    from wars.rules import PENALTY_MANPOWER_CAP
+
+    db.execute(
+        "SELECT factor FROM war_penalties "
+        "WHERE user_id = %s AND kind = %s AND expires_at > %s",
+        (user_id, PENALTY_MANPOWER_CAP, time.time()),
+    )
+    return [row[0] for row in db.fetchall()]
+
+
+def penalized_manpower_cap(cap: int, factors) -> int:
+    from wars.rules import penalized_manpower_cap as _apply
+
+    return _apply(cap, factors)

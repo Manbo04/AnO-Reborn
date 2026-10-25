@@ -217,11 +217,28 @@
         </form>
 
         <h2 class="templatecontentheaderleft">Surrender</h2>
-        <p class="templatecontentpleft">Give up and end this war now. Your enemy wins and takes the usual war spoils, exactly as if your morale had broken. This cannot be undone.</p>
-        <form method="post" action="/war/{{war_id}}/surrender" onsubmit="return confirm('Surrender this war? Your enemy will take the war spoils.');">
-            <input type="hidden" name="confirm" value="yes" />
-            <button class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">flag</span>Surrender</button>
+        <p class="templatecontentpleft">Surrender needs both sides: you offer it, your enemy accepts. Wars can't end by peace or surrender in their first 24 hours. <strong>Conditional</strong>: your enemy takes reduced spoils (10% of each resource). <strong>Unconditional</strong>: full war spoils, and your manpower cap is halved for 5 days.</p>
+        {% if surrender_offer and not surrender_offer.mine %}
+        <p class="templatecontentpleft">Your enemy has offered an <strong>{{ surrender_offer.kind }}</strong> surrender.</p>
+        <form method="post" action="/war/{{war_id}}/surrender/respond">
+            <button class="templatedivbutton templatecenteredbutton" type="submit" name="decision" value="accept"><span class="material-icons-outlined">check</span>Accept surrender</button>
+            <button class="templatedivbutton templatecenteredbutton" type="submit" name="decision" value="reject"><span class="material-icons-outlined">close</span>Reject</button>
         </form>
+        {% elif surrender_offer and surrender_offer.mine %}
+        <p class="templatecontentpleft">You offered an <strong>{{ surrender_offer.kind }}</strong> surrender. Waiting for your enemy to respond.</p>
+        <form method="post" action="/war/{{war_id}}/surrender/respond">
+            <button class="templatedivbutton templatecenteredbutton" type="submit" name="decision" value="reject"><span class="material-icons-outlined">undo</span>Withdraw offer</button>
+        </form>
+        {% else %}
+        <form method="post" action="/war/{{war_id}}/surrender" onsubmit="return confirm('Offer to surrender this war?');">
+            <input type="hidden" name="confirm" value="yes" />
+            <select name="kind" class="loginsignupinput">
+                <option value="conditional">Conditional surrender</option>
+                <option value="unconditional">Unconditional surrender</option>
+            </select>
+            <button class="templatedivbutton templatecenteredbutton" type="submit"><span class="material-icons-outlined">flag</span>Offer surrender</button>
+        </form>
+        {% endif %}
 
         {% endif %}
     </div>

@@ -25,6 +25,7 @@ from database import get_db_connection, get_request_cursor, fetchone_first
 from helpers import record_war_event
 from attack_scripts.combat_helpers import compute_user_army_strength
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -221,12 +222,18 @@ def _fight_details(
     }
 
 
-def conclude_war(db, war_id, winner_id, loser_id, surrendered=False):
+def conclude_war(
+    db, war_id, winner_id, loser_id, surrendered=False, surrender_kind=None
+):
     """End `war_id` with `winner_id` victorious: mark peace, move the standard
     war spoils (20% of every resource, 30% with Looting Teams) from the loser
     to the winner, pay out bounties on the loser and write both war-end news
     items. Shared by the morale-zero path in persist_fight_results() and by
-    voluntary surrender. Runs on the caller's cursor/connection."""
+    voluntary surrender. Runs on the caller's cursor/connection.
+
+    surrender_kind ('conditional' / 'unconditional', wars/rules.py): a
+    conditional surrender pays reduced spoils; an unconditional one pays the
+    full spoils and puts a temporary manpower cap on the loser."""
     # Mark peace
     from attack_scripts.Nations import Nation, Economy
 
@@ -235,6 +242,24 @@ def conclude_war(db, war_id, winner_id, loser_id, surrendered=False):
     from app_core.upgrades.services import get_upgrades
     winner_upgrades = get_upgrades(winner_id, db=db)
     loot_multiplier = 0.3 if winner_upgrades.get("lootingteams") else 0.2
+    from wars import rules as war_rules
+
+    loot_multiplier = war_rules.surrender_spoils_rate(surrender_kind, loot_multiplier)
+    if surrender_kind == "unconditional":
+        now = time.time()
+        db.execute(
+            "INSERT INTO war_penalties "
+            "(user_id, war_id, kind, factor, created_at, expires_at) "
+            "VALUES (%s, %s, %s, %s, %s, %s)",
+            (
+                loser_id,
+                war_id,
+                war_rules.PENALTY_MANPOWER_CAP,
+                war_rules.UNCONDITIONAL_SURRENDER_MANPOWER_FACTOR,
+                now,
+                now + war_rules.UNCONDITIONAL_SURRENDER_PENALTY_SECONDS,
+            ),
+        )
 
     # Transfer resources from loser to winner
     war_spoils = {}

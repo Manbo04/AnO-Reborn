@@ -13,7 +13,7 @@ half the population, zero happiness, 40% of every building). What it does now:
 * **Buildings and cities** are destroyed in proportion to how much of the
   province the blast covers (INFRA_LETHALITY).
 * **Happiness in the struck province drops hard** (HAPPINESS_HIT points).
-* **Fallout (2026-10-04).** Radiation also kills 1% of the target's whole
+* **Fallout (2026-10-04).** Radiation also kills 1% (x RADIATION_DAMAGE_MULTIPLIER, 0.5%) of the target's whole
   nation (wars/aftermath.py).
 * **Repeat strikes** on the same province within REPEAT_WINDOW_HOURS do less:
   each earlier strike halves the damage, fading linearly over the 72h window.
@@ -36,6 +36,7 @@ from __future__ import annotations
 import math
 from datetime import datetime, timedelta, timezone
 
+from wars.rules import MAX_NUKE_VOLLEYS_PER_WAR, RADIATION_DAMAGE_MULTIPLIER, nuke_column
 from influence_formula import (
     NUCLEAR_PENALTY_DECAY_DAYS,
     influence_subquery_sql,
@@ -48,7 +49,9 @@ CITY_KM2 = 25.0  # nominal urban area of one city
 URBAN_DENSITY_RATIO = 20.0  # people per km2 in cities vs open land
 POP_LETHALITY = 0.6  # share of people inside the blast who die
 INFRA_LETHALITY = 0.7  # share of buildings/cities inside the blast destroyed
-HAPPINESS_HIT = 60  # happiness points lost in the struck province
+# Radiation's short-term effects (struck-province happiness and nation-wide
+# fallout deaths) are scaled by wars.rules.RADIATION_DAMAGE_MULTIPLIER.
+HAPPINESS_HIT = 60  # base happiness points lost in the struck province
 
 # --- Repeat strikes --------------------------------------------------------
 REPEAT_WINDOW_HOURS = 72
@@ -132,7 +135,10 @@ def strike_damage(province: dict, multiplier: float) -> dict:
         "infra_frac": infra_frac,
         "deaths": int(math.floor(pop * death_frac)),
         "cities_destroyed": int(math.floor(cities * city_frac)),
-        "happiness_lost": min(happiness, int(round(HAPPINESS_HIT * multiplier))),
+        "happiness_lost": min(
+            happiness,
+            int(round(HAPPINESS_HIT * RADIATION_DAMAGE_MULTIPLIER * multiplier)),
+        ),
     }
 
 
@@ -189,6 +195,26 @@ def is_retaliation(db, war_id, attacker_id, enemy_id) -> bool:
     )
     row = db.fetchone()
     return bool(row) and row[0] == enemy_id
+
+
+def volleys_used(db, war_id, user_id) -> int:
+    """Nuke volleys this side already launched in this war (intercepted
+    launches count: the volley was fired)."""
+    db.execute(
+        "SELECT attacker, attacker_nuked, defender_nuked FROM wars WHERE id = %s",
+        (war_id,),
+    )
+    row = db.fetchone()
+    if not row:
+        return 0
+    fired = row[1] if row[0] == user_id else row[2]
+    return 1 if fired else 0
+
+
+def _mark_volley(db, war_id, user_id) -> None:
+    db.execute("SELECT attacker FROM wars WHERE id = %s", (war_id,))
+    col = nuke_column(db.fetchone()[0], user_id)
+    db.execute(f"UPDATE wars SET {col} = TRUE WHERE id = %s", (war_id,))
 
 
 def _nuke_count(db, user_id) -> int:
@@ -250,7 +276,9 @@ def plan_strike(db, attacker_id, war_id, province_id=None) -> dict:
     nukes = _nuke_count(db, attacker_id)
     provinces = enemy_provinces(db, enemy_id)
     blocked = None
-    if nukes <= 0:
+    if volleys_used(db, war_id, attacker_id) >= MAX_NUKE_VOLLEYS_PER_WAR:
+        blocked = "You have already launched your nuclear volley in this war."
+    elif nukes <= 0:
         blocked = "You don't have any nukes."
     elif not provinces:
         blocked = "The enemy has no provinces to target."
@@ -307,6 +335,7 @@ def execute_strike(db, attacker_id, war_id, province_id) -> dict:
     )
     if not db.fetchone():
         raise StrikeError("You don't have any nukes.")
+    _mark_volley(db, war_id, attacker_id)
 
     # Iron Dome (migration 0104): the struck province's domes get one shot at
     # the warhead. The nuke is spent either way; an intercept does no damage.
@@ -410,7 +439,9 @@ def execute_strike(db, attacker_id, war_id, province_id) -> dict:
     from wars import aftermath as war_aftermath
 
     fallout_deaths = war_aftermath.kill_civilians(
-        db, plan["enemy_id"], war_aftermath.NUKE_FALLOUT_DEATHS
+        db,
+        plan["enemy_id"],
+        war_aftermath.NUKE_FALLOUT_DEATHS * RADIATION_DAMAGE_MULTIPLIER,
     )
 
     now = datetime.now(timezone.utc)

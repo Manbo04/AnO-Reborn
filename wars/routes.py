@@ -27,6 +27,7 @@ import traceback
 
 import variables
 from wars.service import apply_building_damage, apply_population_strike
+from wars import rules as war_rules
 from app_core.world_affairs.services import log_event
 
 # Add any other necessary imports here
@@ -168,7 +169,7 @@ def peace_offers():
             # Make sure others can't accept/delete/etc. the peace
             # offer other than the participants
             db.execute(
-                "SELECT id, attacker, defender FROM wars WHERE "
+                "SELECT id, attacker, defender, start_date FROM wars WHERE "
                 "(attacker=(%s) OR defender=(%s)) AND peace_offer_id=(%s) "
                 "AND peace_date IS NULL FOR UPDATE",
                 (cId, cId, offer_id),
@@ -207,6 +208,11 @@ def peace_offers():
 
             # Offer accepted
             if decision == "1":
+                # Minimum war duration (wars/rules.py): no 10-minute wars.
+                if not war_rules.war_age_ok(result[3], time.time()):
+                    return error(
+                        403, war_rules.min_duration_error(result[3], time.time())
+                    )
                 # Parse resources/amounts into lists
                 resources = (
                     [r for r in demanded_resources.split(",") if r]
@@ -386,18 +392,6 @@ def send_peace_offer(war_id, enemy_id):
             return error(404, "War not found")
         if cId not in (war_row[0], war_row[1]):
             return error(403, "You are not a participant in this war")
-            # The aggressor can't end the war in its first 24h (hit-and-run).
-            db.execute("SELECT start_date FROM wars WHERE id=%s", (war_id,))
-            started = db.fetchone()
-            if (
-                cId == war_row[0]
-                and started
-                and started[0]
-                and time.time() - float(started[0]) < AGGRESSOR_LOCK_SECONDS
-            ):
-                return error(
-                    403, "The aggressor can't offer peace in the first 24 hours of a war."
-                )
         if war_row[3]:
             return error(400, "This war already ended")
         # The receiver is whoever is on the other side of THIS war; never
@@ -459,57 +453,127 @@ def send_peace_offer(war_id, enemy_id):
     return redirect("/peace_offers")
 
 
-AGGRESSOR_LOCK_SECONDS = 24 * 3600  # aggressor can't surrender/offer peace before this
+# Kept for callers/tests that import it; the rule now applies to both sides.
+AGGRESSOR_LOCK_SECONDS = war_rules.WAR_MIN_DURATION_SECONDS
 
-# Surrender: the exit every war was missing besides peace offers (which the
-# other side can ignore forever) and morale reaching zero.
+
+def _load_war_for_surrender(db, war_id, cId):
+    """Lock the war row; returns (row, error_response)."""
+    db.execute(
+        "SELECT attacker, defender, peace_date, start_date FROM wars "
+        "WHERE id=%s FOR UPDATE",
+        (war_id,),
+    )
+    row = db.fetchone()
+    if not row:
+        return None, error(404, "This war doesn't exist")
+    if cId not in (row[0], row[1]):
+        return None, error(403, "You are not a participant in this war.")
+    if row[2]:
+        return None, error(400, "This war already ended")
+    return row, None
+
+
+# Surrender (war rules overhaul, wars/rules.py): ending a war by surrender
+# needs both sides. The losing side offers a conditional or unconditional
+# surrender here; the other side accepts or rejects it below.
 @wars_bp.route("/war/<int:war_id>/surrender", methods=["POST"])
 @login_required
 def surrender_war(war_id):
     cId = session["user_id"]
     if request.form.get("confirm") != "yes":
         return error(400, "Please confirm that you want to surrender.")
+    kind = request.form.get("kind") or "conditional"
+    if kind not in war_rules.SURRENDER_KINDS:
+        return error(400, "Invalid surrender type.")
+    with get_db_connection() as connection:
+        db = connection.cursor()
+        row, err = _load_war_for_surrender(db, war_id, cId)
+        if err:
+            return err
+        now = time.time()
+        if not war_rules.war_age_ok(row[3], now):
+            return error(403, war_rules.min_duration_error(row[3], now))
+        enemy_id = row[1] if cId == row[0] else row[0]
+        db.execute(
+            "INSERT INTO surrender_offers (war_id, surrendering_id, kind, created_at) "
+            "VALUES (%s, %s, %s, %s) ON CONFLICT (war_id) DO UPDATE SET "
+            "surrendering_id = EXCLUDED.surrendering_id, kind = EXCLUDED.kind, "
+            "created_at = EXCLUDED.created_at",
+            (war_id, cId, kind, now),
+        )
+        db.execute("SELECT username FROM users WHERE id=%s", (cId,))
+        name_row = db.fetchone()
+        name = name_row[0] if name_row else f"Nation {cId}"
+        db.execute(
+            "INSERT INTO news (destination_id, message) VALUES (%s, %s)",
+            (
+                enemy_id,
+                f"🏳️ SURRENDER OFFER: {name} offered an {kind} surrender. "
+                f"Accept or reject it on the war page (/war/{war_id}).",
+            ),
+        )
+        connection.commit()
+    flash(f"You offered an {kind} surrender. The war ends once your enemy accepts.")
+    return redirect(f"/war/{war_id}")
+
+
+@wars_bp.route("/war/<int:war_id>/surrender/respond", methods=["POST"])
+@login_required
+def respond_surrender(war_id):
+    cId = session["user_id"]
+    decision = request.form.get("decision")
+    if decision not in ("accept", "reject"):
+        return error(400, "No decision was made.")
     with get_db_connection() as connection:
         db = connection.cursor()
         # Row lock: a double-submit (or a peace accept / lethal attack racing
         # this request) waits here and then sees the war already ended.
+        row, err = _load_war_for_surrender(db, war_id, cId)
+        if err:
+            return err
         db.execute(
-            "SELECT attacker, defender, peace_date, start_date FROM wars "
-            "WHERE id=%s FOR UPDATE",
+            "SELECT surrendering_id, kind FROM surrender_offers WHERE war_id=%s",
             (war_id,),
         )
-        row = db.fetchone()
-        if not row:
-            return error(404, "This war doesn't exist")
-        if cId not in (row[0], row[1]):
-            return error(403, "You are not a participant in this war.")
-        # Hit-and-run guard: the aggressor can't bail out of its own war for
-        # the first 24h, so the defender always gets a window to respond.
-        if (
-            cId == row[0]
-            and row[3]
-            and time.time() - float(row[3]) < AGGRESSOR_LOCK_SECONDS
-            and not row[2]
-        ):
-            return error(
-                403, "The aggressor can't surrender in the first 24 hours of a war."
+        offer = db.fetchone()
+        if not offer:
+            return error(400, "There is no pending surrender offer in this war.")
+        loser_id, kind = offer
+        if loser_id == cId:
+            if decision == "reject":  # withdraw own offer
+                db.execute("DELETE FROM surrender_offers WHERE war_id=%s", (war_id,))
+                connection.commit()
+                return redirect(f"/war/{war_id}")
+            return error(403, "You can't accept your own surrender.")
+        if decision == "reject":
+            db.execute("DELETE FROM surrender_offers WHERE war_id=%s", (war_id,))
+            db.execute(
+                "INSERT INTO news (destination_id, message) VALUES (%s, %s)",
+                (loser_id, "🏳️ Your surrender offer was rejected. The war goes on."),
             )
-        if row[2]:
-            return error(400, "This war already ended")
-        winner_id = row[1] if cId == row[0] else row[0]
+            connection.commit()
+            return redirect(f"/war/{war_id}")
+        now = time.time()
+        if not war_rules.war_age_ok(row[3], now):
+            return error(403, war_rules.min_duration_error(row[3], now))
+        db.execute("DELETE FROM surrender_offers WHERE war_id=%s", (war_id,))
         from attack_scripts.war_orchestrator import conclude_war
 
-        # Same ending as morale reaching zero: the other side wins and takes
-        # the standard war spoils (nothing new is minted).
-        conclude_war(db, war_id, winner_id, cId, surrendered=True)
+        # The surrendering side loses: the acceptor takes the spoils
+        # (reduced for conditional, full + military cap for unconditional).
+        conclude_war(
+            db, war_id, cId, loser_id, surrendered=True, surrender_kind=kind
+        )
+        connection.commit()
     try:
         from database import invalidate_user_cache
 
         invalidate_user_cache(cId)
-        invalidate_user_cache(winner_id)
+        invalidate_user_cache(loser_id)
     except Exception:
         pass
-    flash("You surrendered. The war is over.")
+    flash("You accepted the surrender. The war is over.")
     return redirect("/wars")
 
 
@@ -625,6 +689,18 @@ def war_with_id(war_id):
         from app_core.game_ticks.war_expiry import format_war_auto_end
         auto_end_text = format_war_auto_end(start_date)
 
+        surrender_offer = None
+        try:
+            db.execute(
+                "SELECT surrendering_id, kind FROM surrender_offers WHERE war_id=%s",
+                (war_id,),
+            )
+            so = db.fetchone()
+            if so:
+                surrender_offer = {"mine": so[0] == cId, "kind": so[1]}
+        except Exception:
+            rollback_db_cursor(db)
+
         return render_template(
             template,
             attacker_flag=attacker_flag,
@@ -642,6 +718,7 @@ def war_with_id(war_id):
             spyCount=spyCount,
             successChance=successChance,
             peace_to_send=enemy_id,
+            surrender_offer=surrender_offer,
             repeat_attack=_repeat_attack_ctx(war_id),
             auto_end_text=auto_end_text,
         )
@@ -1757,19 +1834,29 @@ def declare_war():
                 return error(400, format_war_range_error(attacker_strength))
             # Truce (3 days) only locks out the aggressor of the last war, so a
             # defender can always hit back (hit-and-run fix, 2026-10-24).
+            # War rules overhaul: the defender also gets a (shorter) cooldown
+            # so it can't immediately strike back (wars/rules.py).
             db.execute(
                 (
-                    "SELECT peace_date, attacker FROM wars WHERE peace_date IS NOT NULL "
+                    "SELECT peace_date, attacker, defender, origin FROM wars "
+                    "WHERE peace_date IS NOT NULL "
                     "AND ((attacker=%s AND defender=%s) OR (attacker=%s AND defender=%s)) "
                     "ORDER BY peace_date DESC LIMIT 1"
                 ),
                 (attacker.id, defender.id, defender.id, attacker.id),
             )
             last_peace = db.fetchone()
-            if last_peace and last_peace[0] and last_peace[1] == attacker.id:
-                if (last_peace[0] + 259200) > time.time():
+            if last_peace and last_peace[0]:
+                lock = war_rules.post_war_lock_seconds(
+                    attacker.id, last_peace[1], last_peace[2], last_peace[3]
+                )
+                if (last_peace[0] + lock) > time.time():
                     return error(
-                        403, "You can't declare war because truce has not expired!"
+                        403,
+                        "You can't declare war because truce has not expired!"
+                        if lock == war_rules.TRUCE_SECONDS
+                        else "You can't attack again so soon after your last war "
+                        "with this nation ended.",
                     )
             start_dates = time.time()
             db.execute(
@@ -1913,7 +2000,33 @@ def join_war_as_ally(war_id):
             if db.fetchone():
                 return error(400, "You're already at war with this nation!")
 
-            # No truce check: allies may always join a defensive war.
+            # MDP joins respect war range (no unlimited range). This also
+            # covers the aggressor's allies countering a joined ally: that
+            # ally's join row has the aggressor as its defender, so they come
+            # through here and can only counter allies inside their range.
+            from wars.war_range import (
+                get_user_war_strength,
+                in_war_range,
+                format_war_range_error,
+            )
+
+            ally_strength = get_user_war_strength(db, ally_id)
+            if not in_war_range(
+                ally_strength, get_user_war_strength(db, original_attacker_id)
+            ):
+                return error(400, format_war_range_error(ally_strength))
+
+            # A nation in an active truce (any war it fought that ended in the
+            # last TRUCE_SECONDS) can't jump into another war as an ally.
+            db.execute(
+                "SELECT 1 FROM wars WHERE peace_date IS NOT NULL AND peace_date > %s "
+                "AND (attacker=%s OR defender=%s) LIMIT 1",
+                (time.time() - war_rules.TRUCE_SECONDS, ally_id, ally_id),
+            )
+            if db.fetchone():
+                return error(
+                    403, "You can't join a war while you're in an active truce."
+                )
 
             db.execute("SELECT username FROM users WHERE id=(%s)", (ally_id,))
             ally_row = db.fetchone()
@@ -1923,13 +2036,15 @@ def join_war_as_ally(war_id):
             aggressor_name = aggressor_row[0] if aggressor_row else f"Nation {original_attacker_id}"
 
             start_dates = time.time()
+            # origin='mdp_join': a counter-attack, not an offensive war.
             db.execute(
                 "INSERT INTO wars (attacker, defender, war_type, agressor_message, "
-                "start_date, last_visited) VALUES (%s, %s, %s, %s, %s, %s)",
+                "start_date, last_visited, origin, parent_war_id) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
                 (
                     ally_id, original_attacker_id, "Sustained",
                     f"{ally_name} joins the fight in defense of their ally!",
-                    start_dates, start_dates,
+                    start_dates, start_dates, war_rules.WAR_ORIGIN_MDP_JOIN, war_id,
                 ),
             )
             db.execute(
