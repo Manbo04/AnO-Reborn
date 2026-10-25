@@ -1,24 +1,24 @@
 {
   "deploy": {
-    "alerted_at": "2026-10-25T01:32:03Z",
-    "checked_at": "2026-10-25T01:32:03Z",
-    "healed_at": "2026-10-25T01:32:03Z",
-    "msg": "live game still runs 555b988a, but fe173964 was deployed 674 min ago and never went live",
+    "alerted_at": "2026-10-25T06:41:32Z",
+    "checked_at": "2026-10-25T06:41:32Z",
+    "healed_at": "2026-10-25T06:41:32Z",
+    "msg": "live game still runs 555b988a, but fe173964 was deployed 984 min ago and never went live",
     "ok": false,
     "since": "2026-10-24T21:07:08Z"
   },
   "pipeline": {
-    "checked_at": "2026-10-25T01:32:03Z",
+    "checked_at": "2026-10-25T06:41:32Z",
     "msg": "ok",
     "ok": true
   },
   "site": {
-    "checked_at": "2026-10-25T01:32:03Z",
+    "checked_at": "2026-10-25T06:41:32Z",
     "msg": "ok",
     "ok": true
   },
   "ticks": {
-    "checked_at": "2026-10-25T01:32:03Z",
+    "checked_at": "2026-10-25T06:41:32Z",
     "msg": "ok",
     "ok": true
   }
