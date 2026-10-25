@@ -57,8 +57,9 @@ def test_strike_damage_proportional():
     half = nk.strike_damage(prov, 0.5)
     assert 0 < full["deaths"] < prov["population"]
     assert half["deaths"] == pytest.approx(full["deaths"] / 2, rel=0.01)
-    assert full["happiness_lost"] == nk.HAPPINESS_HIT
-    assert half["happiness_lost"] == nk.HAPPINESS_HIT // 2
+    hit = nk.HAPPINESS_HIT * nk.RADIATION_DAMAGE_MULTIPLIER
+    assert full["happiness_lost"] == round(hit)
+    assert half["happiness_lost"] == round(hit / 2)
 
 
 # --- DB flow ----------------------------------------------------------------
@@ -183,9 +184,10 @@ def test_full_launch_flow(client):
             # the whole target nation (wars/aftermath.py, 2026-10-04 rebalance).
             from wars import aftermath
             survivors = 10_000_000 - expected["deaths"]
-            assert pop == survivors - int(survivors * aftermath.NUKE_FALLOUT_DEATHS)
+            fallout = aftermath.NUKE_FALLOUT_DEATHS * nk.RADIATION_DAMAGE_MULTIPLIER
+            assert pop == survivors - int(survivors * fallout)
             assert cities == 20 - expected["cities_destroyed"]
-            assert happy == 80 - nk.HAPPINESS_HIT
+            assert happy == 80 - round(nk.HAPPINESS_HIT * nk.RADIATION_DAMAGE_MULTIPLIER)
             assert working < 5_000_000
             db.execute(
                 "SELECT ub.quantity FROM user_buildings ub JOIN building_dictionary bd "
@@ -215,6 +217,9 @@ def test_full_launch_flow(client):
             assert after < 1_000_000
             plan = nk.plan_strike(db, a, war_id)
             assert plan["blocked"]
+            # ... and A has used its one nuke volley for this war anyway
+            assert nk.volleys_used(db, war_id, a) == 1
+            assert "already launched" in plan["blocked"]
 
             # repeat decay: the struck province now previews at 50%
             _plan_b = nk.plan_strike(db, b, war_id)

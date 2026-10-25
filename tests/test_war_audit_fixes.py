@@ -33,8 +33,9 @@ def _mk_user(db, tag, gold=0):
     return uid
 
 
-def _mk_war(db, a, d):
-    now = time.time()
+def _mk_war(db, a, d, age=2 * 24 * 3600):
+    # Old enough to be ended by peace/surrender (WAR_MIN_DURATION_SECONDS).
+    now = time.time() - age
     db.execute(
         "INSERT INTO wars (attacker, defender, war_type, agressor_message, "
         "start_date, last_visited) VALUES (%s, %s, 'Sustained', 'x', %s, %s) "
@@ -71,6 +72,12 @@ def world():
     with get_db_connection() as conn:
         db = conn.cursor()
         users = [ids[k] for k in ("a", "b", "c", "d")]
+        db.execute(
+            "DELETE FROM surrender_offers WHERE war_id IN (SELECT id FROM wars "
+            "WHERE attacker = ANY(%s) OR defender = ANY(%s))",
+            (users, users),
+        )
+        db.execute("DELETE FROM war_penalties WHERE user_id = ANY(%s)", (users,))
         db.execute(
             "DELETE FROM wars WHERE attacker = ANY(%s) OR defender = ANY(%s)",
             (users, users),
@@ -310,7 +317,7 @@ def test_empty_attacker_never_wins_even_against_an_empty_domain():
 # ---------------------------------------------------------------------------
 
 
-def test_surrender_ends_war_for_the_other_side_once(world):
+def test_surrender_needs_the_other_side_to_accept(world):
     client = _client_as(world["b"])
     assert client.post(f"/war/{world['war_ab']}/surrender", data={}).status_code == 400
     assert (
@@ -319,7 +326,22 @@ def test_surrender_ends_war_for_the_other_side_once(world):
         .status_code
         == 403
     )
-    resp = client.post(f"/war/{world['war_ab']}/surrender", data={"confirm": "yes"})
+    resp = client.post(
+        f"/war/{world['war_ab']}/surrender",
+        data={"confirm": "yes", "kind": "conditional"},
+    )
+    assert resp.status_code in (302, 303)
+    # only an offer: the war is still on, and B can't accept its own offer
+    assert _q("SELECT peace_date FROM wars WHERE id=%s", (world["war_ab"],))[0][0] is None
+    assert (
+        client.post(
+            f"/war/{world['war_ab']}/surrender/respond", data={"decision": "accept"}
+        ).status_code
+        == 403
+    )
+    resp = _client_as(world["a"]).post(
+        f"/war/{world['war_ab']}/surrender/respond", data={"decision": "accept"}
+    )
     assert resp.status_code in (302, 303)
     assert _q("SELECT peace_date FROM wars WHERE id=%s", (world["war_ab"],))[0][0] is not None
     assert any(
@@ -330,11 +352,66 @@ def test_surrender_ends_war_for_the_other_side_once(world):
         "You surrendered" in r[0]
         for r in _q("SELECT message FROM news WHERE destination_id=%s", (world["b"],))
     )
+    # conditional: no military cap penalty
+    assert not _q("SELECT 1 FROM war_penalties WHERE user_id=%s", (world["b"],))
     # second submit: already over
     assert (
         client.post(f"/war/{world['war_ab']}/surrender", data={"confirm": "yes"}).status_code
         == 400
     )
+
+
+def test_unconditional_surrender_caps_the_loser_military(world):
+    from app_core.military.manpower import get_active_manpower_penalties
+    from wars import rules
+
+    _client_as(world["b"]).post(
+        f"/war/{world['war_ab']}/surrender",
+        data={"confirm": "yes", "kind": "unconditional"},
+    )
+    resp = _client_as(world["a"]).post(
+        f"/war/{world['war_ab']}/surrender/respond", data={"decision": "accept"}
+    )
+    assert resp.status_code in (302, 303)
+    with get_db_connection() as conn:
+        factors = get_active_manpower_penalties(conn.cursor(), world["b"])
+    assert factors == [rules.UNCONDITIONAL_SURRENDER_MANPOWER_FACTOR]
+    _q("DELETE FROM war_penalties WHERE user_id=%s", (world["b"],))
+
+
+def test_rejected_surrender_keeps_the_war_going(world):
+    _client_as(world["b"]).post(
+        f"/war/{world['war_ab']}/surrender", data={"confirm": "yes"}
+    )
+    resp = _client_as(world["a"]).post(
+        f"/war/{world['war_ab']}/surrender/respond", data={"decision": "reject"}
+    )
+    assert resp.status_code in (302, 303)
+    assert _q("SELECT peace_date FROM wars WHERE id=%s", (world["war_ab"],))[0][0] is None
+    assert not _q("SELECT 1 FROM surrender_offers WHERE war_id=%s", (world["war_ab"],))
+
+
+def test_fresh_war_cannot_end_by_surrender_or_peace(world):
+    _q("UPDATE wars SET start_date=%s WHERE id=%s", (time.time() - 600, world["war_ab"]))
+    resp = _client_as(world["b"]).post(
+        f"/war/{world['war_ab']}/surrender", data={"confirm": "yes"}
+    )
+    assert resp.status_code == 403
+    with get_db_connection() as conn:
+        db = conn.cursor()
+        db.execute(
+            "INSERT INTO peace (author, demanded_resources, demanded_amount) "
+            "VALUES (%s, '', '') RETURNING id",
+            (world["a"],),
+        )
+        pid = db.fetchone()[0]
+        db.execute("UPDATE wars SET peace_offer_id=%s WHERE id=%s", (pid, world["war_ab"]))
+        conn.commit()
+    resp = _client_as(world["b"]).post(
+        "/peace_offers", data={"peace_offer": str(pid), "decision": "1"}
+    )
+    assert resp.status_code == 403
+    assert _q("SELECT peace_date FROM wars WHERE id=%s", (world["war_ab"],))[0][0] is None
 
 
 def test_war_pages_offer_surrender_and_no_dead_defense_button():
@@ -398,10 +475,56 @@ def test_alliance_lets_a_partner_join_once_only(world):
     second = client.post(f"/wars/{world['war_ab']}/join_ally")
     assert second.status_code == 400
     rows = _q(
-        "SELECT count(*) FROM wars WHERE attacker=%s AND defender=%s AND peace_date IS NULL",
+        "SELECT count(*), max(origin), max(parent_war_id) FROM wars "
+        "WHERE attacker=%s AND defender=%s AND peace_date IS NULL",
         (world["c"], world["a"]),
     )
     assert rows[0][0] == 1
+    assert rows[0][1] == "mdp_join" and rows[0][2] == world["war_ab"]
+
+
+def test_ally_in_a_truce_cannot_join(world):
+    # C/D's war just ended -> C is in a truce and can't join A->B.
+    _q("UPDATE wars SET peace_date=%s WHERE id=%s", (time.time() - 60, world["war_cd"]))
+    with get_db_connection() as conn:
+        db = conn.cursor()
+        _treaty(db, world["c"], world["b"], "mutual_defense")
+        conn.commit()
+    resp = _client_as(world["c"]).post(f"/wars/{world['war_ab']}/join_ally")
+    assert resp.status_code == 403
+
+
+def test_ally_cannot_join_a_finished_war(world):
+    _q("UPDATE wars SET peace_date=%s WHERE id=%s", (time.time(), world["war_ab"]))
+    with get_db_connection() as conn:
+        db = conn.cursor()
+        _treaty(db, world["c"], world["b"], "mutual_defense")
+        conn.commit()
+    resp = _client_as(world["c"]).post(f"/wars/{world['war_ab']}/join_ally")
+    assert resp.status_code == 404
+
+
+def test_ally_join_respects_war_range(world):
+    # C is far stronger than the aggressor A -> outside war range.
+    with get_db_connection() as conn:
+        db = conn.cursor()
+        _treaty(db, world["c"], world["b"], "mutual_defense")
+        for uid, pop in ((world["c"], 10_000_000), (world["a"], 1_000_000)):
+            db.execute(
+                "INSERT INTO provinces (userid, provincename, population) "
+                "VALUES (%s, 'rangetest', %s)",
+                (uid, pop),
+            )
+        conn.commit()
+    try:
+        resp = _client_as(world["c"]).post(f"/wars/{world['war_ab']}/join_ally")
+        assert resp.status_code == 400
+        assert b"war range" in resp.data
+    finally:
+        _q(
+            "DELETE FROM provinces WHERE provincename='rangetest' AND userid = ANY(%s)",
+            ([world["a"], world["c"]],),
+        )
 
 
 def test_alliance_blocks_declaring_war_like_a_nap(world):
