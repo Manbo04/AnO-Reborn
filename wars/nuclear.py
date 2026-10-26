@@ -47,8 +47,8 @@ BLAST_AREA_KM2 = 1413.0  # ~21.2 km radius
 LAND_KM2 = 50.0  # nominal area of one land slot
 CITY_KM2 = 25.0  # nominal urban area of one city
 URBAN_DENSITY_RATIO = 20.0  # people per km2 in cities vs open land
-POP_LETHALITY = 0.6  # share of people inside the blast who die
-INFRA_LETHALITY = 0.7  # share of buildings/cities inside the blast destroyed
+POP_LETHALITY = 0.35  # share of people inside the blast who die
+INFRA_LETHALITY = 0.45  # share of buildings/cities inside the blast destroyed
 # Radiation's short-term effects (struck-province happiness and nation-wide
 # fallout deaths) are scaled by wars.rules.RADIATION_DAMAGE_MULTIPLIER.
 HAPPINESS_HIT = 60  # base happiness points lost in the struck province
@@ -62,6 +62,29 @@ FIRST_STRIKE_COST = 0.50
 RETALIATION_COST = 0.25
 MIN_LAUNCH_INFLUENCE = 1_000_000
 RECOVERY_DAYS = NUCLEAR_PENALTY_DECAY_DAYS
+
+# --- Per-target cooldown (balance prototype) -------------------------------
+# A nation can't be nuked again within TARGET_COOLDOWN_DAYS of the last strike
+# that landed on it, by anyone, in any war. Closes the "new war after the
+# 3-day truce, nuke again" loop. Uses the existing nuclear_strikes log
+# (intercepted launches are not logged, so they don't start the cooldown).
+TARGET_COOLDOWN_DAYS = 7
+
+
+def target_cooldown_until(db, target_id):
+    """When the target's nuke cooldown ends (aware datetime), or None."""
+    db.execute(
+        "SELECT MAX(launched_at) FROM nuclear_strikes "
+        "WHERE target_id = %s AND launched_at > now() - make_interval(days => %s)",
+        (target_id, TARGET_COOLDOWN_DAYS),
+    )
+    row = db.fetchone()
+    last = row[0] if row else None
+    if not last:
+        return None
+    if last.tzinfo is None:
+        last = last.replace(tzinfo=timezone.utc)
+    return (last + timedelta(days=TARGET_COOLDOWN_DAYS)).astimezone(timezone.utc)
 
 
 def blast_profile(land: float, cities: float) -> dict:
@@ -276,7 +299,13 @@ def plan_strike(db, attacker_id, war_id, province_id=None) -> dict:
     nukes = _nuke_count(db, attacker_id)
     provinces = enemy_provinces(db, enemy_id)
     blocked = None
-    if volleys_used(db, war_id, attacker_id) >= MAX_NUKE_VOLLEYS_PER_WAR:
+    cooldown_until = target_cooldown_until(db, enemy_id)
+    if cooldown_until is not None:
+        blocked = (
+            f"{names.get(enemy_id, 'That nation')} was nuked recently. Another strike "
+            f"is possible after {cooldown_until:%Y-%m-%d %H:%M} UTC."
+        )
+    elif volleys_used(db, war_id, attacker_id) >= MAX_NUKE_VOLLEYS_PER_WAR:
         blocked = "You have already launched your nuclear volley in this war."
     elif nukes <= 0:
         blocked = "You don't have any nukes."

@@ -15,6 +15,7 @@ AP_START = 6
 AP_REGEN_PER_HOUR = 1
 
 ENTRENCH_MAX = 3
+ENTRENCH_DEFENSE_PER_LEVEL = 0.05  # was 0.10
 INTEL_MAX = 100
 
 # Action costs: (branch, cost)
@@ -61,14 +62,14 @@ def can_spend_ap(current_ap: int, cost: int) -> bool:
 def entrenchment_defense_multiplier(level: int) -> float:
     """Calculate defensive strength multiplier for ground units based on entrenchment level.
 
-    Each level gives +10% to GROUND units defensive strength (max level 3 -> +30%).
+    Each level gives +5% to GROUND units defensive strength (max level 3 -> +15%).
     """
     try:
         lvl = int(level or 0)
     except (TypeError, ValueError):
         lvl = 0
     clamped_lvl = max(0, min(ENTRENCH_MAX, lvl))
-    return 1.0 + 0.10 * clamped_lvl
+    return 1.0 + ENTRENCH_DEFENSE_PER_LEVEL * clamped_lvl
 
 
 def intel_attack_multiplier(intel: int) -> float:

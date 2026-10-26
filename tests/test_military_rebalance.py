@@ -93,7 +93,10 @@ def test_fighter_helicopter_combat_balance():
     fighter = FighterUnit(5)
     fighter_effects = fighter.attack("apaches")
     assert fighter_effects[0] == 500
-    assert fighter_effects[1] == 15  # +3 bonus per unit -> 15
+    # Balance prototype: counters are a fraction of the stack's own presence
+    from units import COUNTERS_FIGHTERS_APACHES, counter_bonus
+    assert fighter_effects[1] == pytest.approx(counter_bonus("fighters", 5, COUNTERS_FIGHTERS_APACHES))
+    assert fighter_effects[1] > 0
 
     # Apache vs Fighter and Bomber (should be 0 bonus)
     apache = ApacheUnit(5)
@@ -105,4 +108,4 @@ def test_fighter_helicopter_combat_balance():
 
     # Apache vs Land (should still have bonus)
     apache_vs_tank = apache.attack("tanks")
-    assert apache_vs_tank[1] == 5
+    assert apache_vs_tank[1] == pytest.approx(counter_bonus("apaches", 5, 0.15))

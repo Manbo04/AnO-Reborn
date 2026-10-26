@@ -791,12 +791,10 @@ class Military(Nation):
         # attacker still wins the battle; it just isn't free anymore.
         # IMPORTANT: Here you can change the values for the fight chances, bonuses and even can controll casualties (in this whole funciton)
         # If you want to change the bonuses given by a particular unit then go to `units.py` and you can find those in the classes
-        attacker_roll = random.uniform(1, 5)
         attacker_chance = 0
         attacker_unit_amount_bonuses = 0
         attacker_bonus = 0
 
-        defender_roll = random.uniform(1, 5)
         defender_chance = 0
         defender_unit_amount_bonuses = 0
         defender_bonus = 0
@@ -815,7 +813,7 @@ class Military(Nation):
             dealt_infra_damage,
         ) = compute_engagement_metrics(attacker, defender)
 
-        # Apply entrenchment (+10% per level to ground defense) and intel (+intel/10 % to attack strength)
+        # Apply entrenchment (+5% per level to ground defense) and intel (+intel/10 % to attack strength)
         is_ground = domain == "ground" or (
             domain is None
             and any(u in Military.UNIT_DOMAINS["ground"] for u in getattr(attacker, "selected_units_list", []))
@@ -837,8 +835,12 @@ class Military(Nation):
 
         # used to be: attacker_chance += attacker_roll+attacker_unit_amount_bonuses+attacker_bonus
         #             defender_chance += defender_roll+defender_unit_amount_bonuses+defender_bonus
-        attacker_chance += attacker_roll + attacker_unit_amount_bonuses + attacker_bonus
-        defender_chance += defender_roll + defender_unit_amount_bonuses + defender_bonus
+        # Balance prototype: multiplicative roll on each side's score (see
+        # combat_helpers.battle_roll) instead of a flat +uniform(1, 5).
+        from attack_scripts.combat_helpers import battle_roll
+
+        attacker_chance += battle_roll(attacker_unit_amount_bonuses + attacker_bonus)
+        defender_chance += battle_roll(defender_unit_amount_bonuses + defender_bonus)
 
         # An empty side can never win. See zero_out_empty_side().
         from attack_scripts.combat_helpers import zero_out_empty_side

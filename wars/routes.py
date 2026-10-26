@@ -1504,7 +1504,7 @@ def warResult():
             if war_type:
                 attack_effects = list(attack_effects)
                 if war_type == "Raze":
-                    attack_effects[0] = attack_effects[0] * 10
+                    attack_effects[0] = attack_effects[0] * 4  # was 10; cap is now 10%
                 elif war_type == "Loot":
                     attack_effects[0] = attack_effects[0] * 0.2
                     # Treasury loot is a ground raid; air and naval wins cannot seize it.
@@ -1576,7 +1576,7 @@ def warResult():
                         random.randint(0, len(province_id_fetch) - 1)
                     ][0]
                     province_buildings = Nation.get_province_buildings(random_province)
-                    destroy_frac = {"Raze": 0.25, "Sustained": 0.08, "Loot": 0.03}.get(
+                    destroy_frac = {"Raze": 0.10, "Sustained": 0.08, "Loot": 0.03}.get(
                         war_type, 0.08
                     )
                     infra_damage_effects = Military.infrastructure_damage(

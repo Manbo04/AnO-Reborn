@@ -34,16 +34,45 @@ def compute_user_army_strength(user_id: int) -> float:
         return float(row[0] or 0)
 
 
+# --- Balance prototype (2026-10) -------------------------------------------
+# Presence is value-weighted: each unit contributes UNIT_POWER[unit] / 150, so
+# equal gold buys roughly equal presence (UNIT_POWER ~= price / 250). Before
+# this, every unit counted 1/150 regardless of type, so soldiers dominated.
+PRESENCE_DIVISOR = 150.0
+UNIT_POWER = {
+    "soldiers": 1,
+    "tanks": 28,
+    "artillery": 56,
+    "bombers": 88,
+    "fighters": 115,
+    "apaches": 112,
+    "destroyers": 104,
+    "cruisers": 192,
+    "submarines": 160,
+    "aircraft_carriers": 880,
+}
+
+# Battle roll: each side's score is multiplied by uniform(ROLL_LOW, ROLL_HIGH).
+# Replaces the old flat +uniform(1, 5), which was negligible next to army size
+# so the bigger army won every time.
+ROLL_LOW = 0.6
+ROLL_HIGH = 1.4
+
+
+def battle_roll(score: float, rng: object = None) -> float:
+    import random as _random
+
+    return float(score) * (rng or _random).uniform(ROLL_LOW, ROLL_HIGH)
+
+
 def compute_unit_amount_bonus(
     selected_units_list: list, selected_units: Dict[str, int]
 ) -> float:
-    """Compute the unit-amount-derived bonus used in combat loops.
-
-    Mirrors the original logic in `Nations.fight`: sum(unit_count/150)
-    """
+    """Value-weighted presence: sum(unit_count * UNIT_POWER[unit] / 150)."""
     total = 0.0
     for unit in selected_units_list:
-        total += (selected_units.get(unit, 0) or 0) / 150.0
+        count = selected_units.get(unit, 0) or 0
+        total += count * UNIT_POWER.get(unit, 1) / PRESENCE_DIVISOR
     return total
 
 
@@ -120,7 +149,7 @@ def apply_combat_modifiers(
     attacker_intel: int = 0,
     is_ground: bool = True,
 ) -> Tuple[float, float, float, float]:
-    """Apply entrenchment (+10% per level to ground defense) and intel (+intel/10 % to attack strength)."""
+    """Apply entrenchment (+5% per level to ground defense) and intel (+intel/10 % to attack strength)."""
     from wars.action_points import entrenchment_defense_multiplier, intel_attack_multiplier
 
     if is_ground and entrenchment_level:
@@ -210,9 +239,30 @@ def compute_morale_delta(
     computed_morale_delta = int(
         round(base_loser_value * advantage_factor * win_type * 0.1)
     )
-    computed_morale_delta = max(1, computed_morale_delta)
-    computed_morale_delta = min(200, computed_morale_delta)
+    floor = morale_floor(win_type, loser_units)
+    computed_morale_delta = max(floor, computed_morale_delta)
+    computed_morale_delta = min(MORALE_DELTA_CAP, computed_morale_delta)
     return computed_morale_delta
+
+
+# Morale floor per won battle, by how decisive the win was (win_type is the
+# winner/loser score ratio). Wars between equals should end in ~5-15 wins.
+MORALE_FLOOR_CLOSE = 6  # win_type < 1.25
+MORALE_FLOOR_CLEAR = 12  # 1.25 <= win_type < 1.75
+MORALE_FLOOR_CRUSHING = 20  # win_type >= 1.75
+MORALE_FLOOR_EMPTY = 20  # loser fielded nothing
+MORALE_DELTA_CAP = 25
+
+
+def morale_floor(win_type: float, loser_units: dict = None) -> int:
+    if not any((v or 0) > 0 for v in (loser_units or {}).values()):
+        return MORALE_FLOOR_EMPTY
+    wt = float(win_type or 0)
+    if wt >= 1.75:
+        return MORALE_FLOOR_CRUSHING
+    if wt >= 1.25:
+        return MORALE_FLOOR_CLEAR
+    return MORALE_FLOOR_CLOSE
 
 
 def zero_out_empty_side(
@@ -270,8 +320,8 @@ def resolve_battle_outcome(
 # Casualty tuning (share of the committed force of each unit type)
 WINNER_LOSS_PER_POINT = 0.04
 WINNER_MAX_LOSS_FRAC = 0.30
-LOSER_LOSS_PER_POINT = 0.05
-LOSER_MAX_LOSS_FRAC = 0.50
+LOSER_LOSS_PER_POINT = 0.04
+LOSER_MAX_LOSS_FRAC = 0.35
 
 
 def compute_unit_casualties(

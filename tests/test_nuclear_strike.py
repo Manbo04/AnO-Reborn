@@ -219,7 +219,10 @@ def test_full_launch_flow(client):
             assert plan["blocked"]
             # ... and A has used its one nuke volley for this war anyway
             assert nk.volleys_used(db, war_id, a) == 1
-            assert "already launched" in plan["blocked"]
+            # B was just struck, so the 7-day per-target cooldown is the
+            # first reason reported (checked before the per-war volley cap).
+            assert "nuked recently" in plan["blocked"]
+            assert nk.target_cooldown_until(db, b) is not None
 
             # repeat decay: the struck province now previews at 50%
             _plan_b = nk.plan_strike(db, b, war_id)
