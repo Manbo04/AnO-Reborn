@@ -65,6 +65,20 @@ def battle_roll(score: float, rng: object = None) -> float:
     return float(score) * (rng or _random).uniform(ROLL_LOW, ROLL_HIGH)
 
 
+# Artillery shells dug-in positions: an all-artillery attack ignores this share
+# of the defender's entrenchment bonus (scaled by artillery's share of the
+# attacker's presence).
+ARTILLERY_ENTRENCH_PIERCE = 0.6
+
+
+def artillery_entrenchment_pierce(selected_units_list: list, selected_units: Dict[str, int]) -> float:
+    total = compute_unit_amount_bonus(selected_units_list, selected_units)
+    if total <= 0 or "artillery" not in (selected_units_list or []):
+        return 0.0
+    arty = compute_unit_amount_bonus(["artillery"], selected_units)
+    return ARTILLERY_ENTRENCH_PIERCE * arty / total
+
+
 def compute_unit_amount_bonus(
     selected_units_list: list, selected_units: Dict[str, int]
 ) -> float:
@@ -148,12 +162,18 @@ def apply_combat_modifiers(
     entrenchment_level: int = 0,
     attacker_intel: int = 0,
     is_ground: bool = True,
+    entrenchment_pierce: float = 0.0,
 ) -> Tuple[float, float, float, float]:
-    """Apply entrenchment (+5% per level to ground defense) and intel (+intel/10 % to attack strength)."""
+    """Apply entrenchment (+5% per level to ground defense) and intel (+intel/10 % to attack strength).
+
+    entrenchment_pierce (0..1) is the share of the entrenchment bonus the
+    attacker ignores (see artillery_entrenchment_pierce)."""
     from wars.action_points import entrenchment_defense_multiplier, intel_attack_multiplier
 
     if is_ground and entrenchment_level:
         e_mult = entrenchment_defense_multiplier(entrenchment_level)
+        pierce = max(0.0, min(1.0, float(entrenchment_pierce or 0)))
+        e_mult = 1.0 + (e_mult - 1.0) * (1.0 - pierce)
         defender_unit_amount_bonuses *= e_mult
         defender_bonus *= e_mult
 

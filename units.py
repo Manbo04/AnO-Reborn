@@ -43,10 +43,14 @@ def get_unusable_units(user_id: int) -> set:
 # when the countered type is the enemy's whole force (calculate_bonuses scales
 # by the target's share and divides by 100). A 0.25 counter therefore adds
 # ~25% to that stack's score; counters tip fights, they don't decide them.
-COUNTERS_SOLDIERS_ARTILLERY = 0.25
+# Ground triangle (player feedback 2026-10-26): artillery > soldiers,
+# tanks > artillery (overrun), soldiers > tanks (anti-tank infantry).
+# Artillery also gets a small airburst bonus vs tanks.
+COUNTERS_ARTILLERY_SOLDIERS = 0.25
+COUNTERS_TANKS_ARTILLERY = 0.25
+COUNTERS_SOLDIERS_TANKS = 0.25
+COUNTERS_ARTILLERY_TANKS_AIRBURST = 0.03
 COUNTERS_SOLDIERS_APACHES = 0.20
-COUNTERS_TANKS_SOLDIERS = 0.25
-COUNTERS_ARTILLERY_TANKS = 0.25
 COUNTERS_FIGHTERS_BOMBERS = 0.25
 COUNTERS_FIGHTERS_APACHES = 0.15
 COUNTERS_BOMBERS_APACHES = 0.10
@@ -107,9 +111,8 @@ class SoldierUnit(BlueprintUnit):
         self.amount = amount
 
     def attack(self, defending_units: str) -> list:
-        if defending_units == "artillery":
-            # self.damage += 55
-            self.bonus += counter_bonus(self.unit_type, self.amount, COUNTERS_SOLDIERS_ARTILLERY)
+        if defending_units == "tanks":
+            self.bonus += counter_bonus(self.unit_type, self.amount, COUNTERS_SOLDIERS_TANKS)
         if defending_units == "apaches":
             self.bonus += counter_bonus(self.unit_type, self.amount, COUNTERS_SOLDIERS_APACHES)
         return [self.damage * self.amount, self.bonus]
@@ -130,9 +133,9 @@ class TankUnit(BlueprintUnit):
         # One tank beats 4 soldiers. If one tank beat only 4 soldiers then
         # soldiers would counter tanks (1 tank costs ~50 soldiers). One tank is
         # therefore modeled as 4x more effective vs soldiers.
-        if defending_units == "soldiers":
+        if defending_units == "artillery":
             self.damage += 2
-            self.bonus += counter_bonus(self.unit_type, self.amount, COUNTERS_TANKS_SOLDIERS)
+            self.bonus += counter_bonus(self.unit_type, self.amount, COUNTERS_TANKS_ARTILLERY)
 
         return [self.damage * self.amount, self.bonus]
 
@@ -150,8 +153,10 @@ class ArtilleryUnit(BlueprintUnit):
 
     def attack(self, defending_units):
         # One artillery beats 3 tanks
-        if defending_units == "tanks":
-            self.bonus += counter_bonus(self.unit_type, self.amount, COUNTERS_ARTILLERY_TANKS)
+        if defending_units == "soldiers":
+            self.bonus += counter_bonus(self.unit_type, self.amount, COUNTERS_ARTILLERY_SOLDIERS)
+        elif defending_units == "tanks":
+            self.bonus += counter_bonus(self.unit_type, self.amount, COUNTERS_ARTILLERY_TANKS_AIRBURST)
         return [self.damage * self.amount, self.bonus]
 
     def buy():

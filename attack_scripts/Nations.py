@@ -803,7 +803,7 @@ class Military(Nation):
 
         # Delegate inner engagement calculations to a helper so this file
         # can be progressively refactored into smaller, testable units.
-        from attack_scripts.combat_helpers import compute_engagement_metrics, apply_combat_modifiers
+        from attack_scripts.combat_helpers import compute_engagement_metrics, apply_combat_modifiers, artillery_entrenchment_pierce
 
         (
             attacker_unit_amount_bonuses,
@@ -831,6 +831,10 @@ class Military(Nation):
             entrenchment_level=entrenchment_level,
             attacker_intel=attacker_intel,
             is_ground=is_ground,
+            entrenchment_pierce=artillery_entrenchment_pierce(
+                [u for u in attacker.selected_units_list if u not in attacker.unusable_units],
+                attacker.selected_units,
+            ),
         )
 
         # used to be: attacker_chance += attacker_roll+attacker_unit_amount_bonuses+attacker_bonus

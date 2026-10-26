@@ -81,6 +81,26 @@ def test_counter_bonus_is_a_minority_of_presence():
             super().__init__(0, dict(d), selected_units_list=list(d))
             s._unusable_units_cache = set()
 
-    tanks, soldiers = S({"tanks": 1428}), S({"soldiers": 40000})
-    aa, da, ab, db, _ = C.compute_engagement_metrics(tanks, soldiers)
+    arty, soldiers = S({"artillery": 714}), S({"soldiers": 40000})
+    aa, da, ab, db, _ = C.compute_engagement_metrics(arty, soldiers)
     assert 0.10 <= ab / aa <= 0.30
+
+
+def test_ground_triangle_directions():
+    import units as U
+
+    assert U.SoldierUnit(10).attack("tanks")[1] > 0
+    assert U.TankUnit(10).attack("artillery")[1] > 0
+    assert U.ArtilleryUnit(10).attack("soldiers")[1] > 0
+    # airburst vs tanks is small next to the main counter
+    assert U.ArtilleryUnit(10).attack("tanks")[1] < U.ArtilleryUnit(10).attack("soldiers")[1] / 4
+    assert U.TankUnit(10).attack("soldiers")[1] == 0
+    assert U.SoldierUnit(10).attack("artillery")[1] == 0
+
+
+def test_artillery_pierces_entrenchment():
+    assert C.artillery_entrenchment_pierce(["soldiers"], {"soldiers": 100}) == 0
+    assert C.artillery_entrenchment_pierce(["artillery"], {"artillery": 10}) == pytest.approx(C.ARTILLERY_ENTRENCH_PIERCE)
+    _, _, d_full, _ = C.apply_combat_modifiers(100, 0, 100, 0, entrenchment_level=3)
+    _, _, d_pierced, _ = C.apply_combat_modifiers(100, 0, 100, 0, entrenchment_level=3, entrenchment_pierce=0.6)
+    assert d_full == pytest.approx(115.0) and d_pierced == pytest.approx(106.0)
