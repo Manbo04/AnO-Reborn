@@ -1,5 +1,8 @@
 """Balance prototype phase 4: narrower roll and precision strikes."""
+
 import random
+
+import pytest
 
 from attack_scripts import combat_helpers as ch
 
@@ -25,55 +28,93 @@ def test_cover_and_diminishing_reduce_effect():
     r = random.Random(2)
     base = ch.compute_precision_strike("bombers", 500, "tanks", 10000, 0, rng=r)
     covered = ch.compute_precision_strike("bombers", 500, "tanks", 10000, 10**6, rng=r)
-    repeat = ch.compute_precision_strike("bombers", 500, "tanks", 10000, 0, prior_hits=2, rng=r)
+    repeat = ch.compute_precision_strike(
+        "bombers", 500, "tanks", 10000, 0, prior_hits=2, rng=r
+    )
     assert base["lost"] == 0 and covered["lost"] > 0
     assert covered["killed"] < base["killed"] * 0.5
     assert repeat["killed"] < base["killed"] * 0.4
 
 
 def test_small_strike_on_huge_army_is_small():
-    res = ch.compute_precision_strike("cruisers", 1, "soldiers", 10**6, 0, rng=random.Random(0))
+    res = ch.compute_precision_strike(
+        "cruisers", 1, "soldiers", 10**6, 0, rng=random.Random(0)
+    )
     assert res["killed"] < 10**6 * 0.001
 
 
 def test_suppression_penalty():
     units = {"soldiers": 1000, "tanks": 36}  # roughly equal power
     assert ch.suppression_penalty(units, {}) == 0.0
+    # A requested 50% is capped at SUPPRESS_MAX, and tanks are half the power,
+    # so the battle loses about 10% — the type is still most of its strength.
     p = ch.suppression_penalty(units, {"tanks": 0.5})
-    assert 0.2 < p < 0.3
+    assert 0.08 < p < 0.13
     assert ch.suppression_penalty(units, {"tanks": 9, "soldiers": 9}) <= ch.SUPPRESS_MAX
+    assert ch.suppression_penalty({"tanks": 100}, {"tanks": 1}) == ch.SUPPRESS_MAX
     assert ch.suppression_penalty(units, {"cruisers": 0.5}) == 0.0
+
+
+def test_one_day_of_strikes_removes_a_modest_share():
+    assert ch.SUPPRESS_MAX <= 0.20
+    assert ch.max_daily_strike_kill_fraction() == pytest.approx(0.105)
+    # Lifetime of perfect strikes, never stopping, is a geometric 12%.
+    assert ch.STRIKE_MAX_FRAC / (1 - ch.STRIKE_DIMINISH) == pytest.approx(0.12)
+    for seed in range(40):
+        rng = random.Random(seed)
+        total = 0.0
+        for prior in range(ch.STRIKE_DAILY_LIMIT):
+            res = ch.compute_precision_strike(
+                "cruisers", 10**9, "tanks", 10000, 0, prior_hits=prior, rng=rng
+            )
+            total += res["frac"]
+            assert res["killed"] <= int(10000 * ch.STRIKE_MAX_FRAC)
+            assert res["suppress"] <= ch.SUPPRESS_MAX
+        assert total <= ch.max_daily_strike_kill_fraction() + 1e-9
 
 
 def test_precision_ap_costs():
     from wars.action_points import AP_COSTS
+
     assert AP_COSTS["precision_strike_cruisers"] == ("naval", ch.PRECISION_AP_COST)
     assert AP_COSTS["precision_strike_bombers"] == ("air", ch.PRECISION_AP_COST)
 
 
 class FakeDB:
     def __init__(self, rows):
-        self.rows = rows; self.q = []
+        self.rows = rows
+        self.q = []
+
     def execute(self, sql, params=None):
-        self.q.append(sql); self._last = sql
+        self.q.append(sql)
+        self._last = sql
+
     def fetchone(self):
         if "to_regclass" in self._last:
             return (self.rows.get("table"),)
         if "SELECT attacker, defender FROM wars" in self._last:
             return self.rows.get("war")
         return None
+
     def fetchall(self):
         if "FROM precision_strikes" in self._last:
-            return [(t,) for t in self.rows.get("recent", [])]
+            return [(t, True) for t in self.rows.get("recent", [])]
         return []
 
 
 def test_flow_refuses_without_table_and_over_limit(monkeypatch):
     from wars import precision as P
+
     ok, msg, _ = P.precision_strike(FakeDB({"table": None}), 1, 5, "cruisers", "tanks")
     assert not ok and "not available" in msg
     monkeypatch.setattr(P, "get_combatant_role", lambda db, w, u: "attacker")
-    db = FakeDB({"table": "precision_strikes", "war": (5, 9), "recent": ["tanks"] * ch.STRIKE_DAILY_LIMIT})
+    db = FakeDB(
+        {
+            "table": "precision_strikes",
+            "war": (5, 9),
+            "recent": ["tanks"] * ch.STRIKE_DAILY_LIMIT,
+        }
+    )
     ok, msg, _ = P.precision_strike(db, 1, 5, "cruisers", "tanks")
     assert not ok and "at most" in msg
     ok, msg, _ = P.precision_strike(db, 1, 5, "destroyers", "tanks")

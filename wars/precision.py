@@ -8,12 +8,15 @@ attack_scripts.combat_helpers.compute_precision_strike; this module is the DB
 flow. Needs migration 20261026_1400_precision_strikes.sql; without the table
 the action is refused and fights are unaffected.
 """
+
 from __future__ import annotations
 
 from typing import Optional, Tuple
 
 from attack_scripts import combat_helpers as ch
 from wars.action_points import get_combatant_role, spend_action_points
+from wars.aftermath import apply_unit_losses
+from wars.bomber_commit import bombers_free_for, record_sortie
 
 
 def table_exists(db) -> bool:
@@ -38,8 +41,15 @@ def _owned(db, user_id, names):
     return out
 
 
-def precision_strike(db, war_id: int, user_id: int, striker: str, target_unit: str,
-                     rng=None) -> Tuple[bool, str, Optional[dict]]:
+def precision_strike(
+    db,
+    war_id: int,
+    user_id: int,
+    striker: str,
+    target_unit: str,
+    amount: int = None,
+    rng=None,
+) -> Tuple[bool, str, Optional[dict]]:
     if striker not in ch.PRECISION_STRIKERS:
         return False, "Choose cruisers or bombers for a precision strike.", None
     if target_unit not in ch.PRECISION_TARGETS:
@@ -60,20 +70,40 @@ def precision_strike(db, war_id: int, user_id: int, striker: str, target_unit: s
 
     db.execute(
         """
-        SELECT target_unit FROM precision_strikes
-        WHERE war_id = %s AND attacker_id = %s AND struck_at > now() - interval '24 hours'
+        SELECT target_unit, struck_at > now() - interval '24 hours'
+        FROM precision_strikes
+        WHERE war_id = %s AND attacker_id = %s
         """,
         (war_id, user_id),
     )
-    recent = [r[0] for r in (db.fetchall() or [])]
+    rows = db.fetchall() or []
+    recent = [t for t, in_day in rows if in_day]
     if len(recent) >= ch.STRIKE_DAILY_LIMIT:
-        return False, f"You can make at most {ch.STRIKE_DAILY_LIMIT} precision strikes per war every 24 hours.", None
-    prior = sum(1 for t in recent if t == target_unit)
+        return (
+            False,
+            f"You can make at most {ch.STRIKE_DAILY_LIMIT} precision strikes per war every 24 hours.",
+            None,
+        )
+    # Halving counts every earlier strike on this type in the war, not just
+    # today, so a fresh day cannot start the 6% kill over again.
+    prior = sum(1 for t, _in_day in rows if t == target_unit)
 
     branch, cover_unit = ch.PRECISION_STRIKERS[striker]
     mine = _owned(db, user_id, [striker])[striker]
     if mine < 1:
         return False, f"You need at least 1 of your {striker} for this strike.", None
+    try:
+        sent = mine if amount is None else int(amount)
+    except (TypeError, ValueError):
+        return False, "Choose how many units to send on the strike.", None
+    if sent < 1:
+        return False, "Choose how many units to send on the strike.", None
+    if sent > mine:
+        return False, f"You only own {mine} {striker}.", None
+    if striker == "bombers":
+        free_ok, free_err = bombers_free_for(db, user_id, "strike", sent, mine)
+        if not free_ok:
+            return False, free_err, None
     theirs = _owned(db, enemy_id, [target_unit, cover_unit])
 
     ok, err = spend_action_points(db, war_id, user_id, branch, ch.PRECISION_AP_COST)
@@ -81,10 +111,14 @@ def precision_strike(db, war_id: int, user_id: int, striker: str, target_unit: s
         return False, err or f"Not enough {branch} action points.", None
 
     res = ch.compute_precision_strike(
-        striker, mine, target_unit, theirs[target_unit], theirs[cover_unit], prior, rng=rng
+        striker,
+        sent,
+        target_unit,
+        theirs[target_unit],
+        theirs[cover_unit],
+        prior,
+        rng=rng,
     )
-    from wars.aftermath import apply_unit_losses
-
     if res["killed"]:
         apply_unit_losses(db, enemy_id, {target_unit: res["killed"]})
     if res["lost"]:
@@ -95,33 +129,77 @@ def precision_strike(db, war_id: int, user_id: int, striker: str, target_unit: s
             (war_id, attacker_id, target_id, striker, target_unit, killed, lost, suppress)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """,
-        (war_id, user_id, enemy_id, striker, target_unit, res["killed"], res["lost"], float(res["suppress"])),
+        (
+            war_id,
+            user_id,
+            enemy_id,
+            striker,
+            target_unit,
+            res["killed"],
+            res["lost"],
+            float(res["suppress"]),
+        ),
     )
+    db.execute("SELECT username FROM users WHERE id = %s", (user_id,))
+    name_row = db.fetchone()
+    attacker_name = name_row[0] if name_row and name_row[0] else f"Nation {user_id}"
+    db.execute(
+        "INSERT INTO news (destination_id, message) VALUES (%s, %s)",
+        (
+            enemy_id,
+            f"{attacker_name} hit your {target_unit} with {sent} {striker}: "
+            f"{res['killed']} destroyed"
+            + (
+                f". Survivors fight weaker if you field them against their next attack "
+                f"within {ch.SUPPRESS_WINDOW_HOURS} hours."
+                if res["suppress"] > 0
+                else "."
+            ),
+        ),
+    )
+    if striker == "bombers":
+        record_sortie(db, war_id, user_id, "strike", sent)
     msg = (
-        f"Precision strike with {mine} {striker}: destroyed {res['killed']} enemy {target_unit}"
+        f"Precision strike with {sent} {striker}: destroyed {res['killed']} enemy {target_unit}"
         f" (enemy {cover_unit} cover {round(res['cover'] * 100)}%), lost {res['lost']} {striker}."
     )
     if res["suppress"] > 0:
-        msg += (f" Surviving {target_unit} fight at -{round(res['suppress'] * 100)}% strength in your"
-                f" next attack within {ch.SUPPRESS_WINDOW_HOURS} hours.")
+        msg += (
+            f" Surviving {target_unit} fight at -{round(res['suppress'] * 100)}% strength in your"
+            f" next attack that fields them, within {ch.SUPPRESS_WINDOW_HOURS} hours."
+        )
     if prior:
-        msg += f" Reduced effect: {prior} earlier strike(s) on {target_unit} in the last 24 hours."
-    res.update(striker=striker, strikers=mine, target_unit=target_unit, enemy_id=enemy_id)
+        msg += (
+            f" Reduced effect: {prior} earlier strike(s) on {target_unit} in this war."
+        )
+    res.update(
+        striker=striker, strikers=sent, target_unit=target_unit, enemy_id=enemy_id
+    )
     return True, msg, res
 
 
-def consume_suppression(db, war_id: int, attacker_id: int) -> dict:
-    """Disruption from this attacker's unused recent strikes, marked used."""
+def consume_suppression(
+    db, war_id: int, attacker_id: int, fielded: dict = None
+) -> dict:
+    """Disruption from strikes whose target type the defender actually fielded.
+
+    A strike on tanks is not spent by an attack that fields no tanks. It stays
+    pending until that type shows up, or until the window expires.
+    """
     if not war_id or not table_exists(db):
+        return {}
+    present = [u for u, n in (fielded or {}).items() if int(n or 0) > 0]
+    if not present:
         return {}
     db.execute(
         """
         UPDATE precision_strikes SET consumed = TRUE
         WHERE war_id = %s AND attacker_id = %s AND NOT consumed
           AND struck_at > now() - make_interval(hours => %s)
+          AND target_unit = ANY(%s)
         RETURNING target_unit, suppress
         """,
-        (war_id, attacker_id, ch.SUPPRESS_WINDOW_HOURS),
+        (war_id, attacker_id, ch.SUPPRESS_WINDOW_HOURS, present),
     )
     out: dict = {}
     for unit, sup in db.fetchall() or []:

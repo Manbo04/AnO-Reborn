@@ -823,7 +823,9 @@ class Military(Nation):
 
                 with get_db_connection() as conn:
                     with conn.cursor() as cur:
-                        precision_suppression = consume_suppression(cur, attacker.war_id, attacker.user_id)
+                        precision_suppression = consume_suppression(
+                            cur, attacker.war_id, attacker.user_id, defender.selected_units
+                        )
                         conn.commit()
                 _pen = suppression_penalty(defender.selected_units, precision_suppression)
                 defender_unit_amount_bonuses *= (1 - _pen)
@@ -843,12 +845,18 @@ class Military(Nation):
                 _sb = min(_sb, int(_att_mil.get("bombers", 0) or 0))
                 _def_mil = Military.get_military(defender.user_id) or {}
                 _def_fighters = 0 if "fighters" in defender.unusable_units else int(_def_mil.get("fighters", 0) or 0)
-                _support, _cover, _lost = compute_air_support(
+                _support, _cover, _lost, _flost = compute_air_support(
                     _sb, defender.selected_units, _def_fighters,
                     attacker_unit_amount_bonuses + attacker_bonus,
                 )
                 attacker_bonus += _support
-                air_support = {"bombers": _sb, "cover": round(_cover, 2), "bombers_lost": _lost, "support": round(_support, 1)}
+                air_support = {
+                    "bombers": _sb,
+                    "cover": round(_cover, 2),
+                    "bombers_lost": _lost,
+                    "fighters_lost": _flost,
+                    "support": round(_support, 1),
+                }
             except Exception:
                 air_support = None
         setattr(attacker, "_air_support", air_support)
@@ -1030,15 +1038,18 @@ class Military(Nation):
             attacker_lost=winner_is_defender,
         )
 
-        # Attached bombers shot down by the defender's fighters (best effort,
-        # own connection; never undoes the committed fight result).
-        if air_support and air_support.get("bombers_lost"):
+        # Bombers shot down, and fighters lost while intercepting them
+        # (best effort, own connection; never undoes the committed fight).
+        if air_support and (air_support.get("bombers_lost") or air_support.get("fighters_lost")):
             try:
                 from wars.aftermath import apply_unit_losses
 
                 with get_db_connection() as conn:
                     with conn.cursor() as cur:
-                        apply_unit_losses(cur, attacker.user_id, {"bombers": air_support["bombers_lost"]})
+                        if air_support.get("bombers_lost"):
+                            apply_unit_losses(cur, attacker.user_id, {"bombers": air_support["bombers_lost"]})
+                        if air_support.get("fighters_lost"):
+                            apply_unit_losses(cur, defender.user_id, {"fighters": air_support["fighters_lost"]})
                         conn.commit()
             except Exception:
                 pass

@@ -100,8 +100,29 @@ Rules:
   news. 🔒 `tests/test_war_expiry.py`
 - **Battle morale**: The losing side in every combat engagement loses morale,
   whether it is the attacker or defender. The morale hit scales with the loser’s
-  force composition, the victor’s relative strength, and battle outcome. 🔒
+  force composition, the victor’s relative strength, and battle outcome (at least
+  1, at most 24 per battle). A new war starts at 150 morale, 1.5× the live clock,
+  so an even war lasts about 1.5× as many battles. Six opening attacks cannot
+  reach 0. 🔒
   `tests/test_war_morale.py`
+- **Battle score**: each side is value-weighted unit presence plus counter
+  bonuses (a ground triangle: artillery beats soldiers, soldiers beat tanks,
+  tanks beat artillery, each about a quarter of that side's own presence),
+  then multiplied by a roll between 0.8 and 1.2. A side under about two-thirds
+  of the other's strength cannot win the roll. Artillery ignores part of
+  entrenchment. 🔒 `tests/test_balance_prototype.py`, `tests/test_war_balance_gates.py`
+- **Air support**: a ground or naval attack may attach bombers (2 air AP on top
+  of the attack). Fighters reduce the support and both the bombers and the
+  fighters that intercept take losses. The same bombers cannot also fly an air
+  attack or a bomber precision strike in that UTC hour.
+  🔒 `tests/test_air_support.py`
+- **Precision strikes**: cruisers (3 naval AP) or bombers (3 air AP) hit one
+  enemy unit type. The player chooses how many to send. One strike kills at
+  most 6% of that type; three in a day, each half as strong as the last and
+  counting every earlier strike in the war, top out at 10.5%. Survivors of
+  that type fight up to 20% weaker on the striker's next attack that actually
+  fields them, within 3 hours. No land, loot, or morale. The struck nation
+  gets a news item. 🔒 `tests/test_precision_strike.py`
 - **Army size manpower cap** (`app_core/military/manpower.py`): Total army manpower
   across all owned units (including troops currently fighting) cannot exceed
   `MANPOWER_SHARE = 10%` of working-age population (`pop_working`, fallback `population`).
@@ -117,8 +138,8 @@ Rules:
   `UPDATE ... WHERE x >= cost RETURNING`. 🔒 `tests/test_action_points.py`
 - **Entrenchment (Dig In)** (`wars/action_points.py`):
   Nations can spend 2 ground AP to "Dig In" (+1 level, max 3). Each entrenchment level
-  grants +10% defensive strength to ground units when defending against ground attacks
-  in that war (+30% at level 3). Launching your own ground attack in that war resets
+  grants +2.5% defensive strength to ground units when defending against ground attacks
+  in that war (+7.5% at level 3). Launching your own ground attack in that war resets
   your entrenchment to 0 (leaving the trenches). 🔒 `tests/test_action_points.py`
 - **Intel & Recon** (`wars/action_points.py`):
   Each side tracks 0–100 intel against the enemy in that war. Earned via "Recon Flight"
@@ -151,8 +172,10 @@ Rules:
   `attack_scripts/war_orchestrator.py` effectively never runs — **kept on purpose
   (Dede, 2026-10-06)**.
 - **Nukes**: plan → review → launch with a one-time token; launch takes an advisory
-  lock and decrements only while `quantity > 0`; blast deaths then 1% nation-wide
-  fallout; Iron Domes get one interception roll (`wars/nuclear.py`). Nukes no longer freeze growth.
+  lock and decrements only while `quantity > 0`; a compact province in the blast
+  loses 60% of its people and 70% of the buildings in the footprint (same blast
+  as before); one volley per war, and the same province cannot be hit again for
+  7 days. Iron Domes get one interception roll (`wars/nuclear.py`). Nukes no longer freeze growth.
   🔒 `tests/test_nuclear_strike.py` (incl. two concurrent launches, one nuke)
 - **Reparations** (`app_core/game_ticks/taxes.py::war_reparation_tax`, daily, for 7
   days after a truce): loser pays **20% of every resource per day**, **5% for Raze

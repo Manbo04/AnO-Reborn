@@ -26,6 +26,10 @@ import random
 import traceback
 
 import variables
+from attack_scripts.combat_helpers import AIR_SUPPORT_AP_COST
+from wars.action_points import refund_action_points
+from wars.bomber_commit import bombers_free_for, record_sortie
+from wars.precision import precision_strike
 from wars.service import apply_building_damage, apply_population_strike
 from wars import rules as war_rules
 from app_core.world_affairs.services import log_event
@@ -904,12 +908,24 @@ def war_attack(war_id):
             return redirect(f"/war/{war_id}/attack")
 
         if action == "precision_strike":
-            from wars.precision import precision_strike
-
+            raw_amt = request.form.get("strike_amount")
+            if raw_amt is None or str(raw_amt).strip() == "":
+                return _render_attack_page(
+                    error_msg="Choose how many units to send on the strike.",
+                    form_vals=request.form,
+                )
+            try:
+                strike_amount = int(raw_amt)
+            except (ValueError, TypeError):
+                return _render_attack_page(
+                    error_msg="Choose how many units to send on the strike.",
+                    form_vals=request.form,
+                )
             ok, msg, _res = precision_strike(
                 db, war_id, cId,
                 (request.form.get("striker") or "").strip(),
                 (request.form.get("target_unit") or "").strip(),
+                amount=strike_amount,
             )
             if not ok:
                 return _render_attack_page(error_msg=msg, form_vals=request.form)
@@ -990,17 +1006,40 @@ def war_attack(war_id):
                 return _render_attack_page(error_msg="Bomber amount entered was not a number", form_vals=request.form, active_tab=domain)
             if support_bombers < 0:
                 return _render_attack_page(error_msg="Invalid amount selected!", form_vals=request.form, active_tab=domain)
-            owned_bombers = int((Military.get_military(cId) or {}).get("bombers", 0) or 0)
-            if support_bombers > owned_bombers:
-                return _render_attack_page(error_msg=f"You only own {owned_bombers} bombers", form_vals=request.form, active_tab=domain)
 
         attack_units = Units(cId, war_id=war_id, support_bombers=support_bombers)
         err_valid = attack_units.attach_units(selected_units, len(selected_units))
         if err_valid:
             return _render_attack_page(error_msg=err_valid, form_vals=request.form, active_tab=domain)
 
-        from attack_scripts.combat_helpers import AIR_SUPPORT_AP_COST
-        from wars.action_points import refund_action_points
+        # One pool of bombers per UTC hour: support, air attack and precision
+        # strikes share the airframes the player owns.
+        sorties = []
+        air_bombers = int(selected_units.get("bombers") or 0) if domain == "air" else 0
+        if support_bombers > 0 or air_bombers > 0:
+            owned_bombers = int((Military.get_military(cId) or {}).get("bombers", 0) or 0)
+        else:
+            owned_bombers = 0
+        if support_bombers > owned_bombers:
+            return _render_attack_page(
+                error_msg=f"You only own {owned_bombers} bombers",
+                form_vals=request.form,
+                active_tab=domain,
+            )
+        if support_bombers > 0:
+            ok_free, free_err = bombers_free_for(
+                db, cId, "support", support_bombers, owned_bombers
+            )
+            if not ok_free:
+                return _render_attack_page(error_msg=free_err, form_vals=request.form, active_tab=domain)
+            sorties.append(("support", support_bombers))
+        if air_bombers > 0:
+            ok_free, free_err = bombers_free_for(
+                db, cId, "attack", air_bombers, owned_bombers
+            )
+            if not ok_free:
+                return _render_attack_page(error_msg=free_err, form_vals=request.form, active_tab=domain)
+            sorties.append(("attack", air_bombers))
 
         if support_bombers > 0:
             ok_ap, ap_err = spend_action_points(db, war_id, cId, "air", AIR_SUPPORT_AP_COST)
@@ -1011,6 +1050,8 @@ def war_attack(war_id):
             if support_bombers > 0:
                 refund_action_points(db, war_id, cId, "air", AIR_SUPPORT_AP_COST)
             return _render_attack_page(error_msg=ap_err, form_vals=request.form, active_tab=domain)
+        for role, amount in sorties:
+            record_sortie(db, war_id, cId, role, amount)
 
         session["enemy_id"] = eId
         session["war_domain"] = domain
