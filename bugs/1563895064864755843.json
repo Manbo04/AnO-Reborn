@@ -2,8 +2,8 @@
   "author_id": "616524068987863060",
   "created_at": "2026-10-25T12:40:39Z",
   "kind": "bug",
-  "last_message_id": "1563927547551424659",
-  "last_player_message_at": "2026-10-25T14:49:43Z",
+  "last_message_id": "1564251361585926206",
+  "last_player_message_at": "2026-10-26T12:16:26Z",
   "messages": [
     {
       "at": "2026-10-25T12:40:39Z",
@@ -68,6 +68,46 @@
       "id": "1563927547551424659",
       "staff": false,
       "text": "Like what is your percentages for each age group"
+    },
+    {
+      "at": "2026-10-26T11:01:37Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1564232529442119853",
+      "staff": false,
+      "text": "my percentage for working-age pop is decreasing every day for some reason even though at this point i probably have the most education buildings per capita in the game"
+    },
+    {
+      "at": "2026-10-26T11:03:37Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1564233034860073053",
+      "staff": false,
+      "text": "total output has increased slightly since yesterday though, up to (i think) 127%"
+    },
+    {
+      "at": "2026-10-26T11:03:55Z",
+      "attachments": [],
+      "author": "Cheesar",
+      "author_id": "616524068987863060",
+      "bot": false,
+      "id": "1564233109610831913",
+      "staff": false,
+      "text": "which still doesnt match the numbers of graduates im getting"
+    },
+    {
+      "at": "2026-10-26T12:16:26Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1564251361585926206",
+      "staff": false,
+      "text": "Working age people have nothing to do with education. It’s just people within a certain age range"
     }
   ],
   "thread_id": "1563895064864755843",
