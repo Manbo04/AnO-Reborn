@@ -387,3 +387,55 @@ def compute_unit_casualties(
             loser_pairs.append((l_unit, l_cas))
 
     return winner_pairs, loser_pairs
+
+
+# --- Air support for ground/naval attacks (balance prototype) ---------------
+# The attacker may attach bombers to a ground or naval attack. They don't
+# fight as a stack; they add a support score to the attacking side:
+#   (bomber presence + bomber counter bonuses vs the defending units)
+#   x SUPPORT_FACTOR x (1 - COVER_EFFECT x cover),
+# capped at SUPPORT_CAP x the attacker's own (pre-roll) score, where cover is
+# min(1, defender fighter presence / bomber presence). The defender's fighters
+# also shoot attached bombers down (up to INTERCEPT_LOSS_MAX of them at full
+# cover). No attached bombers -> zero support, i.e. old behaviour.
+SUPPORT_FACTOR = 1.3
+COVER_EFFECT = 0.75
+SUPPORT_CAP = 0.6
+INTERCEPT_LOSS_MAX = 0.15
+AIR_SUPPORT_AP_COST = 2  # air AP, on top of the ground/naval attack's cost
+
+
+def compute_air_support(
+    bombers: int,
+    defender_units: Dict[str, int],
+    defender_fighters: int,
+    attacker_score: float,
+    rng: object = None,
+) -> Tuple[float, float, int]:
+    """Return (support_score, cover, bombers_lost)."""
+    import random as _random
+
+    _rng = rng or _random
+    bombers = max(0, int(bombers or 0))
+    if bombers <= 0:
+        return 0.0, 0.0, 0
+    from units import BomberUnit
+
+    bomber_presence = compute_unit_amount_bonus(["bombers"], {"bombers": bombers})
+    total = sum((v or 0) for v in (defender_units or {}).values())
+    counter = 0.0
+    for unit, count in (defender_units or {}).items():
+        if not count:
+            continue
+        bonus = BomberUnit(bombers).attack(unit)[1]
+        counter += bonus * (count / (total + 1)) / 100.0
+    fighter_presence = compute_unit_amount_bonus(
+        ["fighters"], {"fighters": max(0, int(defender_fighters or 0))}
+    )
+    cover = min(1.0, fighter_presence / bomber_presence)
+    score = (bomber_presence + counter) * SUPPORT_FACTOR * (1.0 - COVER_EFFECT * cover)
+    score = min(score, SUPPORT_CAP * max(0.0, float(attacker_score or 0)))
+    lost = 0
+    if cover > 0:
+        lost = min(bombers, int(round(bombers * INTERCEPT_LOSS_MAX * cover * _rng.uniform(0.7, 1.3))))
+    return score, cover, lost

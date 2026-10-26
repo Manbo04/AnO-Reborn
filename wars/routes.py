@@ -968,13 +968,35 @@ def war_attack(war_id):
         if not sum(selected_units.values()):
             return _render_attack_page(error_msg="Can't attack because you haven't sent any units", form_vals=request.form, active_tab=domain)
 
-        attack_units = Units(cId, war_id=war_id)
+        # Optional air support: bombers attached to a ground/naval attack.
+        support_bombers = 0
+        if domain in ("ground", "naval"):
+            try:
+                support_bombers = int(request.form.get(f"{domain}_support_bombers") or 0)
+            except (ValueError, TypeError):
+                return _render_attack_page(error_msg="Bomber amount entered was not a number", form_vals=request.form, active_tab=domain)
+            if support_bombers < 0:
+                return _render_attack_page(error_msg="Invalid amount selected!", form_vals=request.form, active_tab=domain)
+            owned_bombers = int((Military.get_military(cId) or {}).get("bombers", 0) or 0)
+            if support_bombers > owned_bombers:
+                return _render_attack_page(error_msg=f"You only own {owned_bombers} bombers", form_vals=request.form, active_tab=domain)
+
+        attack_units = Units(cId, war_id=war_id, support_bombers=support_bombers)
         err_valid = attack_units.attach_units(selected_units, len(selected_units))
         if err_valid:
             return _render_attack_page(error_msg=err_valid, form_vals=request.form, active_tab=domain)
 
+        from attack_scripts.combat_helpers import AIR_SUPPORT_AP_COST
+        from wars.action_points import refund_action_points
+
+        if support_bombers > 0:
+            ok_ap, ap_err = spend_action_points(db, war_id, cId, "air", AIR_SUPPORT_AP_COST)
+            if not ok_ap:
+                return _render_attack_page(error_msg=f"Air support: {ap_err}", form_vals=request.form, active_tab=domain)
         ok_ap, ap_err = spend_action_points(db, war_id, cId, domain, 3)
         if not ok_ap:
+            if support_bombers > 0:
+                refund_action_points(db, war_id, cId, "air", AIR_SUPPORT_AP_COST)
             return _render_attack_page(error_msg=ap_err, form_vals=request.form, active_tab=domain)
 
         session["enemy_id"] = eId
@@ -1658,6 +1680,8 @@ def warResult():
             defender_result["initial_units"] = defender_initial
             defender_result["remaining_units"] = defender_remaining
             attacker_result["unit_loss"] = attacker_loss
+            if getattr(attacker, "_air_support", None):
+                attacker_result["air_support"] = attacker._air_support
             attacker_result["initial_units"] = attacker_initial
             attacker_result["remaining_units"] = attacker_remaining
         else:

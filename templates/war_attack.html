@@ -377,6 +377,20 @@
                     </div>
                 </div>
                 {% endfor %}
+                <div class="unit-row-card air-support-row">
+                    <img src="{{ url_for('static', filename=game_asset_path('units', 'bombers')) }}?v=2" alt="bombers" class="unit-thumb">
+                    <div class="unit-meta">
+                        <div class="unit-name">Air support: attach bombers (optional)</div>
+                        <div class="unit-counts">
+                            <span>Owned: <b id="owned-ground_support_bombers">{{ owned.get('bombers', 0) }}</b></span>
+                            <span class="wr-muted">+2 Air AP if used. Enemy fighters can shoot some down.</span>
+                        </div>
+                    </div>
+                    <div class="unit-input-group">
+                        <button type="button" class="btn-max" onclick="setMax('ground_support_bombers')">Max</button>
+                        <input type="number" id="input-ground_support_bombers" name="ground_support_bombers" class="count-input" min="0" max="{{ owned.get('bombers', 0) }}" value="{{ form_values.get('ground_support_bombers', 0) if form_values else 0 }}">
+                    </div>
+                </div>
             </div>
 
             <!-- AIR TAB PANEL -->
@@ -421,6 +435,20 @@
                     </div>
                 </div>
                 {% endfor %}
+                <div class="unit-row-card air-support-row">
+                    <img src="{{ url_for('static', filename=game_asset_path('units', 'bombers')) }}?v=2" alt="bombers" class="unit-thumb">
+                    <div class="unit-meta">
+                        <div class="unit-name">Air support: attach bombers (optional)</div>
+                        <div class="unit-counts">
+                            <span>Owned: <b id="owned-naval_support_bombers">{{ owned.get('bombers', 0) }}</b></span>
+                            <span class="wr-muted">+2 Air AP if used. Enemy fighters can shoot some down.</span>
+                        </div>
+                    </div>
+                    <div class="unit-input-group">
+                        <button type="button" class="btn-max" onclick="setMax('naval_support_bombers')">Max</button>
+                        <input type="number" id="input-naval_support_bombers" name="naval_support_bombers" class="count-input" min="0" max="{{ owned.get('bombers', 0) }}" value="{{ form_values.get('naval_support_bombers', 0) if form_values else 0 }}">
+                    </div>
+                </div>
             </div>
 
             <!-- SPECIAL TAB PANEL (ICBMS & NUKES) -->
@@ -492,9 +520,9 @@
 let currentTab = '{{ active_tab or "ground" }}';
 
 const apCosts = {
-    'ground': '3 Ground AP',
+    'ground': '3 Ground AP (+2 Air AP with bombers)',
     'air': '3 Air AP',
-    'naval': '3 Naval AP',
+    'naval': '3 Naval AP (+2 Air AP with bombers)',
     'special': '0 AP (ICBM)'
 };
 

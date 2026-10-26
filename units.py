@@ -410,11 +410,16 @@ class Units(Military):
         bonuses: int = None,
         selected_units_list: list = None,
         war_id=None,
+        support_bombers: int = 0,
     ):
         self.user_id = user_id
         self.selected_units = selected_units
         self.bonuses = bonuses
         self.war_id = war_id
+        # Bombers attached as air support to a ground/naval attack (balance
+        # prototype). They are not part of selected_units; see
+        # combat_helpers.compute_air_support. 0 = no air support.
+        self.support_bombers = int(support_bombers or 0)
         # Cache for unusable-unit lookup (populated lazily on first combat use)
         self._unusable_units_cache = None
 

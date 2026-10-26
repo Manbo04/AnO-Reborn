@@ -178,6 +178,17 @@
                 {% endif %}
             </div>
 
+            {% if attacker_result.get("air_support") %}
+            <div class="game-glass game-panel combatant-panel">
+                <h4>Air support</h4>
+                <p class="wr-muted" style="font-size: 12px; margin: 0;">
+                    {{ attacker_result["air_support"]["bombers"] }} bombers flew in support.
+                    Enemy fighter cover: {{ (attacker_result["air_support"]["cover"] * 100) | round | int }}%.
+                    Bombers shot down: {{ attacker_result["air_support"]["bombers_lost"] }}.
+                </p>
+            </div>
+            {% endif %}
+
             <!-- Defender Panel -->
             <div class="game-glass game-panel combatant-panel">
                 <div class="combatant-header">

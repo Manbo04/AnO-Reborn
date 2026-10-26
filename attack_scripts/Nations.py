@@ -813,6 +813,27 @@ class Military(Nation):
             dealt_infra_damage,
         ) = compute_engagement_metrics(attacker, defender)
 
+        # Air support: bombers attached to a ground/naval attack.
+        air_support = None
+        _sb = int(getattr(attacker, "support_bombers", 0) or 0)
+        if _sb > 0 and domain in ("ground", "naval") and "bombers" not in attacker.unusable_units:
+            try:
+                from attack_scripts.combat_helpers import compute_air_support
+
+                _att_mil = Military.get_military(attacker.user_id) or {}
+                _sb = min(_sb, int(_att_mil.get("bombers", 0) or 0))
+                _def_mil = Military.get_military(defender.user_id) or {}
+                _def_fighters = 0 if "fighters" in defender.unusable_units else int(_def_mil.get("fighters", 0) or 0)
+                _support, _cover, _lost = compute_air_support(
+                    _sb, defender.selected_units, _def_fighters,
+                    attacker_unit_amount_bonuses + attacker_bonus,
+                )
+                attacker_bonus += _support
+                air_support = {"bombers": _sb, "cover": round(_cover, 2), "bombers_lost": _lost, "support": round(_support, 1)}
+            except Exception:
+                air_support = None
+        setattr(attacker, "_air_support", air_support)
+
         # Apply entrenchment (+5% per level to ground defense) and intel (+intel/10 % to attack strength)
         is_ground = domain == "ground" or (
             domain is None
@@ -989,6 +1010,19 @@ class Military(Nation):
             win_type,
             attacker_lost=winner_is_defender,
         )
+
+        # Attached bombers shot down by the defender's fighters (best effort,
+        # own connection; never undoes the committed fight result).
+        if air_support and air_support.get("bombers_lost"):
+            try:
+                from wars.aftermath import apply_unit_losses
+
+                with get_db_connection() as conn:
+                    with conn.cursor() as cur:
+                        apply_unit_losses(cur, attacker.user_id, {"bombers": air_support["bombers_lost"]})
+                        conn.commit()
+            except Exception:
+                pass
 
         # Naval blockade (JOB C4):
         # When attacker wins naval battle with definite victory or annihilation, loser is blockaded for 24h.
