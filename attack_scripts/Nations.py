@@ -813,6 +813,25 @@ class Military(Nation):
             dealt_infra_damage,
         ) = compute_engagement_metrics(attacker, defender)
 
+        # Precision-strike disruption: survivors of struck types fight weaker
+        # in the striker's next attack on this enemy (one-shot, best effort).
+        precision_suppression = {}
+        if getattr(attacker, "war_id", None):
+            try:
+                from attack_scripts.combat_helpers import suppression_penalty
+                from wars.precision import consume_suppression
+
+                with get_db_connection() as conn:
+                    with conn.cursor() as cur:
+                        precision_suppression = consume_suppression(cur, attacker.war_id, attacker.user_id)
+                        conn.commit()
+                _pen = suppression_penalty(defender.selected_units, precision_suppression)
+                defender_unit_amount_bonuses *= (1 - _pen)
+                defender_bonus *= (1 - _pen)
+            except Exception:
+                precision_suppression = {}
+        setattr(attacker, "_precision_suppression", precision_suppression)
+
         # Air support: bombers attached to a ground/naval attack.
         air_support = None
         _sb = int(getattr(attacker, "support_bombers", 0) or 0)

@@ -903,6 +903,19 @@ def war_attack(war_id):
             flash(msg)
             return redirect(f"/war/{war_id}/attack")
 
+        if action == "precision_strike":
+            from wars.precision import precision_strike
+
+            ok, msg, _res = precision_strike(
+                db, war_id, cId,
+                (request.form.get("striker") or "").strip(),
+                (request.form.get("target_unit") or "").strip(),
+            )
+            if not ok:
+                return _render_attack_page(error_msg=msg, form_vals=request.form)
+            flash(msg)
+            return redirect(f"/war/{war_id}/attack")
+
         if action == "recon_flight":
             ok, msg, new_intel = recon_flight(db, war_id, cId)
             if not ok:
@@ -1680,6 +1693,10 @@ def warResult():
             defender_result["initial_units"] = defender_initial
             defender_result["remaining_units"] = defender_remaining
             attacker_result["unit_loss"] = attacker_loss
+            if getattr(attacker, "_precision_suppression", None):
+                attacker_result["precision_suppression"] = {
+                    u: round(f * 100) for u, f in attacker._precision_suppression.items()
+                }
             if getattr(attacker, "_air_support", None):
                 attacker_result["air_support"] = attacker._air_support
             attacker_result["initial_units"] = attacker_initial

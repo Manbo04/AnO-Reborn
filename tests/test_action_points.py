@@ -44,11 +44,11 @@ def test_can_spend_ap():
 
 def test_entrenchment_defense_multiplier():
     assert action_points.entrenchment_defense_multiplier(0) == 1.0
-    assert action_points.entrenchment_defense_multiplier(1) == pytest.approx(1.05)
-    assert action_points.entrenchment_defense_multiplier(2) == pytest.approx(1.10)
-    assert action_points.entrenchment_defense_multiplier(3) == pytest.approx(1.15)
+    assert action_points.entrenchment_defense_multiplier(1) == pytest.approx(1.025)
+    assert action_points.entrenchment_defense_multiplier(2) == pytest.approx(1.05)
+    assert action_points.entrenchment_defense_multiplier(3) == pytest.approx(1.075)
     # Clamping outside 0..3
-    assert action_points.entrenchment_defense_multiplier(4) == pytest.approx(1.15)
+    assert action_points.entrenchment_defense_multiplier(4) == pytest.approx(1.075)
     assert action_points.entrenchment_defense_multiplier(-1) == 1.0
     assert action_points.entrenchment_defense_multiplier(None) == 1.0
 
@@ -158,14 +158,14 @@ def test_parse_one_screen_attack_nukes():
 def test_apply_combat_modifiers_ground_entrenchment():
     from attack_scripts.combat_helpers import apply_combat_modifiers
 
-    # Entrenchment level 2 (+10%) on ground battle
+    # Entrenchment level 2 (+5%) on ground battle
     atk_amt, atk_bon, dfn_amt, dfn_bon = apply_combat_modifiers(
         100.0, 50.0, 100.0, 50.0, entrenchment_level=2, attacker_intel=0, is_ground=True
     )
     assert atk_amt == 100.0
     assert atk_bon == 50.0
-    assert pytest.approx(dfn_amt, 0.001) == 110.0
-    assert pytest.approx(dfn_bon, 0.001) == 55.0
+    assert pytest.approx(dfn_amt, 0.001) == 105.0
+    assert pytest.approx(dfn_bon, 0.001) == 52.5
 
 
 def test_apply_combat_modifiers_non_ground_ignores_entrenchment():

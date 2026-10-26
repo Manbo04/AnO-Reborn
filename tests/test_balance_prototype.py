@@ -45,8 +45,8 @@ def test_loser_casualty_cap():
     assert dict(lp)["tanks"] <= int(1000 * C.LOSER_MAX_LOSS_FRAC * 1.2) + 1
 
 
-def test_entrenchment_five_percent_per_level():
-    assert action_points.entrenchment_defense_multiplier(3) == pytest.approx(1.15)
+def test_entrenchment_per_level():
+    assert action_points.entrenchment_defense_multiplier(3) == pytest.approx(1.075)
 
 
 def test_nuke_lethality_values():
@@ -103,4 +103,4 @@ def test_artillery_pierces_entrenchment():
     assert C.artillery_entrenchment_pierce(["artillery"], {"artillery": 10}) == pytest.approx(C.ARTILLERY_ENTRENCH_PIERCE)
     _, _, d_full, _ = C.apply_combat_modifiers(100, 0, 100, 0, entrenchment_level=3)
     _, _, d_pierced, _ = C.apply_combat_modifiers(100, 0, 100, 0, entrenchment_level=3, entrenchment_pierce=0.6)
-    assert d_full == pytest.approx(115.0) and d_pierced == pytest.approx(106.0)
+    assert d_full == pytest.approx(107.5) and d_pierced == pytest.approx(103.0)

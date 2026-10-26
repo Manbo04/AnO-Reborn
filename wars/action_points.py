@@ -15,7 +15,7 @@ AP_START = 6
 AP_REGEN_PER_HOUR = 1
 
 ENTRENCH_MAX = 3
-ENTRENCH_DEFENSE_PER_LEVEL = 0.05  # was 0.10
+ENTRENCH_DEFENSE_PER_LEVEL = 0.025  # was 0.10 (master), 0.05 (phase 1); halved with the narrower roll
 INTEL_MAX = 100
 
 # Action costs: (branch, cost)
@@ -27,7 +27,9 @@ AP_COSTS: Dict[str, Tuple[Optional[str], int]] = {
     "cruise_missile_strike": ("naval", 2),
     "dig_in": ("ground", 2),
     "recon_flight": ("air", 2),
-    "air_support": ("air", 2),  # bombers attached to a ground/naval attack
+    "air_support": ("air", 2),
+    "precision_strike_cruisers": ("naval", 3),
+    "precision_strike_bombers": ("air", 3),  # bombers attached to a ground/naval attack
     "nuke": (None, 0),
     "strategic_airstrike": (None, 0),
 }

@@ -55,8 +55,8 @@ UNIT_POWER = {
 # Battle roll: each side's score is multiplied by uniform(ROLL_LOW, ROLL_HIGH).
 # Replaces the old flat +uniform(1, 5), which was negligible next to army size
 # so the bigger army won every time.
-ROLL_LOW = 0.6
-ROLL_HIGH = 1.4
+ROLL_LOW = 0.8
+ROLL_HIGH = 1.2
 
 
 def battle_roll(score: float, rng: object = None) -> float:
@@ -398,7 +398,7 @@ def compute_unit_casualties(
 # min(1, defender fighter presence / bomber presence). The defender's fighters
 # also shoot attached bombers down (up to INTERCEPT_LOSS_MAX of them at full
 # cover). No attached bombers -> zero support, i.e. old behaviour.
-SUPPORT_FACTOR = 1.3
+SUPPORT_FACTOR = 1.15  # phase 3 used 1.3 with the 0.6-1.4 roll
 COVER_EFFECT = 0.75
 SUPPORT_CAP = 0.6
 INTERCEPT_LOSS_MAX = 0.15
@@ -439,3 +439,63 @@ def compute_air_support(
     if cover > 0:
         lost = min(bombers, int(round(bombers * INTERCEPT_LOSS_MAX * cover * _rng.uniform(0.7, 1.3))))
     return score, cover, lost
+
+
+# --- Precision strikes (balance prototype, phase 4) -------------------------
+# Cruisers (missiles, naval AP) or bombers (air AP) hit one chosen enemy unit
+# type. No territory, loot or morale effect. Cover: destroyers screen against
+# missiles, fighters intercept bombers. Anti-spam: per-strike kill cap, halving
+# for each earlier strike on the same type in the same war in the last 24h,
+# and a daily limit per war.
+PRECISION_STRIKERS = {"cruisers": ("naval", "destroyers"), "bombers": ("air", "fighters")}
+PRECISION_TARGETS = (
+    "soldiers", "tanks", "artillery", "fighters", "bombers", "apaches",
+    "destroyers", "cruisers", "submarines", "aircraft_carriers",
+)
+PRECISION_AP_COST = 3
+STRIKE_MAX_FRAC = 0.06      # most of the targeted type one strike can kill
+STRIKE_REACH = 0.25          # strike power needed (vs target power) for full effect
+STRIKE_COVER_EFFECT = 0.7   # full cover removes 70% of the effect
+STRIKE_DIMINISH = 0.5       # x0.5 per earlier strike on that type (24h, same war)
+STRIKE_DAILY_LIMIT = 3      # strikes per attacker per war per 24h
+STRIKER_LOSS_MAX = 0.05     # striker losses at full cover
+# Disruption: survivors of the struck type are shaken and fight at reduced
+# strength in the striker's next attack on this enemy (within the window).
+SUPPRESS_MAX = 0.5          # most of the struck type's strength removed, per type
+SUPPRESS_WINDOW_HOURS = 3
+
+
+def compute_precision_strike(striker, strikers, target_unit, target_amount,
+                             cover_amount, prior_hits=0, rng=None):
+    """Pure strike math. Returns dict(killed, lost, cover, frac)."""
+    import random as _random
+
+    r = rng or _random
+    strikers = max(0, int(strikers or 0))
+    target_amount = max(0, int(target_amount or 0))
+    if striker not in PRECISION_STRIKERS or target_unit not in PRECISION_TARGETS or strikers == 0 or target_amount == 0:
+        return {"killed": 0, "lost": 0, "cover": 0.0, "frac": 0.0, "suppress": 0.0}
+    power = UNIT_POWER[striker] * strikers
+    cover_power = UNIT_POWER[PRECISION_STRIKERS[striker][1]] * max(0, int(cover_amount or 0))
+    cover = min(1.0, cover_power / power)
+    reach = min(1.0, power / (STRIKE_REACH * UNIT_POWER[target_unit] * target_amount))
+    frac = STRIKE_MAX_FRAC * reach * (1 - STRIKE_COVER_EFFECT * cover) * (STRIKE_DIMINISH ** max(0, int(prior_hits)))
+    frac *= r.uniform(0.9, 1.1)
+    frac = min(frac, STRIKE_MAX_FRAC)
+    killed = min(target_amount, int(target_amount * frac))
+    suppress = min(SUPPRESS_MAX, SUPPRESS_MAX * (frac / STRIKE_MAX_FRAC))
+    lost = min(strikers, int(round(strikers * STRIKER_LOSS_MAX * cover * r.uniform(0.7, 1.3))))
+    return {"killed": killed, "lost": lost, "cover": cover, "frac": frac, "suppress": suppress}
+
+
+def suppression_penalty(defender_units, suppressed):
+    """Share of the defender's score removed by disruption.
+    suppressed: {unit_type: fraction 0..SUPPRESS_MAX} (summed per type, capped)."""
+    total = sum(UNIT_POWER.get(u, 0) * max(0, int(a or 0)) for u, a in (defender_units or {}).items())
+    if total <= 0 or not suppressed:
+        return 0.0
+    pen = 0.0
+    for u, f in suppressed.items():
+        f = max(0.0, min(SUPPRESS_MAX, float(f or 0)))
+        pen += f * UNIT_POWER.get(u, 0) * max(0, int((defender_units or {}).get(u, 0) or 0)) / total
+    return min(pen, SUPPRESS_MAX)

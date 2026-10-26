@@ -320,7 +320,7 @@
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
                 <form action="/war/{{ war_id }}/attack" method="POST" class="quick-action-btn-form">
                     <input type="hidden" name="action" value="dig_in">
-                    <button type="submit" class="game-btn game-btn-secondary game-btn-sm" {% if status.ground_ap < 2 or status.my_entrench >= 3 %}disabled{% endif %} title="Costs 2 Ground AP. Gives +10% ground defensive strength (max 3). Resets when you launch a ground attack.">
+                    <button type="submit" class="game-btn game-btn-secondary game-btn-sm" {% if status.ground_ap < 2 or status.my_entrench >= 3 %}disabled{% endif %} title="Costs 2 Ground AP. Gives +2.5% ground defensive strength per level (max 3). Resets when you launch a ground attack.">
                         <span class="material-icons-outlined">shield</span> Dig In (2 Ground AP)
                     </button>
                 </form>
@@ -329,6 +329,22 @@
                     <input type="hidden" name="action" value="recon_flight">
                     <button type="submit" class="game-btn game-btn-secondary game-btn-sm" {% if status.air_ap < 2 %}disabled{% endif %} title="Costs 2 Air AP. Requires >= 1 Fighter or Bomber. Gives +25 Intel. At 50+ Intel enemy units are revealed!">
                         <span class="material-icons-outlined">flight_takeoff</span> Recon Flight (2 Air AP)
+                    </button>
+                </form>
+
+                <form action="/war/{{ war_id }}/attack" method="POST" class="quick-action-btn-form" title="Costs 3 AP of the striking branch. Kills up to 6% of one enemy unit type and weakens the survivors in your next attack (within 3 hours). Enemy destroyers screen missiles, enemy fighters intercept bombers. Max 3 strikes per war per 24 hours; repeat strikes on the same type are weaker. No land, loot or morale.">
+                    <input type="hidden" name="action" value="precision_strike">
+                    <select name="striker" class="game-select-sm" aria-label="Strike with">
+                        <option value="cruisers" {% if status.naval_ap < 3 %}disabled{% endif %}>Cruiser missiles (3 Naval AP)</option>
+                        <option value="bombers" {% if status.air_ap < 3 %}disabled{% endif %}>Bombers (3 Air AP)</option>
+                    </select>
+                    <select name="target_unit" class="game-select-sm" aria-label="Target">
+                        {% for u in ['soldiers', 'tanks', 'artillery', 'fighters', 'bombers', 'apaches', 'destroyers', 'cruisers', 'submarines', 'aircraft_carriers'] %}
+                        <option value="{{ u }}">{{ u }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="game-btn game-btn-secondary game-btn-sm">
+                        <span class="material-icons-outlined">gps_fixed</span> Precision Strike
                     </button>
                 </form>
             </div>
