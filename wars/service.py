@@ -66,6 +66,10 @@ def apply_building_damage(db, target_id, building_name, damage_points, threshold
                 (take, target_id, building_id, province_id),
             )
         left -= take
+    if destroyed > 0:
+        from wars.history import record_building_loss
+
+        record_building_loss(db, target_id, building_name, destroyed, "strike")
     return destroyed, True
 
 

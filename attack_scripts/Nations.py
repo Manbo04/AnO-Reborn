@@ -534,6 +534,11 @@ class Military(Nation):
 
                 damage -= health
 
+            from wars.history import record_building_loss
+
+            for name, effect in damage_effects.items():
+                record_building_loss(db, owner_id, name, effect[1], "ground battle")
+
             connection.commit()
 
             # will return: how many buildings are damaged or destroyed
