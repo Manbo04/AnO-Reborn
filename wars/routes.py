@@ -2130,6 +2130,41 @@ def wars():
                     )
                     war_details = {row[0]: row[1:] for row in db.fetchall()}
 
+                    # Newest declaration first (weekly vote 10-16), not by
+                    # enemy score. start_date can be NULL on very old wars.
+                    war_attacker_defender_ids = sorted(
+                        war_attacker_defender_ids,
+                        key=lambda w: (
+                            str((war_details.get(w[0]) or (None, None, None))[2] or ""),
+                            w[0],
+                        ),
+                        reverse=True,
+                    )
+
+                    # Your branch action points per war, so you don't have to
+                    # open every card to see if you can act.
+                    my_ap = {}
+                    try:
+                        from wars.action_points import war_combat_columns_exist
+
+                        if war_combat_columns_exist(db):
+                            db.execute(
+                                "SELECT id, attacker, attacker_ground_ap, "
+                                "attacker_air_ap, attacker_naval_ap, "
+                                "defender_ground_ap, defender_air_ap, "
+                                "defender_naval_ap FROM wars WHERE id IN ("
+                                + war_placeholders + ")",
+                                tuple(war_ids),
+                            )
+                            for r in db.fetchall():
+                                mine = r[2:5] if r[1] == cId else r[5:8]
+                                my_ap[r[0]] = {
+                                    "ground": mine[0], "air": mine[1], "naval": mine[2],
+                                }
+                    except Exception:
+                        rollback_db_cursor(db)
+                        my_ap = {}
+
                     # Fetch all usernames AND flags at once
                     user_placeholders = ",".join(["%s"] * len(all_user_ids))
                     db.execute(
@@ -2176,6 +2211,7 @@ def wars():
                             "att": attacker_info,
                             "def": defender_info,
                             "auto_end_text": auto_end_text,
+                            "my_ap": my_ap.get(war_id),
                         }
             except Exception:
                 rollback_db_cursor(db)

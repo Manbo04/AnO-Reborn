@@ -789,6 +789,7 @@ def province(pId):
             population=national_pop,
             food_score=food_score,
             units=units,
+            jobs_here=province_jobs(units),
             enough_consumer_goods=enough_consumer_goods,
             enough_rations=enough_rations,
             has_power=has_power,
@@ -2659,6 +2660,17 @@ def mass_purchase_sell():
 
 
 CALC_MAX_UNITS = 100_000
+
+
+def province_jobs(units) -> int:
+    """Jobs the buildings in one province offer (weekly vote 10-16: show how
+    many people a province employs). Same per-building worker counts the
+    nation-wide efficiency rule uses."""
+    total = 0
+    for name, matrix in variables.BUILDING_EMPLOYMENT_MATRICES.items():
+        qty = (units or {}).get(name, 0) or 0
+        total += int(matrix.get("worker_count", 0) or 0) * int(qty)
+    return total
 
 
 def _calc_quote(db, cId, unit, start, target):
