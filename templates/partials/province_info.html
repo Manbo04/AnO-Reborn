@@ -130,6 +130,12 @@
                 <td><span class="material-icons-outlined">work</span>Working Age:</td>
                 <td>{{ province['pop_working'] | commas }}</td>
             </tr>
+            {% if jobs_here is defined %}
+            <tr title="Jobs offered by the buildings in this province, against its working-age people. Workers from other provinces count nation-wide.">
+                <td><span class="material-icons-outlined">badge</span>Employed here:</td>
+                <td>{{ ([jobs_here, province['pop_working'] or 0] | min) | commas }} / {{ (province['pop_working'] or 0) | commas }} <small>({{ jobs_here | commas }} jobs)</small></td>
+            </tr>
+            {% endif %}
             <tr>
                 <td><span class="material-icons-outlined">elderly</span>Elderly:</td>
                 <td>{{ province['pop_elderly'] | commas }}</td>

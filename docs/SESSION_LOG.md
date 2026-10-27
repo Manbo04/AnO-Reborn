@@ -1004,3 +1004,11 @@ Already true, no change: higher-educated people can already fill lower jobs (eff
 **What to watch**: 5x-11x education throughput changes population education mix over the next days; loans issued before deploy keep their old fee.
 **Not done (still passed votes)**: mass sell buildings, past trades in "my offers", revenue page with trades, cost calculators, building-destroyed war log,
 war cards AP/sort, per-province "X/X employed" slot, coalition bank opt-out, other features (vacation mode, login bonus, tutorial rework, resource bonds).
+
+## 2026-10-27 (later) — Weekly-vote QoL batches 2 + 3 (PRs #231, this one)
+**Done**: #231 mass sell buildings (`/mass_purchase/sell`), `/calculator`, Past trades in My Offers (`market_fills`), info-line fix (classic cards show only "Employs N workers"; map sheet labels base values).
+This PR: war cards show your ground/air/naval AP and list newest declaration first (`wars/routes.py`), "Employed here" row on the province page (`province_jobs`).
+Already shipped earlier (no work needed): trade deals on the revenue page (#212), higher education fills lower jobs (`economy/workforce.py`).
+**What to watch**: school capacity jump (5k/10k/40k) changes education mix; mass sell refunds equal single sell (full gold + materials, same as existing route).
+**Not done (passed votes, reasons)**: destroyed-buildings war log and public war history page need new war storage in `attack_scripts/war_orchestrator.py` and templates that open PR #229 also rewrites (do after #229 lands); coalition bank opt-out changes how bank balances are withdrawn (money design, needs Dede); big features (vacation mode, login bonus, tutorial rework, resource bonds, electricity, sidebar UI).
+**Deploy gotcha**: a Railway web deploy can show FAILED with no logs while the workflow says success; check `/deploy-info` for the new sha, then `railway redeploy --service web --yes`.

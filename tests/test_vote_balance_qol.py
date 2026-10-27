@@ -164,3 +164,12 @@ def test_calc_quote_matches_real_prices(monkeypatch):
 
     q = province._calc_quote(None, 1, "cityCount", 3, 8)
     assert q["gold"] == land_city_purchase_cost("cityCount", 3, 5, [], 1.0) and q["resources"] == {}
+
+
+def test_province_jobs_sums_worker_counts():
+    import province
+
+    assert province.province_jobs({}) == 0
+    assert province.province_jobs(None) == 0
+    assert province.province_jobs({"farms": 2, "not_a_building": 9}) == 100_000
+    assert province.province_jobs({"farms": 1, "primary_school": 1}) == 80_000
