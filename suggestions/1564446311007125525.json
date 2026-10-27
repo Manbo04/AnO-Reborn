@@ -1,0 +1,23 @@
+{
+  "author_id": "249007223454433292",
+  "created_at": "2026-10-27T01:11:06Z",
+  "kind": "suggestion",
+  "last_message_id": "1564446311007125525",
+  "last_player_message_at": "2026-10-27T01:11:06Z",
+  "messages": [
+    {
+      "at": "2026-10-27T01:11:06Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1564446311007125525",
+      "staff": false,
+      "text": "A checkbox to toggle between Available & All Projects for convenience."
+    }
+  ],
+  "status": "new",
+  "thread_id": "1564446311007125525",
+  "title": "Available/Unlocked Projects",
+  "url": "https://discord.com/channels/708006319658893385/1564446311007125525"
+}
