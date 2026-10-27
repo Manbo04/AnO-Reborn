@@ -1289,7 +1289,7 @@ def create_app():
         try:
             from app_core.economy.building_costs import building_info_text
 
-            return building_info_text(unit.split(", ")[0])
+            return building_info_text(unit.split(", ")[0], employs_only=True)
         except Exception:
             return ""
 

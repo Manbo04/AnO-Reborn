@@ -1,0 +1,67 @@
+{% extends "layout.html" %}{% block title %} Cost Calculator {% endblock %}{% block body_class %} page-calculator game-page-v2{% endblock %}{% block body %}
+{% from 'macros/game_ui.html' import game_button %}
+
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/province.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+
+<div class="templatediv">
+    <div class="templatedivtopper provincestopper">
+        <h1 class="templatedivtitle"><span class="material-icons-outlined iconlarge">calculate</span>Cost Calculator</h1>
+    </div>
+    <div class="templatedivcontent">
+        <p class="templatecontentpleft">Work out what it costs to take cities, land or any building from one amount to another. Prices come from the same code as the real purchase, including your policies, so what you see is what you pay.</p>
+        <div class="game-glass game-panel" style="margin-bottom:16px;">
+            <label for="calcUnit">What do you want to price?</label>
+            <select id="calcUnit" class="templateselect">
+                {% for key, label in units %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
+            </select>
+            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:12px;">
+                <div style="flex:1 1 140px;">
+                    <label for="calcFrom">Starting amount (owned now)</label>
+                    <input id="calcFrom" class="loginsignupinput" type="number" min="0" max="100000" inputmode="numeric" value="0" />
+                </div>
+                <div style="flex:1 1 140px;">
+                    <label for="calcTo">Target amount</label>
+                    <input id="calcTo" class="loginsignupinput" type="number" min="1" max="100000" inputmode="numeric" value="10" />
+                </div>
+            </div>
+            <p class="game-faint" style="font-size:12px; margin:8px 0 0;">For buildings, the amount is how many you would build in total (cost is per building, so 0 to 10 is ten buildings).</p>
+        </div>
+        <div id="calcResult" class="game-glass game-panel" aria-live="polite" hidden>
+            <div class="game-faint" style="font-size:12px;">Total cost</div>
+            <div id="calcGold" class="game-mono" style="font-size:1.4rem;"></div>
+            <div id="calcRes" class="game-faint" style="font-size:13px; margin-top:4px;"></div>
+        </div>
+        <p id="calcError" class="ec-preview is-bad" hidden></p>
+        <div style="margin-top:16px;">
+            {{ game_button('Back to Mass Purchase', icon='payments', href='/mass_purchase', variant='secondary') }}
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    var unit = document.getElementById('calcUnit'), from = document.getElementById('calcFrom'), to = document.getElementById('calcTo');
+    var box = document.getElementById('calcResult'), err = document.getElementById('calcError');
+    var timer = null, seq = 0;
+    function fmt(n) { return Number(n).toLocaleString('en-US'); }
+    function run() {
+        var mine = ++seq;
+        fetch('/calculator/quote?unit=' + encodeURIComponent(unit.value) + '&from=' + encodeURIComponent(from.value) + '&to=' + encodeURIComponent(to.value), { credentials: 'same-origin' })
+            .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+            .then(function (res) {
+                if (mine !== seq) return;
+                if (!res.ok) { box.hidden = true; err.hidden = false; err.textContent = res.j.error || 'Could not price that.'; return; }
+                err.hidden = true; box.hidden = false;
+                document.getElementById('calcGold').textContent = '$' + fmt(res.j.gold) + ' for ' + fmt(res.j.units);
+                var parts = Object.keys(res.j.resources).map(function (k) { return fmt(res.j.resources[k]) + ' ' + k.replace(/_/g, ' '); });
+                document.getElementById('calcRes').textContent = parts.length ? 'Plus: ' + parts.join(', ') : 'No materials needed.';
+            })
+            .catch(function () { if (mine === seq) { box.hidden = true; err.hidden = false; err.textContent = 'Could not reach the server.'; } });
+    }
+    function later() { clearTimeout(timer); timer = setTimeout(run, 250); }
+    [unit, from, to].forEach(function (el) { el.addEventListener('input', later); el.addEventListener('change', later); });
+    run();
+})();
+</script>
+{% endblock %}

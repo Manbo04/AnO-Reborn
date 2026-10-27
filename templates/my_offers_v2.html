@@ -321,6 +321,44 @@
         </div>
         {% endif %}
         </div>
+
+        <div class="game-glass game-panel" style="margin-bottom: 18px;" id="trade-history">
+            <h2 class="templatecontentheaderleft">Past trades</h2>
+            <p class="game-faint" style="font-size:12.5px;">Your most recent {{ history | length }} filled market offers (up to 250), newest first.</p>
+            <form method="get" action="/my_offers#trade-history" style="display:flex; flex-wrap:wrap; gap:8px; align-items:flex-end; margin-bottom:12px;">
+                <div><label for="h_resource" class="game-faint" style="font-size:12px;">Resource</label>
+                    <input class="loginsignupinput" id="h_resource" name="h_resource" value="{{ history_filters.resource }}" placeholder="e.g. steel" style="max-width:130px;" /></div>
+                <div><label for="h_min" class="game-faint" style="font-size:12px;">Price from</label>
+                    <input class="loginsignupinput" id="h_min" name="h_min" type="number" min="0" inputmode="numeric" value="{{ history_filters.min }}" style="max-width:110px;" /></div>
+                <div><label for="h_max" class="game-faint" style="font-size:12px;">Price to</label>
+                    <input class="loginsignupinput" id="h_max" name="h_max" type="number" min="0" inputmode="numeric" value="{{ history_filters.max }}" style="max-width:110px;" /></div>
+                <div><label for="h_from" class="game-faint" style="font-size:12px;">From date</label>
+                    <input class="loginsignupinput" id="h_from" name="h_from" type="date" value="{{ history_filters.from }}" /></div>
+                <div><label for="h_to" class="game-faint" style="font-size:12px;">To date</label>
+                    <input class="loginsignupinput" id="h_to" name="h_to" type="date" value="{{ history_filters.to }}" /></div>
+                <button type="submit" class="game-btn game-btn-primary"><span class="material-icons-outlined">filter_alt</span> Filter</button>
+                <a class="game-btn game-btn-secondary" href="/my_offers#trade-history">Clear</a>
+            </form>
+            {% if history | length == 0 %}
+            <h3 class="templatecontentheadercenter">No past trades{% if history_filters.resource or history_filters.min != '' or history_filters.max != '' or history_filters.from or history_filters.to %} match those filters{% endif %}</h3>
+            {% else %}
+            <div class="templateoutertablediv">
+                <table class="templatetable templatetable2">
+                    <tr><th>Date</th><th>Type</th><th>Resource</th><th>Amount</th><th>Price each</th><th>Nation</th></tr>
+                    {% for at, side, resource, amount, price, currency_id, other in history %}
+                    <tr>
+                        <td>{{ at.strftime('%Y-%m-%d %H:%M') if at else '' }}</td>
+                        <td>{{ side }}</td>
+                        <td>{{ resource | replace('_', ' ') | title }}</td>
+                        <td>{{ amount | fmt }}</td>
+                        <td>${{ price | fmt }}{% if currency_id %} <small>(in currency)</small>{% endif %}</td>
+                        <td>{% if other %}<a href="/country/id={{ other }}">#{{ other }}</a>{% else %}&mdash;{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}

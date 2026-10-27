@@ -2501,6 +2501,217 @@ def _mass_buy_buildings(db, cId, unit, mode, quantity, province_ids):
     return bought_in, total_spent, owned, failures
 
 
+def _mass_sell_buildings(db, cId, unit, mode, quantity, province_ids):
+    """Sell `unit` buildings across the user's selected provinces (the reverse
+    of Mass Purchase; weekly vote 10-09, 16 yes / 1 no). Refunds exactly what
+    selling one by one refunds: same price/policy maths, resources through the
+    ledger, audit + revenue rows. mode "remove" sells `quantity` per province,
+    mode "all" sells every one of that building. Each province runs in its own
+    SAVEPOINT. Returns (provinces_sold_in, units_sold, gold_refunded, failures).
+    """
+    from app_core.economy.building_purchase import _load_policies
+
+    failures = []
+    db.execute(
+        "SELECT 1 FROM wars WHERE (attacker = %s OR defender = %s) "
+        "AND peace_date IS NULL LIMIT 1",
+        (cId, cId),
+    )
+    if db.fetchone():
+        return 0, 0, 0, [
+            "Buildings cannot be sold while you are at war. "
+            "Resolve the war through peace or its normal outcome first."
+        ]
+    unit_prices = variables.PROVINCE_UNIT_PRICES
+    price = unit_prices.get(f"{unit}_price", 0)
+    policies = _load_policies(db, cId)
+    if 2 in policies:
+        price *= 0.96
+    if 6 in policies and unit == "universities":
+        price *= 0.93
+    if 1 in policies and unit == "universities":
+        price *= 1.14
+    resources = dict(unit_prices.get(f"{unit}_resource", {}) or {})
+
+    db.execute(
+        "SELECT id, provinceName FROM provinces "
+        "WHERE userId = %s AND id = ANY(%s) ORDER BY id FOR UPDATE",
+        (cId, province_ids),
+    )
+    provinces = db.fetchall()
+    sold_in, units_sold, gold_total = 0, 0, 0
+    for pid, pname in provinces:
+        db.execute("SAVEPOINT mass_sell_building")
+        try:
+            db.execute(
+                """
+                SELECT ub.quantity FROM user_buildings ub
+                JOIN building_dictionary bd ON bd.building_id = ub.building_id
+                WHERE ub.user_id = %s AND ub.province_id = %s AND bd.name = %s
+                FOR UPDATE OF ub
+                """,
+                (cId, pid, unit),
+            )
+            row = db.fetchone()
+            have = int(row[0] or 0) if row else 0
+            num = have if mode == "all" else min(quantity, have)
+            if num < 1:
+                db.execute("RELEASE SAVEPOINT mass_sell_building")
+                continue
+            db.execute(
+                """
+                UPDATE user_buildings SET quantity = quantity - %s
+                WHERE user_id = %s AND province_id = %s AND quantity >= %s
+                  AND building_id = (
+                      SELECT building_id FROM building_dictionary WHERE name = %s
+                  )
+                """,
+                (num, cId, pid, num, unit),
+            )
+            if db.rowcount != 1:
+                raise ValueError("building count changed")
+            refund = int(num * price)
+            db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
+            gold_before = (db.fetchone() or [0])[0] or 0
+            ledger.credit_gold(db, cId, refund)
+            if resources:
+                ledger.credit_resources(
+                    db, cId, {r: int(a) * num for r, a in resources.items()}
+                )
+            db.execute(
+                "INSERT INTO purchase_audit (user_id, province_id, unit, units, "
+                "gold_before, gold_after, note) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                (cId, pid, unit, num, gold_before, gold_before + refund,
+                 f"sell_{unit}"),
+            )
+            db.execute(
+                "INSERT INTO revenue (user_id, type, name, description, date, "
+                "resource, amount) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                (cId, "revenue", f"Selling {num} {unit} in a province.", "",
+                 get_date(), unit, num),
+            )
+            db.execute("RELEASE SAVEPOINT mass_sell_building")
+            sold_in += 1
+            units_sold += num
+            gold_total += refund
+        except Exception as exc:
+            db.execute("ROLLBACK TO SAVEPOINT mass_sell_building")
+            logging.getLogger(__name__).info(
+                "Mass sell of %s in province %s (user %s) skipped: %s",
+                unit, pid, cId, exc,
+            )
+            failures.append(f"{pname}: could not sell")
+    return sold_in, units_sold, gold_total, failures
+
+
+@bp.route("/mass_purchase/sell", methods=["POST"])
+@login_required
+@require_post_origin
+def mass_purchase_sell():
+    """Sell one building type across several provinces in one submit."""
+    cId = session["user_id"]
+    unit = _normalize_mass_unit(request.form.get("building"))
+    mode = "all" if request.form.get("sell_type") == "all" else "remove"
+    if unit in MASS_LAND_CITY_UNITS or f"{unit}_price" not in variables.PROVINCE_UNIT_PRICES:
+        flash("Pick a building to sell.", "error")
+        return redirect("/mass_purchase")
+    quantity = 0
+    if mode == "remove":
+        try:
+            quantity = int(request.form.get("quantity"))
+        except (TypeError, ValueError):
+            flash("Enter a valid amount.", "error")
+            return redirect("/mass_purchase")
+        if quantity < 1 or quantity > MASS_PURCHASE_MAX_PER_PROVINCE:
+            flash("Enter an amount from 1 to %s." % f"{MASS_PURCHASE_MAX_PER_PROVINCE:,}", "error")
+            return redirect("/mass_purchase")
+    province_ids = [int(p) for p in request.form.getlist("province_ids") if p.isdigit()]
+    if not province_ids:
+        flash("Select at least one province.", "error")
+        return redirect("/mass_purchase")
+
+    with get_request_cursor() as db:
+        db.execute("SELECT pg_advisory_xact_lock(%s)", (cId,))
+        sold_in, units_sold, gold_total, failures = _mass_sell_buildings(
+            db, cId, unit, mode, quantity, province_ids
+        )
+    try:
+        invalidate_user_cache(cId)
+        from database import query_cache, invalidate_view_cache
+
+        query_cache.invalidate(pattern=f"provinces_{cId}_")
+        query_cache.invalidate(pattern=f"province_{cId}_")
+        invalidate_view_cache("province", user_id=cId)
+        invalidate_view_cache("provinces", user_id=cId)
+    except Exception:
+        pass
+    name = unit.replace("_", " ").title()
+    if units_sold:
+        flash(
+            f"Sold {units_sold:,} {name} in {sold_in} province(s) "
+            f"for ${gold_total:,} plus the materials back."
+        )
+    elif not failures:
+        flash(f"None of the selected provinces have any {name} to sell.", "error")
+    for f in failures:
+        flash(f, "error")
+    return redirect("/mass_purchase")
+
+
+CALC_MAX_UNITS = 100_000
+
+
+def _calc_quote(db, cId, unit, start, target):
+    """Total cost to take `unit` from `start` owned to `target` owned, using
+    the exact functions the real buy routes use (so the calculator can't drift
+    from what you'd be charged; weekly vote 10-16, 6 yes / 0 no)."""
+    from app_core.economy.building_costs import land_city_purchase_cost
+    from app_core.economy.building_purchase import _load_policies
+
+    policies = _load_policies(db, cId)
+    num = target - start
+    if unit in MASS_LAND_CITY_UNITS:
+        gold = land_city_purchase_cost(
+            unit, start, num, policies, land_price_multiplier_for(active_keys(db, cId))
+        )
+        return {"gold": int(gold), "resources": {}, "units": num}
+    cost = get_build_cost(unit, policies)
+    return {
+        "gold": int(cost["gold"]) * num,
+        "resources": {r: int(a) * num for r, a in (cost["resources"] or {}).items()},
+        "units": num,
+    }
+
+
+@bp.route("/calculator", methods=["GET"])
+@login_required
+def cost_calculator():
+    units = [("cityCount", "Cities"), ("land", "Land")]
+    for n in sorted(list(CITY_UNITS) + list(LAND_UNITS)):
+        units.append((n, n.replace("_", " ").title()))
+    return render_template("calculator_v2.html", units=units)
+
+
+@bp.route("/calculator/quote", methods=["GET"])
+@login_required
+def cost_calculator_quote():
+    cId = session["user_id"]
+    unit = _normalize_mass_unit(request.args.get("unit"))
+    try:
+        start = int(request.args.get("from", 0))
+        target = int(request.args.get("to", 0))
+    except (TypeError, ValueError):
+        return jsonify({"error": "Enter whole numbers."}), 400
+    if unit not in MASS_LAND_CITY_UNITS and f"{unit}_price" not in variables.PROVINCE_UNIT_PRICES:
+        return jsonify({"error": "Pick something to price."}), 400
+    if start < 0 or target <= start:
+        return jsonify({"error": "The target must be higher than the starting amount."}), 400
+    if target - start > CALC_MAX_UNITS:
+        return jsonify({"error": f"At most {CALC_MAX_UNITS:,} at a time."}), 400
+    with get_request_cursor() as db:
+        return jsonify(_calc_quote(db, cId, unit, start, target))
+
+
 @bp.route("/mass_purchase/buy", methods=["POST"])
 @login_required
 @require_post_origin

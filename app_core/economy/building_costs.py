@@ -214,8 +214,12 @@ def building_info(name: str) -> dict:
     }
 
 
-def building_info_text(name: str) -> str:
-    """One-line player-facing version of building_info()."""
+def building_info_text(name: str, employs_only: bool = False) -> str:
+    """One-line player-facing version of building_info().
+
+    Output/upkeep shown here are the BASE values; the classic province cards
+    already print upgrade-adjusted numbers, so they use employs_only=True to
+    avoid two different figures on one card."""
     info = building_info(name)
 
     def pretty(d, sign=""):
@@ -224,10 +228,12 @@ def building_info_text(name: str) -> str:
     parts = []
     if info["employs"]:
         parts.append(f"Employs {info['employs']:,} workers")
+    if employs_only:
+        return " · ".join(parts)
     if info["upkeep"]:
-        parts.append(f"upkeep ${info['upkeep']:,}/h")
+        parts.append(f"base upkeep ${info['upkeep']:,}/h")
     if info["produces"]:
-        parts.append("makes " + pretty(info["produces"]))
+        parts.append("base output " + pretty(info["produces"]))
     if info["consumes"]:
         parts.append("uses " + pretty(info["consumes"]))
     if info["effects"]:

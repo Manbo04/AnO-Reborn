@@ -553,6 +553,43 @@ def record_market_fill(db, offer_id, resource, amount, price, currency_id,
          int(gold_price), seller_id, buyer_id),
     )
 
+MY_TRADE_HISTORY_LIMIT = 250
+
+
+def get_my_trade_history(db, user_id, resource=None, min_price=None,
+                         max_price=None, date_from=None, date_to=None):
+    """The user's most recent filled market offers (weekly vote 10-16: past
+    trades in My Offers, newest 250, filterable by resource, price and date).
+    Rows: (created_at, side, resource, amount, price, currency_id, counterparty).
+    `side` is "Sold" or "Bought" from the user's point of view."""
+    where = ["(f.seller_id = %s OR f.buyer_id = %s)"]
+    params = [user_id, user_id]
+    if resource:
+        where.append("f.resource = %s")
+        params.append(resource)
+    if min_price is not None:
+        where.append("f.price >= %s")
+        params.append(min_price)
+    if max_price is not None:
+        where.append("f.price <= %s")
+        params.append(max_price)
+    if date_from:
+        where.append("f.created_at >= %s::date")
+        params.append(date_from)
+    if date_to:
+        where.append("f.created_at < (%s::date + 1)")
+        params.append(date_to)
+    db.execute(
+        "SELECT f.created_at, CASE WHEN f.seller_id = %s THEN 'Sold' ELSE 'Bought' END, "
+        "f.resource, f.amount, f.price, f.currency_id, "
+        "CASE WHEN f.seller_id = %s THEN f.buyer_id ELSE f.seller_id END "
+        "FROM market_fills f WHERE " + " AND ".join(where) +
+        " ORDER BY f.created_at DESC, f.id DESC LIMIT " + str(MY_TRADE_HISTORY_LIMIT),
+        [user_id, user_id] + params,
+    )
+    return db.fetchall()
+
+
 def get_last_fill_prices(db, resources):
     """{resource: (gold_price, created_at)} of the latest fill per resource."""
     if not resources:
