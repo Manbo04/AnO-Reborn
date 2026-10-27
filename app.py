@@ -709,6 +709,9 @@ def create_app():
     if upgrades_bp: app.register_blueprint(upgrades_bp)
     app.register_blueprint(intelligence.bp)
     app.register_blueprint(wars_bp)
+    from wars.history import war_history_bp
+
+    app.register_blueprint(war_history_bp)
     app.register_blueprint(treaties_bp)
     app.register_blueprint(loans_bp)
     app.register_blueprint(bonds_bp)

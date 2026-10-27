@@ -1012,3 +1012,8 @@ Already shipped earlier (no work needed): trade deals on the revenue page (#212)
 **What to watch**: school capacity jump (5k/10k/40k) changes education mix; mass sell refunds equal single sell (full gold + materials, same as existing route).
 **Not done (passed votes, reasons)**: destroyed-buildings war log and public war history page need new war storage in `attack_scripts/war_orchestrator.py` and templates that open PR #229 also rewrites (do after #229 lands); coalition bank opt-out changes how bank balances are withdrawn (money design, needs Dede); big features (vacation mode, login bonus, tutorial rework, resource bonds, electricity, sidebar UI).
 **Deploy gotcha**: a Railway web deploy can show FAILED with no logs while the workflow says success; check `/deploy-info` for the new sha, then `railway redeploy --service web --yes`.
+
+## 2026-10-27 — War history + destroyed-buildings log (passed votes)
+- New `war_building_losses` table (migration 20261027_2000) and `wars/history.py`: `record_building_loss` (savepoint, never breaks an attack), public `/war_history` list and `/war_history/<id>` detail (per-nation, per-building losses; nuke losses read from `nuclear_strikes`). Linked from the Wars page.
+- Hooked in `wars/service.py:apply_building_damage` (drone, cruise, bomber strikes) and `Military.infrastructure_damage` (ground battles). Ground losses attach to the victim's latest unfinished war.
+- Built on master, not on the open #229 branch; it edits the same war files, so whichever lands second takes a small conflict.
