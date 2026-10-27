@@ -271,6 +271,8 @@ Tables no static query touches (dynamic SQL, scripts, or dead): `coalition_membe
 | `/build_structure` | POST | `province:build_structure_action` |
 | `/businesses` | GET | `app_core.game_engine.routes:businesses` |
 | `/buy_offer/<offer_id>` | POST | `app_core.market.routes:buy_market_offer` |
+| `/calculator` | GET | `province:cost_calculator` |
+| `/calculator/quote` | GET | `province:cost_calculator_quote` |
 | `/callback` | GET | `signup:callback` |
 | `/change` | POST | `change:change` |
 | `/coalition/<coalition_id>` | GET | `app_core.coalitions.routes:coalition` |
@@ -379,6 +381,7 @@ Tables no static query touches (dynamic SQL, scripts, or dead): `coalition_membe
 | `/mass_purchase` | GET | `app_core.game_engine.routes:mass_purchase` |
 | `/mass_purchase/buy` | POST | `province:mass_purchase_buy` |
 | `/mass_purchase/preview` | POST | `province:mass_purchase_preview` |
+| `/mass_purchase/sell` | POST | `province:mass_purchase_sell` |
 | `/mechanics` | GET | `app_core.main.routes:mechanics` |
 | `/mechanics/biomes` | GET | `app_core.main.routes:mechanics_biomes` |
 | `/mechanics/consumer_goods` | GET | `app_core.main.routes:mechanics_consumer_goods` |
