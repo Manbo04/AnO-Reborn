@@ -2,8 +2,8 @@
   "author_id": "1180720719060029500",
   "created_at": "2026-10-23T00:38:00Z",
   "kind": "bug",
-  "last_message_id": "1563247779889942632",
-  "last_player_message_at": "2026-10-23T00:38:00Z",
+  "last_message_id": "1564484948755488851",
+  "last_player_message_at": "2026-10-27T03:44:38Z",
   "messages": [
     {
       "at": "2026-10-23T00:38:00Z",
@@ -26,6 +26,16 @@
       "id": "1563247779889942632",
       "staff": false,
       "text": "<@1180720719060029500> the bank deposit buttons are fixed and live. Personal Deposit is now the first button (and what Enter does), it goes into your personal balance and you can withdraw it yourself anytime. Donate to Alliance is the second one, asks you to confirm, and a donation can't be taken back by you (only alliance leadership can return it). A deposit with no button chosen is now rejected instead of silently becoming a donation. The \"swap\" you saw is that reorder. I checked the log: personal deposits since the fix are all crediting the personal balance correctly. If a personal deposit still vanishes for you, send me the time and I'll trace it."
+    },
+    {
+      "at": "2026-10-27T03:44:38Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1564484948755488851",
+      "staff": false,
+      "text": "Nope, personal deposits are going into coalition bank for me. for some stuff and not others. lumber and iron and bauxite goes into my personal deposit. money rations consumer goods disappear into coalition bank"
     }
   ],
   "thread_id": "1562988429740875926",
