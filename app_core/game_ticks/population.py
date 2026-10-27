@@ -67,9 +67,9 @@ def calc_education_graduation(pop_children, policies, primary_buildings, hs_buil
 
     can_graduate = min(pop_children, int(round(pop_children * graduation_rate)))
     
-    true_primary_capacity = primary_buildings * 1000
-    hs_capacity = hs_buildings * 900
-    uni_capacity = uni_buildings * 5000
+    true_primary_capacity = primary_buildings * variables.PRIMARY_SCHOOL_CAPACITY
+    hs_capacity = hs_buildings * variables.HIGH_SCHOOL_CAPACITY
+    uni_capacity = uni_buildings * variables.UNIVERSITY_CAPACITY
     
     primary_capacity = true_primary_capacity
     grace_until = None

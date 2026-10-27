@@ -994,3 +994,13 @@ morale-zero ending); `/defense` retired (button + nav entry removed, URL redirec
 
 **What to watch**: surrender hands the winner the normal 20%/30% war spoils (same as morale zero); sessions created before this
 deploy have no `attack_issued_at`, so an in-flight attack from a pre-deploy cookie resolves only if it is the war's first attack.
+
+## 2026-10-27 — Weekly-vote balance + QoL batch (loan fee, schools, info, workforce panel)
+**Done** (branch `feat/vote-balance-qol`): loan fee is now marginal (10% up to 70% of cap, 20% only on the part above; `compute_fee`);
+school capacities moved to `variables` (primary 5,000 / high school 10,000 / university 40,000 per tick, was 1,000/900/5,000) and
+primary + high school build costs halved (soft-lock complaint); "i" info on building cards (`building_info_text`: workers, upkeep,
+output, effects) in the province map sheet and classic cards; "Workforce & jobs" panel on the nation page (jobs per education tier vs workers).
+Already true, no change: higher-educated people can already fill lower jobs (efficiency counts all workers, `economy/workforce.py`).
+**What to watch**: 5x-11x education throughput changes population education mix over the next days; loans issued before deploy keep their old fee.
+**Not done (still passed votes)**: mass sell buildings, past trades in "my offers", revenue page with trades, cost calculators, building-destroyed war log,
+war cards AP/sort, per-province "X/X employed" slot, coalition bank opt-out, other features (vacation mode, login bonus, tutorial rework, resource bonds).

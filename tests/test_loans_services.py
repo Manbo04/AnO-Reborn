@@ -140,10 +140,21 @@ def test_compute_fee_rate_base_below_threshold():
     assert services.compute_fee_rate(1_000_000, 40_000_000) == variables.LOAN_ORIGINATION_FEE
 
 
-def test_compute_fee_rate_high_utilization_above_threshold():
+def test_compute_fee_marginal_above_threshold():
+    # Only the part above the 70% line pays the higher rate.
     cap = 40_000_000
-    amount = int(cap * variables.LOAN_HIGH_UTILIZATION_THRESHOLD) + 1
-    assert services.compute_fee_rate(amount, cap) == variables.LOAN_HIGH_UTILIZATION_FEE
+    line = int(cap * variables.LOAN_HIGH_UTILIZATION_THRESHOLD)
+    assert services.compute_fee(line, cap) == int(round(line * variables.LOAN_ORIGINATION_FEE))
+    amount = cap
+    expected = int(round(
+        line * variables.LOAN_ORIGINATION_FEE
+        + (amount - line) * variables.LOAN_HIGH_UTILIZATION_FEE
+    ))
+    assert services.compute_fee(amount, cap) == expected
+    # Blended rate sits between the two rates and is below the old flat 15%.
+    rate = services.compute_fee_rate(amount, cap)
+    assert variables.LOAN_ORIGINATION_FEE < rate < variables.LOAN_HIGH_UTILIZATION_FEE
+    assert rate < 0.15
 
 
 def test_cooldown_remaining_none_when_never_borrowed(monkeypatch):
@@ -252,7 +263,7 @@ def test_take_loan_success_charges_high_utilization_fee(monkeypatch):
     monkeypatch.setattr(services, "credit_gold", lambda db, uid, amount: None)
     ok, err, category = services.take_loan(QueuedCursor(), 1, amount)
     assert ok is True
-    assert insert_calls == [(1, amount, int(round(amount * (1 + variables.LOAN_HIGH_UTILIZATION_FEE))))]
+    assert insert_calls == [(1, amount, amount + services.compute_fee(amount, cap))]
 
 
 # ---------------------------------------------------------------------------
@@ -368,8 +379,10 @@ def test_loan_quote_matches_take_loan_fee_rules():
     assert q["valid"] and q["fee_rate"] == variables.LOAN_ORIGINATION_FEE
     assert q["total_repay"] == int(round(700_000 * (1 + variables.LOAN_ORIGINATION_FEE)))
     assert q["threshold_value"] == 700_000
-    q = services.loan_quote(700_001, cap)
-    assert q["fee_rate"] == variables.LOAN_HIGH_UTILIZATION_FEE and q["over_threshold"]
+    q = services.loan_quote(800_000, cap)
+    assert q["over_threshold"]
+    assert q["fee"] == int(round(700_000 * variables.LOAN_ORIGINATION_FEE + 100_000 * variables.LOAN_HIGH_UTILIZATION_FEE))
+    assert q["total_repay"] == 800_000 + q["fee"]
     assert not services.loan_quote(cap + 1, cap)["valid"]
     assert not services.loan_quote(None, cap)["valid"]
 

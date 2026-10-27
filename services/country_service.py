@@ -136,6 +136,7 @@ class CountryService:
         total_elderly = 0
         resource_rows = []
         building_rows = []
+        workforce_needs = None
         technology_rows = []
 
         members_tbl = get_coalition_members_table()
@@ -377,6 +378,26 @@ class CountryService:
                 )
                 building_rows_raw = db.fetchall() or []
                 building_rows = [(r[0], r[1]) for r in building_rows_raw]
+                try:
+                    # Jobs by education tier vs workers (weekly vote 10-16
+                    # "show education needs"). Own cursor query, failures
+                    # here must not break the country page.
+                    from app_core.economy.workforce import workforce_by_education
+                    db.execute(
+                        "SELECT COALESCE(SUM(edu_none), 0), COALESCE(SUM(edu_highschool), 0), "
+                        "COALESCE(SUM(edu_college), 0) FROM provinces WHERE userid = %s",
+                        (cId,),
+                    )
+                    _edu = db.fetchone() or (0, 0, 0)
+                    workforce_needs = workforce_by_education(
+                        {r[2]: int(r[1] or 0) for r in building_rows_raw},
+                        {"edu_none": _edu[0], "edu_highschool": _edu[1], "edu_college": _edu[2]},
+                        total_working,
+                        variables.BUILDING_EMPLOYMENT_MATRICES,
+                    )
+                except Exception:
+                    rollback_db_cursor(db)
+                    workforce_needs = None
             
                 target_silos = 0
                 for r in building_rows_raw:
@@ -953,6 +974,7 @@ class CountryService:
             "policies": policies,
             "resource_rows": resource_rows,
             "building_rows": building_rows,
+            "workforce_needs": workforce_needs,
             "total_buildings": sum(qty for _, qty in building_rows) if building_rows else 0,
             "technology_rows": technology_rows,
             "last_active": last_active,
