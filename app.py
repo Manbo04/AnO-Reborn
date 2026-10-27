@@ -1285,6 +1285,15 @@ def create_app():
             return unit
 
     @app.template_filter()
+    def building_info(unit):
+        try:
+            from app_core.economy.building_costs import building_info_text
+
+            return building_info_text(unit.split(", ")[0])
+        except Exception:
+            return ""
+
+    @app.template_filter()
     def milres(unit):
         try:
             from variables import MILDICT

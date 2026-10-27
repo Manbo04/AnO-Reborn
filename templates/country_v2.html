@@ -220,6 +220,28 @@
                 </div>
             </div>
 
+            {% if workforce_needs and workforce_needs.jobs_total > 0 %}
+            <div class="game-glass game-panel" style="margin-bottom: 20px;">
+                <div class="game-panel-head">
+                    <div class="game-panel-title">Workforce &amp; jobs</div>
+                </div>
+                <table class="game-table" style="width:100%;">
+                    <thead><tr><th style="text-align:left;">Education</th><th style="text-align:right;">Jobs wanted</th><th style="text-align:right;">Workers</th></tr></thead>
+                    <tbody>
+                    {% for r in workforce_needs.rows %}
+                    <tr><td>{{ r.label }}</td><td style="text-align:right;">{{ r.needed | fmt }}</td><td style="text-align:right;">{{ r.have | fmt }}</td></tr>
+                    {% endfor %}
+                    <tr><td><strong>Total</strong></td><td style="text-align:right;"><strong>{{ workforce_needs.jobs_total | fmt }}</strong></td><td style="text-align:right;"><strong>{{ workforce_needs.workers_total | fmt }}</strong></td></tr>
+                    </tbody>
+                </table>
+                <p class="game-faint" style="font-size: 12px; margin: 8px 0 0;">
+                    {% if workforce_needs.unfilled_jobs > 0 %}<span class="text-danger">{{ workforce_needs.unfilled_jobs | fmt }} jobs have no worker</span>, so production runs below full efficiency.
+                    {% else %}Every job has a worker ({{ workforce_needs.idle_workers | fmt }} people without a job).{% endif %}
+                    Any worker can fill any job, so more educated people cover less educated roles.
+                </p>
+            </div>
+            {% endif %}
+
             <div class="game-grid-2" style="margin-bottom: 20px;">
                 <div class="game-glass game-panel">
                     <div class="game-panel-head">
