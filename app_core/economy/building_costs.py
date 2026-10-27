@@ -197,6 +197,50 @@ def get_slot_type(building_name: str) -> str | None:
     return None
 
 
+def building_info(name: str) -> dict:
+    """What a building does, from the same tables the tick uses: workers it
+    employs, upkeep, what it produces/consumes and side effects. Shown as the
+    "i" info on building cards (weekly vote 10-09 / 10-16)."""
+    import variables
+
+    infra = variables.NEW_INFRA.get(name) or {}
+    matrix = variables.BUILDING_EMPLOYMENT_MATRICES.get(name) or {}
+    return {
+        "employs": int(matrix.get("worker_count", 0) or 0),
+        "upkeep": int(infra.get("money", 0) or 0),
+        "produces": dict(infra.get("plus") or {}),
+        "consumes": dict(infra.get("minus") or {}),
+        "effects": dict(infra.get("eff") or {}),
+    }
+
+
+def building_info_text(name: str, employs_only: bool = False) -> str:
+    """One-line player-facing version of building_info().
+
+    Output/upkeep shown here are the BASE values; the classic province cards
+    already print upgrade-adjusted numbers, so they use employs_only=True to
+    avoid two different figures on one card."""
+    info = building_info(name)
+
+    def pretty(d, sign=""):
+        return ", ".join(f"{sign}{v:,} {k.replace('_', ' ')}" for k, v in d.items())
+
+    parts = []
+    if info["employs"]:
+        parts.append(f"Employs {info['employs']:,} workers")
+    if employs_only:
+        return " · ".join(parts)
+    if info["upkeep"]:
+        parts.append(f"base upkeep ${info['upkeep']:,}/h")
+    if info["produces"]:
+        parts.append("base output " + pretty(info["produces"]))
+    if info["consumes"]:
+        parts.append("uses " + pretty(info["consumes"]))
+    if info["effects"]:
+        parts.append("effects: " + pretty(info["effects"], "+"))
+    return " · ".join(parts)
+
+
 def enrich_building_row(row: dict, policies: list | None = None) -> dict:
     """Attach canonical cost fields to a building_dictionary row."""
     name = row.get("name") or ""
@@ -212,6 +256,7 @@ def enrich_building_row(row: dict, policies: list | None = None) -> dict:
     out["gold_cost"] = cost["gold"]
     out["resource_cost"] = cost["resources"]
     out["cost_display"] = cost["cost_display"]
+    out["info"] = building_info_text(name)
     return out
 
 

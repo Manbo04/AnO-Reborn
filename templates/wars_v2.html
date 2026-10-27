@@ -21,6 +21,9 @@
                 {{ game_button('Peace Offers', icon='favorite_border', href='/peace_offers', extra_class='center smallactionbutton') }}
             </div>
             <div class="templatedivflex2right">
+                {{ game_button('War History', icon='history', href='/war_history', extra_class='center smallactionbutton') }}
+            </div>
+            <div class="templatedivflex2right">
                 {{ game_button('Intelligence', icon='person_search', href='/intelligence', extra_class='center smallactionbutton') }}
             </div>
         </div>
@@ -119,6 +122,12 @@
                 <h2 class="templatecontentheadercenter">VS</h2>
                 {% if war_info[war_id].get("auto_end_text") %}
                 <div style="font-size: 0.8rem; color: #a0aec0; text-align: center; white-space: nowrap; margin-top: 2px;">{{ war_info[war_id]["auto_end_text"] }}</div>
+                {% endif %}
+                {% set ap = war_info[war_id].get("my_ap") %}
+                {% if ap %}
+                <div class="war-card-ap" title="Your action points in this war (ground / air / naval)" style="font-size: 0.8rem; text-align: center; margin-top: 4px;">
+                    AP &#9876; {{ ap.ground }} &middot; &#9992; {{ ap.air }} &middot; &#9875; {{ ap.naval }}
+                </div>
                 {% endif %}
             </div>
 

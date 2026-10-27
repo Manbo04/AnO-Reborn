@@ -259,6 +259,10 @@
                     : '') +
                 '</div><div class="province-base-building-meta">' +
                 formatCost(b) +
+                (b.info
+                    ? '</div><div class="province-base-building-meta" title="What this building does">&#9432; ' +
+                      escapeHtml(b.info)
+                    : '') +
                 '</div></div>' +
                 '<span class="province-base-building-qty" data-qty>' +
                 b.quantity +

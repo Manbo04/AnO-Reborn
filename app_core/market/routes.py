@@ -4,12 +4,13 @@ from helpers import login_required, redirect_back, error, get_valid_int, record_
 import variables
 from app_core.assembly_effects import MARKET_BLOCK_SQL
 import logging
+import re
 from database import get_request_cursor, invalidate_user_cache, invalidate_view_cache, rollback_db_cursor
 
 from .repositories import (
     is_active_resource, get_user_resource_quantity,
     get_offer_by_id, delete_offer, update_offer_amount, lock_users, get_user_gold_for_update,
-    insert_offer, insert_trade, get_my_trades, get_my_offers, delete_trade, try_lock_trade,
+    insert_offer, insert_trade, get_my_trades, get_my_offers, get_my_trade_history, delete_trade, try_lock_trade,
     unlock_trade, get_trade_by_id, get_username, insert_news, delete_trade_by_id, user_exists,
     decrement_gold, increment_gold, is_embargoed, add_embargo, remove_embargo, list_embargoes,
     get_user_gold, get_user_resource_quantities, get_my_currency_ids,
@@ -654,6 +655,30 @@ def post_offer(offer_type):
     # Land on the book for the resource just listed, so the new offer is in view.
     return redirect("/market?" + urlencode({"resource": resource}))
 
+def _history_filters(args):
+    """Parse the trade-history filter query string; bad values are ignored."""
+    def _int(name):
+        try:
+            v = int(args.get(name, ""))
+            return v if v >= 0 else None
+        except (TypeError, ValueError):
+            return None
+
+    def _date(name):
+        v = (args.get(name) or "").strip()
+        return v if re.fullmatch(r"\d{4}-\d{2}-\d{2}", v) else None
+
+    resource = (args.get("h_resource") or "").strip().lower()
+    if not re.fullmatch(r"[a-z_]{1,40}", resource):
+        resource = None
+    q = {"resource": resource, "min_price": _int("h_min"), "max_price": _int("h_max"),
+         "date_from": _date("h_from"), "date_to": _date("h_to")}
+    return {"query": q, "form": {
+        "resource": resource or "", "min": q["min_price"] if q["min_price"] is not None else "",
+        "max": q["max_price"] if q["max_price"] is not None else "",
+        "from": q["date_from"] or "", "to": q["date_to"] or ""}}
+
+
 @market_bp.route("/my_offers", methods=["GET"])
 @login_required
 def my_offers():
@@ -668,6 +693,8 @@ def my_offers():
         col_partners = get_coalition_embargo_partners(db, cId)
         offer_cur, trade_cur = get_my_currency_ids(db, cId)
         labels = get_currency_labels(db, list(offer_cur.values()) + list(trade_cur.values()))
+        hist_filters = _history_filters(request.args)
+        history = get_my_trade_history(db, cId, **hist_filters["query"])
 
     template = "my_offers_v2.html" if is_theme_v2_enabled("my_offers") else "my_offers.html"
     return render_template(
@@ -675,6 +702,7 @@ def my_offers():
         offer_currency={k: labels.get(v, "currency") for k, v in offer_cur.items()},
         trade_currency={k: labels.get(v, "currency") for k, v in trade_cur.items()},
         coalition_embargo_partners=col_partners,
+        history=history, history_filters=hist_filters["form"],
     )
 
 @market_bp.route("/delete_offer/<offer_id>", methods=["POST"])

@@ -85,7 +85,7 @@
                         <option value="add">Add this many to each province</option>
                         <option value="target">Bring each province up to</option>
                     </select>
-                    <input class="loginsignupinput" id="massPurchaseQuantity" autocomplete="off" name="quantity" type="number" min="1" max="100000" inputmode="numeric" placeholder="Amount" required />
+                    <input class="loginsignupinput" id="massPurchaseQuantity" autocomplete="off" name="quantity" type="number" min="1" max="100000" inputmode="numeric" placeholder="Amount" />
                 </div>
             </div>
 
@@ -128,9 +128,16 @@
                 </table>
             </div>
 
-            <div style="margin-top: 16px;">
+            <div style="margin-top: 16px; display:flex; flex-wrap:wrap; gap:8px;">
+                {{ game_button('Cost calculator', icon='calculate', href='/calculator', variant='secondary') }}
                 {{ game_button('Buy in selected provinces', icon='payments', type='submit') }}
+                <select name="sell_type" class="templateselect" aria-label="How much to sell" style="max-width:260px;">
+                    <option value="remove">Sell this amount from each province</option>
+                    <option value="all">Sell ALL of this building</option>
+                </select>
+                {{ game_button('Sell in selected provinces', icon='remove_circle_outline', type='submit', formaction='/mass_purchase/sell', variant='danger', confirm="return confirm('Sell these buildings? You get the standard refund.')") }}
             </div>
+            <p class="game-faint" style="font-size: 11.5px; margin: 6px 0 0;">Selling works for buildings only (not cities or land) and refunds exactly what selling one province at a time does. Not possible while you are at war.</p>
         </form>
 
         <p class="templatecontentpleft landingpagecontent">

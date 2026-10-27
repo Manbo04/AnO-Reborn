@@ -29,7 +29,7 @@
                 <div class="{{ credit_tone }}" title="{{ credit.label }} credit"><dt>Credit score</dt><dd>{{ credit.score }} <small>{{ credit.label }}</small></dd></div>
                 <div class="tone-info"><dt>Capacity</dt><dd>${{ status.cap | fmt }}</dd></div>
                 <div class="tone-muted"><dt>Base cap</dt><dd>${{ credit.base_cap | fmt }}</dd></div>
-                <div class="tone-warn" title="Borrow above this and the fee is {{ (credit_rules.high_fee * 100) | int }}% instead of {{ (credit_rules.base_fee * 100) | int }}%"><dt>{{ (credit_rules.threshold * 100) | int }}% line</dt><dd>${{ status.threshold_value | fmt }}</dd></div>
+                <div class="tone-warn" title="Only the part you borrow above this line pays {{ (credit_rules.high_fee * 100) | int }}% instead of {{ (credit_rules.base_fee * 100) | int }}%"><dt>{{ (credit_rules.threshold * 100) | int }}% line</dt><dd>${{ status.threshold_value | fmt }}</dd></div>
                 {% if status.has_active_loan %}
                 <div class="{{ 'tone-bad' if credit.counts.in_default else 'tone-warn' }}"><dt>Still owed</dt><dd>${{ status.balance | fmt }}</dd></div>
                 <div class="{{ 'tone-bad' if credit.counts.in_default or credit.counts.overdue else 'tone-info' }}"><dt>Due (UTC)</dt><dd>{{ status.due_at.strftime('%b %d %H:%M') if status.due_at else '—' }}</dd></div>
@@ -62,7 +62,7 @@
                         <dt>Your capacity (after credit)</dt><dd>${{ status.cap | commas }}</dd>
                         {% if not status.has_active_loan %}
                         <dt>Fee up to the {{ (credit_rules.threshold * 100) | int }}% line</dt><dd>{{ (credit_rules.base_fee * 100) | int }}%</dd>
-                        <dt>Fee above the line</dt><dd class="ec-warn">{{ (credit_rules.high_fee * 100) | int }}%</dd>
+                        <dt>Fee on the part above the line</dt><dd class="ec-warn">{{ (credit_rules.high_fee * 100) | int }}%</dd>
                         <dt>Credit effect on capacity</dt><dd class="{{ 'ec-good' if credit.points > 0 else ('ec-bad' if credit.points < 0 else '') }}">{{ '+' if credit.points > 0 }}{{ credit.points }}%</dd>
                         <dt>Repay on time within</dt><dd>{{ credit_rules.term_days }} days</dd>
                         <dt>Default after</dt><dd class="ec-bad">{{ credit_rules.default_days }} days</dd>
@@ -199,7 +199,7 @@
             over.textContent = q.over_threshold ? 'Yes (line is ' + fmt(q.threshold_value) + ')' : 'No (line is ' + fmt(q.threshold_value) + ')';
             over.className = q.over_threshold ? 'ec-warn' : 'ec-good';
             if (q.error) { msg.textContent = q.error; msg.className = 'ec-preview is-bad'; }
-            else if (q.over_threshold) { msg.textContent = 'You get ' + fmt(q.amount) + ' now and repay ' + fmt(q.total_repay) + '. Above the line, so the higher fee applies.'; msg.className = 'ec-preview is-warn'; }
+            else if (q.over_threshold) { msg.textContent = 'You get ' + fmt(q.amount) + ' now and repay ' + fmt(q.total_repay) + '. Only the part above the line pays the higher fee.'; msg.className = 'ec-preview is-warn'; }
             else { msg.textContent = 'You get ' + fmt(q.amount) + ' now and repay ' + fmt(q.total_repay) + '.'; msg.className = 'ec-preview is-ok'; }
         };
         input.addEventListener('input', function () {

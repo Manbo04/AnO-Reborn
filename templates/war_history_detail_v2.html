@@ -1,0 +1,31 @@
+{% extends "layout.html" %}{% block title %} War {{ war.id }} {% endblock %}{% block body_class %} game-page-v2{% endblock %}{% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+<div class="templatediv">
+    {{ game_hero(war.attacker ~ ' vs ' ~ war.defender, badge_icon='history', badge_text=('Ongoing' if war.ongoing else 'Ended ' ~ war.end)) }}
+    <div class="templatedivcontent">
+        <p>{{ war.war_type }} war, started {{ war.start }}{% if not war.ongoing %}, ended {{ war.end }}{% endif %}.
+        {% if war.winner_id %}Winner: {{ war.attacker if war.winner_id == war.attacker_id else war.defender }}.{% endif %}</p>
+
+        <h2 class="templatecontentheaderleft">Buildings destroyed</h2>
+        {% if losses %}
+        <div style="overflow-x:auto">
+        <table class="game-table" style="width:100%">
+            <thead><tr><th>Nation</th><th>Building</th><th>Destroyed</th></tr></thead>
+            <tbody>
+            {% for l in losses %}
+            <tr><td>{{ l.victim }}</td><td>{{ l.building }}</td><td>{{ "{:,}".format(l.qty) }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% else %}
+        <p>No buildings were destroyed in this war.</p>
+        {% endif %}
+
+        {% for victim_id, n in nukes.items() %}
+        <p>Nuclear strikes also destroyed {{ "{:,}".format(n) }} buildings of {{ war.attacker if victim_id == war.attacker_id else war.defender }}.</p>
+        {% endfor %}
+        <p><a href="/war_history">&larr; All wars</a></p>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "layout.html" %}{% block title %} War History {% endblock %}{% block body_class %} game-page-v2{% endblock %}{% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+<div class="templatediv">
+    {{ game_hero('War History', badge_icon='history', badge_text=(wars|length) ~ ' wars') }}
+    <div class="templatedivcontent">
+        {% if not wars %}
+        <p>No wars have been fought yet.</p>
+        {% else %}
+        <div class="table-scroll" style="overflow-x:auto">
+        <table class="game-table" style="width:100%">
+            <thead><tr><th>War</th><th>Type</th><th>Started</th><th>Ended</th><th>Buildings destroyed</th></tr></thead>
+            <tbody>
+            {% for w in wars %}
+            <tr>
+                <td><a href="/war_history/{{ w.id }}">{{ w.attacker }} vs {{ w.defender }}</a></td>
+                <td>{{ w.war_type }}</td>
+                <td>{{ w.start }}</td>
+                <td>{% if w.ongoing %}ongoing{% else %}{{ w.end }}{% endif %}</td>
+                <td>{{ "{:,}".format(w.buildings_lost) }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

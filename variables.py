@@ -226,6 +226,12 @@ DEMO_AGING_RATES = {
 DEMO_BIRTH_RATE = 0.00025
 
 # Education distribution (when children graduate)
+# Students graduating per tick-hour a building can carry (weekly vote 10-16:
+# larger multiples of 5,000; a high school needs two primary schools feeding it).
+PRIMARY_SCHOOL_CAPACITY = 5000
+HIGH_SCHOOL_CAPACITY = 10000
+UNIVERSITY_CAPACITY = 40000
+
 # Determined by available school/university capacity in province
 EDUCATION_GRADUATION_PRIORITY = [
     "universities",  # If capacity available -> edu_college
@@ -922,10 +928,12 @@ PROVINCE_UNIT_PRICES = {
     "seismic_reinforcements_price": 150000,
     "seismic_reinforcements_resource": {"steel": 5000, "aluminium": 1000},
     # Education Buildings (Tier 2)
-    "primary_school_price": 4000000,
-    "primary_school_resource": {"steel": 25000, "aluminium": 15000, "lumber": 40000},
-    "high_school_price": 12000000,
-    "high_school_resource": {"steel": 60000, "aluminium": 40000, "lumber": 80000},
+    # Halved 10-27 (weekly vote "cheaper education buildings"): the first
+    # schools were a soft-lock for nations without spare steel.
+    "primary_school_price": 2000000,
+    "primary_school_resource": {"steel": 12000, "aluminium": 7500, "lumber": 20000},
+    "high_school_price": 6000000,
+    "high_school_resource": {"steel": 30000, "aluminium": 20000, "lumber": 40000},
     # Military Infrastructure (Tier 2-4)
     "army_bases_price": 8000000,
     "army_bases_resource": {"lumber": 120000},
@@ -1230,7 +1238,7 @@ LOAN_CAP_PER_POPULATION = 40  # $ of borrowing capacity per population point
 LOAN_MIN_AMOUNT = 100_000
 LOAN_ORIGINATION_FEE = 0.10  # one-time fee added to principal at issuance
 LOAN_HIGH_UTILIZATION_THRESHOLD = 0.70  # fraction of borrowing cap
-LOAN_HIGH_UTILIZATION_FEE = 0.15  # fee charged instead of LOAN_ORIGINATION_FEE above the threshold
+LOAN_HIGH_UTILIZATION_FEE = 0.20  # fee on ONLY the part of a loan above the threshold (rest pays LOAN_ORIGINATION_FEE)
 LOAN_COOLDOWN_HOURS = 24  # can't take a new loan until this long after fully repaying the last one
 
 # Loan credit score (Kurai, #suggestions 2026-09-07): repaying on time raises

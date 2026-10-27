@@ -1014,3 +1014,25 @@ The 1,000,000-strength battle count is under 1.5× because a large share of mast
 **Strikes:** one day on one type, full reach and no cover, removes at most 10.5%. Disruption is at most 20%, so the type still fights. Equal striker vs a nation that does not strike: 53% war wins (n=60 at strength 200k). A 0.8× striker does not flip a head-on war in that model (0%).
 
 **What to watch:** active wars are scaled by 1.5 once (`morale_on_long_clock`) so 40/100 becomes 60/150. Bars are labelled `/ 150`. Browser click-through at 390px was not done; the strike button, news row, chosen amount, and fielded-only disruption were exercised with the Flask test client against local Postgres.
+## 2026-10-27 — Weekly-vote balance + QoL batch (loan fee, schools, info, workforce panel)
+**Done** (branch `feat/vote-balance-qol`): loan fee is now marginal (10% up to 70% of cap, 20% only on the part above; `compute_fee`);
+school capacities moved to `variables` (primary 5,000 / high school 10,000 / university 40,000 per tick, was 1,000/900/5,000) and
+primary + high school build costs halved (soft-lock complaint); "i" info on building cards (`building_info_text`: workers, upkeep,
+output, effects) in the province map sheet and classic cards; "Workforce & jobs" panel on the nation page (jobs per education tier vs workers).
+Already true, no change: higher-educated people can already fill lower jobs (efficiency counts all workers, `economy/workforce.py`).
+**What to watch**: 5x-11x education throughput changes population education mix over the next days; loans issued before deploy keep their old fee.
+**Not done (still passed votes)**: mass sell buildings, past trades in "my offers", revenue page with trades, cost calculators, building-destroyed war log,
+war cards AP/sort, per-province "X/X employed" slot, coalition bank opt-out, other features (vacation mode, login bonus, tutorial rework, resource bonds).
+
+## 2026-10-27 (later) — Weekly-vote QoL batches 2 + 3 (PRs #231, this one)
+**Done**: #231 mass sell buildings (`/mass_purchase/sell`), `/calculator`, Past trades in My Offers (`market_fills`), info-line fix (classic cards show only "Employs N workers"; map sheet labels base values).
+This PR: war cards show your ground/air/naval AP and list newest declaration first (`wars/routes.py`), "Employed here" row on the province page (`province_jobs`).
+Already shipped earlier (no work needed): trade deals on the revenue page (#212), higher education fills lower jobs (`economy/workforce.py`).
+**What to watch**: school capacity jump (5k/10k/40k) changes education mix; mass sell refunds equal single sell (full gold + materials, same as existing route).
+**Not done (passed votes, reasons)**: destroyed-buildings war log and public war history page need new war storage in `attack_scripts/war_orchestrator.py` and templates that open PR #229 also rewrites (do after #229 lands); coalition bank opt-out changes how bank balances are withdrawn (money design, needs Dede); big features (vacation mode, login bonus, tutorial rework, resource bonds, electricity, sidebar UI).
+**Deploy gotcha**: a Railway web deploy can show FAILED with no logs while the workflow says success; check `/deploy-info` for the new sha, then `railway redeploy --service web --yes`.
+
+## 2026-10-27 — War history + destroyed-buildings log (passed votes)
+- New `war_building_losses` table (migration 20261027_2000) and `wars/history.py`: `record_building_loss` (savepoint, never breaks an attack), public `/war_history` list and `/war_history/<id>` detail (per-nation, per-building losses; nuke losses read from `nuclear_strikes`). Linked from the Wars page.
+- Hooked in `wars/service.py:apply_building_damage` (drone, cruise, bomber strikes) and `Military.infrastructure_damage` (ground battles). Ground losses attach to the victim's latest unfinished war.
+- Built on master, not on the open #229 branch; it edits the same war files, so whichever lands second takes a small conflict.

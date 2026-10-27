@@ -255,7 +255,16 @@ def tutorial():
     )
 
 @bp.route("/mechanics", methods=["GET"])
-def mechanics(): return render_template("mechanics.html")
+def mechanics():
+    import variables
+    return render_template(
+        "mechanics.html",
+        school_capacity={
+            "primary": variables.PRIMARY_SCHOOL_CAPACITY,
+            "high_school": variables.HIGH_SCHOOL_CAPACITY,
+            "university": variables.UNIVERSITY_CAPACITY,
+        },
+    )
 
 @bp.route("/privacy", methods=["GET"])
 def privacy_policy(): return render_template("privacy_policy.html")

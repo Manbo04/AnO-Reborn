@@ -710,6 +710,9 @@ def create_app():
     if upgrades_bp: app.register_blueprint(upgrades_bp)
     app.register_blueprint(intelligence.bp)
     app.register_blueprint(wars_bp)
+    from wars.history import war_history_bp
+
+    app.register_blueprint(war_history_bp)
     app.register_blueprint(treaties_bp)
     app.register_blueprint(loans_bp)
     app.register_blueprint(bonds_bp)
@@ -1289,6 +1292,15 @@ def create_app():
             return cost["cost_display"]
         except Exception:
             return unit
+
+    @app.template_filter()
+    def building_info(unit):
+        try:
+            from app_core.economy.building_costs import building_info_text
+
+            return building_info_text(unit.split(", ")[0], employs_only=True)
+        except Exception:
+            return ""
 
     @app.template_filter()
     def milres(unit):

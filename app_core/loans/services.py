@@ -149,12 +149,26 @@ def compute_loan_cap(db, user_id):
     return get_credit_profile(db, user_id)["cap"]
 
 
+def compute_fee(amount, cap):
+    """One-time origination fee in dollars. The base rate applies to the part
+    of the loan up to the high-utilization line; only the part above the line
+    pays the higher rate (weekly vote 10-09: marginal, not whole-loan)."""
+    line = int(cap * variables.LOAN_HIGH_UTILIZATION_THRESHOLD) if cap > 0 else amount
+    below = min(amount, line)
+    above = max(0, amount - line)
+    return int(
+        round(
+            below * variables.LOAN_ORIGINATION_FEE
+            + above * variables.LOAN_HIGH_UTILIZATION_FEE
+        )
+    )
+
+
 def compute_fee_rate(amount, cap):
-    """One-time origination fee, higher for loans above the
-    high-utilization threshold of the borrower's own cap."""
-    if cap > 0 and amount > cap * variables.LOAN_HIGH_UTILIZATION_THRESHOLD:
-        return variables.LOAN_HIGH_UTILIZATION_FEE
-    return variables.LOAN_ORIGINATION_FEE
+    """Blended fee rate (fee / amount) for a loan of `amount` against `cap`."""
+    if not amount or amount <= 0:
+        return variables.LOAN_ORIGINATION_FEE
+    return compute_fee(amount, cap) / amount
 
 
 def loan_quote(amount, cap):
@@ -174,11 +188,11 @@ def loan_quote(amount, cap):
     if amount is None or amount <= 0:
         quote["error"] = "Enter an amount."
         return quote
-    fee_rate = compute_fee_rate(amount, cap)
-    total = int(round(amount * (1 + fee_rate)))
+    fee = compute_fee(amount, cap)
+    total = amount + fee
     quote.update(
-        fee_rate=fee_rate,
-        fee=total - amount,
+        fee_rate=fee / amount,
+        fee=fee,
         total_repay=total,
         over_threshold=amount > threshold_value,
     )
