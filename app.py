@@ -1288,11 +1288,13 @@ def create_app():
             return unit
 
     @app.template_filter()
-    def building_info(unit):
+    def building_info(unit, upgrades=None):
+        """Full generated description (build cost, upkeep, workers + required
+        education, output, inputs, effects) for a building card."""
         try:
-            from app_core.economy.building_costs import building_info_text
+            from app_core.economy.building_costs import building_description
 
-            return building_info_text(unit.split(", ")[0], employs_only=True)
+            return building_description(unit.split(", ")[0], upgrades)
         except Exception:
             return ""
 

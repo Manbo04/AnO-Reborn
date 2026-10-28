@@ -8,7 +8,11 @@ from dotenv import load_dotenv
 import logging
 from collections import defaultdict
 from app_core.policies.services import get_user_policies
-from app_core.economy.industry_bonuses import production_bonuses
+from app_core.economy.industry_bonuses import (
+    PROCESSING_BUILDINGS,
+    producer_output_multipliers,
+    production_bonuses,
+)
 from app_core.economy.tick_order import upkeep_budget
 from app_core.economy.project_bonuses import project_output_bonus
 from app_core.economy.consumer_goods import load_province_cg_capacities
@@ -453,6 +457,16 @@ def get_revenue(cId, db=None):
                         land_by_id.get(province, 0),
                         city_by_id.get(province, 0),
                         nation_building_counts,
+                        producer_output_multipliers(
+                            buildings,
+                            land_by_id.get(province, 0),
+                            city_by_id.get(province, 0),
+                            prod_by_id.get(province, 50),
+                            upgrades,
+                            efficiency_multiplier,
+                        )
+                        if building in PROCESSING_BUILDINGS
+                        else None,
                     )["multiplier"]
 
                     # PHASE 3 workforce efficiency (see above) -- applied last,

@@ -482,6 +482,14 @@ def province(pId):
         except Exception:
             rollback_db_cursor(db)
 
+        # Production multipliers -- shared with /mass_purchase so the two pages
+        # can't disagree about whether a province is powered, and needed here
+        # so vertical integration measures REAL local output, not base rates.
+        productivity_multiplier = province_energy_mod.productivity_multiplier(
+            province.get("productivity")
+        )
+        efficiency_multiplier = province_energy_mod.national_efficiency_multiplier(db, user_id)
+
         # Economies of scale + vertical integration shown on each producing
         # building's card (same helper the production tick uses).
         industry_bonus = {}
@@ -489,6 +497,7 @@ def province(pId):
             from app_core.economy.industry_bonuses import (
                 PROCESSING_BUILDINGS,
                 SCALE_BUILDINGS,
+                producer_output_multipliers,
                 production_bonuses,
                 self_sufficiency,
             )
@@ -504,6 +513,14 @@ def province(pId):
                 row_val(r, "name", 0): int(row_val(r, "coalesce", 1, default=0) or 0)
                 for r in db.fetchall()
             }
+            local_output_mult = producer_output_multipliers(
+                units,
+                province.get("land") or 0,
+                province.get("citycount") or 0,
+                province.get("productivity"),
+                upgrades,
+                efficiency_multiplier,
+            )
             for bname in SCALE_BUILDINGS:
                 b = production_bonuses(
                     bname,
@@ -511,6 +528,7 @@ def province(pId):
                     province.get("land") or 0,
                     province.get("citycount") or 0,
                     nation_counts,
+                    local_output_mult,
                 )
                 entry = {
                     "scale": round(b["scale"] * 100, 1),
@@ -520,7 +538,9 @@ def province(pId):
                 if bname in PROCESSING_BUILDINGS:
                     entry["integration"] = round(b["integration"] * 100, 1)
                     entry["self_sufficiency"] = int(
-                        round(self_sufficiency(bname, units) * 100)
+                        round(
+                            self_sufficiency(bname, units, local_output_mult) * 100
+                        )
                     )
                 industry_bonus[bname] = entry
         except Exception:
@@ -567,10 +587,6 @@ def province(pId):
         # Energy + production multipliers -- shared with /mass_purchase so the
         # two pages can't disagree about whether a province is powered.
         new_infra = variables.NEW_INFRA
-        productivity_multiplier = province_energy_mod.productivity_multiplier(
-            province.get("productivity")
-        )
-        efficiency_multiplier = province_energy_mod.national_efficiency_multiplier(db, user_id)
 
         # Real per-building hourly output in this province, built exactly like
         # generate_province_revenue(): (productivity + national-project bonus)

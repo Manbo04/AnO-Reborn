@@ -8,8 +8,12 @@ Player suggestion 2026-09-25 (luciuskonst, "Economy tweaks/ideas laundry list" #
   returns (``max * (1 - e^(-k * share))``), so the first buildings matter
   most and the bonus flattens out towards ``SCALE_MAX_BONUS``.
 * **Vertical integration** -- a processing building (steel mill, refinery,
-  factory) gets extra output when the nation mines/produces its own inputs,
-  in proportion to how self-sufficient the nation is in the scarcest input.
+  factory) gets extra output when its own *province* mines/produces the
+  inputs, in proportion to how self-sufficient the province is in the
+  scarcest input. Supply is what the province's producers really make per
+  hour (productivity, national projects, specialisation, workforce), not
+  their base rate; otherwise a province with 2x-boosted mines reads ~half
+  self-sufficient while producing a surplus (Andy, 2026-10-27).
 
 This is the single implementation used by the hourly production tick
 (``app_core.game_ticks.revenue``), the revenue projection (``countries.py``)
@@ -24,6 +28,7 @@ from typing import Mapping
 
 import variables
 from app_core.economy.building_costs import CITY_UNITS
+from app_core.economy.project_bonuses import project_output_bonus
 
 # Tunables (kept here next to the formula they tune).
 SCALE_MAX_BONUS = 0.15  # asymptotic cap: +15% output
@@ -64,15 +69,58 @@ def scale_bonus(count_in_province: int, province_slots: int) -> float:
     return SCALE_MAX_BONUS * (1.0 - math.exp(-SCALE_CURVE_K * share))
 
 
-def self_sufficiency(building: str, nation_counts: Mapping[str, int]) -> float:
-    """How much of a processing building's inputs the nation produces itself.
+def producer_output_multipliers(
+    counts: Mapping[str, int],
+    land: int,
+    city_count: int,
+    productivity: float | None,
+    upgrades: Mapping[str, bool],
+    efficiency_multiplier: float = 1.0,
+) -> dict[str, float]:
+    """Real output multiplier of every producing building in one province.
 
-    For each input, domestic output capacity (all producing buildings in the
-    nation, base rates) is compared with what the nation's buildings of this
-    type consume. The scarcest input sets the ratio (0..1).
+    Mirrors the production tick (``plus_amount_multiplier``): (productivity +
+    national-project bonus) x specialisation x workforce efficiency. The
+    integration bonus itself is left out on purpose -- it is derived from
+    these numbers, so including it would be circular.
     """
+    if productivity is None:
+        productivity_multiplier = 1.0
+    else:
+        productivity_multiplier = 1.0 + (
+            (productivity - 50) * variables.DEFAULT_PRODUCTIVITY_PRODUCTION_MULTIPLIER
+        )
+    out: dict[str, float] = {}
+    for building in SCALE_BUILDINGS:
+        if not counts.get(building):
+            continue
+        scale = scale_bonus(
+            counts.get(building, 0) or 0,
+            province_slots_for(building, land, city_count),
+        )
+        out[building] = (
+            (productivity_multiplier + project_output_bonus(building, upgrades))
+            * (1.0 + scale)
+            * efficiency_multiplier
+        )
+    return out
+
+
+def self_sufficiency(
+    building: str,
+    local_counts: Mapping[str, int],
+    output_multipliers: Mapping[str, float] | None = None,
+) -> float:
+    """How much of a processing building's inputs its province produces itself.
+
+    For each input, the province's real hourly output of it (producer count x
+    base rate x ``output_multipliers``, which default to 1.0 = base rate) is
+    compared with what the province's buildings of this type consume. The
+    scarcest input sets the ratio (0..1).
+    """
+    mult = output_multipliers or {}
     minus = _infra(building).get("minus") or {}
-    own = nation_counts.get(building, 0) or 0
+    own = local_counts.get(building, 0) or 0
     if not minus or own <= 0:
         return 0.0
     producers = _producers_by_resource()
@@ -82,18 +130,24 @@ def self_sufficiency(building: str, nation_counts: Mapping[str, int]) -> float:
         if demand <= 0:
             continue
         supply = sum(
-            (nation_counts.get(b, 0) or 0) * amount
+            (local_counts.get(b, 0) or 0) * amount * mult.get(b, 1.0)
             for b, amount in producers.get(resource, ())
         )
         ratios.append(min(1.0, supply / demand))
     return min(ratios) if ratios else 0.0
 
 
-def integration_bonus(building: str, nation_counts: Mapping[str, int]) -> float:
+def integration_bonus(
+    building: str,
+    local_counts: Mapping[str, int],
+    output_multipliers: Mapping[str, float] | None = None,
+) -> float:
     """Vertical-integration bonus (0..INTEGRATION_MAX_BONUS)."""
     if building not in PROCESSING_BUILDINGS:
         return 0.0
-    return INTEGRATION_MAX_BONUS * self_sufficiency(building, nation_counts)
+    return INTEGRATION_MAX_BONUS * self_sufficiency(
+        building, local_counts, output_multipliers
+    )
 
 
 def province_slots_for(building: str, land: int, city_count: int) -> int:
@@ -107,8 +161,14 @@ def production_bonuses(
     land: int,
     city_count: int,
     nation_counts: Mapping[str, int] = None,
+    output_multipliers: Mapping[str, float] = None,
 ) -> dict:
     """Both bonuses for one building type in one province.
+
+    ``nation_counts`` is accepted for call-site compatibility but unused:
+    integration is a per-province bonus (Oct 3 design change). Pass
+    ``output_multipliers`` (see ``producer_output_multipliers``) so supply is
+    measured at real output rather than base rates.
 
     Returns ``{"scale": float, "integration": float, "multiplier": float}``;
     the multiplier is applied to output on top of every other modifier.
@@ -120,7 +180,7 @@ def production_bonuses(
         province_slots_for(building, land, city_count),
     )
     # Vertical integration bonus is calculated per-province based on locally produced inputs
-    integration = integration_bonus(building, province_counts)
+    integration = integration_bonus(building, province_counts, output_multipliers)
     return {
         "scale": scale,
         "integration": integration,

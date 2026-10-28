@@ -55,7 +55,11 @@ from app_core.game_ticks.common import (
 )
 from app_core.game_ticks.locks import try_pg_advisory_lock, release_pg_advisory_lock
 from app_core.game_ticks.population import find_unit_category
-from app_core.economy.industry_bonuses import production_bonuses
+from app_core.economy.industry_bonuses import (
+    PROCESSING_BUILDINGS,
+    producer_output_multipliers,
+    production_bonuses,
+)
 from app_core.economy.province_effects import (
     apply_effect,
     building_effects_per_unit,
@@ -903,12 +907,27 @@ def generate_province_revenue():  # Runs each hour
 
                         # Economies of scale + vertical integration
                         # (app_core/economy/industry_bonuses.py).
+                        _city_count = provinces_data.get(province_id, {}).get(
+                            "citycount", 0
+                        )
                         bonus = production_bonuses(
                             unit,
                             province_buildings,
                             land,
-                            provinces_data.get(province_id, {}).get("citycount", 0),
+                            _city_count,
                             nation_building_counts.get(user_id, {}),
+                            producer_output_multipliers(
+                                province_buildings,
+                                land,
+                                _city_count,
+                                productivity,
+                                upgrades,
+                                workforce_debuffs.get(user_id, {}).get(
+                                    "efficiency_multiplier", 1.0
+                                ),
+                            )
+                            if unit in PROCESSING_BUILDINGS
+                            else None,
                         )
                         plus_amount_multiplier *= bonus["multiplier"]
 
