@@ -1742,35 +1742,37 @@ def deposit_into_bank(coalition_id):
         db.execute(update_statement, (amount, coalition_id))
 
         if is_personal:
-            # Track cumulative contribution — use SAVEPOINT so a failure here doesn't
-            # corrupt the cursor and roll back the bank UPDATE above.
-            try:
-                db.execute("SAVEPOINT contrib_track")
-                db.execute(
-                    """
-                    INSERT INTO col_bank_contributions (coalition_id, user_id, resource, total_deposited)
-                    VALUES (%s, %s, %s, %s)
-                    ON CONFLICT (coalition_id, user_id, resource)
-                    DO UPDATE SET total_deposited = col_bank_contributions.total_deposited + EXCLUDED.total_deposited
-                    """,
-                    (coalition_id, cId, resource, amount),
-                )
-            except Exception:
-                db.execute("ROLLBACK TO SAVEPOINT contrib_track")
-
-        log_kind = "personal" if is_personal else "donation"
-        try:
-            db.execute("SAVEPOINT txn_log")
+            # Credit the member's personal balance. This is NOT best-effort:
+            # if it fails the whole request errors and rolls back (money,
+            # resource and vault update included) so a personal deposit can
+            # never silently turn into an irreversible donation.
+            # total_withdrawn is clamped to the old total_deposited so a
+            # legacy "payout larger than deposits" hole (see withdraw())
+            # cannot swallow this deposit.
             db.execute(
                 """
-                INSERT INTO col_bank_transactions
-                    (coalition_id, user_id, actor_id, resource, amount, direction, kind)
-                VALUES (%s, %s, %s, %s, %s, 'deposit', %s)
+                INSERT INTO col_bank_contributions (coalition_id, user_id, resource, total_deposited)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (coalition_id, user_id, resource)
+                DO UPDATE SET
+                    total_withdrawn = LEAST(
+                        COALESCE(col_bank_contributions.total_withdrawn, 0),
+                        col_bank_contributions.total_deposited
+                    ),
+                    total_deposited = col_bank_contributions.total_deposited + EXCLUDED.total_deposited
                 """,
-                (coalition_id, cId, cId, resource, amount, log_kind),
+                (coalition_id, cId, resource, amount),
             )
-        except Exception:
-            db.execute("ROLLBACK TO SAVEPOINT txn_log")
+
+        log_kind = "personal" if is_personal else "donation"
+        db.execute(
+            """
+            INSERT INTO col_bank_transactions
+                (coalition_id, user_id, actor_id, resource, amount, direction, kind)
+            VALUES (%s, %s, %s, %s, %s, 'deposit', %s)
+            """,
+            (coalition_id, cId, cId, resource, amount, log_kind),
+        )
 
     with get_request_cursor() as db:
         for resource in deposited_resources:
@@ -1870,12 +1872,17 @@ def withdraw(resource, amount, user_id, coalition_id, actor_id=None):
         # Banker-approved payouts count against the recipient's personal
         # balance too; otherwise a member could be paid back by a banker and
         # then withdraw the same deposit again via withdraw_personal_from_bank.
+        # Capped at total_deposited: a payout larger than the member's own
+        # deposits must not leave a hidden negative balance that silently
+        # absorbs their next personal deposits (the "Bank bug").
         try:
             db.execute("SAVEPOINT personal_bal")
             db.execute(
                 """
                 UPDATE col_bank_contributions
-                SET total_withdrawn = COALESCE(total_withdrawn, 0) + %s
+                SET total_withdrawn = LEAST(
+                    total_deposited, COALESCE(total_withdrawn, 0) + %s
+                )
                 WHERE coalition_id = %s AND user_id = %s AND resource = %s
                 """,
                 (amount, coalition_id, user_id, resource),
