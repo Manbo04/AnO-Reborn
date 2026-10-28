@@ -1,0 +1,34 @@
+{
+  "author_id": "1180720719060029500",
+  "created_at": "2026-10-28T01:49:03Z",
+  "kind": "bug",
+  "last_message_id": "1564818324146364550",
+  "last_player_message_at": "2026-10-28T01:49:21Z",
+  "messages": [
+    {
+      "at": "2026-10-28T01:49:03Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1564818249353273455/1564818250015965264/image.png?ex=6ae2a60f&is=6ae1548f&hm=6bae9a413dda9d4adb2f6c5f6d8ba5a3b2d3b632e5e31122b1d0f423a3210918&"
+      ],
+      "author": "Andy",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1564818249353273455",
+      "staff": false,
+      "text": "i have a bauxite surplus in this province alone yet the game says only 56% of my inputs are produced domestically.\n\nwhere's the 44% wtf"
+    },
+    {
+      "at": "2026-10-28T01:49:21Z",
+      "attachments": [],
+      "author": "Andy",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1564818324146364550",
+      "staff": false,
+      "text": "math included"
+    }
+  ],
+  "thread_id": "1564818249353273455",
+  "title": "Vertical integ bug",
+  "url": "https://discord.com/channels/708006319658893385/1564818249353273455"
+}
