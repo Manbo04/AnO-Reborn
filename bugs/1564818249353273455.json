@@ -2,7 +2,7 @@
   "author_id": "1180720719060029500",
   "created_at": "2026-10-28T01:49:03Z",
   "kind": "bug",
-  "last_message_id": "1564818324146364550",
+  "last_message_id": "1564954954584694847",
   "last_player_message_at": "2026-10-28T01:49:21Z",
   "messages": [
     {
@@ -26,6 +26,16 @@
       "id": "1564818324146364550",
       "staff": false,
       "text": "math included"
+    },
+    {
+      "at": "2026-10-28T10:52:16Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1564954954584694847",
+      "staff": false,
+      "text": "<@1180720719060029500> Hey Andy, thanks for flagging this. The 56% was a calculation bug, not your economy. The vertical integration share was using your mines' *base* rate instead of what they actually produce with all your boosts applied. That made it look like you were short on bauxite when you really have a surplus. The fix now measures real, boosted output. It's done and waiting in a PR for the next release. It's calculated per province, so each province gets its own figure based on its own buildings. Sorry for the confusion!"
     }
   ],
   "thread_id": "1564818249353273455",

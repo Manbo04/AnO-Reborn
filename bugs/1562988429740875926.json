@@ -2,7 +2,7 @@
   "author_id": "1180720719060029500",
   "created_at": "2026-10-23T00:38:00Z",
   "kind": "bug",
-  "last_message_id": "1564484948755488851",
+  "last_message_id": "1564960229316100097",
   "last_player_message_at": "2026-10-27T03:44:38Z",
   "messages": [
     {
@@ -36,6 +36,36 @@
       "id": "1564484948755488851",
       "staff": false,
       "text": "Nope, personal deposits are going into coalition bank for me. for some stuff and not others. lumber and iron and bauxite goes into my personal deposit. money rations consumer goods disappear into coalition bank"
+    },
+    {
+      "at": "2026-10-28T10:52:17Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1564954959311675505",
+      "staff": false,
+      "text": "<@249007223454433292> <@1180720719060029500> Hey celess mob and Andy, we're really sorry about this one. Here's what happened. If a banker had paid you out more money, rations or consumer goods than you'd personally deposited, your balance went negative behind the scenes. That hidden negative balance then silently swallowed your later personal deposits, so they were counted as donations instead of coming back to you as credit. The fix is in review. We're also going through the records since 23/10 so we can restore affected balances. I can't promise exact amounts or dates yet, but we'll update you here once we know more."
+    },
+    {
+      "at": "2026-10-28T11:10:20Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1564959498702160034",
+      "staff": false,
+      "text": "Update: the fix is now live, and everyone affected has been refunded to their personal bank balance. Thanks for reporting it!"
+    },
+    {
+      "at": "2026-10-28T11:13:14Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1564960229316100097",
+      "staff": false,
+      "text": "Refund update:\n\n<@249007223454433292> all of your swallowed deposits are now back in your personal bank balance. That includes 2M iron: the iron history was unclear, so you got the confirmed minimum.\n\nUnion of Novorossiya: your rations, iron, coal, oil, consumer goods and components have been refunded, but the money was not. Your personal money deposits since 23/10 were coalition bank withdrawals put straight back in as personal deposits, so crediting them would have turned coalition money into personal money. That money is still in the coalition bank. Also, you may not be able to withdraw the full rations refund until the coalition bank holds enough rations.\n\nThanks for your patience!"
     }
   ],
   "thread_id": "1562988429740875926",

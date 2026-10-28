@@ -2,7 +2,7 @@
   "author_id": "1180720719060029500",
   "created_at": "2026-10-27T13:43:44Z",
   "kind": "bug",
-  "last_message_id": "1564636400492744707",
+  "last_message_id": "1564954956954599444",
   "last_player_message_at": "2026-10-27T13:46:27Z",
   "messages": [
     {
@@ -58,6 +58,16 @@
       "id": "1564636400492744707",
       "staff": false,
       "text": "50,000 workers? what level"
+    },
+    {
+      "at": "2026-10-28T10:52:17Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1564954956954599444",
+      "staff": false,
+      "text": "<@1180720719060029500> Hey Andy, sorry, those numbers were confusing, and part of that was our text. Here's how it breaks down:\n- 3,000 is the base upkeep. 2,400 is what you pay with Cheaper Materials.\n- 100 kg of rations is the base output. The 150 in the old text was the upgraded number (Advanced Machinery), and the text didn't say so.\n- Farm workers only need No schooling.\n\nWe're changing all the building panels so they show one consistent line, generated from the real game values, including the education level needed. That should stop the text drifting from the actual numbers. It's pending the next release."
     }
   ],
   "thread_id": "1564635715445330060",
