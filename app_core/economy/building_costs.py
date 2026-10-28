@@ -227,7 +227,10 @@ def building_info_text(name: str, employs_only: bool = False) -> str:
 
     parts = []
     if info["employs"]:
-        parts.append(f"Employs {info['employs']:,} workers")
+        edu = education_requirement(name)
+        parts.append(
+            f"Employs {info['employs']:,} workers" + (f" ({edu})" if edu else "")
+        )
     if employs_only:
         return " · ".join(parts)
     if info["upkeep"]:
@@ -238,6 +241,151 @@ def building_info_text(name: str, employs_only: bool = False) -> str:
         parts.append("uses " + pretty(info["consumes"]))
     if info["effects"]:
         parts.append("effects: " + pretty(info["effects"], "+"))
+    return " · ".join(parts)
+
+
+EDUCATION_LABELS = {
+    "edu_none": "No schooling",
+    "edu_highschool": "High school",
+    "edu_college": "College",
+}
+
+_PERCENT_STATS = ("happiness", "productivity", "consumer_spending", "pollution")
+
+
+def education_requirement(name: str) -> str:
+    """Worker education the building hires, from the same employment matrix
+    the workforce tick uses (e.g. "No schooling", "80% High school, 20% College")."""
+    import variables
+
+    edu = (variables.BUILDING_EMPLOYMENT_MATRICES.get(name) or {}).get("education") or {}
+    shares = [(k, v) for k, v in edu.items() if v]
+    if len(shares) == 1:
+        return EDUCATION_LABELS.get(shares[0][0], shares[0][0])
+    return ", ".join(
+        f"{round(v * 100):g}% {EDUCATION_LABELS.get(k, k)}" for k, v in shares
+    )
+
+
+def _distribution_capacity(name: str) -> dict:
+    import variables
+
+    out = {}
+    rations = getattr(variables, "RATIONS_DISTRIBUTION_PER_BUILDING", {}) or {}
+    goods = getattr(variables, "CONSUMER_GOODS_DISTRIBUTION_PER_BUILDING", {}) or {}
+    if name in rations:
+        out["rations"] = int(rations[name])
+    if name in goods:
+        out["consumer goods"] = int(goods[name])
+    return out
+
+
+def building_description(
+    name: str, upgrades: dict | None = None, policies: list | None = None
+) -> str:
+    """Single player-facing description of a building, generated from the
+    tables the tick uses (NEW_INFRA, the employment matrix, build prices,
+    province_effects). Replaces the hand-written per-building sentences that
+    mixed build cost, base upkeep and upgrade-adjusted numbers under one word
+    "cost" (Discord "I Am Confusion", Andy). Every figure is labelled; where an
+    upgrade changes it, both the base and the adjusted figure are shown."""
+    import variables
+    from app_core.economy.project_bonuses import PROJECT_OUTPUT_BONUSES
+    from app_core.economy.province_effects import building_effects_per_unit
+
+    name = _normalize_building_name(name)
+    infra = variables.NEW_INFRA.get(name)
+    if not infra:
+        return ""
+    upgrades = upgrades or {}
+
+    def res_text(d, sign=""):
+        out = []
+        for k, v in d.items():
+            label = k.replace("_", " ")
+            amount = format_weight(v) if k in variables.RESOURCES else f"{v:,}"
+            out.append(f"{sign}{amount} {label}")
+        return ", ".join(out)
+
+    parts = []
+    try:
+        cost = get_build_cost(name, policies)
+        build = f"${format_money(cost['gold'])}"
+        if cost["resources"]:
+            build += " + " + res_text(cost["resources"])
+        parts.append(f"Build cost {build}")
+    except KeyError:
+        pass
+
+    upkeep = int(infra.get("money", 0) or 0)
+    if upkeep:
+        text = f"Upkeep ${upkeep:,}/h"
+        category = next(
+            (c for c, names in variables.INFRA_TYPE_BUILDINGS.items() if name in names),
+            None,
+        )
+        if category == "industry" and upgrades.get("cheapermaterials"):
+            text += f" (${int(upkeep * 0.8):,}/h with Cheaper Materials)"
+        elif name == "malls" and upgrades.get("onlineshopping"):
+            text += f" (${int(upkeep * 0.7):,}/h with Online Shopping)"
+        parts.append(text)
+
+    matrix = variables.BUILDING_EMPLOYMENT_MATRICES.get(name) or {}
+    if matrix.get("worker_count"):
+        edu = education_requirement(name)
+        parts.append(
+            f"Employs {int(matrix['worker_count']):,} workers"
+            + (f" ({edu})" if edu else "")
+        )
+
+    plus = dict(infra.get("plus") or {})
+    if plus:
+        text = "Base output " + res_text(plus) + "/h"
+        if name == "farms":
+            text += (
+                f" + {format_weight(variables.LAND_FARM_PRODUCTION_ADDITION)}"
+                " per acre of land"
+            )
+        bonus = PROJECT_OUTPUT_BONUSES.get(name)
+        if bonus and upgrades.get(bonus[0]):
+            text += f" (+{round(bonus[1] * 100):g}% from your national project)"
+        parts.append(text)
+
+    # Input multipliers the tick applies (revenue.py "Per-unit resource cost").
+    input_mult = 1.0
+    if name == "component_factories" and upgrades.get("automationintegration"):
+        input_mult *= 0.75
+    if name == "steel_mills":
+        if upgrades.get("largerforges"):
+            input_mult *= 0.7
+        if upgrades.get("integratedsteelmaking"):
+            input_mult *= 1.36
+        if upgrades.get("electricarcfurnace"):
+            input_mult *= 0.5
+    minus = {k: round(v * input_mult) for k, v in (infra.get("minus") or {}).items()}
+    if minus:
+        parts.append("Uses " + res_text(minus) + "/h")
+    if name == "steel_mills" and upgrades.get("electricarcfurnace"):
+        energy = 2
+    else:
+        energy = 1 if name in variables.ENERGY_CONSUMERS else 0
+    if energy:
+        parts.append(f"Uses {energy} electricity/h")
+    capacity = _distribution_capacity(name)
+    if capacity:
+        parts.append(
+            "Distribution capacity "
+            + ", ".join(f"{v:,} {k}" for k, v in capacity.items())
+        )
+
+    eff, effminus = building_effects_per_unit(name, upgrades, policies or [])
+    effects = []
+    for k, v in eff.items():
+        effects.append(f"+{v:g}{'%' if k in _PERCENT_STATS else ''} {k.replace('_', ' ')}")
+    for k, v in effminus.items():
+        effects.append(f"-{v:g}{'%' if k in _PERCENT_STATS else ''} {k.replace('_', ' ')}")
+    if effects:
+        parts.append("Effects: " + ", ".join(effects))
     return " · ".join(parts)
 
 

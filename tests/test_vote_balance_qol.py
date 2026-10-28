@@ -62,7 +62,7 @@ def test_building_info_text_has_employment_and_upkeep():
 
     text = building_info_text("farms")
     assert "Employs 50,000 workers" in text and "base upkeep" in text
-    assert building_info_text("farms", employs_only=True) == "Employs 50,000 workers"
+    assert building_info_text("farms", employs_only=True) == "Employs 50,000 workers (No schooling)"
     assert building_info_text("not_a_building") == ""
     assert enrich_building_row({"name": "farms", "display_name": "Farms"})["info"] == text
 
