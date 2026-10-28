@@ -4,10 +4,10 @@ Discord "Bank bug" (celess mob, 2026-10-27): personal deposits of some
 resources ended up only in the alliance vault. Every resource is exercised
 for both destinations so a per-resource difference cannot hide again.
 
-Needs Postgres (DATABASE_URL); rows are removed by the shared coalition fixture.
+Needs Postgres (DATABASE_URL), like the CI prod-shaped job provides; rows are
+removed by the shared coalition fixture. Deliberately not skipped without a DB.
 """
 
-import os
 
 import pytest
 
@@ -22,10 +22,6 @@ from tests.test_coalition_qol_wishlist import (  # noqa: F401  (fixtures + helpe
 
 ALL_RESOURCES = ["money"] + list(variables.RESOURCES)
 
-needs_db = pytest.mark.skipif(
-    not os.getenv("DATABASE_PUBLIC_URL") and not os.getenv("DATABASE_URL"),
-    reason="Requires Postgres (DATABASE_PUBLIC_URL or DATABASE_URL)",
-)
 
 
 def _seed(uid, res, qty):
@@ -65,7 +61,6 @@ def _vault(col_id, res):
     return _q(f"SELECT {res} FROM colBanks WHERE colId=%s", (col_id,))[0][0]
 
 
-@needs_db
 @pytest.mark.parametrize("res", ALL_RESOURCES)
 def test_personal_deposit_credits_personal_balance(client, coalition, res):
     c = coalition
@@ -103,7 +98,6 @@ def test_personal_deposit_credits_personal_balance(client, coalition, res):
     assert _vault(c["col_id"], res) == before_vault
 
 
-@needs_db
 @pytest.mark.parametrize("res", ALL_RESOURCES)
 def test_alliance_donation_does_not_credit_personal_balance(client, coalition, res):
     c = coalition
@@ -132,7 +126,6 @@ def test_alliance_donation_does_not_credit_personal_balance(client, coalition, r
     assert kinds == [("donation",)]
 
 
-@needs_db
 def test_multi_resource_personal_deposit_in_one_submit(client, coalition):
     """The real form posts every row at once (blank rows included)."""
     c = coalition
@@ -154,7 +147,6 @@ def test_multi_resource_personal_deposit_in_one_submit(client, coalition):
     assert got == {"money": 1000, "rations": 7, "consumer_goods": 9}
 
 
-@needs_db
 def test_personal_balance_column_shows_every_deposited_resource(client, coalition):
     """The Personal Balance column must show what was just deposited, per row."""
     import re
@@ -176,7 +168,6 @@ def test_personal_balance_column_shows_every_deposited_resource(client, coalitio
         assert val == "321", f"{label} personal balance shows {val!r}"
 
 
-@needs_db
 @pytest.mark.parametrize("res", ALL_RESOURCES)
 def test_alliance_payout_never_eats_later_personal_deposits(client, coalition, res):
     """A leader paid more of a resource from alliance reserves than they ever
@@ -206,7 +197,6 @@ def test_alliance_payout_never_eats_later_personal_deposits(client, coalition, r
     assert deposited - withdrawn == 300, f"{res}: personal balance is {deposited - withdrawn}, not 300"
 
 
-@needs_db
 def test_legacy_negative_personal_balance_is_healed_by_next_deposit(client, coalition):
     """Rows already in the hole (withdrawn > deposited, created before the cap
     existed) must credit the next personal deposit in full."""
@@ -233,7 +223,6 @@ def test_legacy_negative_personal_balance_is_healed_by_next_deposit(client, coal
     assert deposited - withdrawn == 300
 
 
-@needs_db
 @pytest.mark.parametrize("res", ["money", "rations", "consumer_goods"])
 def test_failed_contribution_tracking_rolls_back_whole_deposit(client, coalition, res, monkeypatch):
     """If the personal-balance insert fails the deposit must not half-happen."""
