@@ -8,6 +8,7 @@ from flask import Flask, g, request, render_template, session, redirect, send_fr
 from flask_compress import Compress
 import traceback
 from extensions import limiter
+from attack_scripts.combat_helpers import MORALE_START
 
 # Root modules
 from app_core.upgrades.routes import bp as upgrades_bp
@@ -819,6 +820,11 @@ def create_app():
     if environment == "PROD":
         handler = RequestsHandler()
         logger.addHandler(handler)
+
+    @app.context_processor
+    def inject_morale_max():
+        """War morale clock. Templates label the bar with this, not a hardcoded 100."""
+        return {"morale_max": MORALE_START}
 
     @app.context_processor
     def inject_rotating_ads():

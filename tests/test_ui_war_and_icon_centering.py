@@ -6,6 +6,7 @@ pytestmark = pytest.mark.no_server
 
 ROOT = Path(__file__).resolve().parent.parent
 
+
 @pytest.fixture
 def app():
     app = Flask(
@@ -67,8 +68,8 @@ def test_war_v2_attacker_rendering(app):
         assert "war-role-badge--def" in html
 
         # Stats display
-        assert "90 / 100 Morale" in html
-        assert "35 / 100 Morale" in html
+        assert "90 / 150 Morale" in html
+        assert "35 / 150 Morale" in html
         # War supply was removed; the route no longer sends a supplies key.
         assert "Supplies" not in html
 
@@ -129,8 +130,8 @@ def test_war_classic_no_stretch(app):
             spyCount=5,
         )
         assert "card-align-row" not in html
-        assert "35 / 100 Morale" in html
-        assert "90 / 100 Morale" in html
+        assert "35 / 150 Morale" in html
+        assert "90 / 150 Morale" in html
 
 
 def test_resourcediv_layout_geometry():
@@ -139,7 +140,9 @@ def test_resourcediv_layout_geometry():
     layout_file = Path("templates/layout.html")
     assert layout_file.exists()
     content = layout_file.read_text(encoding="utf-8")
-    assert 'top: 150px' not in content, "Hardcoded top: 150px must be removed from layout.html"
+    assert (
+        "top: 150px" not in content
+    ), "Hardcoded top: 150px must be removed from layout.html"
     assert 'id="resourcediv"' in content
     assert 'class="resourcediv"' in content
 
@@ -180,7 +183,7 @@ def test_war_spectator_is_read_only(app, template):
         html = render_template(template, **SPECTATOR_CTX)
 
     assert "Gondor" in html and "Mordor" in html
-    assert "90 / 100 Morale" in html or "90 / 100 Morale" in html.replace("\n", "")
+    assert "90 / 150 Morale" in html or "90 / 150 Morale" in html.replace("\n", "")
     assert "spectator" in html
     assert "/warchoose/77" not in html
     assert "/spyResult" not in html

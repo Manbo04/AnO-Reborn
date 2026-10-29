@@ -384,6 +384,12 @@ def persist_fight_results(
             )
             if is_attacker_loss:
                 morale_delta = 0
+            elif computed_morale_delta is not None:
+                # Balance prototype: the computed delta (combat_helpers.
+                # compute_morale_delta, floored by win type, capped) is now
+                # authoritative. Previously any non-None win_type took the
+                # legacy branch below, so the computed delta was never used.
+                morale_delta = int(computed_morale_delta)
             elif win_type is not None:
                 # (Legacy compatibility) The old code checked if `win_type >= 4`
                 # and applied fixed morale drops instead of `computed_morale_delta`.
@@ -396,7 +402,7 @@ def persist_fight_results(
                 else:
                     morale_delta = 5
             else:
-                morale_delta = int(computed_morale_delta or 0)
+                morale_delta = 0
 
             new_morale = current - int(morale_delta)
 

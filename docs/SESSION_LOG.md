@@ -995,6 +995,25 @@ morale-zero ending); `/defense` retired (button + nav entry removed, URL redirec
 **What to watch**: surrender hands the winner the normal 20%/30% war spoils (same as morale zero); sessions created before this
 deploy have no `attack_issued_at`, so an in-flight attack from a pre-deploy cookie resolves only if it is the war's first attack.
 
+## 2026-10-26 — War balance: longer wars, strikes, nukes, opening MAP
+
+**Root cause of "1 fighter beats 100":** live master score is `uniform(1, 5) + count/150 + counter bonus`. The flat roll is 4 points wide, and 100 units are only 0.67 presence, so the roll swamps a 100-to-1 gap (measured about 32–38% by domain). A 60-billion stack is presence ~4e8 and the flat roll cannot beat it. The new roll is `uniform(0.8, 1.2)` times value-weighted presence, so under ~0.67× cannot win. Measured 1v100 and 1v60e9 are 0% on ground, air, and naval.
+
+**Length:** new wars start at 150 morale (master 100). A hit is still master's formula, capped at 24 so six opening attacks (the whole starting pool) deal at most 144 and cannot finish a fresh war. Per-point casualties are 0.02 so a branch is not ground down to zero and then left idle. Even Balanced wars, 80 trials, `scripts/simulate_war_balance.py`:
+
+| strength | master battles / MAP refills | new battles / MAP refills | ended on opening AP |
+| --- | --- | --- | --- |
+| 200,000 | 149 / 72 | 221 / 105 (1.48× / 1.46×) | 0 / 0 |
+| 1,000,000 | 30 / 9 | 36.5 / 13.5 (1.22× / 1.50×) | 0 / 0 |
+| 50,000 | 141 / 81 | 227.5 / 136.5 (1.61× / 1.69×) | 0 / 0 |
+
+The 1,000,000-strength battle count is under 1.5× because a large share of master's short war is the shared 12-battle opening. Hours, the real clock, are 1.50×.
+
+**Nukes:** compact province still loses 60% of people and 70% of buildings in the footprint (same blast as master). Extra rule is a 7-day per-target cooldown. A huge province (land 750, cities 760) loses about 4.1% of its people.
+
+**Strikes:** one day on one type, full reach and no cover, removes at most 10.5%. Disruption is at most 20%, so the type still fights. Equal striker vs a nation that does not strike: 53% war wins (n=60 at strength 200k). A 0.8× striker does not flip a head-on war in that model (0%).
+
+**What to watch:** active wars are scaled by 1.5 once (`morale_on_long_clock`) so 40/100 becomes 60/150. Bars are labelled `/ 150`. Browser click-through at 390px was not done; the strike button, news row, chosen amount, and fielded-only disruption were exercised with the Flask test client against local Postgres.
 ## 2026-10-27 — Weekly-vote balance + QoL batch (loan fee, schools, info, workforce panel)
 **Done** (branch `feat/vote-balance-qol`): loan fee is now marginal (10% up to 70% of cap, 20% only on the part above; `compute_fee`);
 school capacities moved to `variables` (primary 5,000 / high school 10,000 / university 40,000 per tick, was 1,000/900/5,000) and

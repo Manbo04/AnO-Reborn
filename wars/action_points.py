@@ -15,6 +15,7 @@ AP_START = 6
 AP_REGEN_PER_HOUR = 1
 
 ENTRENCH_MAX = 3
+ENTRENCH_DEFENSE_PER_LEVEL = 0.025  # was 0.10 (master), 0.05 (phase 1); halved with the narrower roll
 INTEL_MAX = 100
 
 # Action costs: (branch, cost)
@@ -26,6 +27,9 @@ AP_COSTS: Dict[str, Tuple[Optional[str], int]] = {
     "cruise_missile_strike": ("naval", 2),
     "dig_in": ("ground", 2),
     "recon_flight": ("air", 2),
+    "air_support": ("air", 2),
+    "precision_strike_cruisers": ("naval", 3),
+    "precision_strike_bombers": ("air", 3),  # bombers attached to a ground/naval attack
     "nuke": (None, 0),
     "strategic_airstrike": (None, 0),
 }
@@ -61,14 +65,14 @@ def can_spend_ap(current_ap: int, cost: int) -> bool:
 def entrenchment_defense_multiplier(level: int) -> float:
     """Calculate defensive strength multiplier for ground units based on entrenchment level.
 
-    Each level gives +10% to GROUND units defensive strength (max level 3 -> +30%).
+    Each level gives +5% to GROUND units defensive strength (max level 3 -> +15%).
     """
     try:
         lvl = int(level or 0)
     except (TypeError, ValueError):
         lvl = 0
     clamped_lvl = max(0, min(ENTRENCH_MAX, lvl))
-    return 1.0 + 0.10 * clamped_lvl
+    return 1.0 + ENTRENCH_DEFENSE_PER_LEVEL * clamped_lvl
 
 
 def intel_attack_multiplier(intel: int) -> float:
@@ -351,6 +355,21 @@ def spend_action_points(
     cur_row = db.fetchone()
     have = int(cur_row[0] or 0) if cur_row else 0
     return False, f"Not enough {branch} action points (have {have}, need {cost}). +1 every hour."
+
+
+def refund_action_points(db, war_id: int, user_id: int, branch: str, amount: int) -> None:
+    """Give back AP spent earlier in the same request (used when the second
+    half of a two-branch action fails). Never exceeds AP_MAX."""
+    if amount <= 0 or branch not in ("ground", "air", "naval") or not war_combat_columns_exist(db):
+        return
+    role = get_combatant_role(db, war_id, user_id)
+    if not role:
+        return
+    col = f"{role}_{branch}_ap"
+    db.execute(
+        f"UPDATE wars SET {col} = LEAST(%s, {col} + %s) WHERE id = %s",
+        (AP_MAX, amount, war_id),
+    )
 
 
 def dig_in(db, war_id: int, user_id: int) -> Tuple[bool, Optional[str], int]:

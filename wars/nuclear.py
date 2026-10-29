@@ -36,7 +36,11 @@ from __future__ import annotations
 import math
 from datetime import datetime, timedelta, timezone
 
-from wars.rules import MAX_NUKE_VOLLEYS_PER_WAR, RADIATION_DAMAGE_MULTIPLIER, nuke_column
+from wars.rules import (
+    MAX_NUKE_VOLLEYS_PER_WAR,
+    RADIATION_DAMAGE_MULTIPLIER,
+    nuke_column,
+)
 from influence_formula import (
     NUCLEAR_PENALTY_DECAY_DAYS,
     influence_subquery_sql,
@@ -47,6 +51,10 @@ BLAST_AREA_KM2 = 1413.0  # ~21.2 km radius
 LAND_KM2 = 50.0  # nominal area of one land slot
 CITY_KM2 = 25.0  # nominal urban area of one city
 URBAN_DENSITY_RATIO = 20.0  # people per km2 in cities vs open land
+# Same blast as live master. The 7-day per-target cooldown below is what stops
+# nukes being the dominant "end the war, declare again, nuke again" plan.
+# A compact province (blast covers it) still loses 60% of its people and 70%
+# of the buildings in the footprint.
 POP_LETHALITY = 0.6  # share of people inside the blast who die
 INFRA_LETHALITY = 0.7  # share of buildings/cities inside the blast destroyed
 # Radiation's short-term effects (struck-province happiness and nation-wide
@@ -62,6 +70,29 @@ FIRST_STRIKE_COST = 0.50
 RETALIATION_COST = 0.25
 MIN_LAUNCH_INFLUENCE = 1_000_000
 RECOVERY_DAYS = NUCLEAR_PENALTY_DECAY_DAYS
+
+# --- Per-target cooldown (balance prototype) -------------------------------
+# A nation can't be nuked again within TARGET_COOLDOWN_DAYS of the last strike
+# that landed on it, by anyone, in any war. Closes the "new war after the
+# 3-day truce, nuke again" loop. Uses the existing nuclear_strikes log
+# (intercepted launches are not logged, so they don't start the cooldown).
+TARGET_COOLDOWN_DAYS = 7
+
+
+def target_cooldown_until(db, target_id):
+    """When the target's nuke cooldown ends (aware datetime), or None."""
+    db.execute(
+        "SELECT MAX(launched_at) FROM nuclear_strikes "
+        "WHERE target_id = %s AND launched_at > now() - make_interval(days => %s)",
+        (target_id, TARGET_COOLDOWN_DAYS),
+    )
+    row = db.fetchone()
+    last = row[0] if row else None
+    if not last:
+        return None
+    if last.tzinfo is None:
+        last = last.replace(tzinfo=timezone.utc)
+    return (last + timedelta(days=TARGET_COOLDOWN_DAYS)).astimezone(timezone.utc)
 
 
 def blast_profile(land: float, cities: float) -> dict:
@@ -110,7 +141,7 @@ def repeat_multiplier(prior_ages_hours) -> float:
         max(0.0, 1.0 - max(0.0, float(age)) / REPEAT_WINDOW_HOURS)
         for age in (prior_ages_hours or [])
     )
-    return REPEAT_FACTOR ** weight
+    return REPEAT_FACTOR**weight
 
 
 def influence_cost(current_influence: float, is_retaliation: bool) -> int:
@@ -269,14 +300,22 @@ def plan_strike(db, attacker_id, war_id, province_id=None) -> dict:
     """Everything the launch pages show. Raises StrikeError when the war is
     invalid; eligibility problems are reported in plan['blocked']."""
     enemy_id = _active_war(db, war_id, attacker_id)
-    db.execute("SELECT id, username FROM users WHERE id IN (%s, %s)", (attacker_id, enemy_id))
+    db.execute(
+        "SELECT id, username FROM users WHERE id IN (%s, %s)", (attacker_id, enemy_id)
+    )
     names = {r[0]: r[1] for r in db.fetchall()}
     influence = fresh_influence(db, attacker_id)
     retaliation = is_retaliation(db, war_id, attacker_id, enemy_id)
     nukes = _nuke_count(db, attacker_id)
     provinces = enemy_provinces(db, enemy_id)
     blocked = None
-    if volleys_used(db, war_id, attacker_id) >= MAX_NUKE_VOLLEYS_PER_WAR:
+    cooldown_until = target_cooldown_until(db, enemy_id)
+    if cooldown_until is not None:
+        blocked = (
+            f"{names.get(enemy_id, 'That nation')} was nuked recently. Another strike "
+            f"is possible after {cooldown_until:%Y-%m-%d %H:%M} UTC."
+        )
+    elif volleys_used(db, war_id, attacker_id) >= MAX_NUKE_VOLLEYS_PER_WAR:
         blocked = "You have already launched your nuclear volley in this war."
     elif nukes <= 0:
         blocked = "You don't have any nukes."
@@ -291,7 +330,9 @@ def plan_strike(db, attacker_id, war_id, province_id=None) -> dict:
     if province_id is not None:
         target = next((p for p in provinces if p["id"] == int(province_id)), None)
         if target is None:
-            raise StrikeError("That province doesn't belong to your enemy in this war.", 400)
+            raise StrikeError(
+                "That province doesn't belong to your enemy in this war.", 400
+            )
     cost = influence_cost(influence, retaliation)
     return {
         "war_id": war_id,
@@ -360,10 +401,16 @@ def execute_strike(db, attacker_id, war_id, province_id) -> dict:
             "enemy_name": plan["enemy_name"],
             "enemy_id": plan["enemy_id"],
             "province_name": prov_name,
-            "deaths": 0, "death_pct": 0.0, "cities_destroyed": 0,
-            "buildings_destroyed": 0, "happiness_lost": 0, "multiplier": 1.0,
-            "is_retaliation": plan["is_retaliation"], "cost": 0,
-            "influence_before": plan["influence"], "recovery_days": RECOVERY_DAYS,
+            "deaths": 0,
+            "death_pct": 0.0,
+            "cities_destroyed": 0,
+            "buildings_destroyed": 0,
+            "happiness_lost": 0,
+            "multiplier": 1.0,
+            "is_retaliation": plan["is_retaliation"],
+            "cost": 0,
+            "influence_before": plan["influence"],
+            "recovery_days": RECOVERY_DAYS,
         }
 
     # Lock the province row and recompute from its current values.
@@ -408,7 +455,9 @@ def execute_strike(db, attacker_id, war_id, province_id) -> dict:
         """,
         (
             dmg["deaths"],
-            survive, survive, survive,
+            survive,
+            survive,
+            survive,
             dmg["cities_destroyed"],
             dmg["happiness_lost"],
             province_id,
@@ -457,10 +506,21 @@ def execute_strike(db, attacker_id, war_id, province_id) -> dict:
         RETURNING id
         """,
         (
-            war_id, attacker_id, plan["enemy_id"], province_id, prov["name"],
-            now, now + timedelta(days=RECOVERY_DAYS), plan["is_retaliation"],
-            plan["influence"], cost, round(dmg["multiplier"], 4), dmg["deaths"],
-            dmg["cities_destroyed"], buildings_destroyed, dmg["happiness_lost"],
+            war_id,
+            attacker_id,
+            plan["enemy_id"],
+            province_id,
+            prov["name"],
+            now,
+            now + timedelta(days=RECOVERY_DAYS),
+            plan["is_retaliation"],
+            plan["influence"],
+            cost,
+            round(dmg["multiplier"], 4),
+            dmg["deaths"],
+            dmg["cities_destroyed"],
+            buildings_destroyed,
+            dmg["happiness_lost"],
         ),
     )
     strike_id = db.fetchone()[0]

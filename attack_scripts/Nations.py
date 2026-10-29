@@ -796,12 +796,10 @@ class Military(Nation):
         # attacker still wins the battle; it just isn't free anymore.
         # IMPORTANT: Here you can change the values for the fight chances, bonuses and even can controll casualties (in this whole funciton)
         # If you want to change the bonuses given by a particular unit then go to `units.py` and you can find those in the classes
-        attacker_roll = random.uniform(1, 5)
         attacker_chance = 0
         attacker_unit_amount_bonuses = 0
         attacker_bonus = 0
 
-        defender_roll = random.uniform(1, 5)
         defender_chance = 0
         defender_unit_amount_bonuses = 0
         defender_bonus = 0
@@ -810,7 +808,7 @@ class Military(Nation):
 
         # Delegate inner engagement calculations to a helper so this file
         # can be progressively refactored into smaller, testable units.
-        from attack_scripts.combat_helpers import compute_engagement_metrics, apply_combat_modifiers
+        from attack_scripts.combat_helpers import compute_engagement_metrics, apply_combat_modifiers, artillery_entrenchment_pierce
 
         (
             attacker_unit_amount_bonuses,
@@ -820,7 +818,55 @@ class Military(Nation):
             dealt_infra_damage,
         ) = compute_engagement_metrics(attacker, defender)
 
-        # Apply entrenchment (+10% per level to ground defense) and intel (+intel/10 % to attack strength)
+        # Precision-strike disruption: survivors of struck types fight weaker
+        # in the striker's next attack on this enemy (one-shot, best effort).
+        precision_suppression = {}
+        if getattr(attacker, "war_id", None):
+            try:
+                from attack_scripts.combat_helpers import suppression_penalty
+                from wars.precision import consume_suppression
+
+                with get_db_connection() as conn:
+                    with conn.cursor() as cur:
+                        precision_suppression = consume_suppression(
+                            cur, attacker.war_id, attacker.user_id, defender.selected_units
+                        )
+                        conn.commit()
+                _pen = suppression_penalty(defender.selected_units, precision_suppression)
+                defender_unit_amount_bonuses *= (1 - _pen)
+                defender_bonus *= (1 - _pen)
+            except Exception:
+                precision_suppression = {}
+        setattr(attacker, "_precision_suppression", precision_suppression)
+
+        # Air support: bombers attached to a ground/naval attack.
+        air_support = None
+        _sb = int(getattr(attacker, "support_bombers", 0) or 0)
+        if _sb > 0 and domain in ("ground", "naval") and "bombers" not in attacker.unusable_units:
+            try:
+                from attack_scripts.combat_helpers import compute_air_support
+
+                _att_mil = Military.get_military(attacker.user_id) or {}
+                _sb = min(_sb, int(_att_mil.get("bombers", 0) or 0))
+                _def_mil = Military.get_military(defender.user_id) or {}
+                _def_fighters = 0 if "fighters" in defender.unusable_units else int(_def_mil.get("fighters", 0) or 0)
+                _support, _cover, _lost, _flost = compute_air_support(
+                    _sb, defender.selected_units, _def_fighters,
+                    attacker_unit_amount_bonuses + attacker_bonus,
+                )
+                attacker_bonus += _support
+                air_support = {
+                    "bombers": _sb,
+                    "cover": round(_cover, 2),
+                    "bombers_lost": _lost,
+                    "fighters_lost": _flost,
+                    "support": round(_support, 1),
+                }
+            except Exception:
+                air_support = None
+        setattr(attacker, "_air_support", air_support)
+
+        # Apply entrenchment (+5% per level to ground defense) and intel (+intel/10 % to attack strength)
         is_ground = domain == "ground" or (
             domain is None
             and any(u in Military.UNIT_DOMAINS["ground"] for u in getattr(attacker, "selected_units_list", []))
@@ -838,12 +884,20 @@ class Military(Nation):
             entrenchment_level=entrenchment_level,
             attacker_intel=attacker_intel,
             is_ground=is_ground,
+            entrenchment_pierce=artillery_entrenchment_pierce(
+                [u for u in attacker.selected_units_list if u not in attacker.unusable_units],
+                attacker.selected_units,
+            ),
         )
 
         # used to be: attacker_chance += attacker_roll+attacker_unit_amount_bonuses+attacker_bonus
         #             defender_chance += defender_roll+defender_unit_amount_bonuses+defender_bonus
-        attacker_chance += attacker_roll + attacker_unit_amount_bonuses + attacker_bonus
-        defender_chance += defender_roll + defender_unit_amount_bonuses + defender_bonus
+        # Balance prototype: multiplicative roll on each side's score (see
+        # combat_helpers.battle_roll) instead of a flat +uniform(1, 5).
+        from attack_scripts.combat_helpers import battle_roll
+
+        attacker_chance += battle_roll(attacker_unit_amount_bonuses + attacker_bonus)
+        defender_chance += battle_roll(defender_unit_amount_bonuses + defender_bonus)
 
         # An empty side can never win. See zero_out_empty_side().
         from attack_scripts.combat_helpers import zero_out_empty_side
@@ -988,6 +1042,22 @@ class Military(Nation):
             win_type,
             attacker_lost=winner_is_defender,
         )
+
+        # Bombers shot down, and fighters lost while intercepting them
+        # (best effort, own connection; never undoes the committed fight).
+        if air_support and (air_support.get("bombers_lost") or air_support.get("fighters_lost")):
+            try:
+                from wars.aftermath import apply_unit_losses
+
+                with get_db_connection() as conn:
+                    with conn.cursor() as cur:
+                        if air_support.get("bombers_lost"):
+                            apply_unit_losses(cur, attacker.user_id, {"bombers": air_support["bombers_lost"]})
+                        if air_support.get("fighters_lost"):
+                            apply_unit_losses(cur, defender.user_id, {"fighters": air_support["fighters_lost"]})
+                        conn.commit()
+            except Exception:
+                pass
 
         # Naval blockade (JOB C4):
         # When attacker wins naval battle with definite victory or annihilation, loser is blockaded for 24h.

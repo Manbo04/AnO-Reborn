@@ -113,8 +113,8 @@
                 <h2 class="templatecontentheadercenter"><a class="templatelink" href="/country/id={{def['id']}}">{{def["name"]}}</a></h2>
                 <img alt="Image" tabindex="0" class="unitimage" src="/flag/country/{{def['id']}}" />
                 <div class="progressbarparent">
-                    <div class="progressbarchildtext">{{def["morale"]}} / 100 Morale</div>
-                    <div class="progressbarchild" style="width:{{ def['morale'] }}%"></div>
+                    <div class="progressbarchildtext">{{def["morale"]}} / {{ morale_max|default(150) }} Morale</div>
+                    <div class="progressbarchild" style="width:{{ (def['morale'] * 100 / (morale_max|default(150)))|round(1) }}%"></div>
                 </div>
             </div>
 
@@ -137,8 +137,8 @@
                 <h2 class="templatecontentheadercenter templatelink"><a class="templatelink" href="/country/id={{att['id']}}">{{att["name"]}}</a></h2>
                 <img alt="Image" tabindex="0" class="unitimage" src="/flag/country/{{att['id']}}" />
                 <div class="progressbarparent">
-                    <div class="progressbarchildtext">{{att["morale"]}} / 100 Morale</div>
-                    <div class="progressbarchild" style="width:{{ att['morale'] }}%"></div>
+                    <div class="progressbarchildtext">{{att["morale"]}} / {{ morale_max|default(150) }} Morale</div>
+                    <div class="progressbarchild" style="width:{{ (att['morale'] * 100 / (morale_max|default(150)))|round(1) }}%"></div>
                 </div>
             </div>
         </div>
@@ -152,13 +152,13 @@
                 <span class="world-war-side">
                     <img alt="" class="world-war-flag" src="/flag/country/{{ w.att.id }}" loading="lazy" />
                     <span class="world-war-name">{{ w.att.name }}</span>
-                    <span class="world-war-morale">{{ w.att.morale }}%</span>
+                    <span class="world-war-morale">{{ (w.att.morale * 100 / (morale_max|default(150)))|round|int }}%</span>
                 </span>
                 <span class="world-war-vs">attacking</span>
                 <span class="world-war-side world-war-side--def">
                     <img alt="" class="world-war-flag" src="/flag/country/{{ w.def.id }}" loading="lazy" />
                     <span class="world-war-name">{{ w.def.name }}</span>
-                    <span class="world-war-morale">{{ w.def.morale }}%</span>
+                    <span class="world-war-morale">{{ (w.def.morale * 100 / (morale_max|default(150)))|round|int }}%</span>
                 </span>
                 <span class="material-icons-outlined world-war-go" aria-hidden="true">visibility</span>
             </a>

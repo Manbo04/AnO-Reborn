@@ -23,8 +23,8 @@
                 </div>
                 <div class="war-stats-bars">
                     <div class="progressbarparent war-bar">
-                        <div class="progressbarchildtext">{{ defender_info["morale"] }} / 100 Morale</div>
-                        <div class="progressbarchild" style="width: {{ defender_info['morale'] }}%;"></div>
+                        <div class="progressbarchildtext">{{ defender_info["morale"] }} / {{ morale_max|default(150) }} Morale</div>
+                        <div class="progressbarchild" style="width: {{ (defender_info['morale'] * 100 / (morale_max|default(150)))|round(1) }}%;"></div>
                     </div>
                 </div>
             </div>
@@ -46,8 +46,8 @@
                 </div>
                 <div class="war-stats-bars">
                     <div class="progressbarparent war-bar">
-                        <div class="progressbarchildtext">{{ attacker_info["morale"] }} / 100 Morale</div>
-                        <div class="progressbarchild" style="width: {{ attacker_info['morale'] }}%;"></div>
+                        <div class="progressbarchildtext">{{ attacker_info["morale"] }} / {{ morale_max|default(150) }} Morale</div>
+                        <div class="progressbarchild" style="width: {{ (attacker_info['morale'] * 100 / (morale_max|default(150)))|round(1) }}%;"></div>
                     </div>
                 </div>
             </div>

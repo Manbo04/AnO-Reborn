@@ -84,6 +84,25 @@
     display: flex;
     align-items: center;
 }
+.quick-action-btn-form.strike-form {
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+}
+.strike-form select,
+.strike-amount {
+    min-height: 40px;
+    max-width: 100%;
+}
+.strike-amount {
+    width: 6.5rem;
+    flex: 0 0 auto;
+    padding: 6px 8px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    color: inherit;
+    border: 1px solid var(--border, #4a5568);
+}
 
 /* Segmented Control / Tabs */
 .attack-segmented {
@@ -305,7 +324,7 @@
                     </div>
                     <div style="text-align:right;">
                         <div style="color:var(--text-secondary);">Entrenchment: <b style="color:#48bb78;">Lvl {{ status.my_entrench }}/3</b></div>
-                        <div style="font-size:0.8em; color:var(--text-secondary);">+{{ status.my_entrench * 10 }}% Ground Def (Theirs: Lvl {{ status.enemy_entrench }})</div>
+                        <div style="font-size:0.8em; color:var(--text-secondary);">+{{ (status.my_entrench * 2.5)|round(1) }}% Ground Def (Theirs: Lvl {{ status.enemy_entrench }})</div>
                     </div>
                 </div>
             </div>
@@ -320,7 +339,7 @@
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
                 <form action="/war/{{ war_id }}/attack" method="POST" class="quick-action-btn-form">
                     <input type="hidden" name="action" value="dig_in">
-                    <button type="submit" class="game-btn game-btn-secondary game-btn-sm" {% if status.ground_ap < 2 or status.my_entrench >= 3 %}disabled{% endif %} title="Costs 2 Ground AP. Gives +10% ground defensive strength (max 3). Resets when you launch a ground attack.">
+                    <button type="submit" class="game-btn game-btn-secondary game-btn-sm" {% if status.ground_ap < 2 or status.my_entrench >= 3 %}disabled{% endif %} title="Costs 2 Ground AP. Gives +2.5% ground defensive strength per level (max 3). Resets when you launch a ground attack.">
                         <span class="material-icons-outlined">shield</span> Dig In (2 Ground AP)
                     </button>
                 </form>
@@ -329,6 +348,23 @@
                     <input type="hidden" name="action" value="recon_flight">
                     <button type="submit" class="game-btn game-btn-secondary game-btn-sm" {% if status.air_ap < 2 %}disabled{% endif %} title="Costs 2 Air AP. Requires >= 1 Fighter or Bomber. Gives +25 Intel. At 50+ Intel enemy units are revealed!">
                         <span class="material-icons-outlined">flight_takeoff</span> Recon Flight (2 Air AP)
+                    </button>
+                </form>
+
+                <form action="/war/{{ war_id }}/attack" method="POST" class="quick-action-btn-form strike-form" title="Costs 3 AP of the striking branch. One strike kills at most 6% of one enemy unit type; three in a day, each half as strong as the last, top out at 10.5%, and earlier strikes in this war keep counting. Survivors of that type fight at up to -20% strength the next time you attack and they are fielded (within 3 hours). They are not removed from the battle. Enemy destroyers screen missiles, enemy fighters intercept bombers. Max 3 strikes per war per 24 hours. No land, loot or morale.">
+                    <input type="hidden" name="action" value="precision_strike">
+                    <select name="striker" class="game-select-sm" aria-label="Strike with">
+                        <option value="cruisers" {% if status.naval_ap < 3 %}disabled{% endif %}>Cruiser missiles (3 Naval AP)</option>
+                        <option value="bombers" {% if status.air_ap < 3 %}disabled{% endif %}>Bombers (3 Air AP)</option>
+                    </select>
+                    <select name="target_unit" class="game-select-sm" aria-label="Target">
+                        {% for u in ['soldiers', 'tanks', 'artillery', 'fighters', 'bombers', 'apaches', 'destroyers', 'cruisers', 'submarines', 'aircraft_carriers'] %}
+                        <option value="{{ u }}">{{ u }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="number" name="strike_amount" class="strike-amount" min="1" inputmode="numeric" required aria-label="How many to send" placeholder="How many" value="{{ form_values.get('strike_amount', '') if form_values else '' }}">
+                    <button type="submit" class="game-btn game-btn-secondary game-btn-sm">
+                        <span class="material-icons-outlined">gps_fixed</span> Precision Strike
                     </button>
                 </form>
             </div>
@@ -377,6 +413,20 @@
                     </div>
                 </div>
                 {% endfor %}
+                <div class="unit-row-card air-support-row">
+                    <img src="{{ url_for('static', filename=game_asset_path('units', 'bombers')) }}?v=2" alt="bombers" class="unit-thumb">
+                    <div class="unit-meta">
+                        <div class="unit-name">Air support: attach bombers (optional)</div>
+                        <div class="unit-counts">
+                            <span>Owned: <b id="owned-ground_support_bombers">{{ owned.get('bombers', 0) }}</b></span>
+                            <span class="wr-muted">+2 Air AP if used. Enemy fighters can shoot some down.</span>
+                        </div>
+                    </div>
+                    <div class="unit-input-group">
+                        <button type="button" class="btn-max" onclick="setMax('ground_support_bombers')">Max</button>
+                        <input type="number" id="input-ground_support_bombers" name="ground_support_bombers" class="count-input" min="0" max="{{ owned.get('bombers', 0) }}" value="{{ form_values.get('ground_support_bombers', 0) if form_values else 0 }}">
+                    </div>
+                </div>
             </div>
 
             <!-- AIR TAB PANEL -->
@@ -421,6 +471,20 @@
                     </div>
                 </div>
                 {% endfor %}
+                <div class="unit-row-card air-support-row">
+                    <img src="{{ url_for('static', filename=game_asset_path('units', 'bombers')) }}?v=2" alt="bombers" class="unit-thumb">
+                    <div class="unit-meta">
+                        <div class="unit-name">Air support: attach bombers (optional)</div>
+                        <div class="unit-counts">
+                            <span>Owned: <b id="owned-naval_support_bombers">{{ owned.get('bombers', 0) }}</b></span>
+                            <span class="wr-muted">+2 Air AP if used. Enemy fighters can shoot some down.</span>
+                        </div>
+                    </div>
+                    <div class="unit-input-group">
+                        <button type="button" class="btn-max" onclick="setMax('naval_support_bombers')">Max</button>
+                        <input type="number" id="input-naval_support_bombers" name="naval_support_bombers" class="count-input" min="0" max="{{ owned.get('bombers', 0) }}" value="{{ form_values.get('naval_support_bombers', 0) if form_values else 0 }}">
+                    </div>
+                </div>
             </div>
 
             <!-- SPECIAL TAB PANEL (ICBMS & NUKES) -->
@@ -492,9 +556,9 @@
 let currentTab = '{{ active_tab or "ground" }}';
 
 const apCosts = {
-    'ground': '3 Ground AP',
+    'ground': '3 Ground AP (+2 Air AP with bombers)',
     'air': '3 Air AP',
-    'naval': '3 Naval AP',
+    'naval': '3 Naval AP (+2 Air AP with bombers)',
     'special': '0 AP (ICBM)'
 };
 
