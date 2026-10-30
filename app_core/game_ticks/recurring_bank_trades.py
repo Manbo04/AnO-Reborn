@@ -123,9 +123,13 @@ def _run_one(db, rec_id, now=None):
         outcome = "member_short"
         db.execute("ROLLBACK TO SAVEPOINT recurring_trade_move")
     else:
+        # Safe Personal Deposit: protected members' personal balances stay in the vault.
+        from app_core.coalitions.repositories import protected_reserve_after
+
+        reserved = protected_reserve_after(db, col_id, want_res)
         db.execute(
             f"UPDATE colBanks SET {want_res} = {want_res} - %s WHERE colId=%s AND {want_res} >= %s RETURNING colId",
-            (want_amt, col_id, want_amt),
+            (want_amt, col_id, want_amt + reserved),
         )
         if not db.fetchone():
             outcome = "bank_short"
