@@ -284,6 +284,7 @@ Tables no static query touches (dynamic SQL, scripts, or dead): `coalition_membe
 | `/coalition/<int:coalition_id>/bond-insurance` | GET | `app_core.coalition_bank.routes:bond_insurance` |
 | `/coalition/<int:coalition_id>/bond-insurance/set` | POST | `app_core.coalition_bank.routes:set_bond_insurance` |
 | `/coalition/<int:coalition_id>/chat/messages` | GET | `app_core.chat.routes:coalition_chat_history` |
+| `/coalition/<int:coalition_id>/deposit_protection` | POST | `app_core.coalitions.routes:set_deposit_protection_route` |
 | `/coalition/<int:coalition_id>/embargo` | POST | `app_core.coalitions.routes:embargo_coalition` |
 | `/coalition/<int:coalition_id>/lift_embargo` | POST | `app_core.coalitions.routes:lift_coalition_embargo` |
 | `/coalition/<int:coalition_id>/member/<int:member_id>/revenue` | GET | `app_core.coalitions.routes:member_revenue` |
