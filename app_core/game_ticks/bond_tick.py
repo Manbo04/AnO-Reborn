@@ -159,6 +159,10 @@ def _apply_coalition_insurance(db, bond_id, issuer_id, lender_id, shortfall):
     db.execute("SELECT money FROM colBanks WHERE colId=%s FOR UPDATE", (coalition_id,))
     row = db.fetchone()
     bank_money = int(row[0] or 0) if row else 0
+    # Safe Personal Deposit: never pay insurance out of protected personal balances.
+    from app_core.coalitions.repositories import protected_reserve_after
+
+    bank_money = max(0, bank_money - protected_reserve_after(db, coalition_id, "money"))
     paid = int(min(bank_money, shortfall))
     if paid <= 0:
         return coalition_id, 0
