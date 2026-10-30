@@ -1265,7 +1265,7 @@ def toggle_build_sharing():
     )
 
     if coalition_id:
-        return redirect(f"/coalition/{coalition_id}")
+        return redirect(f"/coalition/{coalition_id}#general")
     return redirect("/")
 
 
@@ -1365,7 +1365,7 @@ def give_position():
         except Exception as e:
             print(f"give_position: cache invalidation failed: {e}", flush=True)
 
-        return redirect("/my_coalition")
+        return redirect(f"/coalition/{coalition_id}#government")
 
 
 # Route for accepting a coalition join request
@@ -1415,7 +1415,7 @@ def adding(uId):
         except Exception as e:
             print(f"adding: cache invalidation failed: {e}", flush=True)
 
-        return redirect(f"/coalition/{coalition_id}")
+        return redirect(f"/coalition/{coalition_id}#government")
 
 
 # Route for removing a join request
@@ -1454,7 +1454,7 @@ def removing_requests(uId):
         except Exception as e:
             print(f"removing_requests: cache invalidation failed: {e}", flush=True)
 
-        return redirect(f"/coalition/{coalition_id}")
+        return redirect(f"/coalition/{coalition_id}#government")
 
 
 # Route for deleting a coalition
@@ -1635,7 +1635,7 @@ def update_col_info(coalition_id):
                         (new_name, renames_used + 1, coalition_id),
                     )
 
-    return redirect("/my_coalition")
+    return redirect(f"/coalition/{coalition_id}#settings")
 
 
 # Coalition bank stuff
@@ -2434,7 +2434,7 @@ def offer_treaty():
                 400, "Error inserting into database. Please contact the website admins"
             )
 
-    return redirect("/my_coalition")
+    return redirect(f"/coalition/{user_coalition}#diplomacy")
 
 
 # Route for accepting a treaty offer from another coalition
@@ -2488,7 +2488,7 @@ def accept_treaty(offer_id):
                 f"coalitions signed a treaty: {treaty_name}.",
             )
 
-    return redirect("/my_coalition")
+    return redirect(f"/coalition/{user_coalition}#diplomacy")
 
 
 # Route for breaking a treaty with another coalition
@@ -2521,7 +2521,7 @@ def break_treaty(offer_id):
         if not db.fetchone():
             return error(400, "You do not have such a treaty")
 
-    return redirect("/my_coalition")
+    return redirect(f"/coalition/{user_coalition}#diplomacy")
 
 
 def decline_treaty(offer_id):
@@ -2547,7 +2547,7 @@ def decline_treaty(offer_id):
         if not db.fetchone():
             return error(400, "You do not have such a treaty")
 
-    return redirect("/my_coalition")
+    return redirect(f"/coalition/{user_coalition}#diplomacy")
 
 
 def send_coalition_invite(nation_id):
@@ -2869,7 +2869,7 @@ def update_coalition_settings(coalition_id):
 
     _invalidate_bank_caches(coalition_id)
     flash("Coalition settings saved.")
-    return redirect(f"/coalition/{coalition_id}")
+    return redirect(f"/coalition/{coalition_id}#settings")
 
 
 # Leader-only: rename the coalition's roles (display names only).
@@ -2904,7 +2904,7 @@ def update_role_names(coalition_id):
 
     _invalidate_bank_caches(coalition_id)
     flash("Role names saved.")
-    return redirect(f"/coalition/{coalition_id}")
+    return redirect(f"/coalition/{coalition_id}#settings")
 
 
 def _bank_log_access(db, user_id, coalition_id, kind):

@@ -1313,4 +1313,20 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
         </div>
     </div>
 </div>
+<script>
+    // Open the tab named in the URL hash (e.g. /coalition/5#bank) so form
+    // posts return the player to the section they were using.
+    (function () {
+        var tabs = {general: 'coalitiongeneral', members: 'coalitiongeneral', join: 'coalitionjoin',
+                    actions: 'coalitionactions', bank: 'coalitionbank', chat: 'coalitionchat',
+                    government: 'coalitiongov', diplomacy: 'coalitiondiplomacy',
+                    tax: 'coalitiontax', settings: 'coalitionsettings'};
+        function openHashTab() {
+            var fn = tabs[(location.hash || '').slice(1)];
+            if (fn && typeof window[fn] === 'function') { window[fn](); }
+        }
+        window.addEventListener('load', openHashTab);
+        window.addEventListener('hashchange', openHashTab);
+    })();
+</script>
 {% endblock %}
