@@ -19,6 +19,27 @@ from flask import session
 
 MIN_VACATION_HOURS = 72
 COOLDOWN_DAYS = 7
+# Durations a player can pick when switching vacation on (days). It ends on
+# its own when the chosen time is up; it can still be switched off early once
+# MIN_VACATION_HOURS have passed.
+DURATION_CHOICES_DAYS = (3, 7, 14, 30)
+DEFAULT_DURATION_DAYS = 7
+
+
+def parse_duration_days(raw):
+    """Validated duration in days, or None if it isn't one of the choices."""
+    try:
+        days = int(str(raw).strip())
+    except (TypeError, ValueError):
+        return None
+    return days if days in DURATION_CHOICES_DAYS else None
+
+
+def _effective(on, ended, until, now):
+    """(on, ended_at) after applying an elapsed chosen duration."""
+    if on and until is not None and now >= until:
+        return False, until
+    return on, ended
 
 ON_VACATION_ATTACKER_MSG = (
     "You're on vacation. Turn vacation mode off in Settings to declare war, "
@@ -64,7 +85,8 @@ def is_on_vacation(db, user_id, lock=False) -> bool:
     concurrent enable can't slip between this check and the caller's write."""
     row = _optional_fetch(
         db,
-        "SELECT vacation_mode FROM users WHERE id=%s"
+        "SELECT vacation_mode AND (vacation_until IS NULL OR vacation_until > NOW()) "
+        "FROM users WHERE id=%s"
         + (" FOR SHARE" if lock else ""),
         (user_id,),
     )
@@ -80,17 +102,23 @@ def get_vacation_state(db, user_id, now=None) -> dict:
         "started_at": None,
         "can_disable_at": None,
         "can_enable_at": None,
+        "until": None,
+        "duration_choices": DURATION_CHOICES_DAYS,
+        "default_duration": DEFAULT_DURATION_DAYS,
     }
     row = _optional_fetch(
         db,
-        "SELECT vacation_mode, vacation_started_at, vacation_ended_at "
+        "SELECT vacation_mode, vacation_started_at, vacation_ended_at, vacation_until "
         "FROM users WHERE id=%s",
         (user_id,),
     )
     if not row:
         return state
-    on, started, ended = bool(row[0]), _aware(row[1]), _aware(row[2])
+    until = _aware(row[3])
+    on, ended = _effective(bool(row[0]), _aware(row[2]), until, now)
+    started = _aware(row[1])
     state["available"] = True
+    state["until"] = until if on else None
     state["on"] = on
     state["started_at"] = started
     if on and started:
@@ -111,18 +139,20 @@ def _fmt_wait(delta) -> str:
     return f"{hours}h {mins}m" if hours else f"{mins}m"
 
 
-def enable_vacation(db, user_id, now=None):
-    """Switch vacation on. Returns (ok, message)."""
+def enable_vacation(db, user_id, now=None, days=DEFAULT_DURATION_DAYS):
+    """Switch vacation on for `days` days. Returns (ok, message)."""
     now = now or _now()
+    if days not in DURATION_CHOICES_DAYS:
+        return False, "Pick how long your vacation should last."
     row = _optional_fetch(
         db,
-        "SELECT vacation_mode, vacation_started_at, vacation_ended_at "
+        "SELECT vacation_mode, vacation_started_at, vacation_ended_at, vacation_until "
         "FROM users WHERE id=%s FOR UPDATE",
         (user_id,),
     )
     if row is None:
         return False, "Vacation mode isn't available yet. Try again shortly."
-    on, _started, ended = bool(row[0]), _aware(row[1]), _aware(row[2])
+    on, ended = _effective(bool(row[0]), _aware(row[2]), _aware(row[3]), now)
     if on:
         return False, "You're already on vacation."
     if ended and now < ended + timedelta(days=COOLDOWN_DAYS):
@@ -138,11 +168,13 @@ def enable_vacation(db, user_id, now=None):
     if db.fetchone():
         return False, "You can't go on vacation while you're at war."
     db.execute(
-        "UPDATE users SET vacation_mode=TRUE, vacation_started_at=%s WHERE id=%s",
-        (now, user_id),
+        "UPDATE users SET vacation_mode=TRUE, vacation_started_at=%s, "
+        "vacation_until=%s, vacation_ended_at=NULL WHERE id=%s",
+        (now, now + timedelta(days=days), user_id),
     )
     return True, (
-        f"Vacation mode is on. It must stay on for at least {MIN_VACATION_HOURS} hours."
+        f"Vacation mode is on for {days} days. You can switch it off early "
+        f"after {MIN_VACATION_HOURS} hours."
     )
 
 
@@ -151,19 +183,22 @@ def disable_vacation(db, user_id, now=None):
     now = now or _now()
     row = _optional_fetch(
         db,
-        "SELECT vacation_mode, vacation_started_at FROM users WHERE id=%s FOR UPDATE",
+        "SELECT vacation_mode, vacation_started_at, vacation_until FROM users "
+        "WHERE id=%s FOR UPDATE",
         (user_id,),
     )
     if row is None:
         return False, "Vacation mode isn't available yet. Try again shortly."
-    on, started = bool(row[0]), _aware(row[1])
+    on, _ended = _effective(bool(row[0]), None, _aware(row[2]), now)
+    started = _aware(row[1])
     if not on:
         return False, "You're not on vacation."
     if started and now < started + timedelta(hours=MIN_VACATION_HOURS):
         wait = _fmt_wait(started + timedelta(hours=MIN_VACATION_HOURS) - now)
         return False, f"Vacation mode must stay on for {wait} more."
     db.execute(
-        "UPDATE users SET vacation_mode=FALSE, vacation_ended_at=%s WHERE id=%s",
+        "UPDATE users SET vacation_mode=FALSE, vacation_ended_at=%s, vacation_until=NULL "
+        "WHERE id=%s",
         (now, user_id),
     )
     return True, (

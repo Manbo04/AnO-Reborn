@@ -264,7 +264,8 @@
                         <div class="game-setting-text">
                             <span class="game-setting-title">Vacation Mode{% if vacation.on %} <strong>(on)</strong>{% endif %}</span>
                             <span class="game-setting-desc">
-                                Protects your nation while you're away: nobody can declare war on you, and you can't declare war, attack, spy or buy military. Your economy keeps running. Needs no ongoing wars to turn on, stays on for at least 72 hours, then a 7-day cooldown before it can be used again.
+                                Protects your nation while you're away: nobody can declare war on you, and you can't declare war, attack, spy or buy military. Your economy keeps running. Needs no ongoing wars to turn on, lasts as long as you choose (3, 7, 14 or 30 days) and ends on its own, can be switched off early after 72 hours, then a 7-day cooldown before it can be used again.
+                                {% if vacation.on and vacation.until %}<br>Ends on its own at {{ vacation.until.strftime('%Y-%m-%d %H:%M UTC') }}.{% endif %}
                                 {% if not vacation.available %}<br>Not available yet.
                                 {% elif vacation.on and vacation.can_disable_at %}<br>Can be turned off after {{ vacation.can_disable_at.strftime('%Y-%m-%d %H:%M UTC') }}.
                                 {% elif not vacation.on and vacation.can_enable_at %}<br>Cooldown: can be turned on again after {{ vacation.can_enable_at.strftime('%Y-%m-%d %H:%M UTC') }}.
@@ -275,6 +276,14 @@
                     {% if vacation.available %}
                     <form method="POST" action="/account/vacation" style="margin: 0;">
                         <input type="hidden" name="action" value="{{ 'off' if vacation.on else 'on' }}">
+                        {% if not vacation.on %}
+                        <label for="vacationDays" style="margin-right: 6px;">Length</label>
+                        <select id="vacationDays" name="days">
+                            {% for d in vacation.duration_choices or (3, 7, 14, 30) %}
+                            <option value="{{ d }}"{% if d == (vacation.default_duration or 7) %} selected{% endif %}>{{ d }} days</option>
+                            {% endfor %}
+                        </select>
+                        {% endif %}
                         <button type="submit" class="templatedivbutton templatecenteredbutton"{% if (vacation.on and vacation.can_disable_at) or (not vacation.on and vacation.can_enable_at) %} disabled{% endif %}>
                             {{ 'Turn off' if vacation.on else 'Turn on' }}
                         </button>

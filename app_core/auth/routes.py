@@ -121,7 +121,7 @@ def account():
 def toggle_vacation():
     """Vacation mode on/off. Acts only on the logged-in nation; the rules
     (no wars, 72h minimum, 7-day cooldown) live in app_core/vacation.py."""
-    from app_core.vacation import disable_vacation, enable_vacation
+    from app_core.vacation import disable_vacation, enable_vacation, parse_duration_days
 
     cId = session["user_id"]
     action = request.form.get("action")
@@ -130,7 +130,11 @@ def toggle_vacation():
 
     with get_request_cursor() as db:
         if action == "on":
-            ok, message = enable_vacation(db, cId)
+            days = parse_duration_days(request.form.get("days"))
+            if days is None:
+                ok, message = False, "Pick how long your vacation should last."
+            else:
+                ok, message = enable_vacation(db, cId, days=days)
         else:
             ok, message = disable_vacation(db, cId)
 
