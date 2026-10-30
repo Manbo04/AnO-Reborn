@@ -15,10 +15,10 @@ pytestmark = pytest.mark.no_server
 NOW = datetime(2026, 11, 1, 12, 0, tzinfo=timezone.utc)
 
 
-def _enable_cursor(mode=False, started=None, ended=None, at_war=False):
+def _enable_cursor(mode=False, started=None, ended=None, at_war=False, until=None):
     return FakeCursor(
         [
-            ("FOR UPDATE", [(mode, started, ended)]),
+            ("FOR UPDATE", [(mode, started, ended, until)]),
             ("FROM wars", [(1,)] if at_war else []),
         ]
     )
@@ -43,7 +43,7 @@ def test_enable_without_war_sets_flag():
 
 def test_cannot_disable_before_72_hours():
     started = NOW - timedelta(hours=71)
-    cur = _enable_cursor(mode=True, started=started)
+    cur = FakeCursor([("FOR UPDATE", [(True, started, None)])])
     ok, msg = vacation.disable_vacation(cur, 1, now=NOW)
     assert not ok and "1h" in msg
     assert not _updated(cur)
@@ -51,7 +51,7 @@ def test_cannot_disable_before_72_hours():
 
 def test_can_disable_after_72_hours():
     started = NOW - timedelta(hours=72, minutes=1)
-    cur = _enable_cursor(mode=True, started=started)
+    cur = FakeCursor([("FOR UPDATE", [(True, started, None)])])
     ok, _ = vacation.disable_vacation(cur, 1, now=NOW)
     assert ok and _updated(cur)
 
@@ -72,10 +72,10 @@ def test_reenable_allowed_after_cooldown():
 
 
 def test_state_reports_when_changes_are_allowed():
-    on = FakeCursor([("FROM users", [(True, NOW - timedelta(hours=10), None)])])
+    on = FakeCursor([("FROM users", [(True, NOW - timedelta(hours=10), None, NOW + timedelta(days=5))])])
     st = vacation.get_vacation_state(on, 1, now=NOW)
     assert st["on"] and st["can_disable_at"] == NOW + timedelta(hours=62)
-    off = FakeCursor([("FROM users", [(False, None, NOW - timedelta(days=1))])])
+    off = FakeCursor([("FROM users", [(False, None, NOW - timedelta(days=1), None)])])
     st = vacation.get_vacation_state(off, 1, now=NOW)
     assert not st["on"] and st["can_enable_at"] == NOW + timedelta(days=6)
 
@@ -150,3 +150,37 @@ def test_no_vacation_decorator_blocks_hostile_actions(monkeypatch):
     with app.test_request_context("/x", method="POST"):
         session["user_id"] = 1
         assert attack() == (403, vacation.ON_VACATION_ATTACKER_MSG)
+
+
+def test_player_picks_duration_and_until_is_stored():
+    cur = _enable_cursor()
+    ok, msg = vacation.enable_vacation(cur, 1, now=NOW, days=14)
+    assert ok and "14 days" in msg
+    upd = [p for q, p in cur.executed if q.startswith("UPDATE users SET vacation_mode")]
+    assert upd and upd[0][1] == NOW + timedelta(days=14)
+
+
+def test_duration_must_be_a_listed_choice():
+    assert vacation.parse_duration_days("7") == 7
+    assert vacation.parse_duration_days("2") is None
+    assert vacation.parse_duration_days("365") is None
+    assert vacation.parse_duration_days("x") is None
+    ok, _ = vacation.enable_vacation(_enable_cursor(), 1, now=NOW, days=2)
+    assert not ok
+
+
+def test_vacation_ends_on_its_own_and_cooldown_starts_then():
+    until = NOW - timedelta(days=1)
+    st = vacation.get_vacation_state(
+        FakeCursor([("FROM users", [(True, NOW - timedelta(days=4), None, until)])]), 1, now=NOW
+    )
+    assert not st["on"] and st["can_enable_at"] == until + timedelta(days=7)
+    cur = _enable_cursor(mode=True, started=NOW - timedelta(days=4), until=until)
+    ok, msg = vacation.enable_vacation(cur, 1, now=NOW)
+    assert not ok and "cooldown" in msg
+
+
+def test_is_on_vacation_query_respects_end_time():
+    cur = FakeCursor([("vacation_until", [(False,)])])
+    assert vacation.is_on_vacation(cur, 1) is False
+    assert any("vacation_until" in q for q in cur.sql_log())
