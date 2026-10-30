@@ -48,8 +48,12 @@
     }
   ],
   "poll_message_id": "1563254474594721802",
-  "status": "voting",
+  "status": "failed",
   "thread_id": "1561844291528032388",
   "title": "Add a Market Bot",
-  "url": "https://discord.com/channels/708006319658893385/1561844291528032388"
+  "url": "https://discord.com/channels/708006319658893385/1561844291528032388",
+  "votes": {
+    "no": 7,
+    "yes": 3
+  }
 }

@@ -6,35 +6,48 @@
   "items": [
     {
       "message_id": "1563254469079076977",
+      "no": 0,
       "question": "Stop sending me back to a section's \"main page\"",
-      "suggestion_id": "1561375947590991984"
+      "suggestion_id": "1561375947590991984",
+      "yes": 11
     },
     {
       "message_id": "1563254474594721802",
+      "no": 7,
       "question": "Add a Market Bot",
-      "suggestion_id": "1561844291528032388"
+      "suggestion_id": "1561844291528032388",
+      "yes": 3
     },
     {
       "message_id": "1563254480554688555",
+      "no": 3,
       "question": "Personal offers visable",
-      "suggestion_id": "1561873542516178985"
+      "suggestion_id": "1561873542516178985",
+      "yes": 6
     },
     {
       "message_id": "1563254485579735131",
+      "no": 1,
       "question": "War economy balance",
-      "suggestion_id": "1562137033877758103"
+      "suggestion_id": "1562137033877758103",
+      "yes": 6
     },
     {
       "message_id": "1563254489530507395",
+      "no": 3,
       "question": "Cost to hiding foreign aid.",
-      "suggestion_id": "1563061335980380200"
+      "suggestion_id": "1563061335980380200",
+      "yes": 5
     },
     {
       "message_id": "1563254492907175999",
+      "no": 2,
       "question": "Undo option",
-      "suggestion_id": "1563092403886358611"
+      "suggestion_id": "1563092403886358611",
+      "yes": 6
     }
   ],
   "opened_at": "2026-10-23T18:15:08Z",
-  "tallied": false
+  "tallied": true,
+  "tallied_at": "2026-10-30T20:39:14Z"
 }

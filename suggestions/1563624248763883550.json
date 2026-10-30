@@ -1,5 +1,6 @@
 {
   "author_id": "710359818329915443",
+  "ballot_id": "2026-10-30",
   "created_at": "2026-10-24T18:44:31Z",
   "kind": "suggestion",
   "last_message_id": "1564047512065679421",
@@ -66,7 +67,8 @@
       "text": "**✅ Live now: war rules update**\nThanks to everyone for the feedback here! The following is now live:\n\n**Surrender**\n• Surrender needs both sides to agree. One side offers it, and the other side accepts or rejects.\n• **Conditional:** the winner takes 10% of resources.\n• **Unconditional:** the winner takes the full spoils, and the loser's manpower cap is halved for 5 days.\n\n**War length & cooldowns**\n• No war can end by peace or surrender in its first 24h. A war still ends right away if morale hits 0.\n• After a war ends, the aggressor keeps the 3-day truce, and the defender has to wait 24h before declaring on the same nation.\n\n**Allies / MDP**\n• Allies can only join ongoing wars, and only if they're in war range of the aggressor. No more unlimited MDP range.\n• Joining through an MDP counts as a counter-attack, not an offensive war.\n• A nation that fought a war in the last 3 days can't join another.\n• The \"Wars You Can Join\" list now only shows wars you can actually join.\n\n**Nukes**\n• Each side can use one nuke per war.\n• Radiation is halved: happiness loss in the struck province drops from 60 to 30, and nation-wide fallout deaths drop from 1% to 0.5%.\n\nAI nations follow the same 24h rule. Report any bugs in #bug-reports!"
     }
   ],
-  "status": "new",
+  "poll_message_id": "1565827459235184641",
+  "status": "voting",
   "thread_id": "1563624248763883550",
   "title": "[Discussion] War rules after the hit-and-run fix: surrender, allies, nukes",
   "url": "https://discord.com/channels/708006319658893385/1563624248763883550"

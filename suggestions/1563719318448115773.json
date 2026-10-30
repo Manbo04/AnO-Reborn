@@ -1,5 +1,6 @@
 {
   "author_id": "429129579039555584",
+  "ballot_id": "2026-10-30",
   "created_at": "2026-10-25T01:02:18Z",
   "kind": "suggestion",
   "last_message_id": "1563722353676910675",
@@ -126,7 +127,8 @@
       "text": "Also give an espionage option to sabotage nuclear weapons facilities"
     }
   ],
-  "status": "new",
+  "poll_message_id": "1565827464763019286",
+  "status": "voting",
   "thread_id": "1563719318448115773",
   "title": "Changes/additions to nuke mechanics",
   "url": "https://discord.com/channels/708006319658893385/1563719318448115773"

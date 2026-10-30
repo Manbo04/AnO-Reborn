@@ -48,8 +48,12 @@
     }
   ],
   "poll_message_id": "1563254469079076977",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1561375947590991984",
   "title": "Stop sending me back to a section's \"main page\"",
-  "url": "https://discord.com/channels/708006319658893385/1561375947590991984"
+  "url": "https://discord.com/channels/708006319658893385/1561375947590991984",
+  "votes": {
+    "no": 0,
+    "yes": 11
+  }
 }

@@ -40,8 +40,12 @@
     }
   ],
   "poll_message_id": "1563254489530507395",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1563061335980380200",
   "title": "Cost to hiding foreign aid.",
-  "url": "https://discord.com/channels/708006319658893385/1563061335980380200"
+  "url": "https://discord.com/channels/708006319658893385/1563061335980380200",
+  "votes": {
+    "no": 3,
+    "yes": 5
+  }
 }

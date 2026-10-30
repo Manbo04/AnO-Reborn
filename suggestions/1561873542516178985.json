@@ -38,8 +38,12 @@
     }
   ],
   "poll_message_id": "1563254480554688555",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1561873542516178985",
   "title": "Personal offers visable",
-  "url": "https://discord.com/channels/708006319658893385/1561873542516178985"
+  "url": "https://discord.com/channels/708006319658893385/1561873542516178985",
+  "votes": {
+    "no": 3,
+    "yes": 6
+  }
 }

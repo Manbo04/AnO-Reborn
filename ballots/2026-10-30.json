@@ -1,0 +1,35 @@
+{
+  "channel_id": "1556457101025353888",
+  "closes_at": "2026-11-06T16:00:00Z",
+  "header_message_id": "1565827453732135036",
+  "id": "2026-10-30",
+  "items": [
+    {
+      "message_id": "1565827455342608521",
+      "question": "Nuke limitations",
+      "suggestion_id": "1563555971593150546"
+    },
+    {
+      "message_id": "1565827459235184641",
+      "question": "[Discussion] War rules after the hit-and-run fix: surrender, allies, nukes",
+      "suggestion_id": "1563624248763883550"
+    },
+    {
+      "message_id": "1565827464763019286",
+      "question": "Changes/additions to nuke mechanics",
+      "suggestion_id": "1563719318448115773"
+    },
+    {
+      "message_id": "1565827468261327060",
+      "question": "Available/Unlocked Projects",
+      "suggestion_id": "1564446311007125525"
+    },
+    {
+      "message_id": "1565827471339684001",
+      "question": "Scale back population requirements for buildings",
+      "suggestion_id": "1565398726476955668"
+    }
+  ],
+  "opened_at": "2026-10-30T20:39:16Z",
+  "tallied": false
+}

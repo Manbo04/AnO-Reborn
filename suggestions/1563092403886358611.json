@@ -58,8 +58,12 @@
     }
   ],
   "poll_message_id": "1563254492907175999",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1563092403886358611",
   "title": "Undo option",
-  "url": "https://discord.com/channels/708006319658893385/1563092403886358611"
+  "url": "https://discord.com/channels/708006319658893385/1563092403886358611",
+  "votes": {
+    "no": 2,
+    "yes": 6
+  }
 }

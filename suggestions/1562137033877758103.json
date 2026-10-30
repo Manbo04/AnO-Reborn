@@ -98,8 +98,12 @@
     }
   ],
   "poll_message_id": "1563254485579735131",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1562137033877758103",
   "title": "War economy balance",
-  "url": "https://discord.com/channels/708006319658893385/1562137033877758103"
+  "url": "https://discord.com/channels/708006319658893385/1562137033877758103",
+  "votes": {
+    "no": 1,
+    "yes": 6
+  }
 }
