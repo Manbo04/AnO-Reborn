@@ -92,9 +92,19 @@ def account():
     except Exception:
         pass
 
+    from app_core.vacation import get_vacation_state
+
+    vacation = {"available": False, "on": False, "can_disable_at": None, "can_enable_at": None}
+    try:
+        with get_request_cursor() as db:
+            vacation = get_vacation_state(db, cId)
+    except Exception:
+        pass
+
     template = "account_v2.html" if is_theme_v2_enabled("account") else "account.html"
     return render_template(
         template,
+        vacation=vacation,
         user=user,
         discord_bot_link=discord_bot_link,
         discord_link_ttl_minutes=discord_link_ttl_minutes,
@@ -104,6 +114,35 @@ def account():
         reset_is_first=(reset_count == 0),
         has_password=has_password,
     )
+
+
+@bp.route("/account/vacation", methods=["POST"])
+@login_required
+def toggle_vacation():
+    """Vacation mode on/off. Acts only on the logged-in nation; the rules
+    (no wars, 72h minimum, 7-day cooldown) live in app_core/vacation.py."""
+    from app_core.vacation import disable_vacation, enable_vacation
+
+    cId = session["user_id"]
+    action = request.form.get("action")
+    if action not in ("on", "off"):
+        return error(400, "Invalid vacation action")
+
+    with get_request_cursor() as db:
+        if action == "on":
+            ok, message = enable_vacation(db, cId)
+        else:
+            ok, message = disable_vacation(db, cId)
+
+    if ok:
+        try:
+            from database import invalidate_view_cache
+
+            invalidate_view_cache("country", page=f"/country/id={cId}")
+        except Exception:
+            pass
+    flash(message, "success" if ok else "warning")
+    return redirect("/account")
 
 
 @bp.route("/account/reveal_email", methods=["POST"])

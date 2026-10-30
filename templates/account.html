@@ -274,6 +274,30 @@
                         <span class="game-switch-slider"></span>
                     </label>
                 </div>
+                <div class="game-setting-row" id="vacationSetting" style="flex-wrap: wrap; gap: 8px;">
+                    <div class="game-setting-info">
+                        <span class="material-icons-outlined game-setting-icon">beach_access</span>
+                        <div class="game-setting-text">
+                            <span class="game-setting-title">Vacation Mode{% if vacation.on %} <strong>(on)</strong>{% endif %}</span>
+                            <span class="game-setting-desc">
+                                Protects your nation while you're away: nobody can declare war on you, and you can't declare war, attack, spy or buy military. Your economy keeps running. Needs no ongoing wars to turn on, stays on for at least 72 hours, then a 7-day cooldown before it can be used again.
+                                {% if not vacation.available %}<br>Not available yet.
+                                {% elif vacation.on and vacation.can_disable_at %}<br>Can be turned off after {{ vacation.can_disable_at.strftime('%Y-%m-%d %H:%M UTC') }}.
+                                {% elif not vacation.on and vacation.can_enable_at %}<br>Cooldown: can be turned on again after {{ vacation.can_enable_at.strftime('%Y-%m-%d %H:%M UTC') }}.
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    {% if vacation.available %}
+                    <form method="POST" action="/account/vacation" style="margin: 0;">
+                        <input type="hidden" name="action" value="{{ 'off' if vacation.on else 'on' }}">
+                        <button type="submit" class="templatedivbutton templatecenteredbutton"{% if (vacation.on and vacation.can_disable_at) or (not vacation.on and vacation.can_enable_at) %} disabled{% endif %}>
+                            {{ 'Turn off' if vacation.on else 'Turn on' }}
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+
             </div>
         </div>
     </div>

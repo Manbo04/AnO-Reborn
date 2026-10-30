@@ -988,9 +988,19 @@ def country(cId):
                 row['unlocked'] = row['key'] in unlocked_keys
                 all_achievements.append(row)
 
+    on_vacation = False
+    try:
+        from app_core.vacation import is_on_vacation
+
+        with get_request_cursor(read_only=True) as db:
+            on_vacation = is_on_vacation(db, int(cId))
+    except Exception:
+        on_vacation = False
+
     template = "country_v2.html" if is_theme_v2_enabled("country") else "country.html"
     return render_template(
         template,
+        on_vacation=on_vacation,
         revenue_history_totals=revenue_history_totals,
         currency_union=currency_union,
         can_invite_to_coalition=can_invite_to_coalition,

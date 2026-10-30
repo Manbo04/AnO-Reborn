@@ -159,6 +159,13 @@ Rules:
   wars** (the Raze rate never applied until 2026-10-06: the code compared a DB row
   tuple to the string). 🔒 `tests/test_war_reparations.py`
 
+- **Vacation mode** (`app_core/vacation.py`, Settings toggle on `/account`): only
+  switchable on with no ongoing wars; while on, nobody can declare war on you and you
+  can't declare war, attack, strike, spy, join a war as an ally, buy or activate
+  military (`@no_vacation` / `is_on_vacation` guards); stays on at least **72h**, then a
+  **7-day cooldown** before it can be used again. Economy ticks normally. "On vacation"
+  badge on the country page. 🔒 `tests/test_vacation_mode.py`
+
 ## 4b. Directives
 
 - **Directives** (`app_core/directives/`): 7-day national boosts bought with gold from

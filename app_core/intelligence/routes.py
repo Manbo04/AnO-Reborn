@@ -2,6 +2,7 @@ from flask import Blueprint, request, render_template, session, redirect
 from psycopg2.extras import RealDictCursor
 
 from helpers import login_required, error, is_theme_v2_enabled
+from app_core.vacation import no_vacation
 from database import get_request_cursor, cache_response, invalidate_view_cache
 
 from .repositories import get_username
@@ -41,6 +42,7 @@ def intelligence():
 
 @bp.route("/spyAmount", methods=["GET", "POST"])
 @login_required
+@no_vacation
 def spyAmount():
     cId = session["user_id"]
     if request.method == "GET":
@@ -70,6 +72,7 @@ def spyAmount():
 
 @bp.route("/spyResult", methods=["GET", "POST"])
 @login_required
+@no_vacation
 def spyResult():
     if request.method == "GET":
         spyEntry = session.get("spyEntry", {})
