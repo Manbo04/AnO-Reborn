@@ -203,6 +203,88 @@ def _optional_fetch(db, sql, params, many=False):
         return None
 
 
+# Personal balance = max(0, total_deposited - total_withdrawn). Members who
+# ticked "Protect my personal deposits" (col_deposit_protection) have it
+# reserved: bankers can't pay out vault stock that would dip below the sum.
+_PERSONAL_BALANCE_SQL = "GREATEST(0, c.total_deposited - COALESCE(c.total_withdrawn, 0))"
+
+
+def is_deposit_protected(db, coalition_id, user_id) -> bool:
+    """Has this member protected their personal deposits? Fails open (False)
+    if the table isn't migrated yet."""
+    row = _optional_fetch(
+        db,
+        "SELECT enabled FROM col_deposit_protection "
+        "WHERE coalition_id=%s AND user_id=%s",
+        (coalition_id, user_id),
+    )
+    return bool(row and row[0])
+
+
+def set_deposit_protection(db, coalition_id, user_id, enabled) -> bool:
+    """Upsert the member's opt-in. Returns False if the table is missing."""
+    try:
+        db.execute("SAVEPOINT col_protect_write")
+        db.execute(
+            """
+            INSERT INTO col_deposit_protection (coalition_id, user_id, enabled, updated_at)
+            VALUES (%s, %s, %s, NOW())
+            ON CONFLICT (coalition_id, user_id)
+            DO UPDATE SET enabled = EXCLUDED.enabled, updated_at = NOW()
+            """,
+            (coalition_id, user_id, bool(enabled)),
+        )
+        db.execute("RELEASE SAVEPOINT col_protect_write")
+        return True
+    except Exception:
+        try:
+            db.execute("ROLLBACK TO SAVEPOINT col_protect_write")
+        except Exception:
+            pass
+        return False
+
+
+def protected_reserves(db, coalition_id) -> dict:
+    """{resource: total personal balance of protected members}, zeros dropped."""
+    rows = _optional_fetch(
+        db,
+        f"""
+        SELECT c.resource, COALESCE(SUM({_PERSONAL_BALANCE_SQL}), 0)
+        FROM col_bank_contributions c
+        JOIN col_deposit_protection p
+          ON p.coalition_id = c.coalition_id AND p.user_id = c.user_id AND p.enabled
+        WHERE c.coalition_id = %s
+        GROUP BY c.resource
+        """,
+        (coalition_id,),
+        many=True,
+    )
+    return {r[0]: int(r[1]) for r in (rows or []) if r[1]}
+
+
+def protected_reserve_after(db, coalition_id, resource, recipient_id=None, amount=0) -> int:
+    """Amount of `resource` that must stay in the vault after a payout of
+    `amount` to `recipient_id`. A protected recipient's own balance shrinks by
+    the payout (withdraw() debits it), so it is counted post-payout; everyone
+    else's protected balance counts in full. Fails open (0) if unmigrated."""
+    row = _optional_fetch(
+        db,
+        f"""
+        SELECT
+          COALESCE(SUM({_PERSONAL_BALANCE_SQL}) FILTER (WHERE c.user_id <> %s), 0),
+          COALESCE(SUM({_PERSONAL_BALANCE_SQL}) FILTER (WHERE c.user_id = %s), 0)
+        FROM col_bank_contributions c
+        JOIN col_deposit_protection p
+          ON p.coalition_id = c.coalition_id AND p.user_id = c.user_id AND p.enabled
+        WHERE c.coalition_id = %s AND c.resource = %s
+        """,
+        (recipient_id if recipient_id is not None else -1,) * 2 + (coalition_id, resource),
+    )
+    if not row:
+        return 0
+    return int(row[0]) + max(0, int(row[1]) - int(amount))
+
+
 def member_shares_with_coalition(db, owner_id) -> bool:
     """Is `owner_id` sharing builds/revenue with their coalition?
 

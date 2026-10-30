@@ -15,7 +15,7 @@ module only manages the roster and what the page shows.
 from app_core.economy import ledger
 import variables
 
-from app_core.coalitions.repositories import _coalition_members_sql
+from app_core.coalitions.repositories import _coalition_members_sql, protected_reserve_after
 
 OFFICER_ROLES = ("leader", "deputy_leader", "banker")
 BANK_RESOURCES = ["money"] + list(variables.RESOURCES)
@@ -218,6 +218,16 @@ def accept_trade(db, actor_id, trade_id):
                              f"Your {give_amt:,} {resource_label(give_res).lower()} was returned.")
         return False, "That member left the coalition; their escrow was refunded.", coalition_id
 
+    # Safe Personal Deposit: the swap pays out `want_res` from the vault, so it
+    # may not dip below what protected members have deposited.
+    db.execute(f"SELECT {want_res} FROM colBanks WHERE colId=%s FOR UPDATE", (coalition_id,))
+    vault_row = db.fetchone()
+    reserved = protected_reserve_after(db, coalition_id, want_res)
+    if reserved and vault_row and vault_row[0] - want_amt < reserved:
+        return False, (
+            f"{reserved:,} {resource_label(want_res).lower()} in the vault is reserved "
+            f"for members who protected their personal deposits."
+        ), coalition_id
     db.execute(
         f"UPDATE colBanks SET {want_res} = {want_res} - %s WHERE colId=%s AND {want_res} >= %s RETURNING colId",
         (want_amt, coalition_id, want_amt),

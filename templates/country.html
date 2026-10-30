@@ -23,6 +23,8 @@
         <!-- <img alt="Image" src="{{ url_for('static', filename='images/country.jpg') }}?v=2" /> -->
         <h1 class="templatedivtitle"><i class="fas fa-flag iconlarge" aria-hidden="true"></i>{{ render_nation_name(cId, username, {'name_color': name_color, 'badge_icon': badge_icon, 'badge_name': badge_name, 'title': title}) }}</h1>
     </div>
+    {% if on_vacation %}<div class="vacation-badge" role="status" style="display:inline-flex;align-items:center;gap:6px;margin:8px 0;padding:4px 12px;border-radius:999px;background:#2e7d32;color:#fff;font-size:0.9em;"><span class="material-icons-outlined" style="font-size:18px;">beach_access</span>On vacation</div>
+    {% endif %}
 
     <div class="templatedivcontent">
 

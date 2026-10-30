@@ -453,6 +453,21 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
             {% if userInCurCol %}
             <h2 class="templatecontentheaderleft">Bank</h2>
             <div class="infodiv">
+                <form action="/coalition/{{ colId }}/deposit_protection" method="POST" style="margin-bottom: 12px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" name="enabled" value="on" onchange="this.form.submit()" {% if my_deposit_protected %}checked{% endif %} />
+                        Protect my personal deposits
+                    </label>
+                    <p style="margin: 4px 0 0; color: var(--text-secondary); font-size: 0.85em;">
+                        While on, bankers can't pay out vault resources that would dip below your personal balance. You can still withdraw it yourself.
+                    </p>
+                </form>
+                {% if protected_reserve_totals %}
+                <p style="margin-bottom: 12px; color: var(--text-secondary); font-size: 0.9em;">
+                    Reserved for members with protected deposits (bankers can't withdraw this):
+                    {% for res, amt in protected_reserve_totals.items() %}{{ "{:,}".format(amt) }} {{ res }}{% if not loop.last %}, {% endif %}{% endfor %}.
+                </p>
+                {% endif %}
                 <form method="POST">
                     <div class="templateoutertablediv inverttable">
                         <table class="templatetable templatetable2">
@@ -1313,4 +1328,20 @@ button, .templatedivbutton, .loginsignupinput, .templateselect, .templatetextare
         </div>
     </div>
 </div>
+<script>
+    // Open the tab named in the URL hash (e.g. /coalition/5#bank) so form
+    // posts return the player to the section they were using.
+    (function () {
+        var tabs = {general: 'coalitiongeneral', members: 'coalitiongeneral', join: 'coalitionjoin',
+                    actions: 'coalitionactions', bank: 'coalitionbank', chat: 'coalitionchat',
+                    government: 'coalitiongov', diplomacy: 'coalitiondiplomacy',
+                    tax: 'coalitiontax', settings: 'coalitionsettings'};
+        function openHashTab() {
+            var fn = tabs[(location.hash || '').slice(1)];
+            if (fn && typeof window[fn] === 'function') { window[fn](); }
+        }
+        window.addEventListener('load', openHashTab);
+        window.addEventListener('hashchange', openHashTab);
+    })();
+</script>
 {% endblock %}

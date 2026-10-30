@@ -10,6 +10,10 @@ from .repositories import (
     INFO_ACCESS_LABELS,
     ROLE_LABEL_MAX_LEN,
     get_coalition_settings,
+    is_deposit_protected,
+    protected_reserve_after,
+    protected_reserves,
+    set_deposit_protection,
     get_role_labels,
     role_can_see,
     member_shares_with_coalition,
@@ -725,6 +729,13 @@ def coalition(coalition_id):
             if uid == cId:
                 my_personal_bank_balances[res] = max(0, amt - withdrawn)
 
+        my_deposit_protected = False
+        protected_reserve_totals = {}
+        if userInCurCol:
+            my_deposit_protected = is_deposit_protected(db, coalition_id, cId)
+            if user_role in ("leader", "deputy_leader", "banker"):
+                protected_reserve_totals = protected_reserves(db, coalition_id)
+
         # Recent bank transaction log. Tax income is its own log so daily tax
         # rows don't push real deposits/withdrawals out of view (luciuskonst's
         # Coalition QOL wishlist). Who sees the whole coalition's log is a
@@ -841,6 +852,8 @@ def coalition(coalition_id):
             name_changes_used=name_changes_used,
             contributions_by_user=contributions_by_user,
             my_personal_bank_balances=my_personal_bank_balances,
+            my_deposit_protected=my_deposit_protected,
+            protected_reserve_totals=protected_reserve_totals,
             bank_transactions=bank_transactions,
             tax_transactions=tax_transactions,
             can_see_all_bank_logs=can_see_all_bank_logs,
@@ -1265,7 +1278,7 @@ def toggle_build_sharing():
     )
 
     if coalition_id:
-        return redirect(f"/coalition/{coalition_id}")
+        return redirect(f"/coalition/{coalition_id}#general")
     return redirect("/")
 
 
@@ -1365,7 +1378,7 @@ def give_position():
         except Exception as e:
             print(f"give_position: cache invalidation failed: {e}", flush=True)
 
-        return redirect("/my_coalition")
+        return redirect(f"/coalition/{coalition_id}#government")
 
 
 # Route for accepting a coalition join request
@@ -1415,7 +1428,7 @@ def adding(uId):
         except Exception as e:
             print(f"adding: cache invalidation failed: {e}", flush=True)
 
-        return redirect(f"/coalition/{coalition_id}")
+        return redirect(f"/coalition/{coalition_id}#government")
 
 
 # Route for removing a join request
@@ -1454,7 +1467,7 @@ def removing_requests(uId):
         except Exception as e:
             print(f"removing_requests: cache invalidation failed: {e}", flush=True)
 
-        return redirect(f"/coalition/{coalition_id}")
+        return redirect(f"/coalition/{coalition_id}#government")
 
 
 # Route for deleting a coalition
@@ -1635,7 +1648,7 @@ def update_col_info(coalition_id):
                         (new_name, renames_used + 1, coalition_id),
                     )
 
-    return redirect("/my_coalition")
+    return redirect(f"/coalition/{coalition_id}#settings")
 
 
 # Coalition bank stuff
@@ -1805,6 +1818,20 @@ def withdraw(resource, amount, user_id, coalition_id, actor_id=None):
     with get_request_cursor() as db:
         if amount < 1:
             return error(400, "Amount cannot be less than 1")
+
+        # Safe Personal Deposit: don't let a payout dip the vault below what
+        # protected members have deposited. Lock the vault row so the check
+        # and the debit below see the same balance.
+        db.execute(f"SELECT {resource} FROM colBanks WHERE colId=%s FOR UPDATE", (coalition_id,))
+        vault_row = db.fetchone()
+        reserved = protected_reserve_after(db, coalition_id, resource, user_id, amount)
+        if reserved and vault_row and vault_row[0] - amount < reserved:
+            flash(
+                f"{reserved:,} {resource} in the vault is reserved for members "
+                "who protected their personal deposits.",
+                "warning",
+            )
+            return redirect(f"/coalition/{coalition_id}#bank")
 
         # Removes the resource from the coalition bank atomically
         update_statement = f"UPDATE colBanks SET {resource}={resource}-%s WHERE colId=%s AND {resource}>=%s RETURNING {resource}"
@@ -2062,6 +2089,31 @@ def withdraw_personal_from_bank(coalition_id):
     return redirect(f"/coalition/{coalition_id}#bank")
 
 
+# Member opt-in: keep my personal deposits out of reach of banker withdrawals.
+# Acts only on the logged-in member's own row.
+def set_deposit_protection_route(coalition_id):
+    cId = session["user_id"]
+    enabled = request.form.get("enabled") in ("on", "true", "1")
+
+    with get_request_cursor() as db:
+        guard = _require_coalition_member(db, cId, coalition_id)
+        if guard:
+            return guard
+        saved = set_deposit_protection(db, coalition_id, cId, enabled)
+
+    if not saved:
+        flash("Deposit protection isn't available yet. Try again shortly.", "warning")
+    else:
+        flash(
+            "Your personal deposits are now protected from banker withdrawals."
+            if enabled
+            else "Your personal deposits are no longer protected.",
+            "success",
+        )
+    _invalidate_bank_caches(coalition_id)
+    return redirect(f"/coalition/{coalition_id}#bank")
+
+
 # Route for coalition leadership to adjust / deduct a member's personal bank balance
 def adjust_personal_bank(coalition_id):
     cId = session["user_id"]
@@ -2126,6 +2178,21 @@ def adjust_personal_bank(coalition_id):
         row = db.fetchone()
         deposited, withdrawn = row if row else (0, 0)
         current_available = max(0, deposited - withdrawn)
+
+        if (
+            (
+                (action_type == "deduct" and amount > 0)
+                or (action_type == "set" and amount < current_available)
+            )
+            and target_uid != cId
+            and is_deposit_protected(db, coalition_id, target_uid)
+        ):
+            flash(
+                f"{target_username} protected their personal deposits; "
+                "their balance can't be reduced by others.",
+                "warning",
+            )
+            return redirect(f"/coalition/{coalition_id}#bank")
 
         if action_type == "deduct":
             if amount > current_available:
@@ -2434,7 +2501,7 @@ def offer_treaty():
                 400, "Error inserting into database. Please contact the website admins"
             )
 
-    return redirect("/my_coalition")
+    return redirect(f"/coalition/{user_coalition}#diplomacy")
 
 
 # Route for accepting a treaty offer from another coalition
@@ -2488,7 +2555,7 @@ def accept_treaty(offer_id):
                 f"coalitions signed a treaty: {treaty_name}.",
             )
 
-    return redirect("/my_coalition")
+    return redirect(f"/coalition/{user_coalition}#diplomacy")
 
 
 # Route for breaking a treaty with another coalition
@@ -2521,7 +2588,7 @@ def break_treaty(offer_id):
         if not db.fetchone():
             return error(400, "You do not have such a treaty")
 
-    return redirect("/my_coalition")
+    return redirect(f"/coalition/{user_coalition}#diplomacy")
 
 
 def decline_treaty(offer_id):
@@ -2547,7 +2614,7 @@ def decline_treaty(offer_id):
         if not db.fetchone():
             return error(400, "You do not have such a treaty")
 
-    return redirect("/my_coalition")
+    return redirect(f"/coalition/{user_coalition}#diplomacy")
 
 
 def send_coalition_invite(nation_id):
@@ -2869,7 +2936,7 @@ def update_coalition_settings(coalition_id):
 
     _invalidate_bank_caches(coalition_id)
     flash("Coalition settings saved.")
-    return redirect(f"/coalition/{coalition_id}")
+    return redirect(f"/coalition/{coalition_id}#settings")
 
 
 # Leader-only: rename the coalition's roles (display names only).
@@ -2904,7 +2971,7 @@ def update_role_names(coalition_id):
 
     _invalidate_bank_caches(coalition_id)
     flash("Role names saved.")
-    return redirect(f"/coalition/{coalition_id}")
+    return redirect(f"/coalition/{coalition_id}#settings")
 
 
 def _bank_log_access(db, user_id, coalition_id, kind):
@@ -3358,6 +3425,11 @@ def register_coalitions_routes(app_instance):
     app_instance.add_url_rule(
         "/withdraw_personal_from_bank/<coalition_id>",
         view_func=withdraw_personal_from_bank_wrapped,
+        methods=["POST"],
+    )
+    app_instance.add_url_rule(
+        "/coalition/<int:coalition_id>/deposit_protection",
+        view_func=login_required(set_deposit_protection_route),
         methods=["POST"],
     )
     app_instance.add_url_rule(

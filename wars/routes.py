@@ -17,6 +17,12 @@ from attack_scripts.Nations import (
 )
 from attack_scripts import Nation
 from app_core.economy import ledger
+from app_core.vacation import (
+    ON_VACATION_ATTACKER_MSG,
+    ON_VACATION_DEFENDER_MSG,
+    is_on_vacation,
+    no_vacation,
+)
 import time
 from datetime import datetime, timezone
 
@@ -777,6 +783,7 @@ def _repeat_attack_ctx(war_id):
 @wars_bp.route("/war/<int:war_id>/repeat_attack", methods=["POST"])
 @login_required
 @check_required
+@no_vacation
 def repeat_attack(war_id):
     """Re-send the last attack made in this war with one click. Amounts are
     capped at what's still owned, so losses from the previous strike don't
@@ -843,6 +850,7 @@ def repeat_attack(war_id):
 
 @wars_bp.route("/war/<int:war_id>/attack", methods=["GET", "POST"])
 @login_required
+@no_vacation
 def war_attack(war_id):
     cId = session["user_id"]
     with get_request_cursor() as db:
@@ -1090,6 +1098,7 @@ def warChoose(war_id):
 @wars_bp.route("/waramount", methods=["GET", "POST"])
 @login_required
 @check_required
+@no_vacation
 def warAmount():
     cId = session["user_id"]
     attack_unit_session = session.get("attack_units")
@@ -1794,6 +1803,14 @@ def declare_war():
             lo_id, hi_id = min(attacker.id, defender.id), max(attacker.id, defender.id)
             db.execute("SELECT pg_advisory_xact_lock(%s, %s)", (lo_id, hi_id))
 
+            # Vacation mode: no declaring while on vacation, no declaring on a
+            # vacationer. FOR SHARE pairs with enable_vacation's FOR UPDATE so
+            # a nation can't go on vacation mid-declaration.
+            if is_on_vacation(db, attacker.id, lock=True):
+                return error(403, ON_VACATION_ATTACKER_MSG)
+            if is_on_vacation(db, defender.id, lock=True):
+                return error(403, ON_VACATION_DEFENDER_MSG)
+
             # Treaties check: Prevent war if an active Non-Aggression pact exists
             db.execute(
                 """
@@ -1967,6 +1984,7 @@ def _ally_join_block(db, ally_id, aggressor_id):
 
 @wars_bp.route("/wars/<int:war_id>/join_ally", methods=["POST"])
 @login_required
+@no_vacation
 def join_war_as_ally(war_id):
     """A Mutual Defense partner of a war's defender joins as a second,
     independent 1v1 war against the original attacker - not a true multi-
@@ -2403,6 +2421,7 @@ def find_targets():
 
 @wars_bp.route("/nuclear_strike", methods=["POST"])
 @login_required
+@no_vacation
 def nuclear_strike():
     """Entry point from a country page: find the active war with that nation
     and open the nuclear strike planner (the strike itself is a two-step
@@ -2454,6 +2473,7 @@ def nuclear_strike_plan(war_id):
 
 @wars_bp.route("/nuclear_strike/<int:war_id>/review", methods=["POST"])
 @login_required
+@no_vacation
 def nuclear_strike_review(war_id):
     """Step 1: show exactly what this launch will do and what it costs."""
     import secrets
@@ -2483,6 +2503,7 @@ def nuclear_strike_review(war_id):
 
 @wars_bp.route("/nuclear_strike/<int:war_id>/launch", methods=["POST"])
 @login_required
+@no_vacation
 def nuclear_strike_launch(war_id):
     """Step 2: the actual launch. Needs the one-time token from the review
     page (so a stray POST or a replayed form can't fire a nuke)."""
@@ -2528,6 +2549,7 @@ def nuclear_strike_launch(war_id):
 
 @wars_bp.route("/strategic_airstrike", methods=["POST"])
 @login_required
+@no_vacation
 def strategic_airstrike():
     attacker_id = session["user_id"]
     try:
@@ -2889,6 +2911,7 @@ def _strike_news(db, attacker_id, target_id, attacker_msg, defender_msg):
 
 @wars_bp.route("/drone_strike", methods=["POST"])
 @login_required
+@no_vacation
 def drone_strike():
     """Launch kamikaze_drones (stockpile-backed, see
     app_core/game_ticks/unit_production.py + app_core/military/services.py)
@@ -3074,6 +3097,7 @@ def drone_strike():
 
 @wars_bp.route("/cruise_missile_strike", methods=["POST"])
 @login_required
+@no_vacation
 def cruise_missile_strike():
     """Launch cruise_missiles (stockpile-backed) at a target building.
     Pricier and slower to manufacture than drones, but a guaranteed hit --

@@ -1,6 +1,7 @@
 from flask import Blueprint, request, render_template, session, redirect
 from helpers import redirect_back
 from helpers import login_required, error, is_theme_v2_enabled
+from app_core.vacation import ON_VACATION_ATTACKER_MSG, is_on_vacation, no_vacation
 from database import get_request_cursor, invalidate_user_cache, invalidate_view_cache
 from variables import MILDICT
 from app_core.upgrades.services import get_upgrades
@@ -68,6 +69,9 @@ def military_sell_buy(way, units):
             if wantedUnits < 1:
                 return error(400, "You cannot buy or sell less than 1 unit")
 
+            if way == "buy" and is_on_vacation(db, cId):
+                return error(403, ON_VACATION_ATTACKER_MSG)
+
             if way == "sell":
                 success, msg = process_sell_units(db, cId, units, wantedUnits, MILDICT)
                 if not success:
@@ -89,6 +93,7 @@ def military_sell_buy(way, units):
 
 @bp.route("/military/activate/<units>", methods=["POST"])
 @login_required
+@no_vacation
 def military_activate(units):
     cId = session["user_id"]
 
