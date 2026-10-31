@@ -3,7 +3,7 @@
   "ballot_id": "2026-10-30",
   "created_at": "2026-10-24T14:13:13Z",
   "kind": "suggestion",
-  "last_message_id": "1563555971593150546",
+  "last_message_id": "1565827457930756229",
   "last_player_message_at": "2026-10-24T14:13:13Z",
   "messages": [
     {
@@ -15,6 +15,16 @@
       "id": "1563555971593150546",
       "staff": false,
       "text": "Limit it so a country can only be hit one or two times a day so a group of people can't level a country in a few minutes."
+    },
+    {
+      "at": "2026-10-30T20:39:17Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1565827457930756229",
+      "staff": false,
+      "text": "<@307290318590705667> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1565827455342608521\nVoting closes <t:1793980800:F>. If Yes wins, it gets built."
     }
   ],
   "poll_message_id": "1565827455342608521",

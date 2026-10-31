@@ -3,8 +3,8 @@
   "ballot_id": "2026-10-23",
   "created_at": "2026-10-20T16:14:51Z",
   "kind": "suggestion",
-  "last_message_id": "1563255304198684746",
-  "last_player_message_at": "2026-10-23T18:18:28Z",
+  "last_message_id": "1565853502390018099",
+  "last_player_message_at": "2026-10-30T22:22:47Z",
   "messages": [
     {
       "at": "2026-10-20T16:14:51Z",
@@ -95,6 +95,26 @@
       "id": "1563255304198684746",
       "staff": true,
       "text": "Been swamped with work"
+    },
+    {
+      "at": "2026-10-30T20:39:13Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1565827441333768200",
+      "staff": false,
+      "text": "<@519965006867988490> the vote is in: **6 yes / 1 no**. Your suggestion passed, it's queued to be built. You'll get a ping here when it's live."
+    },
+    {
+      "at": "2026-10-30T22:22:47Z",
+      "attachments": [],
+      "author": "Unknown Identity",
+      "author_id": "519965006867988490",
+      "bot": false,
+      "id": "1565853502390018099",
+      "staff": true,
+      "text": "<:daveyjuice:1521722224342597632>"
     }
   ],
   "poll_message_id": "1563254485579735131",

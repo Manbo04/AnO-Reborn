@@ -3,7 +3,7 @@
   "ballot_id": "2026-10-30",
   "created_at": "2026-10-29T16:15:40Z",
   "kind": "suggestion",
-  "last_message_id": "1565398726476955668",
+  "last_message_id": "1565827472686194809",
   "last_player_message_at": "2026-10-29T16:15:40Z",
   "messages": [
     {
@@ -15,6 +15,16 @@
       "id": "1565398726476955668",
       "staff": false,
       "text": "After looking up some comparisons nuclear plants apparently only require upwards of a thousand or so for the large ones with steel mills being similar not the 150k-90k that the game requires. In DnS the average building only had 5k/10k/15k population requirements for comparison"
+    },
+    {
+      "at": "2026-10-30T20:39:21Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1565827472686194809",
+      "staff": false,
+      "text": "<@307290318590705667> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1565827471339684001\nVoting closes <t:1793980800:F>. If Yes wins, it gets built."
     }
   ],
   "poll_message_id": "1565827471339684001",

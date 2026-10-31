@@ -3,7 +3,7 @@
   "ballot_id": "2026-10-30",
   "created_at": "2026-10-27T01:11:06Z",
   "kind": "suggestion",
-  "last_message_id": "1564446311007125525",
+  "last_message_id": "1565827470085726229",
   "last_player_message_at": "2026-10-27T01:11:06Z",
   "messages": [
     {
@@ -15,6 +15,16 @@
       "id": "1564446311007125525",
       "staff": false,
       "text": "A checkbox to toggle between Available & All Projects for convenience."
+    },
+    {
+      "at": "2026-10-30T20:39:20Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1565827470085726229",
+      "staff": false,
+      "text": "<@249007223454433292> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1565827468261327060\nVoting closes <t:1793980800:F>. If Yes wins, it gets built."
     }
   ],
   "poll_message_id": "1565827468261327060",

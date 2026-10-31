@@ -3,7 +3,7 @@
   "ballot_id": "2026-10-30",
   "created_at": "2026-10-25T01:02:18Z",
   "kind": "suggestion",
-  "last_message_id": "1563722353676910675",
+  "last_message_id": "1565827466755575990",
   "last_player_message_at": "2026-10-25T01:14:21Z",
   "messages": [
     {
@@ -125,6 +125,16 @@
       "id": "1563722353676910675",
       "staff": false,
       "text": "Also give an espionage option to sabotage nuclear weapons facilities"
+    },
+    {
+      "at": "2026-10-30T20:39:19Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1565827466755575990",
+      "staff": false,
+      "text": "<@429129579039555584> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1565827464763019286\nVoting closes <t:1793980800:F>. If Yes wins, it gets built."
     }
   ],
   "poll_message_id": "1565827464763019286",
