@@ -3,8 +3,8 @@
   "ballot_id": "2026-10-30",
   "created_at": "2026-10-24T18:44:31Z",
   "kind": "suggestion",
-  "last_message_id": "1565827462720655562",
-  "last_player_message_at": "2026-10-24T19:20:25Z",
+  "last_message_id": "1566298296664723587",
+  "last_player_message_at": "2026-11-01T03:50:14Z",
   "messages": [
     {
       "at": "2026-10-24T18:44:31Z",
@@ -75,6 +75,36 @@
       "id": "1565827462720655562",
       "staff": false,
       "text": "<@710359818329915443> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1565827459235184641\nVoting closes <t:1793980800:F>. If Yes wins, it gets built."
+    },
+    {
+      "at": "2026-11-01T03:18:59Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1566290431418048523",
+      "staff": false,
+      "text": "If loser's manpower cap is halved for 5 days, wouldn't the next attacker just level (or threaten to, since it half is pretty significant) the loser again? gotta give the loser a way out of the vicious cycle..."
+    },
+    {
+      "at": "2026-11-01T03:21:06Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1566290966493667429",
+      "staff": false,
+      "text": "how about like a tribute? unconditional surrender - loser has to pay 5/10% of their output over next few days"
+    },
+    {
+      "at": "2026-11-01T03:50:14Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1566298296664723587",
+      "staff": false,
+      "text": "Yeah I had to vote no. There is some good stuff in here which would be unfortunate to lose but there is also a bunch of bad stuff"
     }
   ],
   "poll_message_id": "1565827459235184641",
