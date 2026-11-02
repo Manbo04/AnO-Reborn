@@ -1,6 +1,6 @@
 -- Production schema snapshot (structure only, no player data).
 -- Source: live Railway Postgres via scripts/snapshot_prod_schema.sh
--- Taken: 2026-10-06. Refresh after every migration that ships.
+-- Taken: 2026-11-02. Refresh after every migration that ships.
 -- CI builds its test database from this file, so tests run against the real schema.
 
 --
@@ -349,7 +349,8 @@ CREATE TABLE public.assembly_effects (
     effect_type character varying(32) NOT NULL,
     currency_cap_amount bigint,
     active boolean DEFAULT true NOT NULL,
-    expires_at timestamp without time zone
+    expires_at timestamp without time zone,
+    severity character varying(16)
 );
 
 
@@ -387,7 +388,9 @@ CREATE TABLE public.assembly_proposals (
     text text,
     status character varying(16) DEFAULT 'open'::character varying NOT NULL,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
-    closes_at timestamp without time zone NOT NULL
+    closes_at timestamp without time zone NOT NULL,
+    severity character varying(16),
+    duration_days integer
 );
 
 
@@ -539,6 +542,36 @@ ALTER SEQUENCE public.bonds_id_seq OWNED BY public.bonds.id;
 
 
 --
+-- Name: bot_nations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.bot_nations (
+    user_id integer NOT NULL,
+    archetype text NOT NULL,
+    tier text NOT NULL,
+    provinces integer NOT NULL,
+    population_per_province integer NOT NULL,
+    army_share double precision NOT NULL,
+    target_strength bigint NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    last_in_range_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: bot_war_state; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.bot_war_state (
+    war_id integer NOT NULL,
+    last_attack_at double precision DEFAULT 0 NOT NULL,
+    attacks integer DEFAULT 0 NOT NULL,
+    bot_guard_ts double precision DEFAULT 0 NOT NULL,
+    human_action_ts double precision DEFAULT 0 NOT NULL
+);
+
+
+--
 -- Name: bounties; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -628,6 +661,19 @@ CREATE TABLE public.coalition_bond_insurance (
     user_id integer NOT NULL,
     added_by integer,
     created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: coalition_embargoes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.coalition_embargoes (
+    embargoer_coalition_id integer NOT NULL,
+    target_coalition_id integer NOT NULL,
+    created_by integer,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT coalition_embargoes_check CHECK ((embargoer_coalition_id <> target_coalition_id))
 );
 
 
@@ -974,6 +1020,18 @@ CREATE SEQUENCE public.col_bank_transactions_id_seq
 --
 
 ALTER SEQUENCE public.col_bank_transactions_id_seq OWNED BY public.col_bank_transactions.id;
+
+
+--
+-- Name: col_deposit_protection; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.col_deposit_protection (
+    coalition_id integer NOT NULL,
+    user_id integer NOT NULL,
+    enabled boolean DEFAULT false NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
 
 
 --
@@ -1339,6 +1397,18 @@ CREATE SEQUENCE public.direct_messages_id_seq
 --
 
 ALTER SEQUENCE public.direct_messages_id_seq OWNED BY public.direct_messages.id;
+
+
+--
+-- Name: directives; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.directives (
+    user_id integer NOT NULL,
+    directive_key text NOT NULL,
+    activated_at timestamp with time zone DEFAULT now() NOT NULL,
+    expires_at timestamp with time zone NOT NULL
+);
 
 
 --
@@ -2046,6 +2116,18 @@ CREATE SEQUENCE public.global_market_market_id_seq
 --
 
 ALTER SEQUENCE public.global_market_market_id_seq OWNED BY public.global_market.market_id;
+
+
+--
+-- Name: halloween_gift_claims; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.halloween_gift_claims (
+    user_id integer NOT NULL,
+    year integer NOT NULL,
+    amount bigint NOT NULL,
+    claimed_at timestamp with time zone DEFAULT now() NOT NULL
+);
 
 
 --
@@ -3565,6 +3647,19 @@ CREATE TABLE public.stats (
 
 
 --
+-- Name: surrender_offers; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.surrender_offers (
+    war_id integer NOT NULL,
+    surrendering_id integer NOT NULL,
+    kind character varying(16) NOT NULL,
+    created_at double precision NOT NULL,
+    CONSTRAINT surrender_offers_kind_check CHECK (((kind)::text = ANY ((ARRAY['conditional'::character varying, 'unconditional'::character varying])::text[])))
+);
+
+
+--
 -- Name: task_cursors; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3612,7 +3707,8 @@ ALTER SEQUENCE public.task_metrics_id_seq OWNED BY public.task_metrics.id;
 
 CREATE TABLE public.task_runs (
     task_name text NOT NULL,
-    last_run timestamp with time zone
+    last_run timestamp with time zone,
+    last_period timestamp with time zone
 );
 
 
@@ -3698,10 +3794,10 @@ CREATE TABLE public.trade_agreements (
     id integer NOT NULL,
     proposer_id integer NOT NULL,
     proposer_resource text NOT NULL,
-    proposer_amount integer NOT NULL,
+    proposer_amount bigint NOT NULL,
     receiver_id integer NOT NULL,
     receiver_resource text NOT NULL,
-    receiver_amount integer NOT NULL,
+    receiver_amount bigint NOT NULL,
     interval_hours integer DEFAULT 24 NOT NULL,
     next_execution timestamp with time zone,
     last_execution timestamp with time zone,
@@ -4119,7 +4215,15 @@ CREATE TABLE public.users (
     signup_country character(2),
     signup_device text,
     signup_heard_from text,
-    signup_channel_source text
+    signup_channel_source text,
+    show_discord boolean DEFAULT false NOT NULL,
+    discord_username text,
+    vacation_mode boolean DEFAULT false NOT NULL,
+    vacation_started_at timestamp with time zone,
+    vacation_ended_at timestamp with time zone,
+    vacation_until timestamp with time zone,
+    hidden_from_rankings boolean DEFAULT false NOT NULL,
+    untargetable boolean DEFAULT false NOT NULL
 );
 
 
@@ -4144,6 +4248,41 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
+-- Name: war_building_losses; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.war_building_losses (
+    id bigint NOT NULL,
+    war_id integer NOT NULL,
+    victim_id integer NOT NULL,
+    building text NOT NULL,
+    quantity integer NOT NULL,
+    source text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT war_building_losses_quantity_check CHECK ((quantity > 0))
+);
+
+
+--
+-- Name: war_building_losses_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.war_building_losses_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: war_building_losses_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.war_building_losses_id_seq OWNED BY public.war_building_losses.id;
+
+
+--
 -- Name: war_events; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -4159,7 +4298,8 @@ CREATE TABLE public.war_events (
     new_morale integer,
     win_label text,
     concluded boolean,
-    created_at timestamp with time zone DEFAULT now()
+    created_at timestamp with time zone DEFAULT now(),
+    details text
 );
 
 
@@ -4184,6 +4324,41 @@ ALTER SEQUENCE public.war_events_id_seq OWNED BY public.war_events.id;
 
 
 --
+-- Name: war_penalties; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.war_penalties (
+    id integer NOT NULL,
+    user_id integer NOT NULL,
+    war_id integer,
+    kind character varying(32) NOT NULL,
+    factor double precision NOT NULL,
+    created_at double precision NOT NULL,
+    expires_at double precision NOT NULL
+);
+
+
+--
+-- Name: war_penalties_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.war_penalties_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: war_penalties_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.war_penalties_id_seq OWNED BY public.war_penalties.id;
+
+
+--
 -- Name: wars; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -4204,7 +4379,23 @@ CREATE TABLE public.wars (
     aggressor_message character varying(240),
     status character varying(20) DEFAULT 'active'::character varying,
     winner_id integer,
-    last_attack_resolved_at double precision
+    last_attack_resolved_at double precision,
+    attacker_ground_ap integer DEFAULT 6 NOT NULL,
+    attacker_air_ap integer DEFAULT 6 NOT NULL,
+    attacker_naval_ap integer DEFAULT 6 NOT NULL,
+    defender_ground_ap integer DEFAULT 6 NOT NULL,
+    defender_air_ap integer DEFAULT 6 NOT NULL,
+    defender_naval_ap integer DEFAULT 6 NOT NULL,
+    attacker_entrench smallint DEFAULT 0 NOT NULL,
+    defender_entrench smallint DEFAULT 0 NOT NULL,
+    attacker_intel smallint DEFAULT 0 NOT NULL,
+    defender_intel smallint DEFAULT 0 NOT NULL,
+    attacker_blockaded timestamp with time zone,
+    defender_blockaded timestamp with time zone,
+    origin character varying(20) DEFAULT 'declared'::character varying NOT NULL,
+    parent_war_id integer,
+    attacker_nuked boolean DEFAULT false NOT NULL,
+    defender_nuked boolean DEFAULT false NOT NULL
 );
 
 
@@ -4886,10 +5077,24 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 
 
 --
+-- Name: war_building_losses id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.war_building_losses ALTER COLUMN id SET DEFAULT nextval('public.war_building_losses_id_seq'::regclass);
+
+
+--
 -- Name: war_events id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.war_events ALTER COLUMN id SET DEFAULT nextval('public.war_events_id_seq'::regclass);
+
+
+--
+-- Name: war_penalties id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.war_penalties ALTER COLUMN id SET DEFAULT nextval('public.war_penalties_id_seq'::regclass);
 
 
 --
@@ -5002,6 +5207,22 @@ ALTER TABLE ONLY public.bonds
 
 
 --
+-- Name: bot_nations bot_nations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bot_nations
+    ADD CONSTRAINT bot_nations_pkey PRIMARY KEY (user_id);
+
+
+--
+-- Name: bot_war_state bot_war_state_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bot_war_state
+    ADD CONSTRAINT bot_war_state_pkey PRIMARY KEY (war_id);
+
+
+--
 -- Name: bounties bounties_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -5039,6 +5260,14 @@ ALTER TABLE ONLY public.building_dictionary
 
 ALTER TABLE ONLY public.coalition_bond_insurance
     ADD CONSTRAINT coalition_bond_insurance_pkey PRIMARY KEY (coalition_id, user_id);
+
+
+--
+-- Name: coalition_embargoes coalition_embargoes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.coalition_embargoes
+    ADD CONSTRAINT coalition_embargoes_pkey PRIMARY KEY (embargoer_coalition_id, target_coalition_id);
 
 
 --
@@ -5151,6 +5380,14 @@ ALTER TABLE ONLY public.col_bank_trades
 
 ALTER TABLE ONLY public.col_bank_transactions
     ADD CONSTRAINT col_bank_transactions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: col_deposit_protection col_deposit_protection_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.col_deposit_protection
+    ADD CONSTRAINT col_deposit_protection_pkey PRIMARY KEY (coalition_id, user_id);
 
 
 --
@@ -5271,6 +5508,14 @@ ALTER TABLE ONLY public.devlog_entries
 
 ALTER TABLE ONLY public.direct_messages
     ADD CONSTRAINT direct_messages_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: directives directives_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.directives
+    ADD CONSTRAINT directives_pkey PRIMARY KEY (user_id, directive_key);
 
 
 --
@@ -5535,6 +5780,14 @@ ALTER TABLE ONLY public.global_chat_messages
 
 ALTER TABLE ONLY public.global_market
     ADD CONSTRAINT global_market_pkey PRIMARY KEY (market_id);
+
+
+--
+-- Name: halloween_gift_claims halloween_gift_claims_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.halloween_gift_claims
+    ADD CONSTRAINT halloween_gift_claims_pkey PRIMARY KEY (user_id, year);
 
 
 --
@@ -6002,6 +6255,14 @@ ALTER TABLE ONLY public.stats
 
 
 --
+-- Name: surrender_offers surrender_offers_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.surrender_offers
+    ADD CONSTRAINT surrender_offers_pkey PRIMARY KEY (war_id);
+
+
+--
 -- Name: task_cursors task_cursors_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -6242,11 +6503,27 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: war_building_losses war_building_losses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.war_building_losses
+    ADD CONSTRAINT war_building_losses_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: war_events war_events_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.war_events
     ADD CONSTRAINT war_events_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: war_penalties war_penalties_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.war_penalties
+    ADD CONSTRAINT war_penalties_pkey PRIMARY KEY (id);
 
 
 --
@@ -6292,6 +6569,13 @@ CREATE INDEX currency_union_members_union_idx ON public.currency_union_members U
 --
 
 CREATE UNIQUE INDEX currency_unions_name_lower_uniq ON public.currency_unions USING btree (lower((name)::text));
+
+
+--
+-- Name: directives_active_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX directives_active_idx ON public.directives USING btree (expires_at);
 
 
 --
@@ -6390,6 +6674,13 @@ CREATE INDEX idx_cbr_reqid ON public.colbanksrequests USING btree (reqid);
 --
 
 CREATE INDEX idx_coalition_bond_insurance_user ON public.coalition_bond_insurance USING btree (user_id);
+
+
+--
+-- Name: idx_coalition_embargoes_target; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_coalition_embargoes_target ON public.coalition_embargoes USING btree (target_coalition_id);
 
 
 --
@@ -7534,6 +7825,20 @@ CREATE INDEX idx_users_username ON public.users USING btree (username);
 
 
 --
+-- Name: idx_war_building_losses_war; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_war_building_losses_war ON public.war_building_losses USING btree (war_id, created_at DESC);
+
+
+--
+-- Name: idx_war_penalties_user_expires; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_war_penalties_user_expires ON public.war_penalties USING btree (user_id, expires_at);
+
+
+--
 -- Name: idx_wars_attacker_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -7777,6 +8082,14 @@ ALTER TABLE ONLY public.bonds
 
 
 --
+-- Name: bot_nations bot_nations_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.bot_nations
+    ADD CONSTRAINT bot_nations_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
 -- Name: bounties bounties_claimed_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -7814,6 +8127,30 @@ ALTER TABLE ONLY public.coalition_bond_insurance
 
 ALTER TABLE ONLY public.coalition_bond_insurance
     ADD CONSTRAINT coalition_bond_insurance_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: coalition_embargoes coalition_embargoes_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.coalition_embargoes
+    ADD CONSTRAINT coalition_embargoes_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: coalition_embargoes coalition_embargoes_embargoer_coalition_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.coalition_embargoes
+    ADD CONSTRAINT coalition_embargoes_embargoer_coalition_id_fkey FOREIGN KEY (embargoer_coalition_id) REFERENCES public.colnames(id) ON DELETE CASCADE;
+
+
+--
+-- Name: coalition_embargoes coalition_embargoes_target_coalition_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.coalition_embargoes
+    ADD CONSTRAINT coalition_embargoes_target_coalition_id_fkey FOREIGN KEY (target_coalition_id) REFERENCES public.colnames(id) ON DELETE CASCADE;
 
 
 --
@@ -8022,6 +8359,14 @@ ALTER TABLE ONLY public.direct_messages
 
 ALTER TABLE ONLY public.direct_messages
     ADD CONSTRAINT direct_messages_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: directives directives_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.directives
+    ADD CONSTRAINT directives_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --
@@ -8526,6 +8871,14 @@ ALTER TABLE ONLY public.gem_purchases
 
 ALTER TABLE ONLY public.global_chat_messages
     ADD CONSTRAINT global_chat_messages_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: halloween_gift_claims halloween_gift_claims_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.halloween_gift_claims
+    ADD CONSTRAINT halloween_gift_claims_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
 
 
 --

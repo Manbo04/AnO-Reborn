@@ -44,17 +44,17 @@ INSERT INTO public.tech_dictionary VALUES (13, 'national_health_institution', 'N
 INSERT INTO public.tech_dictionary VALUES (14, 'high_speed_rail', 'High Speed Rail', 'infrastructure', 25000, NULL, NULL, NULL, 'Re-creation of existing and future monorails into high speed rail increases productivity increase by 20%.', true, '2026-03-03 00:07:46.905044+00');
 INSERT INTO public.tech_dictionary VALUES (15, 'advanced_machinery', 'Advanced Machinery', 'industry', 18000, NULL, NULL, NULL, 'The implementation of automation and advanced technologies into conventional farming increases farm output by 50%.', true, '2026-03-03 00:07:46.905044+00');
 INSERT INTO public.tech_dictionary VALUES (16, 'stronger_explosives', 'Stronger Explosives', 'military', 15000, NULL, NULL, NULL, 'Research and development into explosives allows for more effective bauxite harvesting, increasing production by 45%.', true, '2026-03-03 00:07:46.905044+00');
-INSERT INTO public.tech_dictionary VALUES (17, 'widespread_propaganda', 'Widespread Propaganda', 'diplomacy', 10000, 12, NULL, NULL, 'Use of propaganda in media, news, and through devices allows for easy recruitment of soldiers, bringing costs down by 35%.', true, '2026-03-03 00:07:46.905044+00');
+INSERT INTO public.tech_dictionary VALUES (21, 'looting_teams', 'Looting Teams', 'military', 8000, NULL, NULL, NULL, 'Looting teams strip resources from defeated enemies: when you win a war, you take 30% of the loser''s resources instead of 20%.', true, '2026-03-03 00:07:46.905044+00');
 INSERT INTO public.tech_dictionary VALUES (18, 'increased_funding', 'Increased Funding', 'science', 12000, NULL, NULL, NULL, 'Increased funding and construction of new operative bases allows for the ability to recruit and maintain more spies by a factor of 40%.', true, '2026-03-03 00:07:46.905044+00');
 INSERT INTO public.tech_dictionary VALUES (19, 'automation_integration', 'Automation Integration', 'industry', 30000, NULL, NULL, NULL, 'Research and development into technologies allows for cheaper and quicker production of components, decreasing resources needed to make components by 25%.', true, '2026-03-03 00:07:46.905044+00');
 INSERT INTO public.tech_dictionary VALUES (20, 'larger_forges', 'Larger Forges', 'industry', 14000, NULL, NULL, NULL, 'Heavy subsidisation of the steel industry allows for investments into large scale projects, decreasing upkeep and resources to make steel by 30%.', true, '2026-03-03 00:07:46.905044+00');
-INSERT INTO public.tech_dictionary VALUES (21, 'looting_teams', 'Looting Teams', 'military', 8000, 22, NULL, NULL, 'Looting teams will acquire military supplies from annexed establishments, increasing war supplies production by 10%.', true, '2026-03-03 00:07:46.905044+00');
-INSERT INTO public.tech_dictionary VALUES (22, 'organized_supply_lines', 'Organized Supply Lines', 'military', 16000, NULL, NULL, NULL, 'Organized supply lines gives annexed citizens jobs producing resources for your war economy, further increasing war supplies production by 15%.', true, '2026-03-03 00:07:46.905044+00');
-INSERT INTO public.tech_dictionary VALUES (23, 'large_storehouses', 'Large Storehouses', 'infrastructure', 11000, NULL, NULL, NULL, 'Large storehouses allows for greater storage of war supplies, increasing max supplies by 25%.', true, '2026-03-03 00:07:46.905044+00');
+INSERT INTO public.tech_dictionary VALUES (22, 'organized_supply_lines', 'Organized Supply Lines', 'military', 16000, NULL, NULL, NULL, 'No effect right now: war supplies were replaced by action points. A replacement effect will go to the community vote.', false, '2026-03-03 00:07:46.905044+00');
+INSERT INTO public.tech_dictionary VALUES (23, 'large_storehouses', 'Large Storehouses', 'infrastructure', 11000, NULL, NULL, NULL, 'No effect right now: war supplies were replaced by action points. A replacement effect will go to the community vote.', false, '2026-03-03 00:07:46.905044+00');
 INSERT INTO public.tech_dictionary VALUES (24, 'ballistic_missile_silo', 'Ballistic Missile Silo', 'military', 40000, 26, NULL, NULL, 'Ballistic missile silos provides countries with the ability to develop and deploy ballistic missiles.', true, '2026-03-03 00:07:46.905044+00');
 INSERT INTO public.tech_dictionary VALUES (25, 'icbm_silo', 'ICBM Silo', 'military', 50000, 24, NULL, NULL, 'Inter-continental ballistic missile silos allows countries to develop and deploy inter-continental ballistic missiles.', true, '2026-03-03 00:07:46.905044+00');
 INSERT INTO public.tech_dictionary VALUES (26, 'nuclear_testing_facility', 'Nuclear Testing Facility', 'military', 60000, 9, NULL, NULL, 'Nuclear testing facilities gives countries the ability to create nuclear warheads and establish nuclear reactors.', true, '2026-03-03 00:07:46.905044+00');
 INSERT INTO public.tech_dictionary VALUES (29, 'star_wars_project', 'Star Wars Project', 'military', 1200000, NULL, 'iron_dome_bonus', 25.00, 'Strategic Defense Initiative. Iron Domes detect and shoot down 25% more incoming missiles, drones and nukes. Prohibitively expensive, just like the real one.', true, '2026-10-04 09:29:50.416907+00');
+INSERT INTO public.tech_dictionary VALUES (17, 'widespread_propaganda', 'Widespread Propaganda', 'diplomacy', 10000, 12, NULL, NULL, 'Use of propaganda in media, news and devices keeps citizens content (no unemployment happiness penalty) and brings the gold cost of recruiting soldiers down by 35%.', true, '2026-03-03 00:07:46.905044+00');
 
 
 --
@@ -382,5 +382,24 @@ INSERT INTO public.schema_migrations VALUES ('0104_iron_dome.sql', '2026-10-06 0
 INSERT INTO public.schema_migrations VALUES ('0104_market_rework.sql', '2026-10-06 09:48:42.020183+00');
 INSERT INTO public.schema_migrations VALUES ('0105_spyinfo_iron_domes.sql', '2026-10-06 09:48:42.037791+00');
 INSERT INTO public.schema_migrations VALUES ('0106_population_growth_freezes.sql', '2026-10-06 09:48:42.054441+00');
+INSERT INTO public.schema_migrations VALUES ('20261006_1400_task_runs_last_period.sql', '2026-10-06 13:42:31.13752+00');
+INSERT INTO public.schema_migrations VALUES ('20261010_1520_coalition_embargoes.sql', '2026-10-10 15:43:09.481454+00');
+INSERT INTO public.schema_migrations VALUES ('20261010_1500_discord_visibility.sql', '2026-10-10 16:38:14.069992+00');
+INSERT INTO public.schema_migrations VALUES ('20261010_1530_war_combat_mechanics_c.sql', '2026-10-10 16:48:06.850835+00');
+INSERT INTO public.schema_migrations VALUES ('20261011_1800_tech_descriptions_match_effects.sql', '2026-10-11 14:46:39.722933+00');
+INSERT INTO public.schema_migrations VALUES ('20261011_1900_retire_supply_techs.sql', '2026-10-11 14:59:25.422899+00');
+INSERT INTO public.schema_migrations VALUES ('20261011_2000_war_events_details.sql', '2026-10-11 19:03:40.95311+00');
+INSERT INTO public.schema_migrations VALUES ('20261011_2100_bot_nations.sql', '2026-10-11 20:26:29.397133+00');
+INSERT INTO public.schema_migrations VALUES ('20261012_1300_assembly_severity_duration.sql', '2026-10-12 09:48:25.310037+00');
+INSERT INTO public.schema_migrations VALUES ('20261013_0200_directives.sql', '2026-10-13 08:26:19.440121+00');
+INSERT INTO public.schema_migrations VALUES ('20261013_2200_referral_invitee_bonus_marker.sql', '2026-10-13 19:06:49.200673+00');
+INSERT INTO public.schema_migrations VALUES ('20261014_2200_trade_agreement_amounts_bigint.sql', '2026-10-14 19:53:01.589847+00');
+INSERT INTO public.schema_migrations VALUES ('20261025_2300_war_rules_overhaul.sql', '2026-10-25 21:58:12.411143+00');
+INSERT INTO public.schema_migrations VALUES ('20261027_2000_war_building_losses.sql', '2026-10-27 19:13:04.321461+00');
+INSERT INTO public.schema_migrations VALUES ('20261031_1200_col_deposit_protection.sql', '2026-10-30 22:54:03.052478+00');
+INSERT INTO public.schema_migrations VALUES ('20261031_1300_vacation_mode.sql', '2026-10-30 22:54:03.072165+00');
+INSERT INTO public.schema_migrations VALUES ('20261031_1400_vacation_until.sql', '2026-10-30 23:15:36.825867+00');
+INSERT INTO public.schema_migrations VALUES ('20261102_1000_halloween_gift_claims.sql', '2026-11-02 20:11:55.128813+00');
+INSERT INTO public.schema_migrations VALUES ('20261102_1500_hidden_untargetable_flags.sql', '2026-11-02 21:31:34.868178+00');
 
 SET session_replication_role = DEFAULT;
