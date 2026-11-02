@@ -240,6 +240,8 @@ Tables no static query touches (dynamic SQL, scripts, or dead): `coalition_membe
 | `/api/game_map/move` | POST | `app_core.game_map.routes:game_map_move` |
 | `/api/game_map/retreat` | POST | `app_core.game_map.routes:game_map_retreat` |
 | `/api/global_events` | GET | `province:get_global_events` |
+| `/api/halloween/claim` | POST | `app_core.halloween:claim` |
+| `/api/halloween/status` | GET | `app_core.halloween:status` |
 | `/api/news/clear_all` | POST | `app_core.main.routes:api_news_clear_all` |
 | `/api/news/mark_read` | POST | `app_core.main.routes:api_news_mark_read` |
 | `/api/notifications` | GET | `app_core.main.routes:api_notifications` |

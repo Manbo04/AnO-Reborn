@@ -1,10 +1,11 @@
-"""Yearly Halloween gift: a one-click money gift on Oct 31 (Europe/Vilnius).
+""""Thank you for playing" gift: a one-click money gift, claimable once per player
+while the window is open (GIFT_OPENS..GIFT_CLOSES inclusive, Europe/Vilnius).
 
-Claim-once-per-year is enforced by the PRIMARY KEY (user_id, year) on
+Claim-once-per-year (key = year of the window) is enforced by the PRIMARY KEY (user_id, year) on
 halloween_gift_claims: the claim row and the credit happen in one transaction,
 so double clicks, refreshes and several devices cannot pay out twice.
 
-Testing off-season: set HALLOWEEN_GIFT_DATE=YYYY-MM-DD (e.g. 2025-10-31) in the
+Testing outside the window: set HALLOWEEN_GIFT_DATE=YYYY-MM-DD (e.g. 2025-11-05) in the
 environment. It replaces "today" and its year is the claim year, so a test
 claim never consumes the real year's gift. Leave it unset in production.
 """
@@ -19,7 +20,8 @@ from database import get_db_cursor
 from helpers import login_required
 
 HALLOWEEN_GIFT_AMOUNT = 13_000_000_000  # money, the single knob
-HALLOWEEN_MONTH, HALLOWEEN_DAY = 10, 31
+GIFT_OPENS = date(2026, 11, 2)
+GIFT_CLOSES = date(2026, 11, 16)  # last day to claim (inclusive)
 SERVER_TZ = ZoneInfo("Europe/Vilnius")
 
 bp = Blueprint("halloween_bp", __name__)
@@ -37,8 +39,9 @@ def gift_date():
 
 
 def is_halloween(today=None):
+    """True while the gift window is open (name kept for the existing callers/tests)."""
     today = today or gift_date()
-    return (today.month, today.day) == (HALLOWEEN_MONTH, HALLOWEEN_DAY)
+    return GIFT_OPENS <= today <= GIFT_CLOSES
 
 
 def has_claimed(db, user_id, year):
@@ -53,23 +56,24 @@ def claim_gift(db, user_id, today=None):
     """Atomically claim. Returns (ok, message, amount). Caller commits."""
     today = today or gift_date()
     if not is_halloween(today):
-        return False, "The gift is only available on October 31.", 0
+        return False, "The thank-you gift is not available right now.", 0
     db.execute(
         "INSERT INTO halloween_gift_claims (user_id, year, amount) "
         "VALUES (%s, %s, %s) ON CONFLICT (user_id, year) DO NOTHING RETURNING 1",
         (user_id, today.year, HALLOWEEN_GIFT_AMOUNT),
     )
     if db.fetchone() is None:
-        return False, "You already opened this year's gift.", 0
+        return False, "You already opened your gift. Thank you for playing!", 0
     ledger.credit_gold(db, user_id, HALLOWEEN_GIFT_AMOUNT)
     if db.rowcount == 0:  # no stats row: roll the claim back instead of eating it
         raise RuntimeError("no stats row for user %s" % user_id)
-    return True, "Happy Halloween!", HALLOWEEN_GIFT_AMOUNT
+    return True, "Thank you for playing!", HALLOWEEN_GIFT_AMOUNT
 
 
 @bp.app_context_processor
 def _inject_halloween():
-    # Date-only check (no DB): the modal JS asks the API whether to show itself.
+    # Date-only check (no DB): the modal JS asks the API whether to show itself
+    # (and stops asking once the player has claimed or the gift is closed).
     return {"halloween_gift_day": is_halloween(), "halloween_gift_amount": HALLOWEEN_GIFT_AMOUNT}
 
 
@@ -81,7 +85,7 @@ def status():
         return jsonify(available=False)
     with get_db_cursor() as db:
         claimed = has_claimed(db, session["user_id"], today.year)
-    return jsonify(available=not claimed, amount=HALLOWEEN_GIFT_AMOUNT)
+    return jsonify(available=not claimed, claimed=claimed, amount=HALLOWEEN_GIFT_AMOUNT)
 
 
 @bp.route("/api/halloween/claim", methods=["POST"])

@@ -1,4 +1,4 @@
-{# Yearly Halloween gift modal (app_core/halloween.py). Rendered only on Oct 31; JS asks the API whether this player still has it. #}
+{# "Thank you for playing" gift modal (app_core/halloween.py). Rendered only while the gift window is open; JS asks the API whether this player still has it. #}
 <style>
 #hw-gift{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;background:rgba(10,6,20,.78);padding:16px}
 #hw-gift.show{display:flex}
@@ -10,7 +10,7 @@
 #hw-gift .hw-amount{font-size:1.7rem;font-weight:700;color:#ffd24a;margin:8px 0}
 #hw-gift .hw-close{margin-top:10px;min-height:44px;padding:0 22px;border-radius:8px;border:0;background:#ff8a1f;color:#1b1230;font-weight:700;cursor:pointer}
 #hw-gift .hw-later{display:block;margin:8px auto 0;background:none;border:0;color:#bbb;text-decoration:underline;cursor:pointer;min-height:44px}
-#hw-gift .hw-box.hw-open{animation:hw-pop .6s ease-out}
+#hw-gift .hw-box.hw-open{animation:hw-pop .7s ease-out}
 #hw-gift .hw-flash{position:absolute;inset:0;background:radial-gradient(circle,#fff,transparent 65%);opacity:0;pointer-events:none}
 #hw-gift .hw-flash.go{animation:hw-flash .7s ease-out}
 #hw-gift .hw-bit{position:absolute;left:50%;top:38%;font-size:20px;pointer-events:none;animation:hw-fly 1.4s ease-out forwards}
@@ -22,10 +22,10 @@
 <div id="hw-gift" role="dialog" aria-modal="true" aria-labelledby="hw-title" hidden>
   <div class="hw-card">
     <div class="hw-flash" aria-hidden="true"></div>
-    <h2 id="hw-title">🎃 Happy Halloween!</h2>
+    <h2 id="hw-title">🎁 Thank you for playing!</h2>
     <div id="hw-closed">
-      <p>A gift from the Affairs and Order team.</p>
-      <button type="button" class="hw-box" id="hw-open" aria-label="Open your Halloween gift">🎁</button>
+      <p>A gift from the Affairs and Order team, just for being here.</p>
+      <button type="button" class="hw-box" id="hw-open" aria-label="Open your thank-you gift">🎁</button>
       <p>Tap the box to open it</p>
       <button type="button" class="hw-later" id="hw-later">Not now</button>
     </div>
@@ -48,7 +48,7 @@
   function hide() { root.classList.remove('show'); root.hidden = true; }
   function show() { root.hidden = false; root.classList.add('show'); document.getElementById('hw-open').focus(); }
   function burst() {
-    var bits = ['🍬', '🍭', '🎉', '✨', '🎊', '🍫'];
+    var bits = ['💰', '🎉', '✨', '🎊', '⭐', '🪙'];
     for (var i = 0; i < 28; i++) {
       var s = document.createElement('span');
       s.className = 'hw-bit';
@@ -62,6 +62,8 @@
     }
     var f = card.querySelector('.hw-flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
   }
+  var DONE_KEY = 'ano_thank_you_gift_done';
+  function done() { try { localStorage.setItem(DONE_KEY, '1'); } catch (e) {} }
   var busy = false;
   document.getElementById('hw-open').addEventListener('click', function () {
     if (busy) return; busy = true;
@@ -73,24 +75,30 @@
         if (!res.ok || !res.j.success) {
           err.textContent = res.j.message || res.j.error || 'Could not open the gift.';
           err.hidden = false; busy = false;
-          if (res.j.message) setTimeout(hide, 2500);
+          if (res.j.message) { done(); setTimeout(hide, 2500); }
           return;
         }
+        done();
         var box = document.getElementById('hw-open');
-        if (!reduced) { box.classList.add('hw-open'); burst(); }
-        document.getElementById('hw-amount').textContent = '💰 ' + Number(res.j.amount).toLocaleString('en-US');
-        document.getElementById('hw-closed').hidden = true;
-        document.getElementById('hw-opened').hidden = false;
-        document.getElementById('hw-close').focus();
+        function reveal() {
+          document.getElementById('hw-amount').textContent = '💰 ' + Number(res.j.amount).toLocaleString('en-US');
+          document.getElementById('hw-closed').hidden = true;
+          document.getElementById('hw-opened').hidden = false;
+          document.getElementById('hw-close').focus();
+        }
+        // Keep the box on screen while it pops and the burst plays, then reveal the amount.
+        if (reduced) { reveal(); } else { box.classList.add('hw-open'); burst(); setTimeout(reveal, 750); }
       })
       .catch(function () { err.textContent = 'Network error, try again.'; err.hidden = false; busy = false; });
   });
   document.getElementById('hw-close').addEventListener('click', function () { hide(); location.reload(); });
   document.getElementById('hw-later').addEventListener('click', hide);
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && root.classList.contains('show') && document.getElementById('hw-opened').hidden) hide(); });
-  fetch('/api/halloween/status', {credentials: 'same-origin'})
+  // Skip the status call on every page once this browser has claimed (or been told it is gone).
+  var skip = false; try { skip = localStorage.getItem(DONE_KEY) === '1'; } catch (e) {}
+  if (!skip) fetch('/api/halloween/status', {credentials: 'same-origin'})
     .then(function (r) { return r.ok ? r.json() : {}; })
-    .then(function (j) { if (j.available) show(); })
+    .then(function (j) { if (j.available) show(); else if (j.claimed) done(); })
     .catch(function () {});
 })();
 </script>
