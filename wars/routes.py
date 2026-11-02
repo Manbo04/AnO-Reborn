@@ -2351,6 +2351,7 @@ def find_targets():
                     WHERE userid = u.id
                 ) p ON true
                 WHERE u.id != %s
+                  AND NOT COALESCE(u.untargetable, FALSE)
                   AND COALESCE(p.province_population, 0) / 1000.0 BETWEEN %s AND %s
                 -- AI nations first, so every player always sees their bot targets
                 ORDER BY (u.auth_type = 'bot') DESC, u.username
