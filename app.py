@@ -768,6 +768,8 @@ def create_app():
     app.register_blueprint(referrals_api_bp)
     app.register_blueprint(onboarding_api_bp)
     app.register_blueprint(events_bp)
+    from app_core.halloween import bp as halloween_bp
+    app.register_blueprint(halloween_bp)
     register_coalitions_routes(app)
 
     import config

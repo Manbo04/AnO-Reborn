@@ -840,5 +840,6 @@
         })();
     </script>
     {% endif %}
+    {% if session.get('user_id') and halloween_gift_day %}{% include '_halloween_gift.html' %}{% endif %}
 </body>
 </html>
