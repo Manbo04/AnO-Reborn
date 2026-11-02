@@ -127,3 +127,8 @@ def test_migration_adds_both_columns_and_flags_owner():
     assert re.search(r"ADD COLUMN IF NOT EXISTS hidden_from_rankings", text)
     assert re.search(r"ADD COLUMN IF NOT EXISTS untargetable", text)
     assert "untargetable = TRUE WHERE id = 1" in text
+
+
+def test_war_target_finder_skips_untargetable_nations():
+    src = _src("wars/routes.py")
+    assert "AND NOT COALESCE(u.untargetable, FALSE)" in src
