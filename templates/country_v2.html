@@ -412,10 +412,11 @@
                         </div>
                         <div class="game-meter"><div class="game-meter-fill {{ 'good' if rations_pct >= 100 else ('warn' if rations_pct >= 50 else 'bad') }}" style="width: {{ rations_pct }}%;"></div></div>
                     </div>
-                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                        {% for res_key in ['oil', 'coal', 'uranium', 'bauxite', 'iron', 'lead', 'copper', 'lumber', 'silver', 'diamonds', 'bullion', 'components', 'steel', 'consumer_goods', 'aluminium', 'gasoline', 'ammunition'] %}
-                        <span class="game-resource-chip"><img class="game-icon-sm" src="{{ url_for('static', filename=game_asset_path('resources', res_key)) }}?v=3" alt="">{{ resources[res_key] | weight_fmt }}</span>
-                        {% endfor %}
+                    {# Resource amounts live in ONE place: the slide-out Resources panel (all 19 resources, every page).
+                       Repeating 17 chips here duplicated it (celess mob: UI Improvements). The food meter above is unique, so it stays. #}
+                    <div class="game-row" style="gap: 10px; flex-wrap: wrap;">
+                        <button type="button" class="game-btn game-btn-secondary game-btn-sm" onclick="resourcedivcontentshow()"><span class="material-icons-outlined">monetization_on</span> Show all resources</button>
+                        <span class="game-faint" style="font-size: 12px;">Every amount is in the Resources panel (the $ button on the right edge).</span>
                     </div>
                 </div>
             </div>
