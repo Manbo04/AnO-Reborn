@@ -477,6 +477,14 @@ class CountryService:
             at_risk_provinces = sum(1 for prov in provinces if (prov[5] or 0) < 35)
 
             status = CountryService._is_same_country(cId, session.get("user_id"))
+
+            # One-screen province health (own nation only: power/slot detail
+            # is private, same as the Revenue tab). Worst provinces first.
+            province_health = None
+            if status:
+                from app_core.economy.province_health import nation_province_health
+
+                province_health = nation_province_health(cId, provinces)
             # Coalition "share-build": leadership roles a member opted in to
             # sharing with need a way into that member's provinces -- without
             # this the Provinces list only showed for public_province_info
@@ -984,6 +992,7 @@ class CountryService:
             "total_military": total_military,
             "gdp": gdp,
             "at_risk_provinces": at_risk_provinces,
+            "province_health": province_health,
             "name_color": name_color,
             "badge_icon": badge_icon,
             "badge_name": badge_name,

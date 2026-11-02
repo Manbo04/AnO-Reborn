@@ -255,6 +255,32 @@
                     </div>
                     {# Was provinces[:3] -- useless past three provinces (ieb, 2026-09-27).
                        Now every province in a capped scroll box. #}
+                    {% if province_health and province_health.rows %}
+                    {# Health view (own nation): power, slots and stability per province, worst first, each row links to the province to fix it. #}
+                    <div class="game-row" style="gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
+                        <span class="game-badge {{ 'game-badge-bad' if province_health.unpowered else 'game-badge-good' }}">{{ province_health.unpowered }} unpowered</span>
+                        <span class="game-badge {{ 'game-badge-warn' if province_health.unstable else 'game-badge-good' }}">{{ province_health.unstable }} unstable</span>
+                        <span class="game-faint" style="font-size: 12px;">Power {{ province_health.power_used | fmt }}/{{ province_health.power_total | fmt }} &middot; Cities {{ province_health.city_used | fmt }}/{{ province_health.city_total | fmt }} &middot; Land {{ province_health.land_used | fmt }}/{{ province_health.land_total | fmt }}</span>
+                    </div>
+                    <div class="country-province-scroll">
+                    {% for h in province_health.rows %}
+                    <a class="game-list-row" href="/province/{{ h.id }}" style="flex-wrap: wrap; gap: 6px;">
+                        <div style="min-width: 0; flex: 1 1 140px;">
+                            <div style="font-weight: 600; overflow-wrap: anywhere;">{{ h.name }}</div>
+                            <div class="game-faint" style="font-size: 11.5px;">{{ h.population | fmt }} pop</div>
+                        </div>
+                        <div class="game-row" style="gap: 6px; flex-wrap: wrap; justify-content: flex-end; font-size: 12px;">
+                            <span class="game-badge {{ 'game-badge-good' if h.powered else 'game-badge-bad' }}" data-tippy-content="Energy used / produced per hour in this province.">{{ h.power_used | fmt }}/{{ h.power_total | fmt }} {{ 'Powered' if h.powered else 'Unpowered' }}</span>
+                            <span class="game-faint" data-tippy-content="City slots in use / total">Cities {{ h.city_used }}/{{ h.city_total }}</span>
+                            <span class="game-faint" data-tippy-content="Land slots in use / total">Land {{ h.land_used }}/{{ h.land_total }}</span>
+                            {% if h.stability == 'stable' %}<span class="game-badge game-badge-good">Stable</span>
+                            {% elif h.stability == 'unrest' %}<span class="game-badge game-badge-warn">Unrest rising</span>
+                            {% else %}<span class="game-badge game-badge-bad">Under threat</span>{% endif %}
+                        </div>
+                    </a>
+                    {% endfor %}
+                    </div>
+                    {% else %}
                     <div class="country-province-scroll">
                     {% for province in provinces %}
                     <a class="game-list-row" href="/province/{{ province[1] }}">
@@ -278,6 +304,7 @@
                     <p class="game-faint">No provinces yet.</p>
                     {% endfor %}
                     </div>
+                    {% endif %}
                 </div>
 
                 <div class="game-glass game-panel">
