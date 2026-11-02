@@ -62,6 +62,7 @@ bp = Blueprint("province", __name__)
 load_dotenv()
 
 
+from repositories.province_repository import ProvinceRepository
 from services.province_service import ProvinceService
 
 @bp.route("/provinces", methods=["GET"])
@@ -71,7 +72,11 @@ def provinces():
     cId = session["user_id"]
     page = request.args.get('page', 1, type=int)
     
-    data = ProvinceService.get_user_provinces_paginated(cId, page)
+    sort = request.args.get('sort', 'number')
+    if sort not in ProvinceRepository.SORT_COLUMNS:
+        sort = 'number'
+    sort_dir = 'desc' if request.args.get('dir') == 'desc' else 'asc'
+    data = ProvinceService.get_user_provinces_paginated(cId, page, sort=sort, direction=sort_dir)
 
     view_mode = request.args.get('view', 'cards')
     search_query = request.args.get('q', '').strip()[:50]
@@ -93,6 +98,8 @@ def provinces():
         view_mode=view_mode,
         search_query=search_query,
         search_results=search_results,
+        sort=sort,
+        sort_dir=sort_dir,
     )
 
 
