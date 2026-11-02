@@ -400,5 +400,6 @@ INSERT INTO public.schema_migrations VALUES ('20261031_1200_col_deposit_protecti
 INSERT INTO public.schema_migrations VALUES ('20261031_1300_vacation_mode.sql', '2026-10-30 22:54:03.072165+00');
 INSERT INTO public.schema_migrations VALUES ('20261031_1400_vacation_until.sql', '2026-10-30 23:15:36.825867+00');
 INSERT INTO public.schema_migrations VALUES ('20261102_1000_halloween_gift_claims.sql', '2026-11-02 20:11:55.128813+00');
+INSERT INTO public.schema_migrations VALUES ('20261102_1500_hidden_untargetable_flags.sql', '2026-11-02 21:31:34.868178+00');
 
 SET session_replication_role = DEFAULT;

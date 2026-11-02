@@ -4221,7 +4221,9 @@ CREATE TABLE public.users (
     vacation_mode boolean DEFAULT false NOT NULL,
     vacation_started_at timestamp with time zone,
     vacation_ended_at timestamp with time zone,
-    vacation_until timestamp with time zone
+    vacation_until timestamp with time zone,
+    hidden_from_rankings boolean DEFAULT false NOT NULL,
+    untargetable boolean DEFAULT false NOT NULL
 );
 
 
