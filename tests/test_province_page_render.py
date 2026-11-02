@@ -86,3 +86,13 @@ def test_single_edit_entry_point_and_no_duplicate_picture_form():
 def test_page_has_no_per_building_header_sprawl():
     html = render()
     assert html.count("<h2") < 20 and html.count("<h3") < 90
+
+
+def test_every_visible_form_control_is_labelled():
+    html = render()
+    for tag in re.findall(r"<(?:input|select)\b[^>]*>", html):
+        if 'type="hidden"' in tag or 'type="file"' in tag:
+            continue
+        m = re.search(r'\sid="([^"]+)"', tag)
+        labelled = "aria-label=" in tag or (m and f'for="{m.group(1)}"' in html)
+        assert labelled, tag[:140]
