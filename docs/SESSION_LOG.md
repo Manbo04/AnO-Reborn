@@ -1017,3 +1017,9 @@ Already shipped earlier (no work needed): trade deals on the revenue page (#212)
 - New `war_building_losses` table (migration 20261027_2000) and `wars/history.py`: `record_building_loss` (savepoint, never breaks an attack), public `/war_history` list and `/war_history/<id>` detail (per-nation, per-building losses; nuke losses read from `nuclear_strikes`). Linked from the Wars page.
 - Hooked in `wars/service.py:apply_building_damage` (drone, cruise, bomber strikes) and `Military.infrastructure_damage` (ground battles). Ground losses attach to the victim's latest unfinished war.
 - Built on master, not on the open #229 branch; it edits the same war files, so whichever lands second takes a small conflict.
+
+## 2026-11-02 - Hidden-from-rankings + untargetable nations
+
+- **What:** `users.hidden_from_rankings` / `users.untargetable` (migration `20261102_1500_hidden_untargetable_flags.sql`; owner id 1 = both, test id 16 = hidden only, bots hidden by `auth_type='bot'` in code). `app_core/visibility.py` holds `ranked_sql()`, `is_untargetable()`, `blocks_interaction()`. Rankings (`statistics.py`), alliance influence sums (statistics + coalitions list + bot_api), bot_api top lists/nation_count, Discord panel leaderboard/richest and the home nation count skip hidden nations; the `/countries` directory skips untargetable ones (bots stay listed and targetable). Server-side guards on: declare war, spy ops, trade agreements, treaties, bounties, coalition invites, embargo, DMs, game-map attack.
+- **Watch:** every new "interact with another player" route must call `blocks_interaction(db, actor, target)`. Direct-message guard silently drops the message (no error shown to sender). Existing friend-list/market offers by an untargetable nation are not blocked (public market is not a targeted interaction).
+- **Next:** refresh `db/` schema snapshot after the migration ships (needs Dede's guard code on that PR).

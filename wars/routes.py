@@ -17,6 +17,7 @@ from attack_scripts.Nations import (
 )
 from attack_scripts import Nation
 from app_core.economy import ledger
+from app_core.visibility import UNTARGETABLE_MSG, is_untargetable
 from app_core.vacation import (
     ON_VACATION_ATTACKER_MSG,
     ON_VACATION_DEFENDER_MSG,
@@ -1784,6 +1785,8 @@ def declare_war():
             )
             if attacker.id == defender.id:
                 return error(400, "Can't declare war on yourself")
+            if is_untargetable(db, defender.id):
+                return error(403, UNTARGETABLE_MSG)
 
             # FIXED 2026-09-23: found live while auditing wars/ during the
             # account cross-contamination investigation -- unrelated bug,

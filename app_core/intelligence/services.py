@@ -1,3 +1,4 @@
+from app_core.visibility import UNTARGETABLE_MSG, blocks_interaction
 import math
 import time
 import random as rand
@@ -206,6 +207,8 @@ def resolve_spy_operation(db, cId, eId, spies, spy_type, keep_private=False):
     Returns (ok, status_code, error_message, spy_entry) - spy_entry is a dict
     describing the outcome for the attacker (for the /spyResult page), None
     on failure."""
+    if blocks_interaction(db, cId, eId):
+        return False, 403, UNTARGETABLE_MSG, None
     # Serializes this attacker's spy operations (same pattern as
     # wars/routes.py's drone_strike/cruise_missile_strike). Found
     # 2026-09-13: `actual_spies` below is a stale read with no lock, and

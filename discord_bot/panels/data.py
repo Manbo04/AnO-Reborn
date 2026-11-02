@@ -16,6 +16,7 @@ def fetch_leaderboard(limit: int = 10) -> List[Dict[str, Any]]:
         FROM users u
         INNER JOIN stats s ON s.id = u.id
         WHERE COALESCE(u.auth_type, 'normal') IN ('normal', 'email')
+          AND NOT COALESCE(u.hidden_from_rankings, FALSE)
         ORDER BY s.gold DESC NULLS LAST
         LIMIT %s
         """,
@@ -152,6 +153,7 @@ def fetch_world_snapshot() -> Dict[str, Any]:
         SELECT u.username, s.gold
         FROM users u
         JOIN stats s ON s.id = u.id
+        WHERE u.auth_type IS DISTINCT FROM 'bot' AND NOT COALESCE(u.hidden_from_rankings, FALSE)
         ORDER BY s.gold DESC NULLS LAST
         LIMIT 1
         """

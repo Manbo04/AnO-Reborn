@@ -1,3 +1,4 @@
+from app_core.visibility import UNTARGETABLE_MSG, blocks_interaction
 from flask import Blueprint, request, render_template, session, redirect, flash
 from urllib.parse import urlencode
 from helpers import login_required, redirect_back, error, get_valid_int, record_trade_event, is_theme_v2_enabled
@@ -1189,6 +1190,8 @@ def embargo_nation(target_id):
     with get_request_cursor() as db:
         if not user_exists(db, target_id):
             return error(404, "That nation does not exist")
+        if blocks_interaction(db, cId, target_id):
+            return error(403, UNTARGETABLE_MSG)
         add_embargo(db, cId, target_id)
 
     return redirect(f"/country/id={target_id}")

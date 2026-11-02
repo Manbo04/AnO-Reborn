@@ -1,3 +1,4 @@
+from app_core.visibility import UNTARGETABLE_MSG, blocks_interaction
 from .repositories import (
     get_active_treaties,
     get_incoming_treaties,
@@ -66,6 +67,9 @@ def offer_treaty(db, sender_id, recipient_name, treaty_type):
 
     if find_conflicting_treaty(db, treaty_type, sender_id, recipient_id):
         return False, "A treaty of this type is already pending or active with this nation.", "warning"
+
+    if blocks_interaction(db, sender_id, recipient_id):
+        return False, UNTARGETABLE_MSG, "danger"
 
     insert_treaty_offer(db, sender_id, recipient_id, treaty_type)
     return True, None, None

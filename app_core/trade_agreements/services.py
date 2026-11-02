@@ -1,3 +1,4 @@
+from app_core.visibility import UNTARGETABLE_MSG, blocks_interaction
 import logging
 from datetime import datetime, timedelta
 
@@ -197,6 +198,8 @@ def create_agreement(
     receiver_id = resolve_trade_partner_id(db, user_id, receiver_id_raw, receiver_query)
     if not receiver_id:
         return False, "Trade partner not found. Enter an exact country name or nation ID."
+    if blocks_interaction(db, user_id, receiver_id):
+        return False, UNTARGETABLE_MSG
 
     has_enough, balance = check_resource_balance(db, user_id, proposer_resource, proposer_amount)
     if not has_enough:

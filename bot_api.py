@@ -920,7 +920,7 @@ def bot_world_stats():
   members_tbl = get_coalition_members_table() or "coalitions_legacy"
   member_influence_sql = influence_subquery_sql(f"SELECT userid FROM {members_tbl}")
   return jsonify({
-      "nation_count": _count("SELECT COUNT(*) FROM users WHERE auth_type IS DISTINCT FROM 'bot'"),
+      "nation_count": _count("SELECT COUNT(*) FROM users u WHERE u.auth_type IS DISTINCT FROM 'bot' AND NOT COALESCE(u.hidden_from_rankings, FALSE)"),
       "province_count": _count("SELECT COUNT(*) FROM provinces"),
       "coalition_count": _count("SELECT COUNT(*) FROM colNames"),
       "active_war_count": _count("SELECT COUNT(*) FROM wars WHERE peace_date IS NULL"),
@@ -928,16 +928,17 @@ def bot_world_stats():
       "coalition_names": [r[0] for r in _rows("SELECT name FROM colNames ORDER BY id")],
       "top_population": _rows(
           "SELECT u.username, COALESCE(SUM(p.population), 0) FROM users u "
-          "JOIN provinces p ON u.id = p.userid GROUP BY u.id, u.username "
+          "JOIN provinces p ON u.id = p.userid WHERE u.auth_type IS DISTINCT FROM 'bot' AND NOT COALESCE(u.hidden_from_rankings, FALSE) GROUP BY u.id, u.username "
           "ORDER BY 2 DESC LIMIT 10"),
       "top_military": _rows(
           "SELECT u.username, COALESCE(SUM(um.quantity), 0) FROM users u "
-          "JOIN user_military um ON u.id = um.user_id GROUP BY u.id, u.username "
+          "JOIN user_military um ON u.id = um.user_id WHERE u.auth_type IS DISTINCT FROM 'bot' AND NOT COALESCE(u.hidden_from_rankings, FALSE) GROUP BY u.id, u.username "
           "ORDER BY 2 DESC LIMIT 10"),
       "top_alliances": _rows(
           f"SELECT c.name, ROUND(COALESCE(SUM(inf.influence), 0)) FROM colNames c "
           f"JOIN {members_tbl} cm ON c.id = cm.colid "
           f"LEFT JOIN {member_influence_sql} inf ON inf.user_id = cm.userid "
+          f"AND NOT EXISTS (SELECT 1 FROM users hu WHERE hu.id = inf.user_id AND NOT (hu.auth_type IS DISTINCT FROM 'bot' AND NOT COALESCE(hu.hidden_from_rankings, FALSE))) "
           f"GROUP BY c.id, c.name ORDER BY 2 DESC LIMIT 10"),
   })
 
