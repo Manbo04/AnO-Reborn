@@ -18,6 +18,8 @@
                     {% endif %}
                 </td>
             </tr>
+            {# Happiness and productivity are in the vitals strip on the redesigned page. #}
+            {% if not vitals_shown %}
             {% if province['happiness'] < 50 %}
             <tr>
                 <td><strong class="tooltipparent" tabindex="0">
@@ -47,6 +49,7 @@
                     <span class="material-icons-outlined">arrow_circle_up</span>Productivity:</strong></td>
                 <td>{{ province['productivity'] }}%</td>
             </tr>
+            {% endif %}
             {% endif %}
             <tr>
                 <td><strong class="tooltipparent" tabindex="0">

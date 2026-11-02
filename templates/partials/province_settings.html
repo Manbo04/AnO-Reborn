@@ -1,11 +1,4 @@
 {% if province.own %}
-<div class="templatedivflex2 menuflex divflex2center width100">
-    <div class="templatedivflex2left">
-        <button type="button" class="templatedivbutton templatecenteredbutton" id="provincesettingsbutton" onclick="provincesettingstoggle()">
-            <span class="material-icons-outlined">settings</span>Edit
-        </button>
-    </div>
-</div>
 <div class="provincesettingsparent templatedivflex2 menuflex divflex2center width100" id="provincesettingsparent">
     <div class="infodiv province-settings-panel">
         <h3 class="templatecontentheadercenter">Province picture</h3>
@@ -115,7 +108,7 @@
         <p style="color: #ff6666;">This action cannot be undone. All buildings and land on this province will be lost forever.</p>
         <div class="modal-input">
             <label>Type the province name to confirm: <strong>{{ province.name }}</strong></label>
-            <input type="text" id="deleteProvinceConfirmInput" placeholder="Enter province name" />
+            <input type="text" id="deleteProvinceConfirmInput" aria-label="Type the province name to confirm deletion" placeholder="Enter province name" />
         </div>
         <div class="modal-buttons">
             <button onclick="closeDeleteProvinceModal()" class="templatedivbutton">Cancel</button>
