@@ -10,6 +10,7 @@
 
     <div class="templatedivcontent">
 
+        {% if throne_card %}{% include "partials/traits/throne_card.html" %}{% endif %}
         <div class="game-glass game-panel" style="margin-bottom: 18px;">
         <form action="/countries" method="GET">
             <div class="templatedivflex2 divflex2full countries-filter-row">

@@ -44,7 +44,7 @@ New columns on existing tables: none. Snapshot refresh of `db/` after the migrat
 ## 4. Vitality math (every number lives in `app_core/traits/golden_throne_config.py`)
 
 Start 60. Each dawn: `delta = -4 (Throne devours) + 3 (full own+pilgrim sacrifice made) + 0.5 * min(pilgrim_weight, 10)`, clamped to 0..100.
-- 0 pilgrims: -1/day. 6 pilgrims: 0. 10+ pilgrims: +4/day. Skipped sacrifice: -4 -3 extra penalty.
+- 0 pilgrims: -1/day. 2 pilgrims: 0 (break-even). 10+ pilgrims: +4/day. (Corrected during the build: an earlier draft said 6.) Skipped sacrifice: -4 -3 extra penalty.
 
 | Vitality | State | Effect (modest) |
 |---|---|---|

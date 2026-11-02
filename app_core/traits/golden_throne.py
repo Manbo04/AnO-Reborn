@@ -385,6 +385,19 @@ def wall_page(db, before=None, limit=None):
     return out, (out[-1]["day"] if more and out else None)
 
 
+def card(db, now=None):
+    """Tiny summary for the pinned 'Holy Terra' card on the /countries directory."""
+    owner = owner_id(db)
+    if owner is None:
+        return None
+    db.execute("SELECT vitality, crisis, vigil_start FROM throne_state WHERE user_id=%s", (owner,))
+    row = db.fetchone()
+    if not row:
+        return None
+    return {"owner_id": owner, "tier_label": tier_for(row[0], row[1])["label"],
+            "vigil_day": vigil_day(row[2], now)}
+
+
 def page_context(db, owner, viewer_id, now=None):
     """Everything the nation-page partial needs. None if the Throne isn't active."""
     now = now or now_utc()

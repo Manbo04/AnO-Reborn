@@ -997,9 +997,20 @@ def country(cId):
     except Exception:
         on_vacation = False
 
+    traits = []
+    try:
+        from app_core.traits import registry as trait_registry
+
+        if not trait_registry.disabled():
+            with get_request_cursor(read_only=True) as tdb:
+                traits = trait_registry.page_contexts(tdb, int(cId), session.get("user_id"))
+    except Exception:
+        traits = []
+
     template = "country_v2.html" if is_theme_v2_enabled("country") else "country.html"
     return render_template(
         template,
+        traits=traits,
         on_vacation=on_vacation,
         revenue_history_totals=revenue_history_totals,
         currency_union=currency_union,
@@ -1056,9 +1067,20 @@ def countries():
         max_strength=max_strength,
     )
 
+    throne_card = None
+    try:
+        from app_core.traits import golden_throne, registry as trait_registry
+
+        if not trait_registry.disabled():
+            with get_request_cursor(read_only=True) as tdb:
+                throne_card = golden_throne.card(tdb)
+    except Exception:
+        throne_card = None
+
     template = "countries_v2.html" if is_theme_v2_enabled("countries") else "countries.html"
     return render_template(
         template,
+        throne_card=throne_card,
         countries=data["countries"],
         current_user_id=cId,
         current_page=data["current_page"],

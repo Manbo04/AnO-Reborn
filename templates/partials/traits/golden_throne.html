@@ -1,0 +1,99 @@
+{# The Golden Throne trait block. Static: no animation anywhere. ctx = t.ctx (golden_throne.page_context) #}
+{% set g = t.ctx %}
+<section class="throne" id="golden-throne" aria-label="The Golden Throne">
+    <div class="throne-banner">
+        <svg class="throne-sigil" viewBox="0 0 64 64" width="56" height="56" aria-hidden="true">
+            <circle cx="32" cy="32" r="29" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M32 6 L38 26 L58 26 L42 38 L48 58 L32 46 L16 58 L22 38 L6 26 L26 26 Z" fill="none" stroke="currentColor" stroke-width="2"/>
+            <circle cx="32" cy="30" r="6" fill="currentColor"/>
+        </svg>
+        <div>
+            <h2 class="throne-title">Holy Terra</h2>
+            <p class="throne-sub">Seat of the Golden Throne</p>
+        </div>
+    </div>
+
+    <div class="throne-vigil">Day {{ g.vigil_day }} of the Vigil</div>
+
+    <div class="throne-bar" role="progressbar" aria-label="Throne vitality" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ g.vitality|round(0)|int }}">
+        <span class="throne-bar-fill throne-tier-{{ g.tier.key }}" style="width: {{ g.vitality }}%"></span>
+    </div>
+    <div class="throne-state">
+        <strong>{{ g.tier.label }}</strong> <span>{{ g.vitality|round(1) }} / 100</span>
+    </div>
+    <p class="throne-warning">{{ g.warning }}</p>
+    {% if g.event_label %}<p class="throne-event" role="status">Throne event: <strong>{{ g.event_label }}</strong></p>{% endif %}
+
+    <dl class="throne-stats">
+        <div><dt>Next sacrifice</dt><dd><time id="throne-countdown" data-dawn="{{ g.next_dawn_iso }}">…</time></dd></div>
+        <div><dt>Souls given</dt><dd id="throne-souls">{{ g.souls_total|commas }}</dd></div>
+        <div><dt>Pilgrims at dawn</dt><dd>{{ g.waiting }}{% if g.waiting_weight != g.waiting %} ({{ g.waiting_weight }} souls){% endif %}</dd></div>
+        <div><dt>Throne effect</dt><dd>{{ '%+.0f'|format(g.tier.happiness) }}% happiness{% if g.defense_pct %}, {{ '%+.0f'|format(g.defense_pct) }}% defense{% endif %}</dd></div>
+    </dl>
+
+    <div class="throne-pilgrim">
+        {% if g.is_owner %}
+            <p>Pilgrims from other nations offset the daily sacrifice and keep the Light burning.</p>
+        {% elif g.sent %}
+            <p>Your pilgrims are on the road. They will be offered at the next dawn.</p>
+        {% else %}
+            <h3>Send pilgrims</h3>
+            <p>One pilgrimage per day. It offsets one of the 10 souls given at dawn, blesses your people
+               (+{{ g.blessing_pct|round(0)|int }}% happiness for {{ g.blessing_hours }}h) and carves your name on the Wall of the Spent.</p>
+            <form method="post" action="/traits/golden-throne/pilgrimage" class="throne-form">
+                <button type="submit" name="kind" value="population" class="throne-btn">Offer {{ g.cost_pop|commas }} people</button>
+                <button type="submit" name="kind" value="money" class="throne-btn">Offer ${{ g.cost_money|commas }}</button>
+            </form>
+        {% endif %}
+        {% if g.blessing %}<p class="throne-blessed">The Throne's blessing is upon you (+{{ g.blessing.pct|round(0)|int }}% happiness).</p>{% endif %}
+    </div>
+
+    <h3 class="throne-wall-title">Wall of the Spent</h3>
+    <div class="throne-wall" id="throne-wall" tabindex="0" aria-label="Wall of the Spent">
+        {% for d in g.wall %}
+        <div class="throne-wall-row">
+            <span class="throne-wall-day">{{ d.day }}</span>
+            <span class="throne-wall-souls">{% if d.skipped %}Sacrifice failed{% else %}{{ d.souls_own + d.souls_pilgrim }} souls{% endif %}{% if d.souls_pilgrim %} ({{ d.souls_pilgrim }} from pilgrims){% endif %}</span>
+            {% if d.event %}<span class="throne-wall-event">{{ d.event }}</span>{% endif %}
+            {% if d.nations %}<span class="throne-wall-names">{% for n in d.nations %}<a href="/country/id={{ n.id }}">{{ n.name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</span>{% endif %}
+        </div>
+        {% else %}
+        <p class="throne-wall-empty">No sacrifice has been made yet. The first dawn is coming.</p>
+        {% endfor %}
+    </div>
+    {% if g.wall_next %}<button type="button" class="throne-btn throne-more" id="throne-more" data-before="{{ g.wall_next }}">Load earlier days</button>{% endif %}
+</section>
+<script>
+(function () {
+    var el = document.getElementById('throne-countdown');
+    function tick() {
+        if (!el) return;
+        var ms = new Date(el.dataset.dawn) - new Date();
+        if (ms < 0) { el.textContent = 'at dawn'; return; }
+        var m = Math.floor(ms / 60000);
+        el.textContent = Math.floor(m / 60) + 'h ' + (m % 60) + 'm';
+    }
+    tick(); setInterval(tick, 60000);  // text only, once a minute
+    var more = document.getElementById('throne-more'), wall = document.getElementById('throne-wall');
+    if (!more || !wall) return;
+    function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+    more.addEventListener('click', function () {
+        more.disabled = true;
+        fetch('/traits/golden-throne/wall?before=' + encodeURIComponent(more.dataset.before), {credentials: 'same-origin'})
+            .then(function (r) { return r.json(); })
+            .then(function (j) {
+                (j.days || []).forEach(function (d) {
+                    var row = document.createElement('div'); row.className = 'throne-wall-row';
+                    var names = (d.nations || []).map(function (n) { return '<a href="/country/id=' + n.id + '">' + esc(n.name) + '</a>'; }).join(', ');
+                    row.innerHTML = '<span class="throne-wall-day">' + esc(d.day) + '</span> <span class="throne-wall-souls">' +
+                        (d.skipped ? 'Sacrifice failed' : (d.souls_own + d.souls_pilgrim) + ' souls') +
+                        (d.souls_pilgrim ? ' (' + d.souls_pilgrim + ' from pilgrims)' : '') + '</span>' +
+                        (d.event ? ' <span class="throne-wall-event">' + esc(d.event) + '</span>' : '') +
+                        (names ? ' <span class="throne-wall-names">' + names + '</span>' : '');
+                    wall.appendChild(row);
+                });
+                if (j.next_before) { more.dataset.before = j.next_before; more.disabled = false; } else { more.remove(); }
+            }).catch(function () { more.disabled = false; });
+    });
+})();
+</script>
