@@ -1,4 +1,5 @@
 """Routes for unique-nation traits (Golden Throne pilgrimage + public Wall of the Spent)."""
+import time
 from datetime import date
 
 from flask import Blueprint, flash, jsonify, redirect, request, session
@@ -20,7 +21,11 @@ def golden_throne_pilgrimage():
         owner = golden_throne.owner_id(db)
         ok, msg = golden_throne.send_pilgrims(db, session["user_id"], kind)
     flash(msg, "success" if ok else "danger")
-    return redirect(f"/country/id={owner}" if owner else "/countries")
+    if not owner:
+        return redirect("/countries")
+    # The nation page is response-cached per URL for 30s; a unique query string guarantees the
+    # player sees their fresh state and this flash message instead of a stale cached copy.
+    return redirect(f"/country/id={owner}?pilgrimage={int(time.time())}#golden-throne")
 
 
 @bp.route("/traits/golden-throne/wall", methods=["GET"])
