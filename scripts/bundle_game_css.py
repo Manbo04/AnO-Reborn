@@ -25,6 +25,7 @@ FILES = [
     "static/css/store.css",
     "static/css/cosmetics.css",
     "static/css/cosmetics-cyberpunk.css",
+    "static/css/trait-golden-throne.css",
     "static/css/cosmetics-forge.css",
     "static/css/cosmetics-bloodshed.css",
     "static/css/cosmetics-imperial.css",

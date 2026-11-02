@@ -26,6 +26,8 @@
     {% if on_vacation %}<div class="vacation-badge" role="status" style="display:inline-flex;align-items:center;gap:6px;margin:8px 0;padding:4px 12px;border-radius:999px;background:#2e7d32;color:#fff;font-size:0.9em;"><span class="material-icons-outlined" style="font-size:18px;">beach_access</span>On vacation</div>
     {% endif %}
 
+    {% for t in traits or [] %}{% include t.partial %}{% endfor %}
+
     <div class="templatedivcontent">
 
         <div class="templatedivflex2 menuflex2">
