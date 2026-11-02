@@ -76,3 +76,7 @@
 .bld-jump a:hover,.bld-jump a:focus-visible{border-color:var(--accent);color:var(--accent)}
 .bld-toolbar{flex-wrap:wrap}
 .bld-form .bld-group{scroll-margin-top:72px}
+
+/* compact stats table in the Overview tab (was ~100px per row) */
+.province-ui .province-info-stats .templatetable td,.province-ui .province-info-stats .templatetable th{padding-top:8px;padding-bottom:8px;height:auto;line-height:1.3}
+.province-ui .province-info-stats .templatetable tr{height:auto}
