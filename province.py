@@ -74,6 +74,8 @@ def provinces():
     data = ProvinceService.get_user_provinces_paginated(cId, page)
 
     view_mode = request.args.get('view', 'cards')
+    search_query = request.args.get('q', '').strip()[:50]
+    search_results = ProvinceService.search_user_provinces(cId, search_query)
 
     template = "provinces_v2.html" if is_theme_v2_enabled("provinces") else "provinces.html"
     return render_template(
@@ -89,6 +91,8 @@ def provinces():
         total_count=data["total_count"],
         total_population=data["total_population"],
         view_mode=view_mode,
+        search_query=search_query,
+        search_results=search_results,
     )
 
 

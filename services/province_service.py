@@ -4,6 +4,13 @@ from app_core.economy.building_costs import CITY_UNITS, LAND_UNITS
 
 class ProvinceService:
     @staticmethod
+    def search_user_provinces(user_id: int, query: str) -> list:
+        query = (query or "").strip()[:50]
+        if not query:
+            return []
+        return ProvinceRepository.search_provinces_by_name(user_id, query)
+
+    @staticmethod
     def get_user_provinces_paginated(user_id: int, page: int, per_page: int = 30) -> dict:
         has_image_col = ""
         if provinces_has_image_data():

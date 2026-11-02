@@ -1,5 +1,27 @@
 {% extends "layout.html" %} {% block title %} Provinces {% endblock %}{% block body_class %} page-provinces game-page-v2{% endblock %} {% block body %}
 {% from 'macros/game_ui.html' import game_hero %}
+{% macro pager(where) %}
+        {% if total_pages > 1 %}
+        {% set vq = '&view=' ~ view_mode %}
+        <nav class="game-pager" aria-label="Province pages ({{ where }})">
+            {% if current_page > 1 %}
+            <a href="?page=1{{ vq }}" aria-label="First page">&laquo;</a>
+            <a href="?page={{ current_page - 1 }}{{ vq }}">Previous</a>
+            {% endif %}
+            <span class="game-pager-current">Page {{ current_page }} of {{ total_pages }}</span>
+            {% if current_page < total_pages %}
+            <a href="?page={{ current_page + 1 }}{{ vq }}">Next</a>
+            <a href="?page={{ total_pages }}{{ vq }}" aria-label="Last page">&raquo;</a>
+            {% endif %}
+            <form method="get" class="game-row" style="gap: 6px; margin: 0;">
+                <input type="hidden" name="view" value="{{ view_mode }}">
+                <label class="game-faint" for="pager-jump-{{ where }}">Go to page</label>
+                <input id="pager-jump-{{ where }}" type="number" name="page" min="1" max="{{ total_pages }}" value="{{ current_page }}" inputmode="numeric" style="width: 76px; min-height: 40px; padding: 0 8px; border-radius: 8px;">
+                <button type="submit" class="game-btn game-btn-secondary" style="min-height: 40px;">Go</button>
+            </form>
+        </nav>
+        {% endif %}
+{% endmacro %}
 
 <div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/province.jpg') }}');"></div>
 <div class="game-page-overlay"></div>
@@ -23,6 +45,29 @@
     {% endcall %}
 
     <div class="templatedivcontent ">
+
+        {% if total_count is defined and total_count > 1 %}
+        <form method="get" class="game-glass game-panel game-row" style="gap: 8px; flex-wrap: wrap; margin-bottom: 14px;" role="search">
+            <input type="hidden" name="view" value="{{ view_mode }}">
+            <span class="material-icons-outlined" aria-hidden="true">search</span>
+            <input type="search" name="q" value="{{ search_query }}" maxlength="50" placeholder="Find a province by name" aria-label="Find a province by name" style="flex: 1 1 200px; min-height: 40px; padding: 0 10px; border-radius: 8px;">
+            <button type="submit" class="game-btn game-btn-secondary" style="min-height: 40px;">Search</button>
+            {% if search_query %}<a class="game-btn game-btn-secondary" style="min-height: 40px;" href="?view={{ view_mode }}">Clear</a>{% endif %}
+        </form>
+        {% if search_query %}
+        <div class="game-glass game-panel" style="margin-bottom: 14px;">
+            {% if search_results %}
+            <div class="game-faint" style="margin-bottom: 8px;">{{ search_results | length }} match{{ 'es' if search_results | length != 1 else '' }}{% if search_results | length >= 20 %} (showing the first 20, refine your search){% endif %}</div>
+            <div class="game-row" style="gap: 8px; flex-wrap: wrap;">
+                {% for r in search_results %}<a class="game-btn game-btn-secondary" href="/province/{{ r[0] }}">{{ r[1] }}</a>{% endfor %}
+            </div>
+            {% else %}
+            <div class="game-faint">No province of yours matches &ldquo;{{ search_query }}&rdquo;.</div>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% endif %}
+        {{ pager('top') }}
 
         {% if view_mode == 'table' %}
         {# Table View: AndyTheHusky suggestion (alternate table matrix view by building and province) #}
@@ -190,17 +235,7 @@
         </div>
         {% endif %}
 
-        {% if total_pages > 1 %}
-        <div class="game-pager">
-            {% if current_page > 1 %}
-            <a href="?page={{ current_page - 1 }}" class="templatedivbutton" style="padding: 5px 15px; min-width: auto; height: auto;">Previous</a>
-            {% endif %}
-            <span class="game-pager-current">Page {{ current_page }} of {{ total_pages }}</span>
-            {% if current_page < total_pages %}
-            <a href="?page={{ current_page + 1 }}" class="templatedivbutton" style="padding: 5px 15px; min-width: auto; height: auto;">Next</a>
-            {% endif %}
-        </div>
-        {% endif %}
+        {{ pager('bottom') }}
     </div>
 </div>
 {% endblock %}
