@@ -24,10 +24,7 @@ def test_template_renders_sort_control_and_pager_keeps_sort():
         from flask import session
         session["user_id"] = 16
         tpl = app.jinja_env.get_template("provinces_v2.html")
-        try:
-            html = "".join(tpl.blocks["body"](tpl.new_context(ctx)))
-        except Exception as exc:  # context for the card grid is large; the control + pager are what we assert
-            pytest.skip(f"card context incomplete: {exc}")
+        html = "".join(tpl.blocks["body"](tpl.new_context(ctx)))
     assert 'name="sort"' in html and '<option value="population" selected>' in html
     assert 'name="dir"' in html and '<option value="desc" selected>' in html
     assert "sort=population&dir=desc" in html
