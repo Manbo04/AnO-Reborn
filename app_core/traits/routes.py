@@ -16,16 +16,15 @@ bp = Blueprint("traits_bp", __name__)
 @login_required
 def golden_throne_pilgrimage():
     """Send pilgrims: once per dawn window, server-side cost, atomic (see send_pilgrims)."""
-    kind = (request.form.get("kind") or "").strip()
     with get_request_cursor() as db:
         owner = golden_throne.owner_id(db)
-        ok, msg = golden_throne.send_pilgrims(db, session["user_id"], kind)
+        ok, msg = golden_throne.send_pilgrims(db, session["user_id"])
     flash(msg, "success" if ok else "danger")
     if not owner:
         return redirect("/countries")
     # The nation page is response-cached per URL for 30s; a unique query string guarantees the
     # player sees their fresh state and this flash message instead of a stale cached copy.
-    return redirect(f"/country/id={owner}?pilgrimage={int(time.time())}#golden-throne")
+    return redirect(f"/country/id={owner}?pilgrimage={time.time_ns()}#golden-throne")
 
 
 @bp.route("/traits/golden-throne/wall", methods=["GET"])

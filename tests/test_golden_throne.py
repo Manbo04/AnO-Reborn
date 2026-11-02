@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pytest
 
-from app_core.economy import ledger
 from app_core.traits import golden_throne as gt
 from app_core.traits import golden_throne_config as C
 from app_core.traits import modifiers, registry
@@ -184,19 +183,17 @@ def _pilgrim_cursor(owner=1, auth=None, joined="2026-01-01", conflict=False):
     ])
 
 
-def _paid(monkeypatch, money_ok=True, pop_ok=True):
-    def spend(db, uid, amt):
-        if not money_ok:
-            raise ledger.InsufficientFunds("money", amt)
-    monkeypatch.setattr(ledger, "spend_gold", spend)
+def _paid(monkeypatch, pop_ok=True):
     monkeypatch.setattr(gt, "take_population", lambda db, uid, n: n if pop_ok else 0)
 
 
-def test_pilgrimage_success_charges_blesses_and_logs(monkeypatch):
+def test_pilgrimage_success_takes_people_blesses_and_logs(monkeypatch):
     _paid(monkeypatch)
     cur = _pilgrim_cursor()
-    ok, msg = gt.send_pilgrims(cur, 5, "money", now=AFTER_DAWN)
+    ok, msg = gt.send_pilgrims(cur, 5, now=AFTER_DAWN)
     assert ok and "blesses" in msg
+    people = [p for s, p in cur.executed if s.startswith("UPDATE throne_pilgrimages SET people")][0]
+    assert people[0] == C.PILGRIM_COST_POPULATION  # the Wall records how many people were given
     log = cur.sql_log()
     assert any("INSERT INTO throne_blessings" in s and "DO UPDATE" in s for s in log)
     assert "RELEASE SAVEPOINT throne_pilgrimage" in log
@@ -204,11 +201,10 @@ def test_pilgrimage_success_charges_blesses_and_logs(monkeypatch):
     assert blessing[1] == AFTER_DAWN + timedelta(hours=24) and blessing[2] == 2.0  # refreshed, not stacked
 
 
-@pytest.mark.parametrize("kind", ["population", "money"])
-def test_pilgrimage_once_per_window(monkeypatch, kind):
+def test_pilgrimage_once_per_window(monkeypatch):
     _paid(monkeypatch)
     cur = _pilgrim_cursor(conflict=True)  # the UNIQUE row already exists
-    ok, msg = gt.send_pilgrims(cur, 5, kind, now=AFTER_DAWN)
+    ok, msg = gt.send_pilgrims(cur, 5, now=AFTER_DAWN)
     assert not ok and msg == gt.PILGRIM_MESSAGES["already"]
     assert "ROLLBACK TO SAVEPOINT throne_pilgrimage" in cur.sql_log()
     assert not any("throne_blessings" in s for s in cur.sql_log())
@@ -217,7 +213,7 @@ def test_pilgrimage_once_per_window(monkeypatch, kind):
 def test_pilgrimage_key_is_dawn_and_user(monkeypatch):
     _paid(monkeypatch)
     cur = _pilgrim_cursor()
-    gt.send_pilgrims(cur, 5, "population", now=AFTER_DAWN)
+    gt.send_pilgrims(cur, 5, now=AFTER_DAWN)
     ins = [p for s, p in cur.executed if "INSERT INTO throne_pilgrimages" in s][0]
     assert ins[0] == date(2026, 11, 4) and ins[1] == 5  # tomorrow's dawn, this nation
     src = (ROOT / "migrations").glob("*nation_traits_golden_throne.sql")
@@ -225,30 +221,24 @@ def test_pilgrimage_key_is_dawn_and_user(monkeypatch):
 
 
 def test_unaffordable_pilgrimage_does_not_burn_the_daily_slot(monkeypatch):
-    _paid(monkeypatch, money_ok=False)
-    cur = _pilgrim_cursor()
-    ok, msg = gt.send_pilgrims(cur, 5, "money", now=AFTER_DAWN)
-    assert not ok and msg == gt.PILGRIM_MESSAGES["money"]
-    assert "ROLLBACK TO SAVEPOINT throne_pilgrimage" in cur.sql_log()  # row undone
-    assert not any("throne_blessings" in s for s in cur.sql_log())
     _paid(monkeypatch, pop_ok=False)
     cur = _pilgrim_cursor()
-    ok, msg = gt.send_pilgrims(cur, 5, "population", now=AFTER_DAWN)
+    ok, msg = gt.send_pilgrims(cur, 5, now=AFTER_DAWN)
     assert not ok and msg == gt.PILGRIM_MESSAGES["pop"]
+    assert "ROLLBACK TO SAVEPOINT throne_pilgrimage" in cur.sql_log()  # row undone
+    assert not any("throne_blessings" in s for s in cur.sql_log())
 
 
 @pytest.mark.parametrize(
-    "uid,kwargs,kind,key",
-    [(1, {}, "money", "self"),                      # can't pilgrim yourself
-     (5, {"auth": "bot"}, "money", "bot"),
-     (5, {"joined": "2026-11-02"}, "money", "young"),
-     (5, {}, "tithe", "kind"),
-     (5, {}, "", "kind")],
+    "uid,kwargs,key",
+    [(1, {}, "self"),                      # can't pilgrim yourself
+     (5, {"auth": "bot"}, "bot"),
+     (5, {"joined": "2026-11-02"}, "young")],
 )
-def test_pilgrimage_refusals_touch_nothing(monkeypatch, uid, kwargs, kind, key):
+def test_pilgrimage_refusals_touch_nothing(monkeypatch, uid, kwargs, key):
     _paid(monkeypatch)
     cur = _pilgrim_cursor(**kwargs)
-    ok, msg = gt.send_pilgrims(cur, uid, kind, now=AFTER_DAWN)
+    ok, msg = gt.send_pilgrims(cur, uid, now=AFTER_DAWN)
     assert not ok and msg == gt.PILGRIM_MESSAGES[key]
     assert not any(s.startswith(("INSERT", "UPDATE")) for s in cur.sql_log())
 
@@ -256,7 +246,7 @@ def test_pilgrimage_refusals_touch_nothing(monkeypatch, uid, kwargs, kind, key):
 def test_pilgrimage_needs_an_active_throne(monkeypatch):
     _paid(monkeypatch)
     cur = FakeCursor([])  # no owner row
-    ok, msg = gt.send_pilgrims(cur, 5, "money", now=AFTER_DAWN)
+    ok, msg = gt.send_pilgrims(cur, 5, now=AFTER_DAWN)
     assert not ok and msg == gt.PILGRIM_MESSAGES["noowner"]
 
 
@@ -344,3 +334,22 @@ def test_everything_is_wired():
     css = (ROOT / "static/css/trait-golden-throne.css").read_text()
     css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)  # ignore comments
     assert not re.search(r"animation|transition|@keyframes", css)  # static by design
+
+
+# ---------------------------------------------------------------- the Wall + population-only offering
+def test_wall_lists_whose_people_were_given():
+    from datetime import date as d
+    cur = FakeCursor([
+        ("FROM throne_days", [(d(2026, 11, 3), 9, 1, 1, "Pilgrim Surge", False)]),
+        ("FROM throne_pilgrimages p JOIN users u", [(d(2026, 11, 3), 16, "Tester of the Game", 1000)]),
+    ])
+    rows, nxt = gt.wall_page(cur)
+    assert nxt is None and rows[0]["souls_own"] == 9
+    assert rows[0]["nations"] == [{"id": 16, "name": "Tester of the Game", "people": 1000}]
+
+
+def test_only_population_can_be_offered():
+    assert not hasattr(C, "PILGRIM_COST_MONEY")
+    assert "money" not in (ROOT / "templates/partials/traits/golden_throne.html").read_text().lower()
+    assert "money" not in (ROOT / "app_core/traits/routes.py").read_text().lower()
+    assert "people" in (ROOT / "migrations").glob("*nation_traits_golden_throne.sql").__next__().read_text()

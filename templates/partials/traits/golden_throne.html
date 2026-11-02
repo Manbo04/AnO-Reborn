@@ -38,11 +38,11 @@
             <p>Your pilgrims are on the road. They will be offered at the next dawn.</p>
         {% else %}
             <h3>Send pilgrims</h3>
-            <p>One pilgrimage per day. It offsets one of the 10 souls given at dawn, blesses your people
-               (+{{ g.blessing_pct|round(0)|int }}% happiness for {{ g.blessing_hours }}h) and carves your name on the Wall of the Spent.</p>
+            <p>One pilgrimage per day. {{ g.cost_pop|commas }} of your people make the journey and are given at dawn, offsetting
+               one of the 10 souls the Throne takes. They bless your nation
+               (+{{ g.blessing_pct|round(0)|int }}% happiness for {{ g.blessing_hours }}h) and your name is carved on the Wall of the Spent.</p>
             <form method="post" action="/traits/golden-throne/pilgrimage" class="throne-form">
-                <button type="submit" name="kind" value="population" class="throne-btn">Offer {{ g.cost_pop|commas }} people</button>
-                <button type="submit" name="kind" value="money" class="throne-btn">Offer ${{ g.cost_money|commas }}</button>
+                <button type="submit" class="throne-btn">Send {{ g.cost_pop|commas }} pilgrims</button>
             </form>
         {% endif %}
         {% if g.blessing %}<p class="throne-blessed">The Throne's blessing is upon you (+{{ g.blessing.pct|round(0)|int }}% happiness).</p>{% endif %}
@@ -53,9 +53,9 @@
         {% for d in g.wall %}
         <div class="throne-wall-row">
             <span class="throne-wall-day">{{ d.day }}</span>
-            <span class="throne-wall-souls">{% if d.skipped %}Sacrifice failed{% else %}{{ d.souls_own + d.souls_pilgrim }} souls{% endif %}{% if d.souls_pilgrim %} ({{ d.souls_pilgrim }} from pilgrims){% endif %}</span>
+            <span class="throne-wall-souls">{% if d.skipped %}Sacrifice failed{% else %}{{ d.souls_own + d.souls_pilgrim }} souls{% endif %}{% if not d.skipped and d.souls_own %} ({{ d.souls_own }} of Holy Terra's own){% endif %}</span>
             {% if d.event %}<span class="throne-wall-event">{{ d.event }}</span>{% endif %}
-            {% if d.nations %}<span class="throne-wall-names">{% for n in d.nations %}<a href="/country/id={{ n.id }}">{{ n.name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</span>{% endif %}
+            {% if d.nations %}<span class="throne-wall-names">{% for n in d.nations %}<a href="/country/id={{ n.id }}">{{ n.name }}</a> ({{ n.people|commas }} people){% if not loop.last %}, {% endif %}{% endfor %}</span>{% endif %}
         </div>
         {% else %}
         <p class="throne-wall-empty">No sacrifice has been made yet. The first dawn is coming.</p>
@@ -84,10 +84,10 @@
             .then(function (j) {
                 (j.days || []).forEach(function (d) {
                     var row = document.createElement('div'); row.className = 'throne-wall-row';
-                    var names = (d.nations || []).map(function (n) { return '<a href="/country/id=' + n.id + '">' + esc(n.name) + '</a>'; }).join(', ');
+                    var names = (d.nations || []).map(function (n) { return '<a href="/country/id=' + n.id + '">' + esc(n.name) + '</a> (' + Number(n.people || 0).toLocaleString('en-US') + ' people)'; }).join(', ');
                     row.innerHTML = '<span class="throne-wall-day">' + esc(d.day) + '</span> <span class="throne-wall-souls">' +
                         (d.skipped ? 'Sacrifice failed' : (d.souls_own + d.souls_pilgrim) + ' souls') +
-                        (d.souls_pilgrim ? ' (' + d.souls_pilgrim + ' from pilgrims)' : '') + '</span>' +
+                        (!d.skipped && d.souls_own ? " (" + d.souls_own + " of Holy Terra's own)" : '') + '</span>' +
                         (d.event ? ' <span class="throne-wall-event">' + esc(d.event) + '</span>' : '') +
                         (names ? ' <span class="throne-wall-names">' + names + '</span>' : '');
                     wall.appendChild(row);

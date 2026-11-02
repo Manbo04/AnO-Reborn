@@ -1,6 +1,8 @@
 # Unique Nation Traits + "The Golden Throne" (plan, awaiting approval)
 
-Status: PLAN ONLY. No feature code is written yet. Branch: `unique-nation-traits`. No PR until built and verified.
+Status: BUILT (PR #250). Branch: `unique-nation-traits`.
+
+**Changes after Dede's review (2026-11-03):** the pilgrim offering is population only (the $250,000 money option was removed), and the Wall of the Spent records and shows how many people each nation gave (`throne_pilgrimages.people`).
 
 ## 0. Decisions I need from you (defaults chosen, "approve" accepts all)
 

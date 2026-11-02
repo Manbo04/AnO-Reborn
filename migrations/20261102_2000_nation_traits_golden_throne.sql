@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS throne_pilgrimages (
     pilgrim_user_id INTEGER NOT NULL,
     weight          INTEGER NOT NULL DEFAULT 1,
     cost_kind       TEXT NOT NULL,
+    people          INTEGER NOT NULL DEFAULT 0,  -- population actually given by the pilgrim nation
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (for_dawn, pilgrim_user_id)
 );

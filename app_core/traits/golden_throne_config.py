@@ -43,7 +43,6 @@ WARNINGS = {
 
 # --- Pilgrims ---------------------------------------------------------------------------
 PILGRIM_COST_POPULATION = 1_000
-PILGRIM_COST_MONEY = 250_000   # burned, never paid to the owner
 PILGRIM_MIN_ACCOUNT_AGE_DAYS = 2
 PILGRIM_BLESSING_PCT = 2.0     # happiness points
 PILGRIM_BLESSING_HOURS = 24

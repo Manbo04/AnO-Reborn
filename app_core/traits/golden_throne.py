@@ -6,7 +6,6 @@ be unit-tested without Postgres. All numbers come from golden_throne_config.
 import random
 from datetime import date, datetime, timedelta, timezone
 
-from app_core.economy import ledger
 from app_core.world_affairs.services import log_event
 
 from . import golden_throne_config as C
@@ -18,8 +17,6 @@ PILGRIM_MESSAGES = {
     "bot": "Machine-spirits cannot make pilgrimage.",
     "young": "Your nation is too young to send pilgrims.",
     "pop": "You do not have enough people to send.",
-    "money": "You cannot afford the pilgrimage.",
-    "kind": "Choose population or money as the offering.",
     "noowner": "The Golden Throne is not active.",
 }
 
@@ -263,15 +260,19 @@ def run_dawn(db, user_id, now=None, rng=None):
 
 
 # ----------------------------- pilgrimage -------------------------------------------------
-def send_pilgrims(db, user_id, kind, now=None):
+class NotEnoughPeople(Exception):
+    pass
+
+
+def send_pilgrims(db, user_id, now=None):
     """Returns (ok, message). One pilgrimage per nation per dawn window, atomic.
+    The offering is always population: PILGRIM_COST_POPULATION people leave the pilgrim's
+    nation and are recorded on the Wall of the Spent.
 
     The UNIQUE (for_dawn, pilgrim_user_id) row is inserted first, inside a savepoint with the
     cost; if the cost cannot be paid the savepoint rolls the row back, so the limit can't be
     burned without paying and can't be used twice without a second payment."""
     now = now or now_utc()
-    if kind not in ("population", "money"):
-        return False, PILGRIM_MESSAGES["kind"]
     owner = owner_id(db)
     if owner is None:
         return False, PILGRIM_MESSAGES["noowner"]
@@ -300,21 +301,22 @@ def send_pilgrims(db, user_id, kind, now=None):
     db.execute("SAVEPOINT throne_pilgrimage")
     db.execute(
         "INSERT INTO throne_pilgrimages (for_dawn, pilgrim_user_id, weight, cost_kind) "
-        "VALUES (%s, %s, %s, %s) ON CONFLICT (for_dawn, pilgrim_user_id) DO NOTHING RETURNING id",
-        (dawn, user_id, weight, kind),
+        "VALUES (%s, %s, %s, 'population') ON CONFLICT (for_dawn, pilgrim_user_id) DO NOTHING "
+        "RETURNING id",
+        (dawn, user_id, weight),
     )
-    if db.fetchone() is None:
+    row = db.fetchone()
+    if row is None:
         db.execute("ROLLBACK TO SAVEPOINT throne_pilgrimage")
         return False, PILGRIM_MESSAGES["already"]
     try:
-        if kind == "money":
-            ledger.spend_gold(db, user_id, C.PILGRIM_COST_MONEY)
-        else:
-            if take_population(db, user_id, C.PILGRIM_COST_POPULATION) < C.PILGRIM_COST_POPULATION:
-                raise ledger.InsufficientFunds("population", C.PILGRIM_COST_POPULATION)
-    except ledger.InsufficientFunds:
+        people = take_population(db, user_id, C.PILGRIM_COST_POPULATION)
+        if people < C.PILGRIM_COST_POPULATION:
+            raise NotEnoughPeople()
+    except NotEnoughPeople:
         db.execute("ROLLBACK TO SAVEPOINT throne_pilgrimage")
-        return False, PILGRIM_MESSAGES["pop" if kind == "population" else "money"]
+        return False, PILGRIM_MESSAGES["pop"]
+    db.execute("UPDATE throne_pilgrimages SET people=%s WHERE id=%s", (people, row[0]))
     db.execute("RELEASE SAVEPOINT throne_pilgrimage")
 
     db.execute(
@@ -372,11 +374,11 @@ def wall_page(db, before=None, limit=None):
     names = {}
     if rows:
         db.execute(
-            "SELECT p.for_dawn, u.id, u.username FROM throne_pilgrimages p "
+            "SELECT p.for_dawn, u.id, u.username, p.people FROM throne_pilgrimages p "
             "JOIN users u ON u.id = p.pilgrim_user_id WHERE p.for_dawn = ANY(%s) "
             "ORDER BY p.id", ([r[0] for r in rows],))
-        for d, uid, name in db.fetchall():
-            names.setdefault(d, []).append({"id": uid, "name": name})
+        for d, uid, name, people in db.fetchall():
+            names.setdefault(d, []).append({"id": uid, "name": name, "people": int(people or 0)})
     out = [
         {"day": r[0].isoformat(), "souls_own": r[1], "souls_pilgrim": r[2], "pilgrims": r[3],
          "event": r[4], "skipped": r[5], "nations": names.get(r[0], [])}
@@ -435,7 +437,7 @@ def page_context(db, owner, viewer_id, now=None):
         "souls_total": int(souls_total), "waiting": waiting, "waiting_weight": waiting_weight,
         "event_label": event_label, "viewer_id": viewer_id, "is_owner": viewer_id == owner,
         "sent": sent, "blessing": blessing, "wall": rows, "wall_next": nxt,
-        "cost_pop": C.PILGRIM_COST_POPULATION, "cost_money": C.PILGRIM_COST_MONEY,
+        "cost_pop": C.PILGRIM_COST_POPULATION,
         "blessing_pct": C.PILGRIM_BLESSING_PCT, "blessing_hours": C.PILGRIM_BLESSING_HOURS,
         "defense_pct": tier["defense"],
     }
