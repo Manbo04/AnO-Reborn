@@ -11,13 +11,13 @@ class ProvinceService:
         return ProvinceRepository.search_provinces_by_name(user_id, query)
 
     @staticmethod
-    def get_user_provinces_paginated(user_id: int, page: int, per_page: int = 30) -> dict:
+    def get_user_provinces_paginated(user_id: int, page: int, per_page: int = 30, sort: str = "number", direction: str = "asc") -> dict:
         has_image_col = ""
         if provinces_has_image_data():
             has_image_col = ", (image_data IS NOT NULL AND image_data <> '') AS has_image"
 
         provinces_raw, total_count, total_pages, current_page, total_population = ProvinceRepository.get_provinces_paginated(
-            user_id, page, per_page, has_image_col
+            user_id, page, per_page, has_image_col, sort, direction
         )
 
         provinces = []

@@ -62,6 +62,7 @@ bp = Blueprint("province", __name__)
 load_dotenv()
 
 
+from repositories.province_repository import ProvinceRepository
 from services.province_service import ProvinceService
 
 @bp.route("/provinces", methods=["GET"])
@@ -71,7 +72,11 @@ def provinces():
     cId = session["user_id"]
     page = request.args.get('page', 1, type=int)
     
-    data = ProvinceService.get_user_provinces_paginated(cId, page)
+    sort = request.args.get('sort', 'number')
+    if sort not in ProvinceRepository.SORT_COLUMNS:
+        sort = 'number'
+    sort_dir = 'desc' if request.args.get('dir') == 'desc' else 'asc'
+    data = ProvinceService.get_user_provinces_paginated(cId, page, sort=sort, direction=sort_dir)
 
     view_mode = request.args.get('view', 'cards')
     search_query = request.args.get('q', '').strip()[:50]
@@ -93,6 +98,8 @@ def provinces():
         view_mode=view_mode,
         search_query=search_query,
         search_results=search_results,
+        sort=sort,
+        sort_dir=sort_dir,
     )
 
 
@@ -1230,6 +1237,30 @@ def province_quick_build_api(pId):
     )
 
 
+def _province_error(code, message):
+    """Error response for the province page's own forms.
+
+    A player who clicked Buy/Sell/Build on /province/<id> gets the message as a
+    toast on that page (flash + redirect back) instead of a full-page error that
+    throws away what they were doing. API clients, tests and anything that did not
+    come from a province page still get the normal error response and status code.
+    """
+    from urllib.parse import urlparse
+
+    ref = urlparse(request.referrer or "")
+    from_province_page = (
+        ref.netloc == request.host
+        and ref.path.startswith("/province/")
+        and "text/html" in (request.headers.get("Accept") or "")
+    )
+    if from_province_page:
+        flash(str(message), "error")
+        from time import time as _time
+
+        return redirect(f"{ref.path}?_={int(_time())}")
+    return error(code, message)
+
+
 @bp.route("/build_structure", methods=["POST"])
 @login_required
 @require_post_origin
@@ -1241,7 +1272,7 @@ def build_structure_action():
         building_id = int(request.form.get("building_id", "0"))
         quantity = int(request.form.get("quantity", "1"))
     except (TypeError, ValueError):
-        return error(400, "Invalid building selection or quantity.")
+        return _province_error(400, "Invalid building selection or quantity.")
 
     # Defaults to the acting user; only overridden below when this is a
     # coalition "share-build" action on a member's opted-in province, and
@@ -1253,7 +1284,7 @@ def build_structure_action():
         try:
             province_id_int = int(province_id)
         except (TypeError, ValueError):
-            return error(400, "Invalid province.")
+            return _province_error(400, "Invalid province.")
         with get_request_cursor() as db:
             db.execute(
                 "SELECT userId FROM provinces WHERE id = %s",
@@ -1261,11 +1292,11 @@ def build_structure_action():
             )
             row = db.fetchone()
             if not row:
-                return error(404, "Province not found")
+                return _province_error(404, "Province not found")
             owner_id = row[0]
             if owner_id != cId:
                 if not can_manage_province_builds(db, cId, owner_id):
-                    return error(403, "You do not own this province")
+                    return _province_error(403, "You do not own this province")
             effective_user_id = owner_id
 
     try:
@@ -1286,7 +1317,7 @@ def build_structure_action():
                 province_id=int(province_id) if province_id else None,
             )
     except ActionLoopError as e:
-        return error(400, str(e))
+        return _province_error(400, str(e))
 
     try:
         from database import invalidate_view_cache
@@ -1738,7 +1769,7 @@ def province_sell_buy(way, units, province_id):
     cId = session["user_id"]
 
     if way not in ("buy", "sell"):
-        return error(400, "Invalid action.")
+        return _province_error(400, "Invalid action.")
 
     with get_request_cursor() as db:
         # Serializes this user's buy/sell calls on this route (same pattern
@@ -1781,7 +1812,7 @@ def province_sell_buy(way, units, province_id):
                 way,
                 province_id,
             )
-            return error(400, "You don't own this province")
+            return _province_error(400, "You don't own this province")
 
         allUnits = [
             "land",
@@ -1849,16 +1880,16 @@ def province_sell_buy(way, units, province_id):
         db.execute("SELECT gold FROM stats WHERE id=(%s)", (cId,))
         gold_row = db.fetchone()
         if not gold_row:
-            return error(500, "Nation data could not be found")
+            return _province_error(500, "Nation data could not be found")
         gold = gold_row[0] or 0
 
         try:
             wantedUnits = int(request.form.get(units))
         except (ValueError, TypeError):
-            return error(400, "You have to enter a unit amount")
+            return _province_error(400, "You have to enter a unit amount")
 
         if wantedUnits > 2147483647 or wantedUnits < -2147483647:
-            return error(400, "Amount out of range")
+            return _province_error(400, "Amount out of range")
 
         # Player report (ticket-0020): the classic land/city purchase form only
         # has a "Purchase" button (no separate sell button), so entering a
@@ -1870,7 +1901,7 @@ def province_sell_buy(way, units, province_id):
             wantedUnits = -wantedUnits
 
         if wantedUnits < 1:
-            return error(400, "Units cannot be less than 1")
+            return _province_error(400, "Units cannot be less than 1")
 
         from app_core.economy.building_costs import (
             land_city_purchase_cost,
@@ -1902,16 +1933,16 @@ def province_sell_buy(way, units, province_id):
         if units in ("land", "cityCount") and way == "sell":
             current_units = current_cityCount if units == "cityCount" else current_land
             if wantedUnits > current_units:
-                return error(400, "You don't have enough units.")
+                return _province_error(400, "You don't have enough units.")
             remaining = current_units - wantedUnits
             if remaining < 1:
-                return error(400, f"You must keep at least 1 {units if units == 'land' else 'city'}.")
+                return _province_error(400, f"You must keep at least 1 {units if units == 'land' else 'city'}.")
 
             # Check infrastructure slot usage to prevent orphaning buildings
             slot_type = "city" if units == "cityCount" else "land"
             used_slots = current_units - get_free_slots(province_id, slot_type, db=db)
             if remaining < used_slots:
-                return error(400, f"You have {used_slots} {slot_type} slots in use. Sell infrastructure first.")
+                return _province_error(400, f"You have {used_slots} {slot_type} slots in use. Sell infrastructure first.")
 
             # Calculate price of units being removed (from remaining to current_units)
             if units == "cityCount":
@@ -1935,7 +1966,7 @@ def province_sell_buy(way, units, province_id):
             )
         else:
             if units not in allUnits:
-                return error(400, "No such unit exists.")
+                return _province_error(400, "No such unit exists.")
             price = unit_prices.get(f"{units}_price", 0)
             if 2 in policies:
                 price *= 0.96
@@ -1981,7 +2012,7 @@ def province_sell_buy(way, units, province_id):
                 (cId, cId),
             )
             if db.fetchone():
-                return error(
+                return _province_error(
                     400,
                     "Buildings cannot be sold while you are at war. "
                     "Resolve the war through peace or its normal outcome first.",
@@ -2056,7 +2087,7 @@ def province_sell_buy(way, units, province_id):
 
         if way == "sell":
             if wantedUnits > currentUnits:  # Checks if user has enough units to sell
-                return error(400, "You don't have enough units.")
+                return _province_error(400, "You don't have enough units.")
 
             if units in ["land", "cityCount"]:
                 unitUpd = f"UPDATE provinces SET {units}=%s WHERE id=%s"
@@ -2079,7 +2110,7 @@ def province_sell_buy(way, units, province_id):
             db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
             gold_before_row = db.fetchone()
             if not gold_before_row:
-                return error(500, "Nation data could not be found")
+                return _province_error(500, "Nation data could not be found")
             gold_before = gold_before_row[0] or 0
 
             ledger.credit_gold(db, cId, totalPrice)
@@ -2134,7 +2165,7 @@ def province_sell_buy(way, units, province_id):
             if units in ["land", "cityCount"]:
                 if totalPrice > gold:
                     shortfall = totalPrice - gold
-                    return error(
+                    return _province_error(
                         400,
                         f"Not enough money: {units} cost {totalPrice:,} gold, "
                         f"you have {gold:,} (missing {shortfall:,}).",
@@ -2144,7 +2175,7 @@ def province_sell_buy(way, units, province_id):
                 if res_error:
                     missing_count = res_error["difference"] * -1
                     missing_res = res_error["resource"]
-                    return error(
+                    return _province_error(
                         400,
                         f"Not enough {missing_res}: missing {missing_count:,}. "
                         f"Produce or buy on the market before building.",
@@ -2153,7 +2184,7 @@ def province_sell_buy(way, units, province_id):
                 db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
                 gold_before_row = db.fetchone()
                 if not gold_before_row:
-                    return error(500, "Nation data could not be found")
+                    return _province_error(500, "Nation data could not be found")
                 gold_before = gold_before_row[0] or 0
 
                 # Atomic: the gold read above isn't locked, so a second
@@ -2162,7 +2193,7 @@ def province_sell_buy(way, units, province_id):
                     ledger.spend_gold(db, cId, totalPrice)
                 except ledger.InsufficientFunds:
                     rollback_db_cursor(db)  # undo the resources taken above
-                    return error(400, "You don't have enough money.")
+                    return _province_error(400, "You don't have enough money.")
 
                 db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
                 gold_after_row = db.fetchone()
@@ -2201,7 +2232,7 @@ def province_sell_buy(way, units, province_id):
                         "Building purchase error for user %s, province %s (%s x%s): %s",
                         cId, province_id, units, wantedUnits, exc,
                     )
-                    return error(400, str(exc))
+                    return _province_error(400, str(exc))
 
         if way == "buy":
             rev_type = "expense"
