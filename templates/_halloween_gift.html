@@ -1,0 +1,96 @@
+{# Yearly Halloween gift modal (app_core/halloween.py). Rendered only on Oct 31; JS asks the API whether this player still has it. #}
+<style>
+#hw-gift{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;background:rgba(10,6,20,.78);padding:16px}
+#hw-gift.show{display:flex}
+#hw-gift .hw-card{position:relative;width:100%;max-width:340px;max-height:90vh;overflow:hidden;text-align:center;padding:24px 18px;border-radius:14px;background:#1b1230;border:1px solid #ff8a1f;color:#fff}
+#hw-gift h2{margin:0 0 6px;font-size:1.2rem;color:#ff9d3c}
+#hw-gift p{margin:6px 0;font-size:.95rem}
+#hw-gift .hw-box{font-size:84px;line-height:1;background:none;border:0;cursor:pointer;padding:8px;filter:drop-shadow(0 0 14px #ff9d3c)}
+#hw-gift .hw-box:focus-visible,#hw-gift .hw-close:focus-visible{outline:3px solid #fff}
+#hw-gift .hw-amount{font-size:1.7rem;font-weight:700;color:#ffd24a;margin:8px 0}
+#hw-gift .hw-close{margin-top:10px;min-height:44px;padding:0 22px;border-radius:8px;border:0;background:#ff8a1f;color:#1b1230;font-weight:700;cursor:pointer}
+#hw-gift .hw-later{display:block;margin:8px auto 0;background:none;border:0;color:#bbb;text-decoration:underline;cursor:pointer;min-height:44px}
+#hw-gift .hw-box.hw-open{animation:hw-pop .6s ease-out}
+#hw-gift .hw-flash{position:absolute;inset:0;background:radial-gradient(circle,#fff,transparent 65%);opacity:0;pointer-events:none}
+#hw-gift .hw-flash.go{animation:hw-flash .7s ease-out}
+#hw-gift .hw-bit{position:absolute;left:50%;top:38%;font-size:20px;pointer-events:none;animation:hw-fly 1.4s ease-out forwards}
+@keyframes hw-pop{0%{transform:scale(1)}40%{transform:scale(1.35) rotate(-6deg)}100%{transform:scale(1)}}
+@keyframes hw-flash{0%{opacity:.9}100%{opacity:0}}
+@keyframes hw-fly{to{transform:translate(var(--dx),var(--dy)) rotate(var(--rot));opacity:0}}
+@media (prefers-reduced-motion:reduce){#hw-gift *{animation:none!important}}
+</style>
+<div id="hw-gift" role="dialog" aria-modal="true" aria-labelledby="hw-title" hidden>
+  <div class="hw-card">
+    <div class="hw-flash" aria-hidden="true"></div>
+    <h2 id="hw-title">🎃 Happy Halloween!</h2>
+    <div id="hw-closed">
+      <p>A gift from the Affairs and Order team.</p>
+      <button type="button" class="hw-box" id="hw-open" aria-label="Open your Halloween gift">🎁</button>
+      <p>Tap the box to open it</p>
+      <button type="button" class="hw-later" id="hw-later">Not now</button>
+    </div>
+    <div id="hw-opened" hidden>
+      <p>You received</p>
+      <div class="hw-amount" id="hw-amount" aria-live="polite"></div>
+      <p>It has been added to your nation.</p>
+      <button type="button" class="hw-close" id="hw-close">Thanks!</button>
+    </div>
+    <p id="hw-err" role="alert" hidden></p>
+  </div>
+</div>
+<script>
+(function () {
+  var root = document.getElementById('hw-gift');
+  if (!root) return;
+  var card = root.querySelector('.hw-card');
+  var csrf = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function hide() { root.classList.remove('show'); root.hidden = true; }
+  function show() { root.hidden = false; root.classList.add('show'); document.getElementById('hw-open').focus(); }
+  function burst() {
+    var bits = ['🍬', '🍭', '🎉', '✨', '🎊', '🍫'];
+    for (var i = 0; i < 28; i++) {
+      var s = document.createElement('span');
+      s.className = 'hw-bit';
+      s.textContent = bits[i % bits.length];
+      var a = Math.random() * Math.PI * 2, d = 90 + Math.random() * 110;
+      s.style.setProperty('--dx', Math.cos(a) * d + 'px');
+      s.style.setProperty('--dy', Math.sin(a) * d + 'px');
+      s.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
+      card.appendChild(s);
+      setTimeout(function (el) { el.remove(); }.bind(null, s), 1500);
+    }
+    var f = card.querySelector('.hw-flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
+  }
+  var busy = false;
+  document.getElementById('hw-open').addEventListener('click', function () {
+    if (busy) return; busy = true;
+    var err = document.getElementById('hw-err'); err.hidden = true;
+    fetch('/api/halloween/claim', {method: 'POST', credentials: 'same-origin',
+      headers: {'X-CSRFToken': csrf, 'Accept': 'application/json'}})
+      .then(function (r) { return r.json().then(function (j) { return {ok: r.ok, j: j}; }); })
+      .then(function (res) {
+        if (!res.ok || !res.j.success) {
+          err.textContent = res.j.message || res.j.error || 'Could not open the gift.';
+          err.hidden = false; busy = false;
+          if (res.j.message) setTimeout(hide, 2500);
+          return;
+        }
+        var box = document.getElementById('hw-open');
+        if (!reduced) { box.classList.add('hw-open'); burst(); }
+        document.getElementById('hw-amount').textContent = '💰 ' + Number(res.j.amount).toLocaleString('en-US');
+        document.getElementById('hw-closed').hidden = true;
+        document.getElementById('hw-opened').hidden = false;
+        document.getElementById('hw-close').focus();
+      })
+      .catch(function () { err.textContent = 'Network error, try again.'; err.hidden = false; busy = false; });
+  });
+  document.getElementById('hw-close').addEventListener('click', function () { hide(); location.reload(); });
+  document.getElementById('hw-later').addEventListener('click', hide);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && root.classList.contains('show') && document.getElementById('hw-opened').hidden) hide(); });
+  fetch('/api/halloween/status', {credentials: 'same-origin'})
+    .then(function (r) { return r.ok ? r.json() : {}; })
+    .then(function (j) { if (j.available) show(); })
+    .catch(function () {});
+})();
+</script>

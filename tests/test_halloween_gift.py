@@ -1,0 +1,52 @@
+"""Halloween gift: date gating, once-per-year claim, ledger credit (DB-free)."""
+from datetime import date
+
+import pytest
+
+from app_core import halloween
+from tests._fake_db import FakeCursor
+
+pytestmark = pytest.mark.no_server
+
+OCT31 = date(2026, 10, 31)
+
+
+def test_only_oct_31():
+    assert halloween.is_halloween(OCT31)
+    assert not halloween.is_halloween(date(2026, 10, 30))
+    assert not halloween.is_halloween(date(2026, 11, 1))
+
+
+def test_env_override(monkeypatch):
+    monkeypatch.setenv("HALLOWEEN_GIFT_DATE", "2025-10-31")
+    assert halloween.gift_date() == date(2025, 10, 31)
+    monkeypatch.setenv("HALLOWEEN_GIFT_DATE", "garbage")
+    assert halloween.gift_date() != date(2025, 10, 31)
+
+
+def test_wrong_day_touches_nothing():
+    cur = FakeCursor()
+    ok, _, amt = halloween.claim_gift(cur, 1, today=date(2026, 6, 1))
+    assert not ok and amt == 0 and cur.executed == []
+
+
+def test_first_claim_credits_once_second_is_refused():
+    cur = FakeCursor([("INSERT INTO halloween_gift_claims", [(1,)])])
+    cur.rowcount = 1
+    ok, _, amt = halloween.claim_gift(cur, 7, today=OCT31)
+    assert ok and amt == halloween.HALLOWEEN_GIFT_AMOUNT
+    sql = cur.sql_log()
+    assert any("UPDATE stats SET gold=gold+" in s for s in sql)
+    assert cur.executed[0][1] == (7, 2026, halloween.HALLOWEEN_GIFT_AMOUNT)
+
+    dup = FakeCursor([("INSERT INTO halloween_gift_claims", [])])  # conflict -> no row
+    ok, _, amt = halloween.claim_gift(dup, 7, today=OCT31)
+    assert not ok and amt == 0
+    assert not any("UPDATE stats" in s for s in dup.sql_log())
+
+
+def test_missing_stats_row_rolls_back():
+    cur = FakeCursor([("INSERT INTO halloween_gift_claims", [(1,)])])
+    cur.rowcount = 0
+    with pytest.raises(RuntimeError):
+        halloween.claim_gift(cur, 7, today=OCT31)
