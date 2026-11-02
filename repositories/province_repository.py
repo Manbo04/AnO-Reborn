@@ -40,3 +40,16 @@ class ProvinceRepository:
             provinces_raw = db.fetchall()
             
             return provinces_raw, total_count, total_pages, page, total_population
+
+    @staticmethod
+    def search_provinces_by_name(user_id: int, query: str, limit: int = 20) -> list:
+        """Case-insensitive name search over ONE user's provinces; LIKE wildcards in the input are escaped."""
+        escaped = query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        with get_request_cursor(read_only=True) as db:
+            db.execute(
+                "SELECT id, provinceName FROM provinces "
+                "WHERE userId=(%s) AND provinceName ILIKE (%s) ESCAPE '\\' "
+                "ORDER BY provinceName ASC LIMIT %s",
+                (user_id, f"%{escaped}%", limit),
+            )
+            return db.fetchall()
