@@ -50,3 +50,11 @@ def test_missing_stats_row_rolls_back():
     cur.rowcount = 0
     with pytest.raises(RuntimeError):
         halloween.claim_gift(cur, 7, today=OCT31)
+
+
+def test_modal_template_compiles():
+    from jinja2 import Environment, FileSystemLoader
+
+    env = Environment(loader=FileSystemLoader("templates"))
+    env.get_template("_halloween_gift.html")
+    env.get_template("layout.html")
