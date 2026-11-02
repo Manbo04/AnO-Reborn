@@ -15,6 +15,7 @@ from app_core.economy.industry_bonuses import (
 )
 from app_core.economy.tick_order import upkeep_budget
 from app_core.economy.project_bonuses import project_output_bonus
+from app_core.economy.seasons import food_output_multiplier
 from app_core.economy.consumer_goods import load_province_cg_capacities
 from app_core.directives.services import active_keys, tax_multiplier_for
 from app_core.economy.tax_formula import compute_tax_income
@@ -272,7 +273,8 @@ def get_revenue(cId, db=None):
             SELECT
                 COALESCE(s.gold, 0) AS gold,
                 COALESCE(r.quantity, 0) AS rations,
-                COALESCE(cg.quantity, 0) AS consumer_goods
+                COALESCE(cg.quantity, 0) AS consumer_goods,
+                s.location AS location
             FROM stats s
             LEFT JOIN (
                 SELECT ue.quantity FROM user_economy ue
@@ -292,6 +294,8 @@ def get_revenue(cId, db=None):
         current_money = econ_row[0] if econ_row else 0
         current_rations = econ_row[1] if econ_row else 0
         consumer_goods = int(econ_row[2]) if econ_row else 0
+        # Short fake rows (tests) omit location; food then stays at 1.0.
+        nation_location = econ_row[3] if econ_row and len(econ_row) > 3 else None
 
         # PHASE 3: Workforce efficiency + pension-crisis gold penalty --
         # mirrors app_core/game_ticks/revenue.py's
@@ -473,6 +477,11 @@ def get_revenue(cId, db=None):
                     # exactly like revenue.py's plus_amount_multiplier *=
                     # efficiency_multiplier.
                     multiplier *= efficiency_multiplier
+
+                    # Same farm/fishery season factor the revenue tick applies.
+                    food_mult = food_output_multiplier(building, nation_location)
+                    if food_mult != 1.0:
+                        multiplier *= food_mult
 
                     adjusted_total = build_count * (amount + flat_bonus) * multiplier
                     # Normalize to integer to mirror production rounding

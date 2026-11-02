@@ -30,6 +30,7 @@ FILES = [
     "static/css/cosmetics-imperial.css",
     "static/css/cosmetics-frost.css",
     "static/css/cosmetics-nebula.css",
+    "static/css/seasons.css",
 ]
 
 

@@ -1,0 +1,19 @@
+{# Own-nation season card. Effects are listed in the page so they are readable
+   without hovering, including on a phone. #}
+{% if player_season %}
+<section class="season-summary" aria-label="Season in your nation">
+    <div class="season-summary-head">
+        <span class="material-icons-outlined" aria-hidden="true">{{ player_season.icon }}</span>
+        <div>
+            <h2 class="season-summary-title">{{ player_season.label }}</h2>
+            <p class="season-summary-meta">{{ player_season.climate_label }} {{ player_season.biome }} · {{ player_season.hemisphere_label }}</p>
+        </div>
+    </div>
+    <p class="season-summary-when">{{ player_season.days_phrase }} until {{ player_season.next_label }}</p>
+    <ul class="season-summary-effects">
+        {% for line in player_season.lines %}
+        <li>{{ line }}</li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}

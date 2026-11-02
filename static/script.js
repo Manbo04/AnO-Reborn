@@ -274,12 +274,51 @@ function toggleBackgroundImages() {
     setBackgroundImages(!isBackgroundImagesEnabled());
 }
 
+// Season visuals (snow, leaves, petals). Off only hides the decoration.
+// Food, power, and growth keep their seasonal numbers either way.
+function isSeasonVisualsEnabled() {
+    try {
+        return localStorage.getItem("ano_season_visuals") !== "off";
+    } catch (e) {
+        return true;
+    }
+}
+
+function setSeasonVisuals(enabled) {
+    try {
+        localStorage.setItem("ano_season_visuals", enabled ? "on" : "off");
+    } catch (e) {}
+
+    if (enabled) {
+        document.documentElement.classList.remove("no-season-visuals");
+    } else {
+        document.documentElement.classList.add("no-season-visuals");
+    }
+
+    var toggle = document.getElementById("seasonVisualsToggle");
+    if (toggle) toggle.checked = enabled;
+}
+
+function toggleSeasonVisuals() {
+    setSeasonVisuals(!isSeasonVisualsEnabled());
+}
+
+function closeSeasonBadges() {
+    var wraps = document.querySelectorAll(".season-badge-wrap");
+    for (var i = 0; i < wraps.length; i++) {
+        wraps[i].classList.remove("is-open");
+        var btn = wraps[i].querySelector(".season-badge");
+        if (btn) btn.setAttribute("aria-expanded", "false");
+    }
+}
+
 // Apply saved theme and background settings on load (light default; dark available via toggle)
 (function() {
     var theme = "theme-light";
     try { theme = normalizeThemeName(localStorage.getItem("theme")); } catch(e) {}
     setTheme(theme);
     setBackgroundImages(isBackgroundImagesEnabled());
+    setSeasonVisuals(isSeasonVisualsEnabled());
 })();
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -293,6 +332,26 @@ document.addEventListener("DOMContentLoaded", function() {
     if (bgToggle) {
         bgToggle.checked = isBackgroundImagesEnabled();
     }
+    var seasonToggle = document.getElementById("seasonVisualsToggle");
+    if (seasonToggle) {
+        seasonToggle.checked = isSeasonVisualsEnabled();
+    }
+
+    document.addEventListener("click", function (e) {
+        var wrap = e.target.closest ? e.target.closest(".season-badge-wrap") : null;
+        if (!wrap) {
+            closeSeasonBadges();
+            return;
+        }
+        if (e.target.closest(".season-pop")) return;
+        var wasOpen = wrap.classList.contains("is-open");
+        closeSeasonBadges();
+        if (!wasOpen) {
+            wrap.classList.add("is-open");
+            var btn = wrap.querySelector(".season-badge");
+            if (btn) btn.setAttribute("aria-expanded", "true");
+        }
+    });
 });
 
 // ---------------------------------------------------------------------------

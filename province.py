@@ -37,6 +37,7 @@ from action_loop import build_structure, ActionLoopError
 from app_core.coalitions.repositories import can_manage_province_builds
 from app_core.economy.tick_order import tax_due_before_next_upkeep, upkeep_budget
 from app_core.economy.project_bonuses import project_output_bonus
+from app_core.economy.seasons import food_output_multiplier
 from app_core.economy import province_energy as province_energy_mod
 from app_core.economy.biome_buildings import mines_for_biome, other_biome_mines
 from app_core.economy.building_costs import (
@@ -600,6 +601,9 @@ def province(pId):
             mult = (
                 productivity_multiplier + project_output_bonus(bname, upgrades)
             ) * entry.get("multiplier", 1.0) * efficiency_multiplier
+            food_mult = food_output_multiplier(bname, province.get("location"))
+            if food_mult != 1.0:
+                mult *= food_mult
             flat = (
                 int((province.get("land") or 0) * variables.LAND_FARM_PRODUCTION_ADDITION)
                 if bname == "farms"
@@ -626,7 +630,7 @@ def province(pId):
                 gold_budget = national_gold
         energy = province_energy_mod.province_energy(
             units, upgrades, province.get("productivity"), efficiency_multiplier,
-            gold_budget, economy_values,
+            gold_budget, economy_values, location=province.get("location"),
         )
         has_power = energy.pop("has_power")
 

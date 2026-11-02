@@ -1,0 +1,8 @@
+{# Decorative only. pointer-events: none, hidden by the visuals setting and
+   by prefers-reduced-motion. Does not change gameplay. #}
+{% if player_season and player_season.visual != 'none' %}
+<div class="season-ambience season-ambience--{{ player_season.visual }}" aria-hidden="true">
+    <span></span><span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span><span></span><span></span>
+</div>
+{% endif %}

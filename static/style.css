@@ -476,7 +476,8 @@ label {
 .navbarparent:has(.templatecontainer) > .navbarparenttitle,
 .navbarparent:has(.templatecontainer) > .navbarparentloginsignupdiv,
 .navbarparent:has(.templatecontainer) > .menubar,
-.navbarparent:has(.templatecontainer) > .navbar-theme-toggle {
+.navbarparent:has(.templatecontainer) > .navbar-theme-toggle,
+.navbarparent:has(.templatecontainer) > .season-badge-wrap--mobile {
     position: fixed;
     z-index: 1001;
     top: 0;
@@ -18821,5 +18822,281 @@ body.nation-nebula-theme ::-webkit-scrollbar-thumb {
     body.nation-nebula-theme .game-hero h1 .nation-name-flair::after {
         animation: none !important;
     }
+}
+
+
+/* --- static/css/seasons.css --- */
+/* Seasonal badge + ambience. Edit this file, then bundle_game_css.py.
+   Particles sit at z-index -1: above the page photo, under the UI.
+   pointer-events: none so they never take a click. */
+
+.season-badge-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.season-badge-wrap--topbar {
+    float: none;
+    margin: 0;
+}
+
+.season-badge-wrap--mobile {
+    display: none;
+    float: right;
+    margin: 10px 8px 0 0;
+}
+
+.season-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 32px;
+    max-width: 46vw;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.08);
+    color: #e8eef8;
+    font-size: 12px;
+    font-weight: 650;
+    line-height: 1;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.season-badge .material-icons-outlined {
+    font-size: 16px;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+}
+
+.season-badge-days {
+    font-weight: 500;
+    opacity: 0.85;
+}
+
+.season-pop {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: min(260px, 78vw);
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #1c2029;
+    color: #e8eef8;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+    z-index: 1200;
+    text-align: left;
+}
+
+.season-badge-wrap:hover .season-pop,
+.season-badge-wrap:focus-within .season-pop,
+.season-badge-wrap.is-open .season-pop {
+    display: block;
+}
+
+.season-pop-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.season-pop-meta,
+.season-pop-when {
+    margin: 2px 0 0;
+    font-size: 12px;
+    opacity: 0.85;
+}
+
+.season-pop-effects {
+    margin: 8px 0 0;
+    padding-left: 16px;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.season-pop-effects li {
+    margin: 2px 0;
+}
+
+/* Desktop tools are hidden under 858px (game shell) and under 621px always.
+   The navbar copy takes over so the badge stays on screen. */
+@media (max-width: 857px) {
+    body.game-shell-active .season-badge-wrap--mobile {
+        display: inline-flex;
+    }
+}
+
+@media (max-width: 620px) {
+    .season-badge-wrap--mobile {
+        display: inline-flex;
+    }
+
+    .season-badge-wrap--mobile .season-badge-name {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+    }
+}
+
+@media (min-width: 858px) {
+    .season-badge-wrap--mobile {
+        display: none !important;
+    }
+}
+
+/* Own-nation card. Mobile first. */
+.season-summary {
+    margin: 8px 0 16px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid var(--game-glass-border, var(--border, rgba(255, 255, 255, 0.12)));
+    background: var(--game-glass-bg-strong, rgba(28, 32, 41, 0.88));
+    color: var(--colorOne, #1a2332);
+    max-width: 100%;
+}
+
+.season-summary-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.season-summary-head .material-icons-outlined {
+    font-size: 28px;
+    margin: 0;
+    color: var(--accent, #7eb6ff);
+}
+
+.season-summary-title {
+    margin: 0;
+    font-size: 1.15rem;
+    line-height: 1.2;
+}
+
+.season-summary-meta,
+.season-summary-when {
+    margin: 2px 0 0;
+    font-size: 0.85rem;
+    opacity: 0.85;
+}
+
+.season-summary-effects {
+    margin: 8px 0 0;
+    padding-left: 18px;
+    font-size: 0.9rem;
+}
+
+.season-summary-effects li {
+    margin: 3px 0;
+}
+
+/* Ambience. Behind the page content (z-index -1), never clickable. */
+.season-ambience {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.season-ambience span {
+    position: absolute;
+    top: -8%;
+    left: 10%;
+    pointer-events: none;
+    opacity: 0.55;
+    animation: season-fall linear infinite;
+    will-change: transform;
+}
+
+.season-ambience--snow span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.45);
+}
+
+.season-ambience--leaves span {
+    width: 10px;
+    height: 7px;
+    border-radius: 0 80% 0 80%;
+    background: rgba(196, 112, 42, 0.8);
+}
+
+.season-ambience--petals span {
+    width: 8px;
+    height: 8px;
+    border-radius: 80% 0 80% 0;
+    background: rgba(244, 176, 198, 0.85);
+}
+
+.season-ambience--rain span {
+    width: 1px;
+    height: 14px;
+    border-radius: 1px;
+    background: rgba(186, 214, 255, 0.45);
+    opacity: 0.7;
+}
+
+.season-ambience--dust span {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: rgba(214, 184, 120, 0.55);
+}
+
+.season-ambience--glow {
+    background: radial-gradient(
+        ellipse at 50% -10%,
+        rgba(255, 196, 120, 0.16),
+        transparent 46%
+    );
+}
+
+.season-ambience--glow span {
+    display: none;
+}
+
+.season-ambience span:nth-child(1) { left: 6%; animation-duration: 18s; animation-delay: -2s; }
+.season-ambience span:nth-child(2) { left: 16%; animation-duration: 22s; animation-delay: -9s; }
+.season-ambience span:nth-child(3) { left: 28%; animation-duration: 16s; animation-delay: -4s; }
+.season-ambience span:nth-child(4) { left: 40%; animation-duration: 24s; animation-delay: -14s; }
+.season-ambience span:nth-child(5) { left: 52%; animation-duration: 19s; animation-delay: -7s; }
+.season-ambience span:nth-child(6) { left: 63%; animation-duration: 21s; animation-delay: -11s; }
+.season-ambience span:nth-child(7) { left: 72%; animation-duration: 17s; animation-delay: -1s; }
+.season-ambience span:nth-child(8) { left: 81%; animation-duration: 23s; animation-delay: -16s; }
+.season-ambience span:nth-child(9) { left: 88%; animation-duration: 15s; animation-delay: -6s; }
+.season-ambience span:nth-child(10) { left: 34%; animation-duration: 26s; animation-delay: -19s; }
+.season-ambience span:nth-child(11) { left: 57%; animation-duration: 20s; animation-delay: -8s; }
+.season-ambience span:nth-child(12) { left: 94%; animation-duration: 18s; animation-delay: -12s; }
+
+@keyframes season-fall {
+    0% { transform: translate3d(0, -10vh, 0) rotate(0deg); }
+    100% { transform: translate3d(18px, 115vh, 0) rotate(220deg); }
+}
+
+@media (max-width: 820px) {
+    .season-ambience span:nth-child(n + 7) {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .season-ambience {
+        display: none !important;
+    }
+}
+
+html.no-season-visuals .season-ambience {
+    display: none !important;
 }
 

@@ -65,6 +65,11 @@ from app_core.economy.province_effects import (
     building_effects_per_unit,
 )
 from app_core.economy.project_bonuses import project_output_bonus
+from app_core.economy.seasons import (
+    construction_multiplier,
+    energy_upkeep_multiplier,
+    food_output_multiplier,
+)
 
 
 
@@ -704,6 +709,14 @@ def generate_province_revenue():  # Runs each hour
                             user_id, 0
                         )
 
+                        # Seasonal building-upkeep knob. The table leaves this at
+                        # 1, so the int() below matches the pre-season tick.
+                        upkeep_mult = construction_multiplier(
+                            provinces_data.get(province_id, {}).get("location")
+                        )
+                        if upkeep_mult != 1.0:
+                            operating_costs *= upkeep_mult
+
                         operating_costs = int(operating_costs)
 
                         # How many of this province's `unit_amount` buildings can
@@ -750,10 +763,15 @@ def generate_province_revenue():  # Runs each hour
                         elif unit in energy_consumers:
                             energy_per_unit = 1  # Each unit consumes 1 energy
 
+                        energy_cost = energy_per_unit
                         if energy_per_unit:
                             prov_data = provinces_data.get(province_id, {})
                             current_energy = prov_data.get("energy", 0)
-                            affordable_by_energy = int(current_energy // energy_per_unit)
+                            # Heating / cooling. 1.0 keeps the old integer cost.
+                            heat = energy_upkeep_multiplier(prov_data.get("location"))
+                            if heat != 1.0:
+                                energy_cost = energy_per_unit * heat
+                            affordable_by_energy = int(current_energy // energy_cost)
                             if affordable_by_energy < affordable_units:
                                 has_enough_stuff["issues"].append("energy")
                             affordable_units = min(affordable_units, affordable_by_energy)
@@ -838,7 +856,12 @@ def generate_province_revenue():  # Runs each hour
                         if cost_per_unit > 0:
                             pending_gold_cost = int(round(cost_per_unit * affordable_units))
                         if energy_per_unit:
-                            pending_energy_delta = -(energy_per_unit * affordable_units)
+                            if energy_cost == energy_per_unit:
+                                pending_energy_delta = -(energy_per_unit * affordable_units)
+                            else:
+                                pending_energy_delta = -int(
+                                    round(energy_cost * affordable_units)
+                                )
                         for resource, amount_per_unit in per_unit_minus.items():
                             if amount_per_unit <= 0:
                                 continue
@@ -939,6 +962,14 @@ def generate_province_revenue():  # Runs each hour
                         plus_amount_multiplier *= debuff_info.get(
                             "efficiency_multiplier", 1.0
                         )
+
+                        # Farms and fisheries only. Mines and factories are
+                        # unchanged. Missing location (fixture rows) is 1.0.
+                        food_mult = food_output_multiplier(
+                            unit, provinces_data.get(province_id, {}).get("location")
+                        )
+                        if food_mult != 1.0:
+                            plus_amount_multiplier *= food_mult
 
                         # Function for _plus
                         for resource, amount in plus.items():

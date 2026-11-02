@@ -12,6 +12,7 @@ used to compare raw building counts instead, so it flagged provinces as
 import math
 
 import variables
+from app_core.economy.seasons import energy_upkeep_multiplier
 
 
 def _val(row, key, idx):
@@ -79,7 +80,15 @@ def producer_upkeep(units):
     )
 
 
-def province_energy(units, upgrades, productivity, efficiency_multiplier, gold_budget, economy_values):
+def province_energy(
+    units,
+    upgrades,
+    productivity,
+    efficiency_multiplier,
+    gold_budget,
+    economy_values,
+    location=None,
+):
     """Energy breakdown for one province. ``gold_budget`` is the gold available
     for producer upkeep; ``economy_values`` holds the nation's fuel stocks."""
     consumers = variables.ENERGY_CONSUMERS
@@ -92,6 +101,10 @@ def province_energy(units, upgrades, productivity, efficiency_multiplier, gold_b
     # Per-building consumption breakdown (each consumer building uses 1
     # energy/hour, except Electric Arc Furnace steel mills which use 2 —
     # matches the real per-unit cost applied in generate_province_revenue()).
+    # Heating / cooling. Omitted location (callers that predate seasons,
+    # and the unit tests) stays at 1 so a tight power comparison doesn't
+    # move just because the calendar did.
+    heat = energy_upkeep_multiplier(location)
     consumption_breakdown = []
     energy_consumption = 0
     for c in consumers:
@@ -100,6 +113,8 @@ def province_energy(units, upgrades, productivity, efficiency_multiplier, gold_b
             continue
         unit_cost = 2 if (c == "steel_mills" and upgrades.get("electricarcfurnace")) else 1
         subtotal = qty * unit_cost
+        if heat != 1.0:
+            subtotal = int(round(subtotal * heat))
         energy_consumption += subtotal
         consumption_breakdown.append(
             {"name": c, "quantity": qty, "unit_cost": unit_cost, "subtotal": subtotal}

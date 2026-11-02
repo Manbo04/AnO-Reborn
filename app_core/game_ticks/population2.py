@@ -98,19 +98,26 @@ def death_rates(hospitals, pop, pollution, universal_healthcare):
     return elderly, child
 
 
-def births(working, pop, home_count, happiness, food_ratio, dt=DT):
+def births(working, pop, home_count, happiness, food_ratio, dt=DT, growth_mult=1.0):
     food = max(0.0, min(1.0, float(food_ratio or 0)))
-    return int(
+    raw = (
         working * BIRTH_RATE * housing_factor(pop, home_count)
         * happiness_factor(happiness) * food * dt
     )
+    # growth_mult of 1 must not touch the float, or a seasonal no-op would
+    # change int() boundaries for existing population tests.
+    if growth_mult != 1.0:
+        raw *= growth_mult
+    return int(raw)
 
 
-def settlers(pop, home_count, happiness, food_ratio, dt=DT):
+def settlers(pop, home_count, happiness, food_ratio, dt=DT, growth_mult=1.0):
     free = max(0, home_count - pop)
     cap = SETTLER_CAP_BASE + SETTLER_CAP_SHARE * pop
     food = max(0.0, min(1.0, float(food_ratio or 0)))
     daily = min(SETTLER_RATE * free, cap) * happiness_factor(happiness) * food
+    if growth_mult != 1.0:
+        daily *= growth_mult
     return int(daily * dt)
 
 
@@ -120,18 +127,33 @@ def emigrants(pop, home_count, dt=DT):
 
 
 def step_province(
-    p, hospitals, home_count, food_ratio, universal_healthcare, grace, dt=DT
+    p,
+    hospitals,
+    home_count,
+    food_ratio,
+    universal_healthcare,
+    grace,
+    dt=DT,
+    growth_mult=1.0,
+    happiness_bonus=0,
 ):
     """One tick for one province. p has pop_children/working/elderly,
     happiness, pollution. Returns (children, working, elderly) deltas from
-    births, deaths and settlers/emigration (NOT aging, NOT migration)."""
+    births, deaths and settlers/emigration (NOT aging, NOT migration).
+
+    ``growth_mult`` and ``happiness_bonus`` are the season modifiers
+    (app_core/economy/seasons.py). The bonus is added only to the happiness
+    the birth and settler formulas read. It is not written back to the
+    province, and deaths are left alone.
+    """
     c, w, e = p["pop_children"], p["pop_working"], p["pop_elderly"]
     pop = c + w + e
     er, cr = death_rates(hospitals, pop, p.get("pollution"), universal_healthcare)
     d_e = int(e * er * dt)
     d_c = int(c * cr * dt)
-    b = births(w, pop, home_count, p.get("happiness"), food_ratio, dt)
-    s = settlers(pop, home_count, p.get("happiness"), food_ratio, dt)
+    happy = float(p.get("happiness") or 0) + (happiness_bonus or 0)
+    b = births(w, pop, home_count, happy, food_ratio, dt, growth_mult=growth_mult)
+    s = settlers(pop, home_count, happy, food_ratio, dt, growth_mult=growth_mult)
     s_w = int(s * SETTLER_WORKING_SHARE)
     out = 0 if grace else emigrants(pop, home_count, dt)
     out_w = min(w, out)
@@ -234,12 +256,23 @@ def _scale_down(c, w, e, remove):
 
 
 def simulate_nation(
-    provs, buildings_map, food_ratio, healthcare, starve_grace, now=None
+    provs,
+    buildings_map,
+    food_ratio,
+    healthcare,
+    starve_grace,
+    now=None,
+    growth_mult=1.0,
+    happiness_bonus=0,
 ):
     """provs: dicts with id, population, pop_children/working/elderly,
     citycount, land, happiness, pollution (one nation). Returns
     {province_id: (children, working, elderly)} after one tick of births,
-    deaths, starvation, settlers, emigration and internal migration."""
+    deaths, starvation, settlers, emigration and internal migration.
+
+    ``growth_mult`` / ``happiness_bonus`` come from the season table and
+    default to "no season" so callers that don't know a biome stay put.
+    """
     grace = in_grace_period(now)
     state = {}
     for p in provs:
@@ -249,7 +282,13 @@ def simulate_nation(
         dc, dw, de = step_province(
             {"pop_children": c, "pop_working": w, "pop_elderly": e,
              "happiness": p.get("happiness"), "pollution": p.get("pollution")},
-            int(b.get("hospitals", 0) or 0), home_count, food_ratio, healthcare, grace,
+            int(b.get("hospitals", 0) or 0),
+            home_count,
+            food_ratio,
+            healthcare,
+            grace,
+            growth_mult=growth_mult,
+            happiness_bonus=happiness_bonus,
         )
         c, w, e = max(0, c + dc), max(0, w + dw), max(0, e + de)
         if not starve_grace and not starvation_grace_active(now) and food_ratio < 1.0:

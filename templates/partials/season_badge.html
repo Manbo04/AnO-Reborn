@@ -1,0 +1,25 @@
+{# Player's current season. `slot` is "topbar" (desktop tools) or "mobile"
+   (the navbar, shown when the desktop tools are hidden). Gameplay does not
+   depend on this badge. #}
+{% if player_season %}
+<div class="season-badge-wrap season-badge-wrap--{{ slot|default('mobile') }}">
+    <button type="button"
+            class="season-badge"
+            aria-expanded="false"
+            aria-label="{{ player_season.label }}, {{ player_season.days_phrase }} until {{ player_season.next_label }}. {{ player_season.climate_label }} {{ player_season.biome }}, {{ player_season.hemisphere_label }}.">
+        <span class="material-icons-outlined" aria-hidden="true">{{ player_season.icon }}</span>
+        <span class="season-badge-name">{{ player_season.label }}</span>
+        <span class="season-badge-days">{{ player_season.days_left }}d</span>
+    </button>
+    <div class="season-pop" role="tooltip">
+        <p class="season-pop-title">{{ player_season.label }}</p>
+        <p class="season-pop-meta">{{ player_season.climate_label }} {{ player_season.biome }} · {{ player_season.hemisphere_label }}</p>
+        <p class="season-pop-when">{{ player_season.days_phrase }} until {{ player_season.next_label }}</p>
+        <ul class="season-pop-effects">
+            {% for line in player_season.lines %}
+            <li>{{ line }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}

@@ -119,14 +119,23 @@ def apply_combat_modifiers(
     entrenchment_level: int = 0,
     attacker_intel: int = 0,
     is_ground: bool = True,
+    defender_defense_mult: float = 1.0,
 ) -> Tuple[float, float, float, float]:
-    """Apply entrenchment (+10% per level to ground defense) and intel (+intel/10 % to attack strength)."""
+    """Apply entrenchment (+10% per level to ground defense) and intel (+intel/10 % to attack strength).
+
+    ``defender_defense_mult`` is the season modifier (arctic winter). 1.0
+    leaves defense untouched. Callers pass 1.0 for air and naval fights.
+    """
     from wars.action_points import entrenchment_defense_multiplier, intel_attack_multiplier
 
     if is_ground and entrenchment_level:
         e_mult = entrenchment_defense_multiplier(entrenchment_level)
         defender_unit_amount_bonuses *= e_mult
         defender_bonus *= e_mult
+
+    if is_ground and defender_defense_mult and defender_defense_mult != 1.0:
+        defender_unit_amount_bonuses *= defender_defense_mult
+        defender_bonus *= defender_defense_mult
 
     if attacker_intel:
         i_mult = intel_attack_multiplier(attacker_intel)

@@ -6,6 +6,7 @@ import time
 from typing import Optional
 from dotenv import load_dotenv
 from database import fetchone_first, get_db_connection
+from app_core.economy.seasons import defense_multiplier
 
 load_dotenv()
 
@@ -417,6 +418,30 @@ class Nation:
 
         # The minimal set_peace static method is already implemented as a method
         # of the Nation class above; no additional placeholder class is required.
+
+
+def _season_defense_mult(defender, is_ground: bool) -> float:
+    """Small ground-defense bonus from the defender's season (arctic winter).
+
+    Air and naval fights ignore it. A lookup failure leaves defense unchanged
+    so a seasons problem can never break a battle.
+    """
+    if not is_ground:
+        return 1.0
+    uid = getattr(defender, "user_id", None)
+    if not uid:
+        return 1.0
+    try:
+        with get_db_connection() as connection:
+            cur = connection.cursor()
+            cur.execute("SELECT location FROM stats WHERE id=%s", (uid,))
+            row = cur.fetchone()
+        if not row:
+            return 1.0
+        loc = row.get("location") if hasattr(row, "get") else row[0]
+        return defense_multiplier(loc)
+    except Exception:
+        return 1.0
 
 
 class Military(Nation):
@@ -838,6 +863,7 @@ class Military(Nation):
             entrenchment_level=entrenchment_level,
             attacker_intel=attacker_intel,
             is_ground=is_ground,
+            defender_defense_mult=_season_defense_mult(defender, is_ground),
         )
 
         # used to be: attacker_chance += attacker_roll+attacker_unit_amount_bonuses+attacker_bonus

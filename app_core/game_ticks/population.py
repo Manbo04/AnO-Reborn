@@ -52,6 +52,7 @@ from app_core.game_ticks.common import should_skip_task, handle_exception, log_v
 from app_core.game_ticks.locks import try_pg_advisory_lock, release_pg_advisory_lock
 from app_core.game_ticks.food import rations_needed
 from app_core.game_ticks import population2
+from app_core.economy.seasons import growth_multiplier, mood_bonus
 
 def calc_education_graduation(pop_children, policies, primary_buildings, hs_buildings, uni_buildings, now=None, base_rate=None):
     """Computes tier-chained education graduation for a province. Shared between tick and display."""
@@ -183,7 +184,7 @@ def distributable_rations(warehouse, dist_cap, nation_population, comfort, now=N
     return min(warehouse, int(covered_people // variables.RATIONS_PER))
 
 
-def calc_nation_growth(nation_population, comfort, rations_ratio):
+def calc_nation_growth(nation_population, comfort, rations_ratio, growth_mult=1.0):
     """People added to a whole nation this tick (before starvation).
     Based on the population the nation actually has, so war deaths slow it
     down; slows to POP_GROWTH_DIMINISHING_FLOOR past comfort (no hard cap).
@@ -203,7 +204,11 @@ def calc_nation_growth(nation_population, comfort, rations_ratio):
         variables.POP_GROWTH_RATE * catchup * pop
         + variables.POP_GROWTH_SEED_RATE * comfort
     )
-    return int(round((rations_ratio**2) * diminishing * raw))
+    scaled = (rations_ratio**2) * diminishing * raw
+    # Identity multiplier must not touch the float (same reason as births).
+    if growth_mult != 1.0:
+        scaled *= growth_mult
+    return int(round(scaled))
 
 
 def province_capacity_weight(cities, land):
@@ -284,7 +289,8 @@ def get_population_growth(cId, db=None):
             """
             SELECT population, citycount, land, happiness, pollution, id,
                    COALESCE(pop_children, 0), COALESCE(pop_working, 0),
-                   COALESCE(pop_elderly, 0)
+                   COALESCE(pop_elderly, 0),
+                   (SELECT location FROM stats WHERE id = provinces.userId)
             FROM provinces WHERE userId = %s
             """,
             (cId,),
@@ -312,6 +318,7 @@ def get_population_growth(cId, db=None):
                 "pop_children": r[6],
                 "pop_working": r[7],
                 "pop_elderly": r[8],
+                "location": r[9] if len(r) > 9 else None,
             }
             for r in province_rows
         ]
@@ -362,8 +369,11 @@ def get_population_growth(cId, db=None):
         rations_ratio = (
             effective_rations / total_needed if total_needed > 0 else 0
         )
+        season_location = rows[0].get("location") if rows else None
+        season_growth = growth_multiplier(season_location)
+        season_mood = mood_bonus(season_location)
         nation_growth = calc_nation_growth(
-            nation["pop"], nation["comfort"], rations_ratio
+            nation["pop"], nation["comfort"], rations_ratio, season_growth
         )
 
         total_delta = 0
@@ -404,6 +414,8 @@ def get_population_growth(cId, db=None):
                 min(1.0, rations_ratio),
                 cId in hc,
                 grace_period,
+                growth_mult=season_growth,
+                happiness_bonus=season_mood,
             )
             for row in rows:
                 n_c, n_w, n_e = sim[row["id"]]
@@ -493,9 +505,11 @@ def population_growth():  # Function for growing population
                  COALESCE(p.pop_children, 0) AS pop_children,
                  COALESCE(p.pop_working, 0) AS pop_working,
                  COALESCE(p.pop_elderly, 0) AS pop_elderly,
-                 COALESCE(p.legacy_max_population, 0) AS legacy_max_population
+                 COALESCE(p.legacy_max_population, 0) AS legacy_max_population,
+                 COALESCE(s.location, 'Grassland') AS location
              FROM provinces p
              JOIN users u ON u.id = p.userId
+             LEFT JOIN stats s ON s.id = p.userId
             ORDER BY userId ASC
             """
         )
@@ -627,14 +641,27 @@ def population_growth():  # Function for growing population
 
             user_rations_to_deduct[uid] = actually_consumed + spoilage
 
+        location_map = {}
+        for prov in all_provinces:
+            location_map.setdefault(prov["userid"], prov.get("location"))
+
         nation_growth_map = {}
+        season_growth_map = {}
+        season_mood_map = {}
         for uid, nation in nation_ctx.items():
             total_needed = user_total_rations_needed.get(uid, 1)
             effective_rations = user_effective_rations.get(uid, 0) or 0
             ratio = effective_rations / total_needed if total_needed > 0 else 0
             nation["rations_ratio"] = ratio
+            # Fake tick fixtures omit location; that stays a 1.0 multiplier.
+            # A real row always has the joined biome (Grassland if unset).
+            loc = location_map.get(uid)
+            if not isinstance(loc, str):
+                loc = None
+            season_growth_map[uid] = growth_multiplier(loc)
+            season_mood_map[uid] = mood_bonus(loc)
             nation_growth_map[uid] = calc_nation_growth(
-                nation["pop"], nation["comfort"], ratio
+                nation["pop"], nation["comfort"], ratio, season_growth_map[uid]
             )
 
         # Population 2.0: per-province homes/births/deaths/migration/settlers.
@@ -659,6 +686,8 @@ def population_growth():  # Function for growing population
                         nation_ctx[uid].get("rations_ratio", 0),
                         uid in hc_users,
                         sg,
+                        growth_mult=season_growth_map.get(uid, 1.0),
+                        happiness_bonus=season_mood_map.get(uid, 0),
                     )
                 )
             conn.commit()

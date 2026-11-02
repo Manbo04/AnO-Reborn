@@ -17,6 +17,9 @@ def test_account_v2_has_settings_toggles():
     assert "Background Images" in tpl
     assert "game-switch" in tpl
     assert "game-settings-list" in tpl
+    assert 'id="seasonVisualsToggle"' in tpl
+    assert 'onchange="toggleSeasonVisuals()"' in tpl
+    assert "Season visuals" in tpl
 
 
 def test_account_v1_has_settings_toggles():
@@ -29,6 +32,9 @@ def test_account_v1_has_settings_toggles():
     assert "Background Images" in tpl
     assert "game-switch" in tpl
     assert "game-settings-list" in tpl
+    assert 'id="seasonVisualsToggle"' in tpl
+    assert 'onchange="toggleSeasonVisuals()"' in tpl
+    assert "Season visuals" in tpl
 
 
 def test_layout_head_has_early_preferences_init():
@@ -36,6 +42,10 @@ def test_layout_head_has_early_preferences_init():
     assert 'localStorage.getItem("ano_bg_images")' in layout
     assert 'localStorage.getItem("theme")' in layout
     assert "no-bg-images" in layout
+    assert 'localStorage.getItem("ano_season_visuals")' in layout
+    assert "no-season-visuals" in layout
+    assert "partials/season_badge.html" in layout
+    assert "partials/season_ambience.html" in layout
 
 
 def test_script_js_exports_background_functions():
@@ -47,6 +57,12 @@ def test_script_js_exports_background_functions():
     assert "function setTheme(" in js
     assert "bgImagesToggle" in js
     assert "no-bg-images" in js
+    assert "function isSeasonVisualsEnabled()" in js
+    assert "function setSeasonVisuals(" in js
+    assert "function toggleSeasonVisuals()" in js
+    assert "ano_season_visuals" in js
+    assert "no-season-visuals" in js
+    assert "seasonVisualsToggle" in js
 
 
 def test_bundled_css_contains_toggle_and_no_bg_rules():
@@ -57,3 +73,6 @@ def test_bundled_css_contains_toggle_and_no_bg_rules():
     assert ".game-switch-slider" in css
     assert ".game-settings-list" in css
     assert ".game-setting-row" in css
+    assert "html.no-season-visuals .season-ambience" in css
+    assert "pointer-events: none" in css
+    assert "prefers-reduced-motion" in css

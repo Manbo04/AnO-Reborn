@@ -50,6 +50,7 @@ from database import (
 )
 import province
 import game_ui
+from app_core.economy.seasons import season_snapshot
 import bot_api
 from dotenv import load_dotenv
 
@@ -1059,17 +1060,22 @@ def create_app():
                         if members_tbl:
                             db.execute(
                                 f"""
-                                SELECT u.username, cn.id as col_id, cn.name as col_name
+                                SELECT u.username, cn.id as col_id, cn.name as col_name,
+                                       COALESCE(s.location, 'Grassland')
                                 FROM users u
                                 LEFT JOIN {members_tbl} cm ON cm.userid = u.id
                                 LEFT JOIN colnames cn ON cn.id = cm.colid
+                                LEFT JOIN stats s ON s.id = u.id
                                 WHERE u.id = %s
                                 """,
                                 (user_id,),
                             )
                         else:
                             db.execute(
-                                "SELECT username, NULL, NULL FROM users WHERE id = %s",
+                                "SELECT u.username, NULL, NULL, "
+                                "COALESCE(s.location, 'Grassland') "
+                                "FROM users u LEFT JOIN stats s ON s.id = u.id "
+                                "WHERE u.id = %s",
                                 (user_id,),
                             )
                         row = db.fetchone()
@@ -1079,6 +1085,7 @@ def create_app():
                                 "country_name": row[0] if row[0] else "Unknown",
                                 "coalition_id": row[1],
                                 "coalition_name": row[2],
+                                "location": row[3] if len(row) > 3 and row[3] else "Grassland",
                                 # Cosmetics (equipped background) aren't implemented in the
                                 # schema yet (no cosmetics table, no
                                 # stats.equipped_background_cosmetic_id column) -- this was
@@ -1094,6 +1101,7 @@ def create_app():
                                 "country_name": "Unknown",
                                 "coalition_id": None,
                                 "coalition_name": None,
+                                "location": "Grassland",
                                 "equipped_bg_css_class": None,
                             }
                         query_cache.set(cache_key, cached_user, ttl_seconds=60)
@@ -1103,12 +1111,19 @@ def create_app():
                             "country_name": "Error",
                             "coalition_id": None,
                             "coalition_name": None,
+                            "location": "Grassland",
                             "equipped_bg_css_class": None,
                         }
 
                 ctx["country_name"] = cached_user["country_name"]
                 ctx["coalition_id"] = cached_user["coalition_id"]
                 ctx["coalition_name"] = cached_user["coalition_name"]
+                try:
+                    ctx["player_season"] = season_snapshot(
+                        cached_user.get("location") or "Grassland"
+                    )
+                except Exception:
+                    ctx["player_season"] = None
                 ctx["equipped_bg_css_class"] = cached_user.get("equipped_bg_css_class")
 
                 # Rebuild the nav with the viewer's coalition id so

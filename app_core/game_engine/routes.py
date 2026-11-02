@@ -325,9 +325,16 @@ def mass_purchase():
                 (r["name"] if hasattr(r, "get") else r[0]): (r["quantity"] if hasattr(r, "get") else r[1])
                 for r in db.fetchall()
             }
-            db.execute("SELECT gold FROM stats WHERE id=%s", (cId,))
+            db.execute("SELECT gold, location FROM stats WHERE id=%s", (cId,))
             gold_row = db.fetchone()
-            national_gold = ((gold_row["gold"] if hasattr(gold_row, "get") else gold_row[0]) or 0) if gold_row else 0
+            if not gold_row:
+                national_gold, nation_location = 0, None
+            elif hasattr(gold_row, "get"):
+                national_gold = gold_row.get("gold") or 0
+                nation_location = gold_row.get("location")
+            else:
+                national_gold = gold_row[0] or 0
+                nation_location = gold_row[1] if len(gold_row) > 1 else None
             efficiency = pe.national_efficiency_multiplier(db, cId)
 
         next_tax = None
@@ -345,7 +352,7 @@ def mass_purchase():
                     gold_budget = national_gold
             province["powered"] = pe.province_energy(
                 units, upgrades, province.get("productivity"), efficiency,
-                gold_budget, economy_values,
+                gold_budget, economy_values, location=nation_location,
             )["has_power"]
 
     rations_ok = True

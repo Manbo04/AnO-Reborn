@@ -44,6 +44,9 @@
                 document.documentElement.classList.add("no-bg-images");
                 document.documentElement.setAttribute("data-bg-images", "off");
             }
+            if (localStorage.getItem("ano_season_visuals") === "off") {
+                document.documentElement.classList.add("no-season-visuals");
+            }
         } catch (e) {}
     })();
     </script>
@@ -92,7 +95,7 @@
     <style id="critical-scroll-fix">
     .navbarparent:has(.templatecontainer){position:relative;height:auto;overflow:visible;padding:0;background:transparent;box-shadow:none;border-bottom:none}
     .navbarparent:has(.templatecontainer)::after{content:'';position:fixed;top:0;left:0;right:0;height:55px;background:#1c2029;z-index:999;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.2);border-bottom:2px solid var(--accent,#5dade2)}
-    .navbarparent:has(.templatecontainer)>.navbarparenttitle,.navbarparent:has(.templatecontainer)>.navbarparentloginsignupdiv,.navbarparent:has(.templatecontainer)>.menubar,.navbarparent:has(.templatecontainer)>.navbar-theme-toggle{position:fixed;z-index:1001;top:0}
+    .navbarparent:has(.templatecontainer)>.navbarparenttitle,.navbarparent:has(.templatecontainer)>.navbarparentloginsignupdiv,.navbarparent:has(.templatecontainer)>.menubar,.navbarparent:has(.templatecontainer)>.navbar-theme-toggle,.navbarparent:has(.templatecontainer)>.season-badge-wrap--mobile{position:fixed;z-index:1001;top:0}
     .navbarparent:has(.templatecontainer)>.navbarparentloginsignupdiv{right:5%;left:auto}
     .navbarparent:has(.templatecontainer)>.templatecontainer{margin-top:55px;width:100%;max-width:none;position:relative;z-index:1}
     html:has(.navbarparent .templatecontainer),body:has(.navbarparent .templatecontainer){overflow-y:auto;height:auto;min-height:100%}
@@ -280,6 +283,7 @@
         <button type="button" class="theme-toggle-btn navbar-theme-toggle" data-theme-toggle onclick="toggleTheme()" aria-label="Switch to light mode" title="Switch to light mode">
             <span class="material-icons-outlined" data-theme-toggle-icon>light_mode</span>
         </button>
+        {% include 'partials/season_badge.html' %}
         {% endif %}
 
         <div class="navbarparentloginsignupdiv">
@@ -292,6 +296,7 @@
                 </span>Get Started</a> {% elif session.get('user_id') != None %}
 
             <div class="game-topbar-tools">
+                {% with slot='topbar' %}{% include 'partials/season_badge.html' %}{% endwith %}
                 <div class="game-topbar-dropdown-wrap">
                     <button type="button" class="game-icon-btn" id="nav-search-btn" title="Search" aria-label="Search nations and coalitions">
                         <span class="material-icons-outlined">search</span>
@@ -840,5 +845,6 @@
         })();
     </script>
     {% endif %}
+    {% include 'partials/season_ambience.html' %}
 </body>
 </html>
