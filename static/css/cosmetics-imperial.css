@@ -67,7 +67,7 @@ body.nation-imperial-theme .game-page-bg {
    canvas placed right after .game-page-overlay in the DOM (before
    .templatediv) with no z-index override -- same "particles on a canvas
    between the background and the content" technique as
-   cyberpunk-matrix-rain.js / forge-embers-rain.js. */
+   forge-embers-rain.js. */
 body.nation-imperial-theme .imperial-gold-dust-canvas {
     position: fixed;
     inset: 0;
