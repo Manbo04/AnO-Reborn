@@ -680,6 +680,7 @@ body.game-page-v2 .menuflex2 a:hover {
 }
 
 body.game-page-v2 .countryviewclick,
+body.game-page-v2 .countryprofileclick,
 body.game-page-v2 .countryrevenueclick,
 body.game-page-v2 .countrynewsclick,
 body.game-page-v2 .countryactionsclick,
@@ -707,6 +708,7 @@ body.game-page-v2 .upgradesmilitaryclick {
 }
 
 body.game-page-v2 .countryviewclick h3,
+body.game-page-v2 .countryprofileclick h3,
 body.game-page-v2 .countryrevenueclick h3,
 body.game-page-v2 .countrynewsclick h3,
 body.game-page-v2 .countryactionsclick h3,
