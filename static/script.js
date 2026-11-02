@@ -33,6 +33,7 @@ function activateTab(tabId, contentId, group) {
 var TAB_GROUPS = {
     country: [
         { tab: "countryview", content: "view" },
+        { tab: "countryprofile", content: "profile" },
         { tab: "countryrevenue", content: "revenue" },
         { tab: "countrynews", content: "news" },
         { tab: "countryactions", content: "actions" },
