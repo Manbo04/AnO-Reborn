@@ -56,9 +56,12 @@ every writer listed there can create or destroy value.
 | assembly_votes | `app_core/game_engine/routes.py` | `app_core/game_ticks/assembly_tick.py` |
 | bmc_gem_purchases | `app_core/store/repositories.py` | -- |
 | bonds | `app_core/bonds/repositories.py`<br>`app_core/game_ticks/bond_tick.py` | `app_core/coalition_bank/services.py`<br>`app_core/currency_market/repositories.py` |
+| bot_nations | `app_core/bots/service.py` | `app_core/bots/war_ai.py` |
+| bot_war_state | `app_core/bots/war_ai.py` | -- |
 | bounties | `app_core/bounties/repositories.py` | -- |
 | building_dictionary | `migrate.py` | `action_loop.py`<br>`ai_agent.py`<br>`app_core/economy/building_purchase.py`<br>`app_core/economy/consumer_goods.py`<br>`app_core/economy/province_energy.py`<br>`app_core/economy/province_health.py`<br>`app_core/economy/province_power.py`<br>`app_core/game_ticks/disasters.py`<br>`app_core/game_ticks/energy.py`<br>`app_core/game_ticks/food.py`<br>`app_core/game_ticks/maintenance.py`<br>`app_core/game_ticks/population.py`<br>`app_core/game_ticks/population2.py`<br>`app_core/game_ticks/revenue.py`<br>`app_core/game_ticks/taxes.py`<br>`app_core/game_ticks/unit_production.py`<br>`app_core/military/repositories.py`<br>`app_core/onboarding/service.py`<br>`app_core/tutorial/tour.py`<br>`countries.py`<br>`province.py`<br>`services/country_service.py`<br>`services/province_service.py`<br>`wars/routes.py`<br>`wars/service.py` |
 | coalition_bond_insurance | `app_core/coalition_bank/services.py` | `app_core/game_ticks/bond_tick.py` |
+| coalition_embargoes | `app_core/coalitions/repositories.py` | `app_core/market/repositories.py` |
 | coalition_invites | `app_core/coalitions/routes.py` | -- |
 | coalition_messages | `app_core/chat/repositories.py` | `app_core/main/routes.py` |
 | coalitions_legacy | -- | `app_core/admin/repositories.py`<br>`app_core/world_map/repositories.py` |
@@ -68,6 +71,7 @@ every writer listed there can create or destroy value.
 | col_bank_recurring_trades | `app_core/coalition_bank/services.py`<br>`app_core/game_ticks/recurring_bank_trades.py` | `bot_api.py` |
 | col_bank_trades | `app_core/coalition_bank/services.py` | `bot_api.py` |
 | col_bank_transactions | `app_core/coalition_bank/services.py`<br>`app_core/coalitions/routes.py` | `bot_api.py` |
+| col_deposit_protection | `app_core/coalitions/repositories.py` | -- |
 | col_role_names | `app_core/coalitions/routes.py` | -- |
 | colbanks | `app_core/admin/repositories.py`<br>`app_core/coalition_bank/services.py`<br>`app_core/coalitions/routes.py`<br>`app_core/game_ticks/bond_tick.py`<br>`app_core/game_ticks/recurring_bank_trades.py`<br>`repositories/country_repository.py` | -- |
 | colbanksrequests | `app_core/coalitions/routes.py`<br>`repositories/country_repository.py` | -- |
@@ -81,6 +85,7 @@ every writer listed there can create or destroy value.
 | currency_unions | `app_core/currency_unions/repositories.py` | -- |
 | devlog_entries | `app_core/community/repositories.py` | -- |
 | direct_messages | `app_core/chat/repositories.py` | `app_core/main/routes.py` |
+| directives | `app_core/directives/services.py` | -- |
 | discord_bad_words | `discord_bot/moderation_store.py` | -- |
 | discord_custom_commands | `discord_bot/customcommands_store.py` | -- |
 | discord_giveaways | `discord_bot/engagement_store.py` | -- |
@@ -108,6 +113,7 @@ every writer listed there can create or destroy value.
 | gem_packages | -- | `app_core/store/repositories.py` |
 | gem_purchases | `app_core/store/repositories.py` | -- |
 | global_chat_messages | `app_core/chat/repositories.py` | `app_core/main/routes.py` |
+| halloween_gift_claims | `app_core/halloween.py` | -- |
 | identity_diagnostic_log | `app_core/identity_diagnostics.py` | `app_core/admin/routes.py` |
 | interactive_events | `app_core/events/routes.py`<br>`app_core/game_ticks/maintenance.py` | `services/country_service.py` |
 | keys | `affo/create_db.py`<br>`init_db_railway.py` | -- |
@@ -147,6 +153,7 @@ every writer listed there can create or destroy value.
 | site_visits | `app_core/analytics/service.py` | -- |
 | spyinfo | `app_core/intelligence/repositories.py`<br>`countries.py`<br>`repositories/country_repository.py`<br>`tasks.py` | `wars/routes.py` |
 | **stats** | `action_loop.py`<br>`app_core/admin/repositories.py`<br>`app_core/currency/repositories.py`<br>`app_core/economy/ledger.py`<br>`app_core/game_ticks/maintenance.py`<br>`app_core/military/repositories.py`<br>`app_core/patreon/repositories.py`<br>`app_core/store/repositories.py`<br>`app_core/tutorial/routes.py`<br>`countries.py`<br>`repositories/country_repository.py`<br>`signup.py` | `ai_agent.py`<br>`app.py`<br>`app_core/bonds/repositories.py`<br>`app_core/bots/service.py`<br>`app_core/chat/repositories.py`<br>`app_core/coalitions/routes.py`<br>`app_core/currency_market/repositories.py`<br>`app_core/economy/building_purchase.py`<br>`app_core/economy/province_power.py`<br>`app_core/events/routes.py`<br>`app_core/game_map/routes.py`<br>`app_core/game_ticks/bond_tick.py`<br>`app_core/game_ticks/disasters.py`<br>`app_core/game_ticks/loan_interest.py`<br>`app_core/game_ticks/revenue.py`<br>`app_core/game_ticks/taxes.py`<br>`app_core/intelligence/repositories.py`<br>`app_core/loans/repositories.py`<br>`app_core/market/repositories.py`<br>`app_core/onboarding/service.py`<br>`app_core/social_cards/routes.py`<br>`app_core/trade_agreements/repositories.py`<br>`app_core/tutorial/tour.py`<br>`app_core/world_map/repositories.py`<br>`bot_api.py`<br>`province.py`<br>`services/country_service.py`<br>`statistics.py`<br>`tasks.py`<br>`wars/routes.py` |
+| surrender_offers | `wars/routes.py` | -- |
 | task_cursors | `app_core/game_ticks/revenue.py`<br>`app_core/game_ticks/taxes.py` | -- |
 | task_metrics | `helpers.py` | -- |
 | task_runs | `app_core/game_ticks/bond_tick.py`<br>`app_core/game_ticks/common.py`<br>`app_core/game_ticks/disasters.py`<br>`app_core/game_ticks/loan_interest.py`<br>`app_core/game_ticks/maintenance.py`<br>`app_core/game_ticks/population.py`<br>`app_core/game_ticks/revenue.py`<br>`app_core/game_ticks/taxes.py`<br>`app_core/game_ticks/unit_production.py` | `app_core/system/routes.py` |
@@ -167,7 +174,9 @@ every writer listed there can create or destroy value.
 | user_tech | `action_loop.py`<br>`countries.py`<br>`repositories/country_repository.py`<br>`wars/routes.py` | `app_core/economy/province_power.py`<br>`app_core/game_ticks/revenue.py`<br>`app_core/main/routes.py`<br>`app_core/military/iron_dome.py`<br>`app_core/upgrades/repositories.py`<br>`province.py`<br>`services/country_service.py` |
 | user_unit_stockpile | `app_core/military/repositories.py` | `app_core/game_ticks/unit_production.py` |
 | users | `app.py`<br>`app_core/analytics/service.py`<br>`app_core/auth/email_auth.py`<br>`app_core/auth/google_auth.py`<br>`app_core/auth/routes.py`<br>`app_core/auth/totp.py`<br>`app_core/bots/service.py`<br>`app_core/coalitions/routes.py`<br>`app_core/onboarding/customization.py`<br>`app_core/referrals/service.py`<br>`app_core/vacation.py`<br>`change.py`<br>`countries.py`<br>`database.py`<br>`login.py`<br>`repositories/country_repository.py`<br>`signup.py` | `admin_reset_password.py`<br>`app_core/admin/repositories.py`<br>`app_core/bonds/repositories.py`<br>`app_core/bots/war_ai.py`<br>`app_core/bounties/repositories.py`<br>`app_core/chat/repositories.py`<br>`app_core/chat/routes.py`<br>`app_core/coalition_bank/services.py`<br>`app_core/community/repositories.py`<br>`app_core/currency/repositories.py`<br>`app_core/currency_market/repositories.py`<br>`app_core/currency_unions/repositories.py`<br>`app_core/currency_unions/services.py`<br>`app_core/economy/ledger.py`<br>`app_core/game_engine/routes.py`<br>`app_core/game_map/routes.py`<br>`app_core/game_ticks/bond_tick.py`<br>`app_core/game_ticks/maintenance.py`<br>`app_core/game_ticks/population.py`<br>`app_core/game_ticks/taxes.py`<br>`app_core/game_ticks/war_expiry.py`<br>`app_core/identity_diagnostics.py`<br>`app_core/intelligence/repositories.py`<br>`app_core/main/routes.py`<br>`app_core/market/repositories.py`<br>`app_core/onboarding/service.py`<br>`app_core/patreon/repositories.py`<br>`app_core/social_cards/routes.py`<br>`app_core/store/repositories.py`<br>`app_core/trade_agreements/repositories.py`<br>`app_core/treaties/repositories.py`<br>`app_core/tutorial/tour.py`<br>`app_core/world_affairs/repositories.py`<br>`app_core/world_map/routes.py`<br>`bot_api.py`<br>`check_counts.py`<br>`check_tokens.py`<br>`db_check.py`<br>`email_utils.py`<br>`helpers.py`<br>`login_verification.py`<br>`province.py`<br>`services/country_service.py`<br>`statistics.py`<br>`tasks.py`<br>`wars/action_points.py`<br>`wars/history.py`<br>`wars/nuclear.py`<br>`wars/routes.py` |
+| war_building_losses | `wars/history.py` | -- |
 | war_events | `helpers.py` | -- |
+| war_penalties | -- | `app_core/military/manpower.py` |
 | wars | `app_core/bots/war_ai.py`<br>`app_core/game_ticks/maintenance.py`<br>`app_core/game_ticks/taxes.py`<br>`app_core/game_ticks/war_expiry.py`<br>`countries.py`<br>`repositories/country_repository.py`<br>`units.py`<br>`wars/action_points.py`<br>`wars/nuclear.py`<br>`wars/routes.py` | `app_core/admin/repositories.py`<br>`app_core/bots/service.py`<br>`app_core/intelligence/repositories.py`<br>`app_core/main/routes.py`<br>`app_core/vacation.py`<br>`bot_api.py`<br>`province.py`<br>`services/country_service.py`<br>`wars/history.py` |
 | world_events | `app_core/world_affairs/repositories.py` | -- |
 
