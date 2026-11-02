@@ -86,6 +86,7 @@
             <section class="ptabpanel" id="ptab-overview" role="tabpanel" aria-labelledby="tab-overview">
                 <h2 class="sr-only">Overview</h2>
                 {% include 'partials/distribution_alert.html' %}
+                {% set vitals_shown = true %}
                 {% include 'partials/province_info.html' %}
                 {% if province["can_plan_builds"] and not province["own"] %}
                 <div class="province-owner-tools game-stack">

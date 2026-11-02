@@ -96,3 +96,16 @@ def test_every_visible_form_control_is_labelled():
         m = re.search(r'\sid="([^"]+)"', tag)
         labelled = "aria-label=" in tag or (m and f'for="{m.group(1)}"' in html)
         assert labelled, tag[:140]
+
+
+def test_vitals_replace_duplicate_happiness_and_productivity_rows():
+    html = render(province={"happiness": 40, "productivity": 40})
+    assert "Happiness:" not in html and "Productivity:" not in html
+    assert 'class="vital-label"' in html and "Happiness" in html
+
+
+def test_dead_building_jump_script_is_gone():
+    from pathlib import Path
+
+    assert not (Path(__file__).resolve().parent.parent / "static/js/building-jump.js").exists()
+    assert "building-jump" not in render()
