@@ -1,3 +1,4 @@
+from app_core.visibility import UNTARGETABLE_MSG, blocks_interaction
 from app_core.market.repositories import (
     get_user_gold_for_update,
     decrement_gold,
@@ -28,6 +29,9 @@ def place_bounty(db, poster_id, target_id, amount):
 
     if not user_exists(db, target_id):
         return False, "That nation does not exist.", "danger"
+
+    if blocks_interaction(db, poster_id, target_id):
+        return False, UNTARGETABLE_MSG, "danger"
 
     if amount < MIN_BOUNTY_AMOUNT:
         return False, f"Bounties must be at least ${MIN_BOUNTY_AMOUNT:,}.", "danger"

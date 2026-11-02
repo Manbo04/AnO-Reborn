@@ -111,6 +111,7 @@ def test_create_agreement_partner_not_found():
 def test_create_agreement_insufficient_proposer_balance():
     db = QueuedCursor([
         (2,),   # resolve_trade_partner_id -> partner id 2
+        (False,),  # untargetable check on the partner
         (5,),   # check_resource_balance -> only has 5 gold
     ])
     ok, err = services.create_agreement(
@@ -123,6 +124,7 @@ def test_create_agreement_insufficient_proposer_balance():
 def test_create_agreement_success():
     db = QueuedCursor([
         (2,),    # resolve_trade_partner_id -> partner id 2
+        (False,),  # untargetable check on the partner
         (500,),  # check_resource_balance -> enough gold
         (7,),    # insert_agreement RETURNING id
     ])
@@ -138,6 +140,7 @@ def test_create_agreement_success():
 def test_create_agreement_accepts_amounts_above_postgres_integer_limit():
     db = QueuedCursor([
         (2,),              # resolve_trade_partner_id -> partner id 2
+        (False,),  # untargetable check on the partner
         (1_000_000_000,),  # proposer has enough lumber
         (7,),              # insert_agreement RETURNING id
     ])

@@ -187,6 +187,12 @@ def register_chat_socketio_handlers(socketio):
             return
         if other_user_id == user_id:
             return
+        from database import get_request_cursor
+        from app_core.visibility import blocks_interaction
+
+        with get_request_cursor() as _db:
+            if blocks_interaction(_db, user_id, other_user_id):
+                return
         content = _clean_content((data or {}).get("content"))
         if not content or _throttled(user_id):
             return

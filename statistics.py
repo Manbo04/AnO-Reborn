@@ -119,7 +119,7 @@ def statistics():
                     FROM user_economy
                     GROUP BY user_id
                 ) r ON r.user_id = u.id
-                WHERE u.auth_type IS DISTINCT FROM 'bot'
+                WHERE u.auth_type IS DISTINCT FROM 'bot' AND NOT COALESCE(u.hidden_from_rankings, FALSE)
             ) as nation_stats
         """
         )
@@ -155,7 +155,7 @@ def rankings():
                 LEFT JOIN cosmetics nc ON nc.id = s.equipped_name_color_cosmetic_id AND nc.is_active = TRUE
                 LEFT JOIN cosmetics bd ON bd.id = s.equipped_badge_cosmetic_id      AND bd.is_active = TRUE
                 LEFT JOIN cosmetics tt ON tt.id = s.equipped_title_cosmetic_id      AND tt.is_active = TRUE
-                WHERE u.auth_type IS DISTINCT FROM 'bot'
+                WHERE u.auth_type IS DISTINCT FROM 'bot' AND NOT COALESCE(u.hidden_from_rankings, FALSE)
                 GROUP BY u.id, u.username, nc.value, bd.value, bd.name, tt.name
                 ORDER BY total_pop DESC
                 LIMIT 10
@@ -179,7 +179,7 @@ def rankings():
                 LEFT JOIN cosmetics nc ON nc.id = s.equipped_name_color_cosmetic_id AND nc.is_active = TRUE
                 LEFT JOIN cosmetics bd ON bd.id = s.equipped_badge_cosmetic_id      AND bd.is_active = TRUE
                 LEFT JOIN cosmetics tt ON tt.id = s.equipped_title_cosmetic_id      AND tt.is_active = TRUE
-                WHERE u.auth_type IS DISTINCT FROM 'bot'
+                WHERE u.auth_type IS DISTINCT FROM 'bot' AND NOT COALESCE(u.hidden_from_rankings, FALSE)
                 GROUP BY u.id, u.username, nc.value, bd.value, bd.name, tt.name
                 ORDER BY army_size DESC
                 LIMIT 10
@@ -202,7 +202,7 @@ def rankings():
                 LEFT JOIN cosmetics nc ON nc.id = s.equipped_name_color_cosmetic_id AND nc.is_active = TRUE
                 LEFT JOIN cosmetics bd ON bd.id = s.equipped_badge_cosmetic_id      AND bd.is_active = TRUE
                 LEFT JOIN cosmetics tt ON tt.id = s.equipped_title_cosmetic_id      AND tt.is_active = TRUE
-                WHERE u.auth_type IS DISTINCT FROM 'bot'
+                WHERE u.auth_type IS DISTINCT FROM 'bot' AND NOT COALESCE(u.hidden_from_rankings, FALSE)
                 ORDER BY total_money DESC
                 LIMIT 10
                 """
@@ -225,6 +225,8 @@ def rankings():
                 LEFT JOIN (
                     SELECT inf.user_id AS userid, inf.influence
                     FROM {member_influence_sql} inf
+                    JOIN users u ON u.id = inf.user_id
+                    WHERE u.auth_type IS DISTINCT FROM 'bot' AND NOT COALESCE(u.hidden_from_rankings, FALSE)
                 ) prov ON cm.userid = prov.userid
                 GROUP BY c.id, c.name
                 ORDER BY total_influence DESC

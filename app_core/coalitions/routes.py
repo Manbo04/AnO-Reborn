@@ -1,3 +1,4 @@
+from app_core.visibility import UNTARGETABLE_MSG, blocks_interaction
 from .repositories import (
     _require_coalition_member,
     _coalition_id_for_user,
@@ -1050,6 +1051,8 @@ def coalitions():
             LEFT JOIN (
                 SELECT inf.user_id AS userid, inf.influence
                 FROM {member_influence_sql} inf
+                JOIN users u ON u.id = inf.user_id
+                WHERE u.auth_type IS DISTINCT FROM 'bot' AND NOT COALESCE(u.hidden_from_rankings, FALSE)
             ) prov ON cm.userid = prov.userid
             {where_clause}
             GROUP BY cn.id, cn.name, cn.type, cn.flag, cn.date, cn.flag_data
@@ -1071,6 +1074,8 @@ def coalitions():
             LEFT JOIN (
                 SELECT inf.user_id AS userid, inf.influence
                 FROM {member_influence_sql} inf
+                JOIN users u ON u.id = inf.user_id
+                WHERE u.auth_type IS DISTINCT FROM 'bot' AND NOT COALESCE(u.hidden_from_rankings, FALSE)
             ) prov ON cm.userid = prov.userid
             {where_clause}
             GROUP BY cn.id, cn.name, cn.type, cn.flag, cn.date
@@ -2638,6 +2643,9 @@ def send_coalition_invite(nation_id):
         )
         if not db.fetchone():
             return error(404, "Nation not found")
+
+        if blocks_interaction(db, user_id, nation_id):
+            return error(403, UNTARGETABLE_MSG)
 
         # Check if target is already in a coalition
         db.execute(

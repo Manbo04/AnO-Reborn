@@ -343,6 +343,10 @@ def game_map_attack():
             return jsonify({"status": "error", "message": "Target province not found."})
 
         defender_id = tgt[0]
+        from app_core.visibility import blocks_interaction, UNTARGETABLE_MSG
+
+        if blocks_interaction(db, user_id, defender_id):
+            return jsonify({"status": "error", "message": UNTARGETABLE_MSG})
         if defender_id == user_id:
             return jsonify({"status": "error", "message": "That's your own province."})
 
