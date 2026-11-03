@@ -6,13 +6,7 @@ import variables
 BUILDING_DISPLAY_NAMES = {
     "coal_burners": "Coal power plants",
     "oil_burners": "Oil power plants",
-    # The unit key is the historical typo "aerodomes"; players know them as Air Bases
-    # (province page, country page). Without this the cost text read "Aerodomes cost ...".
-    "aerodomes": "Air bases",
 }
-
-# Label shown in build pickers (Quick Build); the building_dictionary row still says "Aerodromes".
-BUILD_PICKER_LABELS = {"aerodomes": "Air Bases"}
 
 CITY_UNITS = frozenset(
     {
@@ -410,7 +404,6 @@ def enrich_building_row(row: dict, policies: list | None = None) -> dict:
     out["gold_cost"] = cost["gold"]
     out["resource_cost"] = cost["resources"]
     out["cost_display"] = cost["cost_display"]
-    out["display_name"] = BUILD_PICKER_LABELS.get(_normalize_building_name(name), out.get("display_name"))
     out["info"] = building_info_text(name)
     return out
 

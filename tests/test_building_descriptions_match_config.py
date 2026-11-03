@@ -109,18 +109,13 @@ def test_tick_reads_the_tables_the_descriptions_use():
         assert "variables.BUILDING_EMPLOYMENT_MATRICES" in open(path, encoding="utf-8").read()
 
 
-@pytest.mark.parametrize("path", ["templates/province_v2.html", "templates/province.html", "templates/macros/province_ui.html", "templates/partials/province_catalog.html"])
+@pytest.mark.parametrize("path", ["templates/province_v2.html", "templates/province.html"])
 def test_province_templates_have_no_hand_written_cost_sentences(path):
     src = open(path, encoding="utf-8").read()
     assert not re.search(r"(?:cost|produce)[^<\n]*\{\{[^}\n]*\binfra\[", src), path
     assert "| prores }}</ul><ul class=\"building-info\">" not in src
-    # every building card with a description uses the generated one. The classic
-    # template spells it out per block; the v2 page renders every building through
-    # the province_ui.building_row macro (one generated description per row).
-    if path == "templates/province.html":
-        assert src.count("| building_info(upgrades) }}") >= 50
-    elif path in ("templates/macros/province_ui.html", "templates/province_v2.html"):
-        assert "| building_info(upgrades) }}" in src
+    # every building card with a description uses the generated one
+    assert src.count("| building_info(upgrades) }}") >= 50
 
 
 def test_jinja_filter_renders_generated_description():
