@@ -1,0 +1,24 @@
+{
+  "author_id": "1180720719060029500",
+  "created_at": "2026-11-03T03:16:17Z",
+  "kind": "bug",
+  "last_message_id": "1567014529643323512",
+  "last_player_message_at": "2026-11-03T03:16:17Z",
+  "messages": [
+    {
+      "at": "2026-11-03T03:16:17Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1567014529643323512/1567014530192637984/image.png?ex=6aeaa381&is=6ae95201&hm=00f01b0692ad9d5af0a1efcc5d04a1d490bb2b8150177d9f7fec4f542a13307d&"
+      ],
+      "author": "Andy",
+      "author_id": "1180720719060029500",
+      "bot": false,
+      "id": "1567014529643323512",
+      "staff": false,
+      "text": "title says all"
+    }
+  ],
+  "thread_id": "1567014529643323512",
+  "title": "pressing these sends me back to the provincial overview",
+  "url": "https://discord.com/channels/708006319658893385/1567014529643323512"
+}
