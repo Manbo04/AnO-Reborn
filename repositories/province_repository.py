@@ -4,27 +4,13 @@ from psycopg2.extras import RealDictCursor
 class ProvinceRepository:
     """Province-related database operations"""
 
-    # Whitelist: the sort key from the query string is mapped to a column here, never interpolated.
-    SORT_COLUMNS = {
-        "number": "id",
-        "name": "LOWER(provinceName)",
-        "population": "population",
-        "land": "land",
-        "cities": "CAST(citycount AS INTEGER)",
-        "happiness": "happiness",
-        "productivity": "productivity",
-    }
-
     @staticmethod
-    def get_provinces_paginated(user_id: int, page: int, per_page: int, has_image_col: str, sort: str = "number", direction: str = "asc") -> tuple:
+    def get_provinces_paginated(user_id: int, page: int, per_page: int, has_image_col: str) -> tuple:
         demo_col = (
             "COALESCE(pop_children, 0), COALESCE(pop_working, 0), COALESCE(pop_elderly, 0)"
             if provinces_has_demographics()
             else "0, 0, 0"
         )
-        sort_col = ProvinceRepository.SORT_COLUMNS.get(sort, "id")
-        sort_dir = "DESC" if direction == "desc" else "ASC"
-        order_by = f"{sort_col} {sort_dir}, id ASC"
         with get_request_cursor(read_only=True) as db:
             db.execute("SELECT COUNT(*) FROM provinces WHERE userId=(%s)", (user_id,))
             total_count = db.fetchone()
@@ -47,7 +33,7 @@ class ProvinceRepository:
                     f"SELECT CAST(citycount AS INTEGER) AS citycount, population, "
                     f"provinceName, id, land, happiness, "
                     f"productivity, energy, {demo_col}{has_image_col} "
-                    f"FROM provinces WHERE userId=(%s) ORDER BY {order_by} LIMIT %s OFFSET %s"
+                    f"FROM provinces WHERE userId=(%s) ORDER BY id ASC LIMIT %s OFFSET %s"
                 ),
                 (user_id, per_page, offset),
             )
