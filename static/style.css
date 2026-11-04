@@ -10805,9 +10805,31 @@ body.page-rankings .rankings-table .rank-empty {
 .onboarding-checklist {
     margin: 0.75rem 0 1rem;
     padding: 0.75rem 1rem;
-    background: rgba(93, 173, 226, 0.12);
-    border-left: 3px solid var(--accent, #5dade2);
-    border-radius: 4px;
+    background: var(--foreground);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent, #5dade2);
+    border-radius: 8px;
+    color: var(--colorOne);
+}
+
+.onboarding-checklist-never {
+    width: auto !important;
+    margin-top: 0.5rem;
+    padding: 6px 12px;
+    min-height: 32px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.onboarding-checklist-never:hover,
+.onboarding-checklist-never:focus-visible {
+    color: var(--accent);
+    border-color: var(--accent);
 }
 
 .onboarding-checklist-header {
@@ -10866,7 +10888,8 @@ body.page-rankings .rankings-table .rank-empty {
 }
 
 .onboarding-checklist-steps .onboarding-done {
-    opacity: 0.75;
+    opacity: 1;
+    color: var(--text-secondary);
 }
 
 .onboarding-tutorial-modal {
