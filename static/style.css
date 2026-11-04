@@ -14309,7 +14309,7 @@ body.page-market .mb-side-head p {
 body.page-market .mb-row,
 body.page-market .mb-cols {
     display: grid;
-    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.2fr) minmax(9.5em, 0.9fr) minmax(0, 1fr);
     gap: 4px 10px;
     align-items: center;
     padding: 6px 12px;
@@ -14362,6 +14362,10 @@ body.page-market .mb-res {
 }
 
 body.page-market .mb-res .game-icon-sm { width: 16px; height: 16px; }
+
+body.page-market .mb-amount {
+    overflow-wrap: anywhere;
+}
 
 body.page-market .mb-amount,
 body.page-market .mb-price {
@@ -14426,7 +14430,7 @@ body.page-market .mb-trade .game-btn { min-height: 40px; flex: 0 0 auto; }
 @container (min-width: 480px) {
     body.page-market .mb-row,
     body.page-market .mb-cols {
-        grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 1fr) auto;
+        grid-template-columns: minmax(0, 1.2fr) minmax(9.5em, 0.9fr) minmax(0, 0.9fr) auto;
     }
     body.page-market .mb-cols { display: grid; }
     body.page-market .mb-cell-label { display: none; }
