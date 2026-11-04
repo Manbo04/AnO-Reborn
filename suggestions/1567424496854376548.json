@@ -1,0 +1,153 @@
+{
+  "author_id": "429129579039555584",
+  "created_at": "2026-11-04T06:25:21Z",
+  "kind": "suggestion",
+  "last_message_id": "1567427965036269599",
+  "last_player_message_at": "2026-11-04T06:39:08Z",
+  "messages": [
+    {
+      "at": "2026-11-04T06:25:21Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1567424496854376548",
+      "staff": false,
+      "text": "Hello gangnem please tell me if you hate anything think something should be changed added etc I will also do a suggestion on how wars are actually fought aswell as the economy and time scale of building an army and stuff if you people like these suggestions"
+    },
+    {
+      "at": "2026-11-04T06:25:33Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1567424547219574815",
+      "staff": false,
+      "text": "**Morale Rework: Tug of War**\nMake war a tug of war system instead of both sides having a morale bar that drops.\nAs in a % bar you push back and forth if you reach 100% leverage you win 0% you lose \n\n**Demands**\nAt the beginning of the war, you make demands. Both sides must choose their demands before using any MAPs.\nWhen making demands, there are two relevant numbers: settlement cost and war leverage.\n\nSettlement cost is simply a point cost to make a demand. Each demand has its own point cost, and each different war type gives a different number of settlement points.\n\nWar leverage is the name of the tug of war system."
+    },
+    {
+      "at": "2026-11-04T06:26:09Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1567424696754897008",
+      "staff": false,
+      "text": "**War Leverage**\nEach front (ground, air, navy) has its own individual leverage. These are put together to make an average, which is your actual leverage in the war.\nFor example, if you have 100% leverage in ground but 50% in the other two, your overall is 75%. If you have 100% in ground but the opponent has 100% in navy (so you have 0% leverage in navy), and you are still at 50% air, then you still have 62.5% leverage.\n\nEach front has its leverage weighed like so: ground 50%, air and navy 25% each.\n\n**Ending a War**\nWars no longer end after a flat week. Wars will end in a few different ways:\n* When both sides come to an agreement (one side proposes a deal, which can include any of the demands either side made at the start of the war, and the other side then accepts).\n* When one side surrenders (the winning side gets all demands).\n* When one side gets to 100% leverage (this should be very hard).\nWhen one side reaches 70% war leverage, the timer begins. Provided the leverage stays above 70%, the war will end after a week. If the leverage dips below 70% and then goes back up, the timer will reset.\nWhen the timer reaches its conclusion, you may win some of your demands. For example, if you wanted to take a province and it cost 70% war leverage, and you had 82% overall leverage by the end, you will have won that demand."
+    },
+    {
+      "at": "2026-11-04T06:26:38Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1567424821996953780",
+      "staff": false,
+      "text": "**War Types**\nWar types will be redone. The new war types will be:\n* Border skirmish\n* Full scale war\n* Tributary war\n* Air war\n* Naval war\nEach war will have a unique demand that can be made.\n\n**Border Skirmish**\nA border skirmish is a type of war that uses much, much less of your army. Additionally, the war range will be larger.\nBalancing-wise, the current population-based war range already gives us the standard formula for the range of differences in potential army size (the bot says 75-133%). Simply make it so the restriction on army size is based on the smaller nation. For example, if one nation can field 50k manpower in this skirmish, the most the larger nation can field is 133% of that, provided they are larger than that 133% difference in nation size.\nThe primary reward of border skirmishes is land, although in a small amount: say between 100-1000, increasing as you get more leverage."
+    },
+    {
+      "at": "2026-11-04T06:27:41Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1567425083889295381",
+      "staff": false,
+      "text": "**Full Scale War**\nFull scale war is the standard war type. Its primary reward is taking provinces: 1 at 70% war leverage, 3 at 100% war leverage.\n\n**Tributary War**\nThe main reward of tributary wars is taxing resources from the loser for a certain amount of time, from 15%-45% for a week.\n* If another war is fought before that time is up, the timer stops and the taxes stop until the war concludes.\n* If the nation paying tribute wins, the taxes stop.\n* If they lose, the taxes continue where they left off.\n* If the new war was another tributary war, the winner adds an extra week to whatever the remaining time was, up to a maximum of two weeks, and whatever the new % of tribute was becomes the new tax %.\nTribute wars also keep the money looted from an attack feature of loot wars.\n\n**Air and Naval Wars**\nAir and naval wars are effectively the same thing, although the main rewards for these wars are not the end result. In an air war, your reward is simply whatever you managed to achieve with your air force during said war. For the naval war, it is maintaining the blockade.\nDue to only using one branch, air and naval wars will have no war demands you can achieve. Your reward is the above.\n\nSurrendering:\n* Surrendering in an air war results in you giving some of your air units (10%) to your opponent. Unlike the other wars, this can only be done after 3 days. However, you can propose a peace deal that can be accepted by the other side to end the war.\n* Surrendering in a naval war is the same, but with naval units."
+    },
+    {
+      "at": "2026-11-04T06:28:09Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1567425202340499553",
+      "staff": false,
+      "text": "Reserve fleet:\nThe air or naval units gained from having the opponent surrender in those war types should be added to a \"reserve fleet.\" This reserve fleet allows you to recruit units from it at no cost until you've used all units in said reserve fleet. This prevents people from going over the manpower cap and allows nations who constantly engage in either type of war to build up large reserve fleets and become air or naval powers. Using the reserve fleet should be optional: you should not be forced to use it up before buying units for resources.\n\nEscalating to a Full Scale War:\nIf one side reaches 60% leverage, they can turn the war into a full scale one, making new demands relevant to the new war type. If this is done, your leverage is kept. For example, if you had 60% leverage, it is now 60% leverage for whatever the associated branch was for the war."
+    },
+    {
+      "at": "2026-11-04T06:28:47Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1567425362684809349",
+      "staff": false,
+      "text": "**Conquered Provinces**\nOriginal owner tracking:\nWhen taking a province in war, the original owner is tracked and displayed. People who visit your nation page can also see the name of the province and the original owner.\n\nPreviously conquered provinces as demands:\nWhen choosing war demands in a full scale war, if you demand a previously conquered province, it costs fewer settlement points to make the demand and 2% less leverage to win it. This is to encourage passing around of the same provinces for political reasons. You will end up with situations where two countries that have never interacted might have drama over territory, basically naturally occurring CBs.\n\nReturning provinces:\nUpon obtaining a province that does not have your nation as its original owner, two months after owning it you will have the option to return it to its original owner. This gives a way for people to play war without being the bad guy: you can declare wars to undo what aggressive nations have done. The two months is long enough that some people may develop said province and have second thoughts about giving it back.\n\nResource bonus:\nA conquered province should have a flat 12% bonus to basic resource output (as in food, coal, lumber, etc., not steel, components, etc.). This should encourage people to invest in these provinces, which means that if you lose a province and it finds its way back to you after however long (1 month, 6 months, whatever), chances are it will be more developed than you would have developed it yourself. Also taking provinces needs to be worth the military cost and political suicide involved this bonus is I believe just enough to make it worth both of those things without it being too much that’s it’s ridiculous. It also helps with creating political drama as who cares about giving away one province but a province that gives you a bonus and has a different biome well that’s a little different I’d say."
+    },
+    {
+      "at": "2026-11-04T06:28:51Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1567425378958442677",
+      "staff": false,
+      "text": "Biomes:\nAdditionally, provinces should keep the biome of the original nation. When a nation starts conquering and declaring wars, they are effectively cut off from the majority of the game right now, which means they basically cannot play. This allows them to still be able to play the game. When the biome rework happens and it turns into a bonus for each biome's resources this province should get the bonus of its original owner's biome, or that 12% basic resource bonus will end up a -13%.\n\nNames:\nProvinces should also have the original province name displayed alongside the original owner's name for LARP's sake, and a free name change should be given to the conqueror."
+    },
+    {
+      "at": "2026-11-04T06:29:32Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1567425552011231274",
+      "staff": false,
+      "text": "**Basic Demands for Full Scale Wars**\nA list of basic demands for full scale wars:\n* Military restrictions: Once I propose a new war economy system, this will mean fewer units are trained per tick. (If this were to be added right now, I would simply increase the money cost of buying units, only the money cost though.) This demand would last 2 days.\n* Reparations: The gold value of whatever buildings were lost by the winner gets repaid over time by a 5% tax on gold. (You can also make them pay reparations to the nations involved in their last 3 wars, not including your own.)\n* Change military leadership: This would prevent the loser from declaring any wars for 2 days.\n* Change government: This would simply be a name change for the political party on the display page. You can change this back after 2 days.\n* Change intelligence leadership: This would prevent you from performing spy actions on any nations for 2 days.\n* Shut down nuclear program: This is for after the nuke changes have gone through. It is a much more expensive demand and would stop your nuclear weapons facilities from producing armed nuclear weapons for a week.\n    * If you end up at war with the same nation before the week is up, the timer is paused and production resumes at war end.\n    * If you lose, a week is added to your remaining time, up to two weeks max.\n    * If you win, your facilities begin operating properly again."
+    },
+    {
+      "at": "2026-11-04T06:30:39Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1567425829678620705",
+      "staff": false,
+      "text": "Also fix blockades right now they only lock you out of the market they should lock you out of all resource transfers that includes alliance bank and nation to nation and stuff that is literally the main thing navy is used for in these games"
+    },
+    {
+      "at": "2026-11-04T06:31:15Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1567425984028876863",
+      "staff": false,
+      "text": "And they lock you out of the market for 24 hours they should lock you out of the market until you win a battle against the enemy navy to unblockade yourself"
+    },
+    {
+      "at": "2026-11-04T06:31:23Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1567426017159811153",
+      "staff": false,
+      "text": "Navy is ass until that’s fixed"
+    },
+    {
+      "at": "2026-11-04T06:32:18Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1567426247099949168",
+      "staff": false,
+      "text": "<@710359818329915443> you read through this especially and tell me what you think my Cro"
+    },
+    {
+      "at": "2026-11-04T06:39:08Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1567427965036269599",
+      "staff": true,
+      "text": "Yep will do later"
+    }
+  ],
+  "status": "new",
+  "thread_id": "1567424496854376548",
+  "title": "Morale, War type, War reward changes.",
+  "url": "https://discord.com/channels/708006319658893385/1567424496854376548"
+}
