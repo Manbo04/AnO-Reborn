@@ -804,10 +804,11 @@ body.page-upgrades .quick-research form {
     gap: 6px 10px;
     align-items: center;
 }
-body.page-upgrades .quick-research form label { display: none; }
-body.page-upgrades .quick-research form .templateselect { margin: 0; }
-body.page-upgrades .quick-research form #tech_description { grid-column: 1 / -1; margin: 0; order: 3; }
-body.page-upgrades .quick-research form button { margin: 0; }
+body.page-upgrades .quick-research form label { display: none !important; }
+body.page-upgrades .quick-research form .templateselect { grid-column: 1; grid-row: 1; margin: 0; width: 100%; }
+body.page-upgrades .quick-research form button { grid-column: 2; grid-row: 1; margin: 0; width: auto; }
+body.page-upgrades .quick-research form #tech_description { grid-column: 1 / -1; grid-row: 2; margin: 0; }
 @media (max-width: 600px) {
     body.page-upgrades .quick-research form { grid-template-columns: 1fr; }
+    body.page-upgrades .quick-research form button { grid-column: 1; grid-row: 3; }
 }
