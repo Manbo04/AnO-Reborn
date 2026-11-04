@@ -104,3 +104,7 @@
 /* purchase panels: same solid surface so labels stay readable */
 .province-ui .province-purchase-panel{background:var(--foreground);border:1px solid var(--border);color:var(--colorOne);box-sizing:border-box;min-width:0}
 .province-ui .province-purchase-panel *{max-width:100%;box-sizing:border-box}
+/* group titles/intros sat straight on the photo (invisible); give them a solid card */
+.province-ui .bld-group-title{margin:0;padding:10px 14px;background:var(--foreground);color:var(--colorOne);border:1px solid var(--border);border-radius:var(--game-radius-md,12px) var(--game-radius-md,12px) 0 0}
+.province-ui .bld-group-title + .bld-group-intro{margin:0 0 8px;padding:0 14px 10px;background:var(--foreground);color:var(--text-secondary);border:1px solid var(--border);border-top:0;border-radius:0 0 var(--game-radius-md,12px) var(--game-radius-md,12px)}
+.province-ui .bld-group-title:not(:has(+ .bld-group-intro)){margin-bottom:8px;border-radius:var(--game-radius-md,12px)}
