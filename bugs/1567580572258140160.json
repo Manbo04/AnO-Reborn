@@ -1,0 +1,52 @@
+{
+  "author_id": "1326884862346657803",
+  "created_at": "2026-11-04T16:45:32Z",
+  "kind": "bug",
+  "last_message_id": "1567585180158402601",
+  "last_player_message_at": "2026-11-04T17:03:51Z",
+  "messages": [
+    {
+      "at": "2026-11-04T16:45:32Z",
+      "attachments": [],
+      "author": "L4",
+      "author_id": "1326884862346657803",
+      "bot": false,
+      "id": "1567580572258140160",
+      "staff": false,
+      "text": "Ballistic missile ain't working"
+    },
+    {
+      "at": "2026-11-04T16:48:51Z",
+      "attachments": [],
+      "author": "L4",
+      "author_id": "1326884862346657803",
+      "bot": false,
+      "id": "1567581406903803946",
+      "staff": false,
+      "text": "My missile just vanished without causing damage, and an error page popped up"
+    },
+    {
+      "at": "2026-11-04T17:03:45Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1567585155441365126",
+      "staff": false,
+      "text": "same"
+    },
+    {
+      "at": "2026-11-04T17:03:51Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1567585180158402601",
+      "staff": false,
+      "text": "Internal Server Error\nThe server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application."
+    }
+  ],
+  "thread_id": "1567580572258140160",
+  "title": "Says Error every time I try to launch an ICBM",
+  "url": "https://discord.com/channels/708006319658893385/1567580572258140160"
+}

@@ -2,7 +2,7 @@
   "author_id": "1180720719060029500",
   "created_at": "2026-11-03T03:16:17Z",
   "kind": "bug",
-  "last_message_id": "1567014529643323512",
+  "last_message_id": "1567556579845341438",
   "last_player_message_at": "2026-11-03T03:16:17Z",
   "messages": [
     {
@@ -16,6 +16,16 @@
       "id": "1567014529643323512",
       "staff": false,
       "text": "title says all"
+    },
+    {
+      "at": "2026-11-04T15:10:12Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1567556579845341438",
+      "staff": false,
+      "text": "<@1180720719060029500> Fixed and live. The Raw resources / Processing buttons on the Resources tab were throwing you to Overview. They now stay on Resources and scroll to that section. Do a hard refresh (Cmd+Shift+R) if it still acts up, your browser may have the old script cached."
     }
   ],
   "thread_id": "1567014529643323512",

@@ -2,8 +2,8 @@
   "author_id": "429129579039555584",
   "created_at": "2026-11-04T06:25:21Z",
   "kind": "suggestion",
-  "last_message_id": "1567427965036269599",
-  "last_player_message_at": "2026-11-04T06:39:08Z",
+  "last_message_id": "1567586761226584085",
+  "last_player_message_at": "2026-11-04T17:10:08Z",
   "messages": [
     {
       "at": "2026-11-04T06:25:21Z",
@@ -144,6 +144,116 @@
       "id": "1567427965036269599",
       "staff": true,
       "text": "Yep will do later"
+    },
+    {
+      "at": "2026-11-04T14:30:35Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1567546609468837919",
+      "staff": true,
+      "text": "okey I like this personally"
+    },
+    {
+      "at": "2026-11-04T14:30:51Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1567546676892139572",
+      "staff": true,
+      "text": "I guess it makes it also easier to balance"
+    },
+    {
+      "at": "2026-11-04T14:32:01Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1567546970883760290",
+      "staff": true,
+      "text": "the sectioning up is quite interesting"
+    },
+    {
+      "at": "2026-11-04T14:33:39Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1567547384123363345",
+      "staff": true,
+      "text": "can I ask to explain the reasoning behind the numbers for the different types of wars?"
+    },
+    {
+      "at": "2026-11-04T17:02:27Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1567584830202318926",
+      "staff": false,
+      "text": "Mb Cro I’m a little stupid what numbers do you mean"
+    },
+    {
+      "at": "2026-11-04T17:04:48Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1567585418105327768",
+      "staff": true,
+      "text": "All?"
+    },
+    {
+      "at": "2026-11-04T17:04:57Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1567585456139542549",
+      "staff": true,
+      "text": "The percentages"
+    },
+    {
+      "at": "2026-11-04T17:05:00Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1567585471381372949",
+      "staff": true,
+      "text": "The day counts"
+    },
+    {
+      "at": "2026-11-04T17:05:59Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1567585716664537261",
+      "staff": false,
+      "text": "Ground contributes more to overall leverage because it’s the main front of a war otherwise losing millions of men at a time in ground would end up the same as losing a couple ships in an attack and we would need to probably give rewards for actually winning ground attacks to balance them"
+    },
+    {
+      "at": "2026-11-04T17:07:09Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1567586011389894822",
+      "staff": false,
+      "text": "I want to start the timer at 70% because that way roughly equal wars have a chance to be prolonged and force both sides to either find some way to beat the other (when I do war mechanics and stuff) or make a deal also 70% is where you start to get the main reward for each war type"
+    },
+    {
+      "at": "2026-11-04T17:10:08Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1567586761226584085",
+      "staff": false,
+      "text": "For the demands? They are like that so you either have a day to recover before the 3 day war truce thing is up or it’s a week with additions and stuff because it’s a reward I want you to be able to maintain if you choose to actively get involved over and over"
     }
   ],
   "status": "new",
