@@ -343,6 +343,11 @@ def building_description(
             f"Employs {int(matrix['worker_count']):,} workers"
             + (f" ({edu})" if edu else "")
         )
+    else:
+        # Only some buildings have an employment matrix; the rest need no
+        # staff and take no jobs. Say so instead of leaving the line out
+        # (Discord "employment numbers disappeared", Andy 2026-11-03).
+        parts.append("Employs no workers")
 
     plus = dict(infra.get("plus") or {})
     if plus:
