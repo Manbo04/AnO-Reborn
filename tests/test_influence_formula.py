@@ -167,3 +167,11 @@ def test_sql_matches_python_and_callers():
                 db.execute("DELETE FROM stats WHERE id = %s", (uid,))
                 purge_users_where(db, 'id = %s', (uid,))
             conn.commit()
+
+
+def test_soldier_counts_same_as_citizen():
+    assert inf.UNIT_WEIGHTS["soldiers"] == inf.POPULATION_WEIGHT
+    assert inf.compute_influence({"units": {"soldiers": 1_000_000}}) == inf.compute_influence(
+        {"population": 1_000_000}
+    )
+    assert "WHEN 'soldiers' THEN 0.005" in inf.influence_subquery_sql("SELECT 1")

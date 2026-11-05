@@ -12,7 +12,9 @@ The blend (rebalanced 2026-09-27, players' request):
 * **Population and military are the main drivers.** Population counts per
   citizen; each unit type has its own weight, ordered carriers > cruisers >
   destroyers > submarines > bombers > fighters > helicopters > tanks >
-  artillery > troops.
+  artillery > troops. Soldiers are the exception to "per-unit points": since
+  2026-11-05 a soldier is worth exactly one citizen (POPULATION_WEIGHT), because
+  at 10 points each, maxed-out soldier counts were ~98% of top nations' score.
 * **Owning missiles subtracts** a modest amount (nukes > ballistic ICBMs >
   kamikaze drones > cruise missiles): a stockpile of WMDs makes the rest of
   the world trust you less.
@@ -51,7 +53,7 @@ UNIT_WEIGHTS = {
     "apaches": 600,  # attack helicopters
     "tanks": 300,
     "artillery": 200,
-    "soldiers": 10,
+    "soldiers": POPULATION_WEIGHT,  # 2026-11-05: a soldier counts exactly like a citizen
     # Support units (not in the combat ordering above, small weights)
     "sam_batteries": 250,
     "spies": 100,
