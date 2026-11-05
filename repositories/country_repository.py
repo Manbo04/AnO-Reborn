@@ -23,7 +23,7 @@ class CountryRepository:
         with get_request_cursor(read_only=True) as db:
             filter_sql = f"""
                 WITH user_ids AS (
-                    SELECT id FROM users u WHERE u.id > 0 AND NOT COALESCE(u.untargetable, FALSE) {search_filter}
+                    SELECT id FROM users u WHERE u.id > 0 AND NOT COALESCE(u.untargetable, FALSE) AND u.auth_type IS DISTINCT FROM 'bot' {search_filter}
                 ),
                 country_rows AS (
                     SELECT
