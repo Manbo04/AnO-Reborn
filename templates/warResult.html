@@ -169,7 +169,7 @@
 
                 {% if attacker_result.get("loot") %}
                     <div class="loot-card">
-                        <h4 data-tippy-content="Only <em>Loot</em>-type wars pay out per fight. The winner takes a <strong>random amount between 0 and 10%</strong> of the defender's current gold. A very low roll can happen &mdash; the cap is per-fight, not per-war. When the war ends (morale hits 0) the winner also takes 20% (or 30% with the Looting Teams upgrade) of every other resource except silver, diamonds and bullion.<br><br><a href='/mechanics/war' style='color:#4da8da;text-decoration:underline;'>&#128214; War mechanics</a>" style="cursor: help;"><i class="fas fa-coins"></i> Spoils of War</h4>
+                        <h4 data-tippy-content="Only <em>Loot</em>-type wars pay out per fight, and only on a winning <strong>ground</strong> attack. The winner takes a <strong>random amount between 0 and 10%</strong> of the defender's current gold (2% against bot nations). A very low roll can happen &mdash; the cap is per-fight, not per-war. When the war ends (morale hits 0) the winner also takes 20% (or 30% with the Looting Teams upgrade) of every other resource except silver, diamonds and bullion.<br><br><a href='/mechanics/war' style='color:#4da8da;text-decoration:underline;'>&#128214; War mechanics</a>" style="cursor: help;"><i class="fas fa-coins"></i> Spoils of War</h4>
                         <div class="infra-item">
                             <span>Money Looted</span>
                             <span class="wr-gain">+{{attacker_result["loot"]["money"] | commas}}</span>
