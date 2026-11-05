@@ -10805,9 +10805,31 @@ body.page-rankings .rankings-table .rank-empty {
 .onboarding-checklist {
     margin: 0.75rem 0 1rem;
     padding: 0.75rem 1rem;
-    background: rgba(93, 173, 226, 0.12);
-    border-left: 3px solid var(--accent, #5dade2);
-    border-radius: 4px;
+    background: var(--foreground);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent, #5dade2);
+    border-radius: 8px;
+    color: var(--colorOne);
+}
+
+.onboarding-checklist-never {
+    width: auto !important;
+    margin-top: 0.5rem;
+    padding: 6px 12px;
+    min-height: 32px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.onboarding-checklist-never:hover,
+.onboarding-checklist-never:focus-visible {
+    color: var(--accent);
+    border-color: var(--accent);
 }
 
 .onboarding-checklist-header {
@@ -10866,7 +10888,8 @@ body.page-rankings .rankings-table .rank-empty {
 }
 
 .onboarding-checklist-steps .onboarding-done {
-    opacity: 0.75;
+    opacity: 1;
+    color: var(--text-secondary);
 }
 
 .onboarding-tutorial-modal {
@@ -14309,7 +14332,7 @@ body.page-market .mb-side-head p {
 body.page-market .mb-row,
 body.page-market .mb-cols {
     display: grid;
-    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.2fr) minmax(9.5em, 0.9fr) minmax(0, 1fr);
     gap: 4px 10px;
     align-items: center;
     padding: 6px 12px;
@@ -14362,6 +14385,10 @@ body.page-market .mb-res {
 }
 
 body.page-market .mb-res .game-icon-sm { width: 16px; height: 16px; }
+
+body.page-market .mb-amount {
+    overflow-wrap: anywhere;
+}
 
 body.page-market .mb-amount,
 body.page-market .mb-price {
@@ -14426,7 +14453,7 @@ body.page-market .mb-trade .game-btn { min-height: 40px; flex: 0 0 auto; }
 @container (min-width: 480px) {
     body.page-market .mb-row,
     body.page-market .mb-cols {
-        grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 1fr) auto;
+        grid-template-columns: minmax(0, 1.2fr) minmax(9.5em, 0.9fr) minmax(0, 0.9fr) auto;
     }
     body.page-market .mb-cols { display: grid; }
     body.page-market .mb-cell-label { display: none; }

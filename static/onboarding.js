@@ -55,13 +55,12 @@
             return;
         }
 
-        var dismissBtn = checklist.querySelector("[data-onboarding-checklist-dismiss]");
-        if (dismissBtn) {
+        checklist.querySelectorAll("[data-onboarding-checklist-dismiss]").forEach(function (dismissBtn) {
             dismissBtn.addEventListener("click", function () {
                 if (userId) dismissChecklist(userId);
                 checklist.style.display = "none";
             });
-        }
+        });
     }
 
     function hideModal(modal) {

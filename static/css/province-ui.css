@@ -80,3 +80,31 @@
 /* compact stats table in the Overview tab (was ~100px per row) */
 .province-ui .province-info-stats .templatetable td,.province-ui .province-info-stats .templatetable th{padding-top:8px;padding-bottom:8px;height:auto;line-height:1.3}
 .province-ui .province-info-stats .templatetable tr{height:auto}
+
+/* Overview tab polish (Dede 11-04): everything sits inside its card, text is readable on the blurred page photo.
+   Solid card surfaces instead of see-through glass; chart stays inside its column. */
+.province-ui .province-info-grid{align-items:start;min-width:0}
+.province-ui .province-info-stats,.province-ui .province-info-demographics{min-width:0;box-sizing:border-box}
+.province-ui .province-info-stats .templatetable,
+.province-ui .province-info-demographics .templatetable{width:100%;box-sizing:border-box;border-collapse:collapse;background:var(--foreground);border:1px solid var(--border);border-radius:var(--game-radius-md,12px);overflow:hidden;color:var(--colorOne)}
+.province-ui .province-info-grid .templatetable th{background:var(--foreground);color:var(--colorOne);border-bottom:2px solid var(--accent);text-align:left;font-size:.8rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:10px 12px}
+.province-ui .province-info-grid .templatetable td{color:var(--colorOne);border-bottom:1px solid var(--border);padding:8px 12px;vertical-align:middle}
+.province-ui .province-info-grid .templatetable td:last-child{text-align:right}
+.province-ui .province-info-grid .templatetable td .material-icons-outlined,.province-ui .province-info-grid .templatetable th .material-icons-outlined{color:var(--accent);vertical-align:middle;margin-right:6px;font-size:20px}
+.province-ui .province-info-demographics .chart-wrapper{box-sizing:border-box;max-width:100%;width:100%;overflow:hidden;padding:8px;background:var(--foreground);border:1px solid var(--border);border-radius:var(--game-radius-md,12px)}
+.province-ui .province-info-demographics .chart-wrapper canvas{max-width:100%}
+.province-ui .province-info-demographics h3{box-sizing:border-box;max-width:100%}
+/* "What changes these each hour": was faint text straight on the photo */
+.province-ui .province-stat-breakdown{margin-top:12px;padding:8px 12px;background:var(--foreground);border:1px solid var(--border);border-radius:var(--game-radius-md,12px);color:var(--colorOne)}
+.province-ui .province-stat-breakdown .game-faint,.province-ui .province-stat-breakdown p{color:var(--text-secondary)}
+.province-ui .province-stat-breakdown-item{border-top:1px solid var(--border)}
+.province-ui .province-stat-breakdown-item summary{color:var(--colorOne);font-weight:600}
+.province-ui .province-stat-breakdown-item summary .material-icons-outlined{color:var(--accent)}
+.province-ui .province-stat-breakdown-item .templatetable{border:0;border-radius:0}
+/* purchase panels: same solid surface so labels stay readable */
+.province-ui .province-purchase-panel{background:var(--foreground);border:1px solid var(--border);color:var(--colorOne);box-sizing:border-box;min-width:0}
+.province-ui .province-purchase-panel *{max-width:100%;box-sizing:border-box}
+/* group titles/intros sat straight on the photo (invisible); give them a solid card */
+.province-ui .bld-group-title{margin:0;padding:10px 14px;background:var(--foreground);color:var(--colorOne);border:1px solid var(--border);border-radius:var(--game-radius-md,12px) var(--game-radius-md,12px) 0 0}
+.province-ui .bld-group-title + .bld-group-intro{margin:0 0 8px;padding:0 14px 10px;background:var(--foreground);color:var(--text-secondary);border:1px solid var(--border);border-top:0;border-radius:0 0 var(--game-radius-md,12px) var(--game-radius-md,12px)}
+.province-ui .bld-group-title:not(:has(+ .bld-group-intro)){margin-bottom:8px;border-radius:var(--game-radius-md,12px)}

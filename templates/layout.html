@@ -136,7 +136,7 @@
     {% if FEATURE_GAME_SHELL and session.get('user_id') %}
     <script defer src="{{ url_for('static', filename='game-shell.js') }}?v=8"></script>
     <script defer src="{{ url_for('static', filename='js/stay-in-place.js') }}?v=2"></script>
-    <script defer src="{{ url_for('static', filename='onboarding.js') }}?v=1"></script>
+    <script defer src="{{ url_for('static', filename='onboarding.js') }}?v=2"></script>
     {% endif %}
     
     <!-- Interactive Tooltips — self-hosted + deferred. Previously these loaded
@@ -249,9 +249,6 @@
 
     {% include 'partials/cookie_consent.html' %}
 
-    {% if session.get('user_id') %}
-    {% include 'partials/security_fix_announcement.html' %}
-    {% endif %}
 
     {% include 'partials/side_ads.html' %}
 
