@@ -13,7 +13,7 @@ from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
 _AD_CACHE: Dict[str, Any] = {"loaded_at": 0.0, "payload": None}
-_AD_CACHE_TTL = 60.0
+_AD_CACHE_TTL = 300.0
 
 _NSFW_SCORE_REJECT_THRESHOLD = 0.85
 
@@ -163,7 +163,7 @@ def load_rotating_ads(get_db_cursor) -> Dict[str, Optional[dict]]:
         with get_db_cursor(read_only=True) as db:
             db.execute(
                 """
-                SELECT id, image_url, target_url, image_data
+                SELECT id, image_url, target_url, (image_data IS NOT NULL) AS has_image
                 FROM advertisements
                 WHERE status = 'approved' AND ad_type = 'top' AND image_data IS NOT NULL
                 ORDER BY RANDOM() LIMIT 1
@@ -177,7 +177,7 @@ def load_rotating_ads(get_db_cursor) -> Dict[str, Optional[dict]]:
 
             db.execute(
                 """
-                SELECT id, image_url, target_url, image_data
+                SELECT id, image_url, target_url, (image_data IS NOT NULL) AS has_image
                 FROM advertisements
                 WHERE status = 'approved' AND ad_type = 'side' AND image_data IS NOT NULL
                 ORDER BY RANDOM() LIMIT 2
