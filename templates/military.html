@@ -206,7 +206,7 @@
                             <p><strong>Upkeep (per unit, per tick):</strong> {{ units["soldiers"]["upkeep_v2"] }}</p>
                             {% elif units["soldiers"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["soldiers"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["soldiers"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["soldiers"]["maintenance_resource"] }} per tick</p>
-                            {% if units["soldiers"]["upkeep_v2"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["soldiers"]["upkeep_v2"] }}</p>{% endif %}
+                            {% endif %}{% if units["soldiers"]["upkeep_v2"] and not units["soldiers"]["upkeep_v2_active"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["soldiers"]["upkeep_v2"] }}</p>
                             {% endif %}
                         </div>
 
@@ -262,7 +262,7 @@
                             <p><strong>Upkeep (per unit, per tick):</strong> {{ units["artillery"]["upkeep_v2"] }}</p>
                             {% elif units["artillery"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["artillery"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["artillery"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["artillery"]["maintenance_resource"] }} per tick</p>
-                            {% if units["artillery"]["upkeep_v2"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["artillery"]["upkeep_v2"] }}</p>{% endif %}
+                            {% endif %}{% if units["artillery"]["upkeep_v2"] and not units["artillery"]["upkeep_v2_active"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["artillery"]["upkeep_v2"] }}</p>
                             {% endif %}
                         </div>
 
@@ -312,7 +312,7 @@
                             <p><strong>Upkeep (per unit, per tick):</strong> {{ units["tanks"]["upkeep_v2"] }}</p>
                             {% elif units["tanks"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["tanks"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["tanks"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["tanks"]["maintenance_resource"] }} per tick</p>
-                            {% if units["tanks"]["upkeep_v2"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["tanks"]["upkeep_v2"] }}</p>{% endif %}
+                            {% endif %}{% if units["tanks"]["upkeep_v2"] and not units["tanks"]["upkeep_v2_active"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["tanks"]["upkeep_v2"] }}</p>
                             {% endif %}
                         </div>
 
@@ -368,7 +368,7 @@
                             <p><strong>Upkeep (per unit, per tick):</strong> {{ units["fighters"]["upkeep_v2"] }}</p>
                             {% elif units["fighters"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["fighters"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["fighters"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["fighters"]["maintenance_resource"] }} per tick</p>
-                            {% if units["fighters"]["upkeep_v2"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["fighters"]["upkeep_v2"] }}</p>{% endif %}
+                            {% endif %}{% if units["fighters"]["upkeep_v2"] and not units["fighters"]["upkeep_v2_active"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["fighters"]["upkeep_v2"] }}</p>
                             {% endif %}
                         </div>
 
@@ -421,7 +421,7 @@
                             <p><strong>Upkeep (per unit, per tick):</strong> {{ units["bombers"]["upkeep_v2"] }}</p>
                             {% elif units["bombers"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["bombers"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["bombers"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["bombers"]["maintenance_resource"] }} per tick</p>
-                            {% if units["bombers"]["upkeep_v2"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["bombers"]["upkeep_v2"] }}</p>{% endif %}
+                            {% endif %}{% if units["bombers"]["upkeep_v2"] and not units["bombers"]["upkeep_v2_active"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["bombers"]["upkeep_v2"] }}</p>
                             {% endif %}
                         </div>
 
@@ -474,7 +474,7 @@
                             <p><strong>Upkeep (per unit, per tick):</strong> {{ units["apaches"]["upkeep_v2"] }}</p>
                             {% elif units["apaches"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["apaches"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["apaches"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["apaches"]["maintenance_resource"] }} per tick</p>
-                            {% if units["apaches"]["upkeep_v2"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["apaches"]["upkeep_v2"] }}</p>{% endif %}
+                            {% endif %}{% if units["apaches"]["upkeep_v2"] and not units["apaches"]["upkeep_v2_active"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["apaches"]["upkeep_v2"] }}</p>
                             {% endif %}
                         </div>
 
@@ -531,7 +531,7 @@
                             <p><strong>Upkeep (per unit, per tick):</strong> {{ units["submarines"]["upkeep_v2"] }}</p>
                             {% elif units["submarines"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["submarines"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["submarines"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["submarines"]["maintenance_resource"] }} per tick</p>
-                            {% if units["submarines"]["upkeep_v2"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["submarines"]["upkeep_v2"] }}</p>{% endif %}
+                            {% endif %}{% if units["submarines"]["upkeep_v2"] and not units["submarines"]["upkeep_v2_active"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["submarines"]["upkeep_v2"] }}</p>
                             {% endif %}
                         </div>
 
@@ -581,7 +581,7 @@
                             <p><strong>Upkeep (per unit, per tick):</strong> {{ units["cruisers"]["upkeep_v2"] }}</p>
                             {% elif units["cruisers"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["cruisers"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["cruisers"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["cruisers"]["maintenance_resource"] }} per tick</p>
-                            {% if units["cruisers"]["upkeep_v2"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["cruisers"]["upkeep_v2"] }}</p>{% endif %}
+                            {% endif %}{% if units["cruisers"]["upkeep_v2"] and not units["cruisers"]["upkeep_v2_active"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["cruisers"]["upkeep_v2"] }}</p>
                             {% endif %}
                         </div>
                         <p class="templatecontentpleft">Cruisers are the powerhouse of the ocean, and are very expensive. Cruisers counter destroyers, figher jets, apaches, and can obtain a naval blockade on the enemy.</p>
@@ -632,7 +632,7 @@
                             <p><strong>Upkeep (per unit, per tick):</strong> {{ units["destroyers"]["upkeep_v2"] }}</p>
                             {% elif units["destroyers"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["destroyers"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["destroyers"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["destroyers"]["maintenance_resource"] }} per tick</p>
-                            {% if units["destroyers"]["upkeep_v2"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["destroyers"]["upkeep_v2"] }}</p>{% endif %}
+                            {% endif %}{% if units["destroyers"]["upkeep_v2"] and not units["destroyers"]["upkeep_v2_active"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["destroyers"]["upkeep_v2"] }}</p>
                             {% endif %}
                         </div>
 
@@ -684,7 +684,7 @@
                             <p><strong>Upkeep (per unit, per tick):</strong> {{ units["aircraft_carriers"]["upkeep_v2"] }}</p>
                             {% elif units["aircraft_carriers"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["aircraft_carriers"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["aircraft_carriers"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["aircraft_carriers"]["maintenance_resource"] }} per tick</p>
-                            {% if units["aircraft_carriers"]["upkeep_v2"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["aircraft_carriers"]["upkeep_v2"] }}</p>{% endif %}
+                            {% endif %}{% if units["aircraft_carriers"]["upkeep_v2"] and not units["aircraft_carriers"]["upkeep_v2_active"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["aircraft_carriers"]["upkeep_v2"] }}</p>
                             {% endif %}
                         </div>
 
@@ -740,7 +740,7 @@
                             <p><strong>Upkeep (per unit, per tick):</strong> {{ units["spies"]["upkeep_v2"] }}</p>
                             {% elif units["spies"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["spies"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["spies"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["spies"]["maintenance_resource"] }} per tick</p>
-                            {% if units["spies"]["upkeep_v2"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["spies"]["upkeep_v2"] }}</p>{% endif %}
+                            {% endif %}{% if units["spies"]["upkeep_v2"] and not units["spies"]["upkeep_v2_active"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["spies"]["upkeep_v2"] }}</p>
                             {% endif %}
                         </div>
 
@@ -791,7 +791,7 @@
                             <p><strong>Upkeep (per unit, per tick):</strong> {{ units["counter_intel_agents"]["upkeep_v2"] }}</p>
                             {% elif units["counter_intel_agents"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["counter_intel_agents"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["counter_intel_agents"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["counter_intel_agents"]["maintenance_resource"] }} per tick</p>
-                            {% if units["counter_intel_agents"]["upkeep_v2"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["counter_intel_agents"]["upkeep_v2"] }}</p>{% endif %}
+                            {% endif %}{% if units["counter_intel_agents"]["upkeep_v2"] and not units["counter_intel_agents"]["upkeep_v2_active"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["counter_intel_agents"]["upkeep_v2"] }}</p>
                             {% endif %}
                         </div>
 
@@ -839,7 +839,7 @@
                             <p><strong>Upkeep (per unit, per tick):</strong> {{ units["sam_batteries"]["upkeep_v2"] }}</p>
                             {% elif units["sam_batteries"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["sam_batteries"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["sam_batteries"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["sam_batteries"]["maintenance_resource"] }} per tick</p>
-                            {% if units["sam_batteries"]["upkeep_v2"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["sam_batteries"]["upkeep_v2"] }}</p>{% endif %}
+                            {% endif %}{% if units["sam_batteries"]["upkeep_v2"] and not units["sam_batteries"]["upkeep_v2_active"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["sam_batteries"]["upkeep_v2"] }}</p>
                             {% endif %}
                         </div>
 
@@ -888,7 +888,7 @@
                             <p><strong>Upkeep (per unit, per tick):</strong> {{ units["icbms"]["upkeep_v2"] }}</p>
                             {% elif units["icbms"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["icbms"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["icbms"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["icbms"]["maintenance_resource"] }} per tick</p>
-                            {% if units["icbms"]["upkeep_v2"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["icbms"]["upkeep_v2"] }}</p>{% endif %}
+                            {% endif %}{% if units["icbms"]["upkeep_v2"] and not units["icbms"]["upkeep_v2_active"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["icbms"]["upkeep_v2"] }}</p>
                             {% endif %}
                         </div>
 
@@ -940,7 +940,7 @@
                             <p><strong>Upkeep (per unit, per tick):</strong> {{ units["nukes"]["upkeep_v2"] }}</p>
                             {% elif units["nukes"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["nukes"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["nukes"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["nukes"]["maintenance_resource"] }} per tick</p>
-                            {% if units["nukes"]["upkeep_v2"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["nukes"]["upkeep_v2"] }}</p>{% endif %}
+                            {% endif %}{% if units["nukes"]["upkeep_v2"] and not units["nukes"]["upkeep_v2_active"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["nukes"]["upkeep_v2"] }}</p>
                             {% endif %}
                         </div>
 
@@ -992,7 +992,7 @@
                             <p><strong>Upkeep (per unit, per tick):</strong> {{ units["kamikaze_drones"]["upkeep_v2"] }}</p>
                             {% elif units["kamikaze_drones"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["kamikaze_drones"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["kamikaze_drones"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["kamikaze_drones"]["maintenance_resource"] }} per tick</p>
-                            {% if units["kamikaze_drones"]["upkeep_v2"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["kamikaze_drones"]["upkeep_v2"] }}</p>{% endif %}
+                            {% endif %}{% if units["kamikaze_drones"]["upkeep_v2"] and not units["kamikaze_drones"]["upkeep_v2_active"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["kamikaze_drones"]["upkeep_v2"] }}</p>
                             {% endif %}
                         </div>
 
@@ -1039,7 +1039,7 @@
                             <p><strong>Upkeep (per unit, per tick):</strong> {{ units["cruise_missiles"]["upkeep_v2"] }}</p>
                             {% elif units["cruise_missiles"]["maintenance_per_tick"] > 0 %}
                             <p><strong>Maintenance:</strong> {{ units["cruise_missiles"]["maintenance_per_tick"] }} <img alt="Image" src="{{ url_for('static', filename=game_asset_path('resources', units["cruise_missiles"]["maintenance_resource"])) }}" class="resource resourcesmall" style="vertical-align: middle; margin-right: 5px;" /> {{ units["cruise_missiles"]["maintenance_resource"] }} per tick</p>
-                            {% if units["cruise_missiles"]["upkeep_v2"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["cruise_missiles"]["upkeep_v2"] }}</p>{% endif %}
+                            {% endif %}{% if units["cruise_missiles"]["upkeep_v2"] and not units["cruise_missiles"]["upkeep_v2_active"] %}<p><strong>From 6 Nov 19:00 UTC (per unit, per tick):</strong> {{ units["cruise_missiles"]["upkeep_v2"] }}</p>
                             {% endif %}
                         </div>
 
