@@ -24,15 +24,15 @@
                     <tr><td><strong>Consumption Rate</strong></td><td>~1 per 50,000 population/hour (children need 30% more, elderly 20% less)</td></tr>
                     <tr><td><strong>Produced By</strong></td><td>Farms (100 rations/hour) or Fisheries (160 rations/hour)</td></tr>
                     <tr><td><strong>Farm vs Fishery</strong></td><td>Farms gain +3 rations per land slot and benefit from Advanced Machinery; Fisheries have higher base output (160) and lower upfront cost ($800k), but do not scale with land or tech, making them ideal early on before farms outscale them.</td></tr>
-                    <tr><td><strong>Distribution</strong></td><td>Distribution buildings must exist to move food; capacity is tiered by type, from 250k pop (Food Banks) up to 5M pop (Malls) — see table below.</td></tr>
-                    <tr><td><strong>Without Rations</strong></td><td>No growth, -30% taxes</td></tr>
+                    <tr><td><strong>Distribution</strong></td><td>Distribution buildings must exist to move food; capacity is tiered by type, from 250k pop (Food Banks) up to 5M pop (Malls) — see table below. Once your nation is far past its comfortable population, each building reaches fewer people (4x over = half).</td></tr>
+                    <tr><td><strong>Without Rations</strong></td><td>Growth falls with the shortfall (none at all with zero rations), people starve, and taxes drop by up to -30% (the full -30% only when no rations reach your people)</td></tr>
                 </table>
             </div>
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">bolt</span> Energy</h3>
-                <p class="templatecontentpleft">Powers your infrastructure. Without energy, buildings operate inefficiently.</p>
+                <p class="templatecontentpleft">Powers your infrastructure. Every factory, refinery, retail (except Industrial Districts), park, hospital, library, university and transit building needs 1 MW per building (a steel mill with Electric Arc Furnace needs 2). Mines, farms and military buildings need none. Power is counted per province: plants only power buildings in their own province. Output is the base value and is scaled by productivity.</p>
                 <table class="templatetable">
-                    <tr><td><strong>Without Power</strong></td><td>-15% tax income</td></tr>
+                    <tr><td><strong>Without Power</strong></td><td>Buildings that cannot be powered sit idle: no output and no upkeep charged for them</td></tr>
                     <tr><td><strong>Coal Burners</strong></td><td>-11 coal/hour → +4 MW</td></tr>
                     <tr><td><strong>Oil Burners</strong></td><td>-16 oil/hour → +5 MW</td></tr>
                     <tr><td><strong>Nuclear Reactors</strong></td><td>-32 uranium/hour → +15 MW (highest output)</td></tr>
@@ -102,7 +102,7 @@
                 <tr><td>Bullion</td><td>Bullion Mines</td><td>$5.0M</td><td>$18,000</td><td>40 bullion</td><td>Jewelry Stores</td></tr>
             </table>
         </div>
-        <p class="templatecontentpleft" style="margin-top: 8px; font-size: 0.9em; color: var(--text-secondary);">Upkeep is deducted from your treasury every hour whether or not you're online. The "Cheaper Materials" upgrade cuts upkeep on all of these by 20%. Build cost is one-time; some also require iron/lumber on hand to construct — check the building's own buy panel on your province page for the exact resource cost.</p>
+        <p class="templatecontentpleft" style="margin-top: 8px; font-size: 0.9em; color: var(--text-secondary);">Upkeep is deducted from your treasury every hour whether or not you're online. The "Cheaper Materials" upgrade cuts upkeep on all of these by 20%. Output shown is the base amount per building; real output is multiplied by your province's productivity, specialisation and workforce staffing. Build cost is one-time and is also paid in lumber and/or iron (Lumber Mills need none) — check the building's own buy panel on your province page for the exact amounts; some policies change the gold price.</p>
 
         <h3 class="templatecontentheader" style="margin-top: 20px;"><span class="material-icons-outlined">settings</span> Processed Materials &amp; Consumer Goods (per hour, not biome-gated)</h3>
         <table class="templatetable">
@@ -110,10 +110,11 @@
             <tr><td><strong>Aluminium</strong></td><td>Refineries: 256 bauxite → 64 aluminium</td></tr>
             <tr><td><strong>Components</strong></td><td>Component Factories: 80 copper + 40 steel + 60 aluminium → 20 components</td></tr>
             <tr><td><strong>Ammunition</strong></td><td>Ammo Factories: 40 copper + 80 lead → 48 ammunition</td></tr>
+            <tr><td><strong>Gasoline</strong></td><td>Oil Refineries: 88 oil → 44 gasoline</td></tr>
             <tr><td><strong>Consumer Goods (Workshops)</strong></td><td>Workshops (entry-level): 2 steel → 4 consumer goods</td></tr>
             <tr><td><strong>Consumer Goods (Jewelry)</strong></td><td>Jewelry Stores (luxury): 12 silver + 6 diamonds + 8 bullion → 36 consumer goods</td></tr>
             <tr><td><strong>Consumer Goods (Automotive)</strong></td><td>Automotive Plants (late-game): 40 steel + 30 aluminium + 15 components → 160 consumer goods</td></tr>
-            <tr><td><strong>Consumer Goods (Retail)</strong></td><td>General Stores: +6 CG | Malls: +30 CG</td></tr>
+            <tr><td><strong>Consumer Goods (Retail)</strong></td><td>Food Banks: +2 | Distribution Centers: +8 | Gas Stations: +12 | General Stores: +10 | Farmers Markets: +16 | Banks: +20 | Malls: +30 | Industrial Districts: +50 CG (base, per building)</td></tr>
         </table>
 
         <!-- Resource Tips -->
@@ -127,7 +128,7 @@
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">trending_up</span> Maximizing Production</h3>
                 <ul class="templatecontentpleft">
-                    <li>Build productivity infrastructure (schools) first</li>
+                    <li>Build productivity infrastructure (transit, universities, schools) first</li>
                     <li>Productivity at 100% gives +45% resource output</li>
                     <li>Upgrades like Advanced Machinery increase yields</li>
                 </ul>

@@ -44,26 +44,26 @@
             <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
                 <div class="templatedivflex2left">
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">paid</span> Tax Income</h3>
-                    <p class="templatecontentpleft">Your primary gold source. Each citizen pays <strong>$0.75 per hour</strong> in base taxes.</p>
+                    <p class="templatecontentpleft">Your primary gold source. Each working-age citizen pays <strong>$0.75 per hour</strong> in base taxes (elderly pay 45% of that, children pay nothing).</p>
                     <p class="templatecontentpleft" style="margin-bottom: 8px;">
                         <a href="/mechanics/revenue" class="templatedivbutton"><span class="material-icons-outlined">info</span> Full Revenue Guide</a>
                     </p>
                     <table class="templatetable">
-                        <tr><td><strong>Base Rate</strong></td><td>$0.75 per citizen/hour</td></tr>
+                        <tr><td><strong>Base Rate</strong></td><td>$0.75 per working-age citizen/hour</td></tr>
                         <tr><td><strong>Consumer Goods Bonus</strong></td><td>+50% when fully supplied</td></tr>
-                        <tr><td><strong>No Rations Penalty</strong></td><td>-30% tax income</td></tr>
-                        <tr><td><strong>No Energy Penalty</strong></td><td>-15% tax income</td></tr>
-                        <tr><td><strong>Land Bonus</strong></td><td>+2% per land slot (max +100%)</td></tr>
+                        <tr><td><strong>No Rations Penalty</strong></td><td>Up to -30% tax income (the bigger the ration shortage, the bigger the cut)</td></tr>
+                        <tr><td><strong>No Energy Penalty</strong></td><td>No direct tax cut, but buildings in a province without enough power stop producing</td></tr>
+                        <tr><td><strong>Land Bonus</strong></td><td>+2% per land slot beyond the first in a province (max +100%)</td></tr>
                     </table>
                 </div>
                 <div class="templatedivflex2left">
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">scale</span> Weight-Based Resources</h3>
                     <p class="templatecontentpleft">Physical resources (oil, food, metals, components) are measured in weight.</p>
                     <table class="templatetable">
-                        <tr><td><strong>kg</strong></td><td>Kilograms (thousands)</td></tr>
-                        <tr><td><strong>t</strong></td><td>Tonnes (millions)</td></tr>
-                        <tr><td><strong>kt</strong></td><td>Kilotonnes (billions)</td></tr>
-                        <tr><td><strong>Mt</strong></td><td>Megatonnes (trillions)</td></tr>
+                        <tr><td><strong>kg</strong></td><td>Kilograms (under 1,000 kg)</td></tr>
+                        <tr><td><strong>t</strong></td><td>Tonnes (1,000 kg and up)</td></tr>
+                        <tr><td><strong>kt</strong></td><td>Kilotonnes (1 million kg and up)</td></tr>
+                        <tr><td><strong>Mt</strong></td><td>Megatonnes (1 billion kg and up)</td></tr>
                         <tr><td><strong>Processing Chains</strong></td><td>Raw→Refined (Oil→Gasoline, Iron Ore→Steel)</td></tr>
                     </table>
                 </div>
@@ -87,7 +87,7 @@
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">settings</span> Components</h3>
                     <p class="templatecontentpleft">Industrial components used in manufacturing consumer goods and military equipment.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Production</strong></td><td>Component Factories (20,000 kg copper + 10,000 kg steel + 15,000 kg aluminium/hour → 40,000 kg components)</td></tr>
+                        <tr><td><strong>Production</strong></td><td>Component Factories (80 kg copper + 40 kg steel + 60 kg aluminium per hour → 20 kg components)</td></tr>
                         <tr><td><strong>Uses</strong></td><td>Consumer goods manufacturing, military unit production</td></tr>
                         <tr><td><strong>Input Resources</strong></td><td>Copper, Steel, and Aluminium (from mining and refineries)</td></tr>
                     </table>
@@ -106,23 +106,25 @@
             <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
                 <div class="templatedivflex2left">
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">trending_up</span> Population Growth</h3>
-                    <p class="templatecontentpleft">Population grows each hour based on rations, happiness, and available capacity.</p>
+                    <p class="templatecontentpleft">Each province gains people through births and settlers and loses them to deaths and starvation, every hour (Population 2.0).</p>
                     <table class="templatetable">
-                        <tr><td><strong>Base Growth Rate</strong></td><td>0.15% of max capacity/hour</td></tr>
+                        <tr><td><strong>Births</strong></td><td>2.5% of working-age people per day, at full speed while homes are not full. Happiness scales it (&times;0.5 at 0 happiness, &times;1.5 at 100) and so does rations coverage</td></tr>
+                        <tr><td><strong>Settlers</strong></td><td>Each day, 10% of the empty homes in a province fill with newcomers (at most 500,000 + 0.1% of its population), scaled by happiness and rations</td></tr>
                         <tr><td><strong>Rations Required</strong></td><td>1 per 50,000 population</td></tr>
-                        <tr><td><strong>Without Rations</strong></td><td>No growth, -30% taxes</td></tr>
-                        <tr><td><strong>Diminishing Returns</strong></td><td>Growth slows near max capacity</td></tr>
+                        <tr><td><strong>Without Rations</strong></td><td>Births and settlers stop, people starve (up to 0.25% of the population per hour with no rations at all) and taxes drop by up to 30%</td></tr>
+                        <tr><td><strong>Deaths</strong></td><td>Elderly 6% per day, children 1% per day. Hospitals cut this (to 2% and 0.2% when hospitals cover everyone: 1 hospital covers 1 million people). Pollution raises deaths by up to 25%. Universal Healthcare cuts them by 30%</td></tr>
                     </table>
                 </div>
                 <div class="templatedivflex2left">
-                    <h3 class="templatecontentheader"><span class="material-icons-outlined">domain</span> Max Population</h3>
-                    <p class="templatecontentpleft">Your maximum population is determined by cities, land, and happiness. Cities and land give diminishing returns at very high counts instead of scaling forever.</p>
+                    <h3 class="templatecontentheader"><span class="material-icons-outlined">domain</span> Homes (Max Population)</h3>
+                    <p class="templatecontentpleft">Each province has a number of homes. Growth is not a hard cap, but a full province stops growing.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Base Maximum</strong></td><td>5,000,000 (whole nation)</td></tr>
-                        <tr><td><strong>Per City</strong></td><td>~+750,000 early on, tapering off at large counts</td></tr>
-                        <tr><td><strong>Per Land Slot</strong></td><td>~+120,000 early on, tapering off at large counts</td></tr>
-                        <tr><td><strong>Happiness Bonus</strong></td><td>+0.08% per % above 50</td></tr>
-                        <tr><td><strong>Pollution Penalty</strong></td><td>-0.04% per % above 50</td></tr>
+                        <tr><td><strong>Base Homes</strong></td><td>2,000,000 per province</td></tr>
+                        <tr><td><strong>Per City</strong></td><td>+50,000 homes</td></tr>
+                        <tr><td><strong>Per Land Slot</strong></td><td>+30,000 homes</td></tr>
+                        <tr><td><strong>Transit Bonus</strong></td><td>Railways +1%, Metros +2%, Monorails +3% each, up to +30% total</td></tr>
+                        <tr><td><strong>Over 100% Full</strong></td><td>Births slow down linearly and stop at 120% full</td></tr>
+                        <tr><td><strong>Over 120% Full</strong></td><td>2% of the excess emigrates per day; people also move 5% of the overflow per day to your provinces with free homes</td></tr>
                     </table>
                 </div>
     </div>
@@ -141,7 +143,7 @@
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">school</span> Education</h3>
                     <p class="templatecontentpleft">Children graduate into the workforce with an education level depending on available school capacities.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Chained Tiers</strong></td><td>Education must be chained. Primary Schools educate up to Basic, High Schools elevate Basic to High School, and Universities elevate High School to College. (Grace period: Until 5 October 2026, 00:00 UTC, higher education doesn't strictly require Primary Schools yet).</td></tr>
+                        <tr><td><strong>Chained Tiers</strong></td><td>Education must be chained. Primary Schools educate up to Basic, High Schools elevate Basic to High School, and Universities elevate High School to College.</td></tr>
                         <tr><td><strong>Capacity</strong></td><td>Primary Schools provide {{ '{:,}'.format(school_capacity.primary) }} student capacity, High Schools provide {{ '{:,}'.format(school_capacity.high_school) }} (so each needs two Primary Schools feeding it), and Universities provide {{ '{:,}'.format(school_capacity.university) }}. Exceeding capacity leaves graduates at the lower tier.</td></tr>
                         <tr><td><strong>Research</strong></td><td>At least 2 Universities are required to research late-game technologies.</td></tr>
                     </table>
@@ -155,25 +157,25 @@
                     <table class="templatetable">
                         <tr><td><strong>Power Plants</strong></td><td>Coal Power Plants burn Coal. Nuclear Plants burn Uranium.</td></tr>
                         <tr><td><strong>Energy Consumption</strong></td><td>Industrial buildings and infrastructure consume MW (Megawatts) every hour.</td></tr>
-                        <tr><td><strong>Power Shortage</strong></td><td>-15% tax income and severely reduced factory output if you lack sufficient power.</td></tr>
+                        <tr><td><strong>Power Shortage</strong></td><td>Buildings that need power stop producing in a province that lacks it. There is no separate tax penalty.</td></tr>
                     </table>
                 </div>
 
             <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
                 <div class="templatedivflex2left">
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">sentiment_satisfied</span> Happiness</h3>
-                    <p class="templatecontentpleft">Happy citizens grow faster and increase max population.</p>
+                    <p class="templatecontentpleft">Happy citizens have more children and attract more settlers.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Effect</strong></td><td>+4% growth per point above 50</td></tr>
+                        <tr><td><strong>Effect</strong></td><td>Births and settlers change by 1% per point (above 50 more, below 50 less)</td></tr>
                         <tr><td><strong>Increased By</strong></td><td>Parks, Stadiums, low pollution</td></tr>
                         <tr><td><strong>Decreased By</strong></td><td>High pollution, wars</td></tr>
                     </table>
                 </div>
                 <div class="templatedivflex2left">
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">cloud</span> Pollution</h3>
-                    <p class="templatecontentpleft">Industrial activity increases pollution, limiting growth.</p>
+                    <p class="templatecontentpleft">Industrial activity increases pollution, which makes people die faster.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Effect</strong></td><td>-2% growth per point above 50</td></tr>
+                        <tr><td><strong>Effect</strong></td><td>Up to +25% deaths at 100 pollution (scales with the pollution level)</td></tr>
                         <tr><td><strong>Increased By</strong></td><td>Factories, Mines, Power Plants</td></tr>
                         <tr><td><strong>Decreased By</strong></td><td>Parks, Monorails, Metros, Green infrastructure</td></tr>
                     </table>
@@ -202,7 +204,7 @@
                     <table class="templatetable">
                         <tr><td><strong>Consumption</strong></td><td>~1 ration per 50,000 population per hour (children need 30% more, elderly 20% less)</td></tr>
                         <tr><td><strong>Produced By</strong></td><td>Farms (100 rations/hour, +3 per land slot bonus)</td></tr>
-                        <tr><td><strong>Without Rations</strong></td><td>No growth, -30% taxes</td></tr>
+                        <tr><td><strong>Without Rations</strong></td><td>No growth, starvation, up to -30% taxes</td></tr>
                         <tr><td><strong>Distribution</strong></td><td>Requires distribution buildings — capacity is tiered per building type, from 250k pop (Food Banks) up to 5M pop (Malls)</td></tr>
                     </table>
                 </div>
@@ -230,7 +232,7 @@
                 </div>
                 <div class="templatedivflex2left">
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">construction</span> Raw Materials</h3>
-                    <p class="templatecontentpleft">Iron, Coal, Bauxite, Uranium, Lead, Copper, Oil, and Lumber — which ones you can mine depends on your <a href="#biomes" style="color: var(--accent);" onclick="document.getElementById('biomes').scrollIntoView({behavior: 'smooth'})">biome</a>.</p>
+                    <p class="templatecontentpleft">Iron, Coal, Bauxite, Uranium, Lead, Copper, Oil, Lumber, Silver, Diamonds and Bullion — which ones you can mine depends on your <a href="#biomes" style="color: var(--accent);" onclick="document.getElementById('biomes').scrollIntoView({behavior: 'smooth'})">biome</a>.</p>
                     <table class="templatetable">
                         <tr><td><strong>Iron</strong></td><td>Steel production, construction</td></tr>
                         <tr><td><strong>Coal</strong></td><td>Power plants, steel</td></tr>
@@ -254,7 +256,7 @@
 
             <div class="mechanics-callout">
                 <span class="material-icons-outlined">info</span>
-                <p>Your homeland biome (set at signup, changeable later from Country → Edit) determines which <strong>4 of the 8 raw-material mines</strong> you can build. Farms, power plants, refineries, factories, and all other buildings are available in every biome.</p>
+                <p>Your homeland biome (set at signup, changeable later from Country → Edit) determines which <strong>raw-material mines</strong> you can build (4 or 5 of the 11 kinds, depending on the biome). Farms, power plants, refineries, factories, and all other buildings are available in every biome.</p>
             </div>
 
             <div class="country-biome-gallery">
@@ -299,8 +301,8 @@
                     <p class="templatecontentpleft">Influence is a single score for how big and strong your nation is overall. It's recalculated from what you own right now &mdash; nothing is "earned" permanently, so losing provinces, units or stockpiles lowers it again.</p>
                     <table class="templatetable">
                         <tr><td><strong>Where it shows</strong></td><td>Countries list, rankings and your country page</td></tr>
-                        <tr><td><strong>Find Targets</strong></td><td>Suggests nations with 90%&ndash;200% of your influence</td></tr>
-                        <tr><td><strong>Declaring war</strong></td><td>Not limited by influence &mdash; the war range is based on province count</td></tr>
+                        <tr><td><strong>Find Targets</strong></td><td>Lists nations inside your war range (population 75&ndash;133% of yours), not by influence</td></tr>
+                        <tr><td><strong>Declaring war</strong></td><td>Not limited by influence &mdash; the war range is based on population (target must have 75&ndash;133% of yours)</td></tr>
                     </table>
                 </div>
                 <div class="templatedivflex2left">
@@ -353,9 +355,9 @@
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">gavel</span> War Declaration</h3>
                     <p class="templatecontentpleft">Requirements and consequences of declaring war.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Requirement</strong></td><td>No active truce with target</td></tr>
-                        <tr><td><strong>Score Range</strong></td><td>Target within war range</td></tr>
-                        <tr><td><strong>On Victory</strong></td><td>Resource transfer, reparations</td></tr>
+                        <tr><td><strong>Requirement</strong></td><td>No post-war truce with the target (3 days for the side that declared the last war, 24 hours for the other side)</td></tr>
+                        <tr><td><strong>War Range</strong></td><td>Target's population must be 75&ndash;133% of yours</td></tr>
+                        <tr><td><strong>On Victory</strong></td><td>Winner takes 20% of every resource (30% with Looting Teams) when the enemy's morale breaks, plus daily plunder for 7 days. See the War Guide</td></tr>
                     </table>
                 </div>
             </div>
@@ -369,15 +371,16 @@
                         <tr><td><strong>Aerodome</strong></td><td>+100 total air units (fighters + bombers + apaches combined)</td></tr>
                         <tr><td><strong>Harbour</strong></td><td>+20 submarines/destroyers (combined), +10 cruisers</td></tr>
                         <tr><td><strong>Admin Building</strong></td><td>+10 spies, +10 counter-intelligence agents</td></tr>
+                        <tr><td><strong>Silo</strong></td><td>+1 nuke, +1 ICBM (you can hold 1 ICBM without any silo)</td></tr>
                     </table>
                 </div>
                 <div class="templatedivflex2left">
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">shield</span> Ground Unit Costs</h3>
-                    <p class="templatecontentpleft">Resources and manpower are spent once, when you build the unit — not as ongoing upkeep.</p>
+                    <p class="templatecontentpleft">The gold, resources and manpower below are paid once, when you build the unit. Units also cost hourly upkeep (see your Revenue page).</p>
                     <table class="templatetable">
-                        <tr><td><strong>Soldiers</strong></td><td>$250 + 500 rations, 1 manpower</td></tr>
-                        <tr><td><strong>Tanks</strong></td><td>$7,000 + 5,000 components, 50,000 steel, 2,000 gasoline, 4 manpower</td></tr>
-                        <tr><td><strong>Artillery</strong></td><td>$14,000 + 3,000 components, 30,000 steel, 1,000 gasoline, 2 manpower</td></tr>
+                        <tr><td><strong>Soldiers</strong></td><td>$250 + 500 kg rations, 1 manpower</td></tr>
+                        <tr><td><strong>Tanks</strong></td><td>$7,000 + 5 t components, 50 t steel, 2 t gasoline, 4 manpower</td></tr>
+                        <tr><td><strong>Artillery</strong></td><td>$14,000 + 3 t components, 30 t steel, 1 t gasoline, 2 manpower</td></tr>
                     </table>
                 </div>
             </div>
@@ -387,10 +390,10 @@
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">flight</span> Air & Naval Unit Costs</h3>
                     <p class="templatecontentpleft">Built from aluminium (air) or steel (naval), plus components and gasoline.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Fighters</strong></td><td>$30,000 + 10,000 components, 20,000 aluminium, 5,000 gasoline</td></tr>
-                        <tr><td><strong>Bombers</strong></td><td>$22,000 + 15,000 components, 25,000 aluminium, 8,000 gasoline</td></tr>
-                        <tr><td><strong>Destroyers</strong></td><td>$26,000 + 15,000 components, 120,000 steel, 4,000 gasoline</td></tr>
-                        <tr><td><strong>Submarines</strong></td><td>$40,000 + 20,000 components, 150,000 steel, 5,000 gasoline</td></tr>
+                        <tr><td><strong>Fighters</strong></td><td>$30,000 + 10 t components, 20 t aluminium, 5 t gasoline</td></tr>
+                        <tr><td><strong>Bombers</strong></td><td>$22,000 + 15 t components, 25 t aluminium, 8 t gasoline</td></tr>
+                        <tr><td><strong>Destroyers</strong></td><td>$26,000 + 15 t components, 120 t steel, 4 t gasoline</td></tr>
+                        <tr><td><strong>Submarines</strong></td><td>$40,000 + 20 t components, 150 t steel, 5 t gasoline</td></tr>
                     </table>
                 </div>
             </div>
@@ -400,8 +403,8 @@
                     <h3 class="templatecontentheader"><span class="material-icons-outlined">opacity</span> Fuel Production</h3>
                     <p class="templatecontentpleft">Gasoline is produced from raw oil in refineries and spent building vehicles.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Oil Refineries</strong></td><td>Convert 88,000 kg oil/hour → 44,000 kg gasoline/hour (2:1)</td></tr>
-                        <tr><td><strong>Gasoline Uses</strong></td><td>Spent once building tanks, artillery, aircraft, and naval units</td></tr>
+                        <tr><td><strong>Oil Refineries</strong></td><td>Convert 88 kg oil/hour → 44 kg gasoline/hour (2:1)</td></tr>
+                        <tr><td><strong>Gasoline Uses</strong></td><td>Spent building tanks, artillery, aircraft and naval units, and every hour as upkeep for units and Iron Domes</td></tr>
                     </table>
                 </div>
             </div>
@@ -420,13 +423,12 @@
                 <div style="width: 100%;">
                     <h3 class="templatecontentheader" style="color: #ff6b6b;"><span class="material-icons-outlined">warning</span> CRITICAL: Distribution System</h3>
                     <p class="templatecontentpleft"><strong>You must have Distribution Centers to use Rations and Consumer Goods.</strong></p>
-                    <p class="templatecontentpleft" style="color: #ffd166;"><strong>Notice:</strong> The strict distribution enforcement fix goes live on 12 Oct 2026 at 18:00 UTC.</p>
                     <p class="templatecontentpleft">Even if you produce 1 million kg of rations, <strong>NOT A SINGLE CITIZEN WILL CONSUME THEM</strong> without distribution infrastructure.</p>
                     <table class="templatetable">
                         <tr><td><strong>Distribution Capacity</strong></td><td>Tiered per building type — Food Banks 250k pop, Gas Stations 1.0M, Distribution Centers 1.5M, Farmers Markets 2.0M, General Stores 2.5M, Malls 5.0M</td></tr>
                         <tr><td><strong>Rations Buildings</strong></td><td>Food Banks, Distribution Centers, Gas Stations, General Stores, Farmers Markets, Malls</td></tr>
                         <tr><td><strong>Consumer Goods Buildings</strong></td><td>Food Banks, Distribution Centers, Gas Stations, General Stores, Malls</td></tr>
-                        <tr><td><strong>Effect of Missing Distribution</strong></td><td>Population doesn't grow, happiness drops, taxes plummet</td></tr>
+                        <tr><td><strong>Effect of Missing Distribution</strong></td><td>People you can't reach count as unfed: no growth, starvation, taxes cut by up to 30%</td></tr>
                         <tr><td><strong>Rule of Thumb</strong></td><td>Build distribution infrastructure FIRST, then production</td></tr>
                     </table>
                 </div>
@@ -449,7 +451,7 @@
                         <tr><td><strong>Requirement</strong></td><td>Capacity scales with building type (see table above) — cheap buildings like Food Banks serve less, Malls serve the most</td></tr>
                         <tr><td><strong>Consumer Goods Distribution</strong></td><td>Food Banks, Distribution Centers, Gas Stations, General Stores, Malls</td></tr>
                         <tr><td><strong>Rations Distribution</strong></td><td>Food Banks, Distribution Centers, Gas Stations, General Stores, Farmers Markets, Malls</td></tr>
-                        <tr><td><strong>Without Distribution</strong></td><td>Rations & CG are <strong>hoarded, not consumed</strong> → -30% taxes, no growth, -5 happiness</td></tr>
+                        <tr><td><strong>Without Distribution</strong></td><td>Rations & CG are <strong>hoarded, not consumed</strong> → up to -30% taxes, no growth, starvation</td></tr>
                         <tr><td><strong>Impact on Economy</strong></td><td>Missing distribution causes productivity collapse and economic shutdown</td></tr>
                     </table>
                 </div>
@@ -470,10 +472,10 @@
                     <h3 class="templatecontentheader" id="demographics"><span class="material-icons-outlined">groups</span> Demographics System</h3>
                     <p class="templatecontentpleft">Population is divided into age groups with different needs and behaviors.</p>
                     <table class="templatetable">
-                        <tr><td><strong>Children</strong></td><td>Graduate to working-age (0.5%/hour with schools)</td></tr>
-                        <tr><td><strong>Working-Age</strong></td><td>Provide workforce, move to elderly (0.1%/hour)</td></tr>
-                        <tr><td><strong>Elderly</strong></td><td>2x CG consumption, death rate 0.2%/hour</td></tr>
-                        <tr><td><strong>Debuffs</strong></td><td>30%+ unemployment = -10 happiness, 40%+ elderly = -$5k gold/hour</td></tr>
+                        <tr><td><strong>Children</strong></td><td>Grow up to working-age over about 18 days (+50% faster with Mandatory Schooling); pay no taxes</td></tr>
+                        <tr><td><strong>Working-Age</strong></td><td>Provide workforce and full taxes, retire to elderly after about 27 more days</td></tr>
+                        <tr><td><strong>Elderly</strong></td><td>2x CG consumption, pay 45% taxes, die at 6% per day (2% with full hospital cover)</td></tr>
+                        <tr><td><strong>Debuffs</strong></td><td>30%+ unemployment = -10 happiness per hour, more than 40 elderly per 100 working-age = -$5,000 gold per hour</td></tr>
                     </table>
                 </div>
             </div>
@@ -532,16 +534,16 @@
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">attach_money</span> Maximizing Income</h3>
                 <ul class="templatecontentpleft">
                     <li>Build schools and factories to boost productivity</li>
-                    <li>Maintain consumer goods supply (1 CG per working-age citizen per hour)</li>
-                    <li>Keep rations stocked to avoid -30% penalty</li>
-                    <li>Ensure power supply for full efficiency</li>
+                    <li>Maintain consumer goods supply (1 CG per 80,000 working-age citizens per hour)</li>
+                    <li>Keep rations stocked to avoid the tax penalty (up to -30%)</li>
+                    <li>Ensure power supply so your buildings keep producing</li>
                     <li>Buy more land for +2% tax bonus per slot</li>
                 </ul>
             </div>
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">speed</span> Growing Fast</h3>
                 <ul class="templatecontentpleft">
-                    <li>Build cities early (+750k max pop each)</li>
+                    <li>Build cities early (+50,000 homes each)</li>
                     <li>Surplus farms to ensure ration supply</li>
                     <li>Build parks to increase happiness</li>
                     <li>Balance industry to control pollution</li>
