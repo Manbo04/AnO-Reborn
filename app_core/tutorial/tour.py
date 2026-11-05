@@ -59,7 +59,7 @@ STEPS: list[dict] = [
         "key": "farms",
         "kind": "state",
         "title": "Feed your people",
-        "brief": "Hungry citizens stop growing. Build 1 Farm so your provinces produce rations.",
+        "brief": "Hungry citizens grow slower, starve and pay less tax. Build 1 Farm so your provinces produce rations.",
         "path": "/province/",
         "target": "button[formaction^='/buy/farms/']",
     },

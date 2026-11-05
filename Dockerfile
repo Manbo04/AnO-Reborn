@@ -58,8 +58,11 @@ ENV PATH=/root/.local/bin:$PATH \
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
-# Default to web service
+# Default to web service.
+# threads=32: every open tab holds one thread for its Socket.IO websocket, so 4x4
+# threads starved page requests once ~16 tabs were open. max-requests 8000: the
+# old 1000 recycled a worker every few minutes (cold caches, dropped chat sockets).
 # --preload loads the Flask app BEFORE forking workers so they can
 # immediately serve Railway's /health healthcheck on startup.
 # Shell form so $PORT expands at runtime (Railway injects PORT env var).
-CMD gunicorn --bind 0.0.0.0:8080 --preload --workers 4 --threads 4 --worker-class gthread --timeout 120 --graceful-timeout 15 --keep-alive 30 --max-requests 1000 --max-requests-jitter 100 --access-logfile - --error-logfile - --log-level info wsgi:app
+CMD gunicorn --bind 0.0.0.0:8080 --preload --workers 4 --threads 32 --worker-class gthread --timeout 120 --graceful-timeout 15 --keep-alive 30 --max-requests 8000 --max-requests-jitter 800 --access-logfile - --error-logfile - --log-level info wsgi:app

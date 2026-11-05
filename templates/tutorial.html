@@ -7,7 +7,7 @@
 {# Only rendered for logged-out visitors now; logged-in players get the in-game
    Command Briefing tour instead (see app_core/main/routes.py::tutorial). #}
 <link href="{{ url_for('static', filename='tutorial.css') }}?v=12" rel="stylesheet" type="text/css" />
-<script defer src="{{ url_for('static', filename='tutorial.js') }}?v=12"></script>
+<script defer src="{{ url_for('static', filename='tutorial.js') }}?v=13"></script>
 {% endblock %}
 {% from "tutorial_chapter_extras.html" import chapter_video_block, chapter_follow_block %}
 {% block body %}
@@ -124,7 +124,7 @@
                             <div class="tutorial-insight-card">
                                 <span class="material-icons-outlined">map</span>
                                 <h4>Provinces</h4>
-                                <p>Each province has its own buildings, pollution, and population cap.</p>
+                                <p>Each province has its own buildings and pollution; population room comes from your nation's total cities and land.</p>
                             </div>
                             <div class="tutorial-insight-card">
                                 <span class="material-icons-outlined">public</span>
@@ -145,10 +145,10 @@
                             </button>
                             <div class="tutorial-accordion-body">
                                 <ul class="templatecontentpleft">
-                                    <li><strong>Tax income</strong> — charged per citizen; boosted by consumer goods, penalized without rations or energy.</li>
+                                    <li><strong>Tax income</strong> — charged per working-age citizen; boosted by consumer goods, penalized when rations do not reach your people.</li>
                                     <li><strong>Province revenue</strong> — buildings produce and consume resources; operating costs deduct gold.</li>
                                     <li><strong>Population growth</strong> — needs rations, influenced by happiness and pollution.</li>
-                                    <li><strong>Trade agreements</strong> — automated exchanges if configured.</li>
+                                    <li><strong>Trade agreements</strong> — automated exchanges if configured (checked every 15 minutes, not hourly).</li>
                                 </ul>
                             </div>
                         </div>
@@ -190,7 +190,7 @@
                     <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
                         <div>
-                            <p class="templatecontentpleft">Provinces are the foundation of your nation. Each holds population, infrastructure slots (land/city), and buildings that produce resources or gold.</p>
+                            <p class="templatecontentpleft">Provinces are the foundation of your nation. Each holds population, infrastructure slots (land/city), and buildings that produce resources or gold. New nations get their first province free at signup; the prices in the calculator apply from your second province on (or if you ever own none). Past 20 owned provinces, each new one costs a further 8% more, compounding.</p>
                             <div class="tutorial-widget" data-widget="province-calc">
                                 <h4><span class="material-icons-outlined">calculate</span> Province cost calculator</h4>
                                 <div class="tutorial-slider-row">
@@ -237,7 +237,7 @@
                     </div>
                     {{ chapter_video_block(tutorial_chapters[2]) }}
                     <div class="tutorial-chapter-body">
-                    <p class="tutorial-lead">Physical resources use weight units (kg → t → kt → Mt). Raw materials are mined; refineries turn them into steel, aluminium, gasoline; factories output components and consumer goods. New nations receive a rations reserve (several days for one province) plus starter lumber — farms themselves only cost cash, so you can plant food before you have power.</p>
+                    <p class="tutorial-lead">Physical resources use weight units (kg → t → kt → Mt). Raw materials are mined; refineries turn them into steel, aluminium, gasoline; factories output components and consumer goods. New nations receive a starter care package — 350,000 rations, 120,000 lumber, plus iron, coal, steel, components and aluminium — enough to build a farm (which costs cash plus 30,000 lumber), a coal power plant and a mine without the market. Rations only reach your people through distribution buildings, and a stockpile far above about two weeks of need slowly spoils.</p>
 
                     <div class="tutorial-widget" data-widget="chain-game">
                         <h4><span class="material-icons-outlined">timeline</span> Chain challenge — click in order</h4>
@@ -252,15 +252,15 @@
                             <span class="tutorial-chain-node" data-chain-id="cg">Retail / CG</span>
                         </div>
                         <button type="button" class="templatelink" data-chain-reset>Reset chain</button>
-                        <p class="templatecontentpleft muted" style="margin-top:8px;">Correct path for CG pipeline: <strong>Bauxite → Aluminium → Components → Consumer Goods</strong> (iron is a separate chain for steel).</p>
+                        <p class="templatecontentpleft muted" style="margin-top:8px;">Correct path for this chain: <strong>Bauxite → Aluminium → Components → Consumer Goods</strong> (the last step is made by Automotive Plants; iron is a separate chain for steel). Most retail buildings, such as Distribution Centers and Malls, make consumer goods with no input resources, only gold upkeep.</p>
                     </div>
 
                     <div class="tutorial-accordion">
                         <button type="button" class="tutorial-accordion-trigger" aria-expanded="false">Essential vs strategic resources <span class="material-icons-outlined">expand_more</span></button>
                         <div class="tutorial-accordion-body">
                             <table class="templatetable">
-                                <tr><td><strong>Rations</strong></td><td>Population growth; −30% tax if missing</td></tr>
-                                <tr><td><strong>Energy</strong></td><td>Powers buildings; −15% tax if short</td></tr>
+                                <tr><td><strong>Rations</strong></td><td>Population growth; up to −30% tax if they do not reach your people</td></tr>
+                                <tr><td><strong>Energy</strong></td><td>Powers buildings; buildings stop producing when power is short (no direct tax penalty)</td></tr>
                                 <tr><td><strong>Components</strong></td><td>Military units &amp; CG manufacturing</td></tr>
                                 <tr><td><strong>Gold</strong></td><td>Buildings, units, provinces — tax is main source</td></tr>
                             </table>
@@ -301,11 +301,11 @@
                     <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
                         <div>
-                            <p class="templatecontentpleft">Base tax is <strong>${{ tutorial_constants.tax_per_citizen }}</strong> per citizen per hour. Consumer goods supply adds +50%. Missing rations costs −30%. Land slots add up to +100%.</p>
+                            <p class="templatecontentpleft">Base tax is <strong>${{ tutorial_constants.tax_per_citizen }}</strong> per working-age citizen per hour (elderly pay 45% of that, children pay nothing). Full consumer goods coverage adds +50%. Rations that fail to reach your people cost up to −30%, scaled by the shortage. Each land slot after the first in a province adds +2%, up to +100%.</p>
                             <div class="tutorial-widget" data-widget="tax-calc">
                                 <h4><span class="material-icons-outlined">calculate</span> Live tax calculator</h4>
                                 <div class="tutorial-slider-row">
-                                    <label>Population: <strong data-tax-pop-label>500,000</strong></label>
+                                    <label>Working-age population: <strong data-tax-pop-label>500,000</strong></label>
                                     <input type="range" data-tax-pop min="0" max="5000000" step="50000" value="500000" />
                                 </div>
                                 <div class="tutorial-slider-row">
@@ -313,7 +313,7 @@
                                     <input type="range" data-tax-land min="0" max="50" value="5" />
                                 </div>
                                 <label class="templatecheckmarklabel"><input type="checkbox" data-tax-cg checked> Consumer goods fully supplied (+50%)</label>
-                                <label class="templatecheckmarklabel"><input type="checkbox" data-tax-food checked> Rations supplied (no −30% penalty)</label>
+                                <label class="templatecheckmarklabel"><input type="checkbox" data-tax-food checked> Rations reach your people (unchecked = none do, −30%)</label>
                                 <div class="tutorial-result-box" data-tax-result></div>
                             </div>
                         </div>
@@ -351,14 +351,15 @@
                     </div>
                     {{ chapter_video_block(tutorial_chapters[4]) }}
                     <div class="tutorial-chapter-body">
-                    <p class="tutorial-lead">Demographics matter: working-age citizens, children, and elderly consume different amounts of consumer goods (elderly use 2×). Happiness raises your comfortable population by 0.08% per point above 50 (up to +4% at 100) and lowers it the same way below 50; pollution above 50 lowers it by 0.04% per point (up to -2% at 100).</p>
+                    <p class="tutorial-lead">Demographics matter: working-age citizens, children, and elderly consume different amounts of consumer goods (elderly use 2×). Happiness raises your comfortable population by 0.08% per point above 50 (up to +4% at 100) and lowers it the same way below 50; pollution above 50 lowers it by 0.04% per point (up to -2% at 100), and pollution below 50 raises it the same way.</p>
                     <div class="tutorial-callout">
-                        <strong>Distribution capacity:</strong> Each distribution building serves roughly 400k population. Without coverage, rations and CG never reach citizens — even if you produce them.
+                        <strong>Distribution capacity:</strong> Each distribution building serves a fixed number of people, from 250k for a Food Bank up to 5M for a Mall. Without coverage, rations and CG never reach citizens — even if you produce them.
                     </div>
                     <table class="templatetable">
                         <tr><td><strong>Unemployment &gt;30%</strong></td><td>−10 happiness</td></tr>
-                        <tr><td><strong>Elderly &gt;40%</strong></td><td>Pension crisis (−5k gold/hour)</td></tr>
-                        <tr><td><strong>Pollution</strong></td><td>Reduces growth; Chernobyl events floor efficiency at 20%</td></tr>
+                        <tr><td><strong>Elderly &gt;40% of working-age</strong></td><td>Pension crisis (−5k gold/hour)</td></tr>
+                        <tr><td><strong>Pollution</strong></td><td>Reduces population growth</td></tr>
+                        <tr><td><strong>Too few workers</strong></td><td>Buildings run at reduced efficiency (staffed share of jobs), never below 20%</td></tr>
                     </table>
                     {{ chapter_follow_block(tutorial_chapters[4]) }}
                     <div class="tutorial-quiz">
@@ -467,7 +468,7 @@
                     <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
                         <div>
-                            <p class="templatecontentpleft">Upgrades permanently improve your nation — military attack/defense, economic boosts, and infrastructure caps. Each costs resources and time; plan around your coalition wars and growth targets.</p>
+                            <p class="templatecontentpleft">Upgrades permanently improve your nation — military attack/defense, economic boosts, and infrastructure caps. Each costs components (late-game techs also need 2 Universities and earlier techs first) and unlocks immediately; plan around your coalition wars and growth targets.</p>
                         </div>
                     </div>
                     {{ chapter_follow_block(tutorial_chapters[7]) }}
@@ -506,9 +507,9 @@
                         <div>
                             <p class="templatecontentpleft">Combat calculates morale loss and damage <strong>per unit</strong>, scaled to opposing forces — matched fights won't instantly zero morale. Choose unit mixes, watch your action points, and coordinate with coalition mates.</p>
                             <ul class="templatecontentpleft">
-                                <li>Declare war from the wars page; select targets and unit counts.</li>
+                                <li>Find a target on the Find Targets page (or on a nation's own page) and declare war, then pick units for each attack from the war page.</li>
                                 <li>War reparations can transfer resources when wars end.</li>
-                                <li>Defensive upgrades and terrain (naval/air) matter for outcomes.</li>
+                                <li>Defensive upgrades matter for outcomes.</li>
                             </ul>
                         </div>
                     </div>
@@ -547,7 +548,7 @@
                     <div class="tutorial-chapter-body">
                     <div class="tutorial-media-row">
                         <div>
-                            <p class="templatecontentpleft">Coalitions offer shared banks, optional tax rates on member income, and diplomatic strength. Leaders approve withdrawals; members contribute to coalition banks for mutual defense funding.</p>
+                            <p class="templatecontentpleft">Coalitions offer shared banks, optional tax rates on member income, and diplomatic strength. Leaders, deputies and bankers approve withdrawals from the shared bank (you can take back your own personal deposits without approval); members contribute to coalition banks for mutual defense funding. The coalition tax is taken only from income left after your building upkeep.</p>
                             <p class="templatecontentpleft"><strong>Endgame mastery:</strong> Balance tax/display accuracy (check coalition tax on country page), monitor statistics, tune policies, and grow before declaring wide wars.</p>
                         </div>
                     </div>

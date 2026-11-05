@@ -122,6 +122,46 @@ def resolve_cache_control(path, status_code, existing):
     return "private, max-age=5, must-revalidate"
 
 
+def _warm_templates_and_imports(flask_app):
+    """Compile every Jinja template and import the heavy page modules at boot.
+
+    Measured on prod: the first /country render in a fresh worker took ~580ms
+    (template compile + lazy imports) vs 38ms for the next one, and every
+    worker pays it on first use. gunicorn runs with --preload, so doing it here
+    happens once in the master before it forks and the workers inherit the
+    compiled templates. Best effort: never blocks or breaks boot.
+    """
+    import time as _t
+
+    started = _t.time()
+    compiled = 0
+    try:
+        env = flask_app.jinja_env
+        for name in env.list_templates():
+            if name.endswith((".html", ".htm", ".xml", ".txt")):
+                try:
+                    env.get_template(name)
+                    compiled += 1
+                except Exception:
+                    pass  # a broken/unused template must not stop boot
+        for mod in (
+            "countries",
+            "services.country_service",
+            "province",
+            "market",
+            "app_core.game_ticks.population",
+        ):
+            try:
+                __import__(mod)
+            except Exception:
+                pass
+    except Exception:
+        logging.getLogger(__name__).exception("template warm-up failed")
+    logging.getLogger(__name__).info(
+        "warm-up: %d templates in %.1fs", compiled, _t.time() - started
+    )
+
+
 def create_app():
     global app
     app.url_map.strict_slashes = False
@@ -1343,6 +1383,8 @@ def create_app():
         logger=_socketio_debug,
         engineio_logger=_socketio_debug,
     )
+
+    _warm_templates_and_imports(app)
 
     return app
 

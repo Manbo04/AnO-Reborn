@@ -139,6 +139,13 @@ def generate_province_revenue():  # Runs each hour
         )
         chunks_completed = 0
         any_chunk_committed = False
+        # A chunk whose write fails (e.g. a deadlock with another :25 task) is
+        # rolled back and the cursor is not advanced, so retrying it is safe.
+        # Without a retry the run stopped here and the NEXT hour resumed from
+        # the cursor, so every province before it skipped an hour
+        # (2026-11-05: 09:25 deadlock -> 10:25 run only did provinces 1001+).
+        chunk_retries = 0
+        max_chunk_retries = int(os.getenv("PROVINCE_REVENUE_CHUNK_RETRIES", "3"))
 
         db.execute(
             "CREATE TABLE IF NOT EXISTS task_cursors ("
@@ -1445,7 +1452,16 @@ def generate_province_revenue():  # Runs each hour
                     print(f"Failed to update task cursor: {e}")
             chunks_completed += 1
             if revenue_write_failed:
+                if chunk_retries < max_chunk_retries:
+                    chunk_retries += 1
+                    print(
+                        "generate_province_revenue: chunk write failed, retry "
+                        f"{chunk_retries}/{max_chunk_retries}"
+                    )
+                    time.sleep(2 * chunk_retries)
+                    continue
                 break
+            chunk_retries = 0
 
         duration = time.perf_counter() - start_time
         try:
