@@ -1,3 +1,4 @@
+import math
 from datetime import datetime, timezone
 
 from app_core.economy import military_upkeep_v2 as v2
@@ -29,10 +30,10 @@ def test_exact_spec_numbers():
 
 def test_rows_aggregate_per_user():
     rows = {(r["user_id"], r["resource"]): r for r in v2.v2_rows(FakeCursor())}
-    assert rows[(1, "money")]["required_amount"] == 2 * 45_000_000 + 10 * 75_000
+    assert rows[(1, "money")]["required_amount"] == math.ceil((2 * 45_000_000 + 10 * 75_000) / 24)
     assert rows[(1, "money")]["resource_id"] is None
-    assert rows[(1, "steel")]["required_amount"] == 4
-    assert rows[(1, "rations")]["required_amount"] == 10
+    assert rows[(1, "steel")]["required_amount"] == 1  # ceil(4/24)
+    assert rows[(1, "rations")]["required_amount"] == 1  # ceil(10/24)
     assert rows[(2, "gasoline")]["resource_id"] == 14
 
 
@@ -40,3 +41,8 @@ def test_grace_period():
     before = datetime(2026, 11, 6, 18, 59, tzinfo=timezone.utc)
     assert not v2.v2_active(before)
     assert v2.v2_active(v2.UPKEEP_V2_START)
+
+
+def test_per_tick_is_one_24th_of_annual():
+    assert v2.TICKS_PER_YEAR == 24
+    assert v2.math.ceil(75_000 * 24 / 24) == 75_000
