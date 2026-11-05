@@ -64,7 +64,7 @@
         messagesEl.scrollTop = messagesEl.scrollHeight;
     }
 
-    var socket = io();
+    var socket = io({ transports: ['websocket', 'polling'] });
     var joined = false;
 
     function joinRoom() {
