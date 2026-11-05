@@ -11,31 +11,31 @@ claimed before work -- see `app_core/game_ticks/common.py::claim_tick_period`);
 
 | beat entry | task | schedule (UTC) | gate |
 |---|---|---|---|
-| ai_agent | `tasks.task_ai_agent` | <crontab: 30 */1 * * * (m/h/dM/MY/d)> | none (must be idempotent) |
-| assembly_tick | `tasks.task_assembly_tick` | <crontab: */5 * * * * (m/h/dM/MY/d)> | min interval 300s |
-| backfill_missing_resources | `tasks.task_backfill_missing_resources` | <crontab: 15 1 * * * (m/h/dM/MY/d)> | none (must be idempotent) |
-| backup_database | `tasks.task_backup_database` | <crontab: 10 3 * * * (m/h/dM/MY/d)> | none (must be idempotent) |
-| bond_tick | `tasks.task_bond_tick` | <crontab: 50 4 * * * (m/h/dM/MY/d)> | per day |
-| bot_nations | `tasks.task_bot_nations` | <crontab: 50 * * * * (m/h/dM/MY/d)> | none (must be idempotent) |
-| bot_war_ai | `tasks.task_bot_war_ai` | <crontab: */5 * * * * (m/h/dM/MY/d)> | none (must be idempotent) |
-| check_achievements | `tasks.task_check_achievements` | <crontab: */30 * * * * (m/h/dM/MY/d)> | none (must be idempotent) |
-| cleanup_old_spyinfo | `tasks.task_cleanup_old_spyinfo` | <crontab: 30 2 * * * (m/h/dM/MY/d)> | none (must be idempotent) |
-| cleanup_orphan_user_rows | `tasks.task_cleanup_orphan_user_rows` | <crontab: 10 1 * * * (m/h/dM/MY/d)> | none (must be idempotent) |
-| economy_snapshot | `tasks.task_economy_snapshot` | <crontab: 0 */1 * * * (m/h/dM/MY/d)> | none (must be idempotent) |
-| execute_trade_agreements | `tasks.task_execute_trade_agreements` | <crontab: */15 * * * * (m/h/dM/MY/d)> | min interval 65s |
-| generate_province_revenue | `tasks.task_generate_province_revenue` | <crontab: 25 * * * * (m/h/dM/MY/d)> | per hour |
-| global_tick | `tasks.task_global_tick` | <crontab: */10 * * * * (m/h/dM/MY/d)> | min interval 540s |
-| loan_interest | `tasks.task_loan_interest` | <crontab: 40 * * * * (m/h/dM/MY/d)> | per hour |
-| manpower_increase | `tasks.task_manpower_increase` | <crontab: 5 */4 * * * (m/h/dM/MY/d)> | per hour |
-| market_auto_orders | `tasks.task_market_auto_orders` | <crontab: 13 * * * * (m/h/dM/MY/d)> | none (must be idempotent) |
-| natural_disasters | `tasks.task_natural_disasters` | <crontab: 15 * * * * (m/h/dM/MY/d)> | per hour |
-| patreon_gem_grant | `tasks.task_patreon_gem_grant` | <crontab: 0 12 1 * * (m/h/dM/MY/d)> | none (must be idempotent) |
-| population_growth | `tasks.task_population_growth` | <crontab: 45 * * * * (m/h/dM/MY/d)> | per hour |
-| produce_unit_stockpiles | `tasks.task_produce_unit_stockpiles` | <crontab: 35 * * * * (m/h/dM/MY/d)> | per hour |
-| recurring_bank_trades | `tasks.task_recurring_bank_trades` | <crontab: 7,22,37,52 * * * * (m/h/dM/MY/d)> | none (must be idempotent) |
-| tax_income | `tasks.task_tax_income` | <crontab: 0 * * * * (m/h/dM/MY/d)> | per hour |
-| war_auto_expiry | `tasks.task_war_auto_expiry` | <crontab: 50 * * * * (m/h/dM/MY/d)> | per hour |
-| war_reparation_tax | `tasks.task_war_reparation_tax` | <crontab: 0 0 * * * (m/h/dM/MY/d)> | per day |
+| ai_agent | `tasks.task_ai_agent` | `30 */1 * * *` | none (must be idempotent) |
+| assembly_tick | `tasks.task_assembly_tick` | `*/5 * * * *` | min interval 300s |
+| backfill_missing_resources | `tasks.task_backfill_missing_resources` | `15 1 * * *` | none (must be idempotent) |
+| backup_database | `tasks.task_backup_database` | `10 3 * * *` | none (must be idempotent) |
+| bond_tick | `tasks.task_bond_tick` | `50 4 * * *` | per day |
+| bot_nations | `tasks.task_bot_nations` | `50 * * * *` | none (must be idempotent) |
+| bot_war_ai | `tasks.task_bot_war_ai` | `*/5 * * * *` | none (must be idempotent) |
+| check_achievements | `tasks.task_check_achievements` | `*/30 * * * *` | none (must be idempotent) |
+| cleanup_old_spyinfo | `tasks.task_cleanup_old_spyinfo` | `30 2 * * *` | none (must be idempotent) |
+| cleanup_orphan_user_rows | `tasks.task_cleanup_orphan_user_rows` | `10 1 * * *` | none (must be idempotent) |
+| economy_snapshot | `tasks.task_economy_snapshot` | `0 */1 * * *` | none (must be idempotent) |
+| execute_trade_agreements | `tasks.task_execute_trade_agreements` | `*/15 * * * *` | min interval 65s |
+| generate_province_revenue | `tasks.task_generate_province_revenue` | `25 * * * *` | per hour |
+| global_tick | `tasks.task_global_tick` | `*/10 * * * *` | min interval 540s |
+| loan_interest | `tasks.task_loan_interest` | `40 * * * *` | per hour |
+| manpower_increase | `tasks.task_manpower_increase` | `5 */4 * * *` | per hour |
+| market_auto_orders | `tasks.task_market_auto_orders` | `13 * * * *` | none (must be idempotent) |
+| natural_disasters | `tasks.task_natural_disasters` | `15 * * * *` | per hour |
+| patreon_gem_grant | `tasks.task_patreon_gem_grant` | `0 12 1 * *` | none (must be idempotent) |
+| population_growth | `tasks.task_population_growth` | `45 * * * *` | per hour |
+| produce_unit_stockpiles | `tasks.task_produce_unit_stockpiles` | `35 * * * *` | per hour |
+| recurring_bank_trades | `tasks.task_recurring_bank_trades` | `7,22,37,52 * * * *` | none (must be idempotent) |
+| tax_income | `tasks.task_tax_income` | `0 * * * *` | per hour |
+| war_auto_expiry | `tasks.task_war_auto_expiry` | `50 * * * *` | per hour |
+| war_reparation_tax | `tasks.task_war_reparation_tax` | `0 0 * * *` | per day |
 
 Sub-steps gated inside `global_tick` (per hour): `military_maintenance`, `war_supply_regen`
 
