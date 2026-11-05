@@ -156,6 +156,17 @@ def generate_province_revenue():  # Runs each hour
             "VALUES (%s, %s) ON CONFLICT DO NOTHING",
             ("generate_province_revenue", 0),
         )
+        # A cursor above 0 here means the previous run stopped part-way (deadlock,
+        # time budget, deploy). This run first finishes that remainder (the
+        # provinces the previous hour never got), then does one full pass for
+        # the current hour. Without the second pass the provinces the previous
+        # run had already served skipped this hour (2026-11-05 10:00).
+        db.execute(
+            "SELECT last_id FROM task_cursors WHERE task_name=%s",
+            ("generate_province_revenue",),
+        )
+        _cursor_row = db.fetchone()
+        catch_up_pending = bool(_cursor_row and _cursor_row[0])
 
         while chunks_completed < max_chunks and time.perf_counter() < revenue_deadline:
             infra_ids = []
@@ -185,6 +196,15 @@ def generate_province_revenue():  # Runs each hour
                         conn.commit()
                     except Exception:
                         pass
+                    if catch_up_pending:
+                        # Remainder of the interrupted previous run is done;
+                        # now run the current hour from the start (once).
+                        catch_up_pending = False
+                        print(
+                            "generate_province_revenue: finished interrupted "
+                            "previous run, starting current hour"
+                        )
+                        continue
                     break
             except Exception:
                 rollback_db_cursor(db)
