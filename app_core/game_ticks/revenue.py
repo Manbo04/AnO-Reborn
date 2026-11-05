@@ -1162,11 +1162,17 @@ def generate_province_revenue():  # Runs each hour
             # Write all gold deductions in batch
             try:
                 if gold_deductions:
-                    gold_updates = [
-                        (amount, user_id)
-                        for user_id, amount in gold_deductions.items()
-                        if amount > 0
-                    ]
+                    # Sorted so every batch takes row locks in the same order
+                    # (unordered batches deadlocked with other writers, 09:25
+                    # 2026-11-05).
+                    gold_updates = sorted(
+                        (
+                            (amount, user_id)
+                            for user_id, amount in gold_deductions.items()
+                            if amount > 0
+                        ),
+                        key=lambda row: row[1],
+                    )
                     if gold_updates:
                         ledger.take_gold_batch(db, gold_updates)
                         log_verbose(f"Batch updated gold for {len(gold_updates)} users")
@@ -1268,6 +1274,7 @@ def generate_province_revenue():  # Runs each hour
                                 pid,
                             )
                         )
+                    province_updates.sort(key=lambda row: row[-1])
                     if province_updates:
                         try:
                             execute_batch(
@@ -1344,11 +1351,14 @@ def generate_province_revenue():  # Runs each hour
                                 for row in dbdict.fetchall()
                             }
 
-                            batch_values = [
-                                (uid, resource_id_map[rname], max(0, delta), delta)
-                                for uid, rname, delta in resource_updates
-                                if rname in resource_id_map
-                            ]
+                            batch_values = sorted(
+                                (
+                                    (uid, resource_id_map[rname], max(0, delta), delta)
+                                    for uid, rname, delta in resource_updates
+                                    if rname in resource_id_map
+                                ),
+                                key=lambda bv: (bv[0], bv[1]),
+                            )
 
                             if batch_values:
                                 ledger.adjust_resource_batch(
@@ -1395,6 +1405,7 @@ def generate_province_revenue():  # Runs each hour
                         )
                         if edu_none or edu_hs or edu_col:
                             edu_updates.append((edu_none, edu_hs, edu_col, pid))
+                    edu_updates.sort(key=lambda row: row[-1])
                     if edu_updates:
                         db.execute("SAVEPOINT revenue_education_batch")
                         try:
