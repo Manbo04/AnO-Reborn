@@ -19,19 +19,19 @@
         <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">calculate</span> Base Calculation</h3>
-                <p class="templatecontentpleft">Every citizen pays taxes each hour. The base rate is modified by various factors.</p>
+                <p class="templatecontentpleft">Working-age citizens pay taxes each hour; elderly pay 45% of the rate and children pay nothing. The base rate is modified by various factors.</p>
                 <table class="templatetable">
-                    <tr><td><strong>Base Tax Rate</strong></td><td>$0.75 per citizen per hour</td></tr>
-                    <tr><td><strong>Example (1M pop)</strong></td><td>$750,000 per hour base</td></tr>
-                    <tr><td><strong>Example (10M pop)</strong></td><td>$7,500,000 per hour base</td></tr>
+                    <tr><td><strong>Base Tax Rate</strong></td><td>$0.75 per working-age citizen per hour (elderly $0.34, children $0)</td></tr>
+                    <tr><td><strong>Example (1M working-age)</strong></td><td>$750,000 per hour base</td></tr>
+                    <tr><td><strong>Example (10M working-age)</strong></td><td>$7,500,000 per hour base</td></tr>
                 </table>
             </div>
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">tune</span> Modifiers</h3>
                 <table class="templatetable">
-                    <tr><td><strong>Consumer Goods Supplied</strong></td><td>+50% taxes</td></tr>
-                    <tr><td><strong>No Rations</strong></td><td>-30% taxes</td></tr>
-                    <tr><td><strong>Land Slots</strong></td><td>+2% per slot (max +100%)</td></tr>
+                    <tr><td><strong>Consumer Goods Supplied</strong></td><td>Up to +50% taxes, per province, in proportion to how much of its consumer goods need your retail buildings there can deliver (goods shipped in from other provinces count half)</td></tr>
+                    <tr><td><strong>No Rations</strong></td><td>Up to -30% taxes, scaled to how short your rations are (full -30% only with none reaching your people)</td></tr>
+                    <tr><td><strong>Land Slots</strong></td><td>+2% per land slot beyond the first, per province (max +100% at 51 land)</td></tr>
                 </table>
             </div>
         </div>
@@ -57,11 +57,12 @@
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">school</span> Increasing Productivity</h3>
                 <table class="templatetable">
-                    <tr><td><strong>Transit</strong></td><td>Monorails, Metros, Railways (major productivity boost)</td></tr>
-                    <tr><td><strong>Schools</strong></td><td>Best productivity boost</td></tr>
-                    <tr><td><strong>Libraries</strong></td><td>Moderate boost</td></tr>
-                    <tr><td><strong>Universities</strong></td><td>High-tier boost</td></tr>
-                    <tr><td><strong>Factories</strong></td><td>Minor boost</td></tr>
+                    <tr><td><strong>Transit</strong></td><td>Monorails +16, Metros +12, Railways +8 (biggest boosts)</td></tr>
+                    <tr><td><strong>Universities</strong></td><td>+10</td></tr>
+                    <tr><td><strong>Schools</strong></td><td>High Schools +5, Primary Schools +2</td></tr>
+                    <tr><td><strong>Libraries</strong></td><td>+3</td></tr>
+                    <tr><td><strong>Factories</strong></td><td>No productivity effect</td></tr>
+                    <tr><td><strong>How it adds up</strong></td><td>Each building adds its points to the province's productivity every hour it runs (max 100); transit, universities and libraries need power to run</td></tr>
                 </table>
             </div>
         </div>
@@ -140,7 +141,7 @@
                 <p class="templatecontentpleft">Each building has hourly operating costs deducted from your gold.</p>
                 <table class="templatetable">
                     <tr><td><strong>How It Works</strong></td><td>Costs deducted automatically each hour</td></tr>
-                    <tr><td><strong>If Broke</strong></td><td>Buildings stop producing</td></tr>
+                    <tr><td><strong>If Broke</strong></td><td>Only as many buildings as you can afford to run produce; the rest sit idle</td></tr>
                     <tr><td><strong>View Costs</strong></td><td>Check province page tooltips</td></tr>
                 </table>
             </div>
@@ -148,7 +149,7 @@
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">lightbulb</span> Tips to Maximize Income</h3>
                 <ul class="templatecontentpleft">
                     <li>Keep rations supplied to avoid the -30% penalty</li>
-                    <li>Match consumer goods to population (1 per 80k)</li>
+                    <li>Match consumer goods to population (about 1 per 80k; elderly need more) and keep retail buildings in every province</li>
                     <li>Build productivity infrastructure early</li>
                     <li>Buy land slots for +2% tax bonus each</li>
                     <li>Sell surplus resources on the market</li>

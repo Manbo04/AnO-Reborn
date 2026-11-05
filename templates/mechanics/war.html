@@ -20,9 +20,10 @@
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">checklist</span> Requirements</h3>
                 <table class="templatetable">
-                    <tr><td><strong>No Active Truce</strong></td><td>Cannot attack nations you have truce with</td></tr>
-                    <tr><td><strong>War Range</strong></td><td>Target's strength (population + military) must be 75&ndash;133% of yours</td></tr>
-                    <tr><td><strong>Not Already at War</strong></td><td>Limited active wars allowed</td></tr>
+                    <tr><td><strong>No Active Truce</strong></td><td>After a war ends, the side that declared it can't declare on the same nation again for 3 days. The other side can't declare back for 24 hours</td></tr>
+                    <tr><td><strong>War Range</strong></td><td>Target's population must be 75&ndash;133% of yours. Military size does not count</td></tr>
+                    <tr><td><strong>Not Already at War</strong></td><td>You can fight several nations at once, but only one war at a time with the same nation</td></tr>
+                    <tr><td><strong>No Pact</strong></td><td>You can't declare on a nation you have a Non-Aggression Pact or Alliance with, and nations on vacation or hidden from interaction can't be targeted</td></tr>
                 </table>
             </div>
             <div class="templatedivflex2left">
@@ -50,15 +51,16 @@
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">local_fire_department</span> Raze</h3>
                 <p class="templatecontentpleft">Maximizes damage to the enemy's buildings. No gold is looted.</p>
                 <table class="templatetable">
-                    <tr><td><strong>Province damage</strong></td><td>10&times; normal</td></tr>
+                    <tr><td><strong>Province damage</strong></td><td>10&times; normal. Each winning attack can destroy up to 25% of the buildings in one random enemy province</td></tr>
                     <tr><td><strong>Gold looted</strong></td><td>No gold taken</td></tr>
+                    <tr><td><strong>Daily plunder after the war</strong></td><td>Only 5% per day instead of 20% (see How a War Ends)</td></tr>
                 </table>
             </div>
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">balance</span> Sustained</h3>
                 <p class="templatecontentpleft">The baseline option &mdash; no bonus and no penalty to province damage, no gold looted per attack.</p>
                 <table class="templatetable">
-                    <tr><td><strong>Province damage</strong></td><td>Normal</td></tr>
+                    <tr><td><strong>Province damage</strong></td><td>Normal. Each winning attack can destroy up to 8% of the buildings in one random enemy province</td></tr>
                     <tr><td><strong>Gold looted</strong></td><td>No gold taken</td></tr>
                 </table>
             </div>
@@ -69,13 +71,13 @@
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">payments</span> Loot</h3>
                 <p class="templatecontentpleft">Trades destruction for profit &mdash; much lighter on the enemy's buildings, but every attack you win has a chance to steal some of their gold.</p>
                 <table class="templatetable">
-                    <tr><td><strong>Province damage</strong></td><td>Only 20% of normal</td></tr>
-                    <tr><td><strong>Gold looted</strong></td><td>Random amount, 0&ndash;10% of the defender's current gold, per winning attack</td></tr>
+                    <tr><td><strong>Province damage</strong></td><td>Only 20% of normal. Each winning attack can destroy at most 3% of the buildings in one random enemy province (always at least 1 if the damage is big enough)</td></tr>
+                    <tr><td><strong>Gold looted</strong></td><td>Only on a winning <strong>ground</strong> attack (air and naval wins steal nothing): a random amount from 0 up to 10% of the defender's current gold (only 2% against bot nations)</td></tr>
                 </table>
             </div>
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">info</span> All war types, always</h3>
-                <p class="templatecontentpleft">Regardless of war type, when a war ends (either side's morale hits 0) the winner takes 20% of every resource the loser has (30% with the Looting Teams project). That end-of-war plunder is separate from the per-attack gold steal Loot-type wars get.</p>
+                <p class="templatecontentpleft">Regardless of war type, when a war ends because one side's morale hits 0, the winner takes 20% of every resource the loser has (30% with the Looting Teams tech). That end-of-war plunder is separate from the per-attack gold steal Loot-type wars get. Surrender and peace deals work differently (see How a War Ends).</p>
             </div>
         </div>
 
@@ -122,7 +124,7 @@
                 <p class="templatecontentpleft"><strong>Requires:</strong> Admin Buildings & Silos</p>
                 <table class="templatetable">
                     <tr><td><strong>Spies</strong></td><td>Intel ops, 10 per admin building</td></tr>
-                    <tr><td><strong>Counter-Intelligence Agents</strong></td><td>Intercept enemy spy ops before they happen (up to 60% chance), 10 per admin building</td></tr>
+                    <tr><td><strong>Counter-Intelligence Agents</strong></td><td>Intercept enemy spy ops before they happen (up to 60% chance, higher the more agents you have per spy sent), 10 per admin building</td></tr>
                     <tr><td><strong>ICBMs</strong></td><td>Long-range missiles (see below)</td></tr>
                     <tr><td><strong>Nukes</strong></td><td>Mass destruction (see below)</td></tr>
                 </table>
@@ -143,23 +145,25 @@
                 <table class="templatetable">
                     <tr><td><strong>Cost</strong></td><td>$16M + 80 t aluminium + 50 t components + 15 t gasoline</td></tr>
                     <tr><td><strong>Build Limit</strong></td><td>Silos + 1 (can build 1 without silos)</td></tr>
-                    <tr><td><strong>Launch Requirement</strong></td><td>Need at least 1 Silo to launch</td></tr>
-                    <tr><td><strong>Target</strong></td><td>Enemy military units + random province damage</td></tr>
+                    <tr><td><strong>Launch Requirement</strong></td><td>An active war and at least 1 ICBM in stock. No silo is needed to fire, silos only raise how many you can hold</td></tr>
+                    <tr><td><strong>Target</strong></td><td>Enemy military units + random province damage. Iron Domes in the hit province can shoot down part of a salvo (up to half; more with the Star Wars Project tech)</td></tr>
                 </table>
                 <p class="templatecontentpleft" style="margin-top: 10px;"><em>Note: You need the ICBM Silo technology to buy ICBMs. With it you can hold 1 ICBM without any silos; silos let you store more and are needed to launch them in war.</em></p>
             </div>
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">dangerous</span> Nuclear Weapons (Nukes)</h3>
-                <p class="templatecontentpleft">The ultimate weapon. A nuke hits <strong>one province you choose</strong> and faces that province's Iron Domes (up to 50% interception, so it can be shot down). You review the expected damage and cost, then confirm, before it launches.</p>
+                <p class="templatecontentpleft">The ultimate weapon. A nuke hits <strong>one province you choose</strong> and faces that province's Iron Domes. A single nuke is all-or-nothing: without the Star Wars Project tech it can't be shot down, with it the target province needs about 6&ndash;10 Iron Domes (10 is the maximum) for a real chance (roughly 35% at 6, almost certain at 9&ndash;10). A shot-down nuke is still used up. You review the expected damage and cost, then confirm, before it launches.</p>
                 <table class="templatetable">
                     <tr><td><strong>Cost</strong></td><td>$80M + 120 t aluminium + 100 t components + 25 t gasoline + 20 t uranium</td></tr>
                     <tr><td><strong>Build Limit</strong></td><td>1 per Silo (requires silos)</td></tr>
                     <tr><td><strong>How to launch</strong></td><td>Wars &rarr; Attack &rarr; Nukes, or "Plan nuclear strike" on the enemy's country page (needs an active war)</td></tr>
                     <tr><td><strong>Deaths</strong></td><td>Depend on density: the blast covers ~1,413 km&sup2;, hitting the cities first. Many cities on little land = heavy losses; big spread-out provinces lose only a small share</td></tr>
-                    <tr><td><strong>Damage</strong></td><td>Cities and buildings destroyed in proportion to the area hit; happiness in that province drops hard</td></tr>
+                    <tr><td><strong>Damage</strong></td><td>Cities and buildings destroyed in proportion to the area hit; happiness in that province drops by up to 30 points</td></tr>
+                    <tr><td><strong>Fallout</strong></td><td>Radiation also kills 0.5% of the population of every province of the target nation, however spread out it is</td></tr>
+                    <tr><td><strong>Volley limit</strong></td><td>Each side can launch only ONE nuke per war (a shot-down nuke counts). Launching needs an active war</td></tr>
                     <tr><td><strong>Repeat strikes</strong></td><td>Hitting the same province again within 72h does less damage (each recent strike halves it)</td></tr>
                     <tr><td><strong>Influence cost</strong></td><td>First strike: 50% of your influence, and further launches compound. Retaliation (they nuked you first in this war): 25%. The penalty fades over 7 days</td></tr>
-                    <tr><td><strong>Requirement</strong></td><td>At least 1,000,000 influence to launch, unless retaliating</td></tr>
+                    <tr><td><strong>Requirement</strong></td><td>At least 1,000,000 influence to launch, unless retaliating. Requires the Nuclear Testing Facility tech</td></tr>
                 </table>
                 <p class="templatecontentpleft" style="margin-top: 10px;"><em>Note: You cannot build nukes without silos. Each silo allows you to store 1 nuke.</em></p>
             </div>
@@ -172,16 +176,17 @@
                 <table class="templatetable">
                     <tr><td><strong>Build Cost</strong></td><td>$350M + 1.08 kt steel + 480 t aluminium</td></tr>
                     <tr><td><strong>Location</strong></td><td>Province → Infrastructure → Military tab</td></tr>
-                    <tr><td><strong>Provides</strong></td><td>+1 ICBM capacity, +1 Nuke capacity</td></tr>
+                    <tr><td><strong>Provides</strong></td><td>+1 ICBM capacity, +1 Nuke capacity (silos can be bombed and destroyed in war)</td></tr>
                 </table>
             </div>
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">tips_and_updates</span> WMD Technologies</h3>
-                <p class="templatecontentpleft">Researched on the Upgrades page (cost in components). Chain: Better Engineering, Nuclear Testing Facility, Ballistic Missile Silo, ICBM Silo.</p>
+                <p class="templatecontentpleft">Researched on the Upgrades page (cost in components). Chain: Better Engineering, Nuclear Testing Facility, Ballistic Missile Silo, ICBM Silo. Nuclear Testing Facility and ICBM Silo also need at least 2 Universities in your nation.</p>
                 <table class="templatetable">
                     <tr><td><strong>Ballistic Missile Silo</strong></td><td>40 t components - Prerequisite for the ICBM Silo</td></tr>
                     <tr><td><strong>ICBM Silo</strong></td><td>50 t components - Required before you can buy ICBMs</td></tr>
                     <tr><td><strong>Nuclear Testing Facility</strong></td><td>60 t components - Required before building nukes</td></tr>
+                    <tr><td><strong>Star Wars Project</strong></td><td>1,200 t components - Iron Domes intercept 25% more (also needs 2 Universities)</td></tr>
                 </table>
             </div>
         </div>
@@ -195,7 +200,7 @@
                     <li>Click <strong>"Attack"</strong> to enter combat</li>
                     <li>Select <strong>"Special Attack"</strong> (missiles/nukes option)</li>
                     <li>Choose your WMD and target enemy units</li>
-                    <li>ICBMs consume 1 unit per launch and damage a random enemy province. Nukes open the nuclear strike planner instead, where you pick the province</li>
+                    <li>ICBMs you fire are used up and damage a random enemy province. Nukes open the nuclear strike planner instead, where you pick the province</li>
                 </ol>
             </div>
         </div>
@@ -212,18 +217,20 @@
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">psychology</span> Morale</h3>
                 <p class="templatecontentpleft">Morale determines your nation's will to fight.</p>
                 <table class="templatetable">
-                    <tr><td><strong>Losing Battles</strong></td><td>Defenders lose morale when defeated; failed attacks cost the attacker 0 morale</td></tr>
-                    <tr><td><strong>0% Morale</strong></td><td>Forced surrender</td></tr>
-                    <tr><td><strong>Recovery</strong></td><td>Slowly regenerates over time</td></tr>
+                    <tr><td><strong>Starting Morale</strong></td><td>Each side starts a war at 100</td></tr>
+                    <tr><td><strong>Losing Battles</strong></td><td>Only the side that gets attacked and loses loses morale: roughly 5, 10 or 15 per lost battle (close, definite victory or annihilation). A failed attack costs the attacker 0 morale, so only defenders can be broken this way</td></tr>
+                    <tr><td><strong>0% Morale</strong></td><td>The war ends at once and the winner takes the war spoils</td></tr>
+                    <tr><td><strong>Recovery</strong></td><td>Morale does not regenerate during a war</td></tr>
                 </table>
             </div>
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">inventory</span> Attack Costs</h3>
-                <p class="templatecontentpleft">Attacks cost action points (AP) and consume resources.</p>
+                <p class="templatecontentpleft">Attacks cost action points (AP) only. They do not use up ammunition or oil. Ground, air and naval each have their own AP pool: it holds up to 12 and refills by 1 every hour.</p>
                 <table class="templatetable">
-                    <tr><td><strong>Ground Attack</strong></td><td>Uses ammunition, oil</td></tr>
-                    <tr><td><strong>Air Strike</strong></td><td>Uses oil, ammunition</td></tr>
-                    <tr><td><strong>Naval Attack</strong></td><td>Uses oil, ammunition</td></tr>
+                    <tr><td><strong>Ground Attack</strong></td><td>3 ground AP</td></tr>
+                    <tr><td><strong>Air Strike</strong></td><td>3 air AP</td></tr>
+                    <tr><td><strong>Naval Attack</strong></td><td>3 naval AP</td></tr>
+                    <tr><td><strong>ICBMs / Nukes</strong></td><td>No AP, but the missiles are used up</td></tr>
                 </table>
             </div>
         </div>
@@ -241,8 +248,8 @@
                 <p class="templatecontentpleft">Use soldiers, tanks, and artillery against enemy ground forces.</p>
                 <table class="templatetable">
                     <tr><td><strong>Units</strong></td><td>Soldiers, Tanks, Artillery</td></tr>
-                    <tr><td><strong>Resources</strong></td><td>Ammunition, Oil</td></tr>
-                    <tr><td><strong>Effective vs</strong></td><td>Enemy ground forces & infrastructure</td></tr>
+                    <tr><td><strong>Cost</strong></td><td>3 ground AP</td></tr>
+                    <tr><td><strong>Effective vs</strong></td><td>Enemy ground forces & infrastructure. Attack helicopters (Apaches) can join a ground attack</td></tr>
                 </table>
             </div>
             <div class="templatedivflex2left">
@@ -250,7 +257,7 @@
                 <p class="templatecontentpleft">Use fighters, bombers, and apaches for air superiority.</p>
                 <table class="templatetable">
                     <tr><td><strong>Units</strong></td><td>Fighters, Bombers, Apaches</td></tr>
-                    <tr><td><strong>Resources</strong></td><td>Oil, Ammunition</td></tr>
+                    <tr><td><strong>Cost</strong></td><td>3 air AP</td></tr>
                     <tr><td><strong>Effective vs</strong></td><td>Enemy air forces & infrastructure</td></tr>
                 </table>
             </div>
@@ -262,7 +269,7 @@
                 <p class="templatecontentpleft">Use destroyers, cruisers, and submarines for naval combat.</p>
                 <table class="templatetable">
                     <tr><td><strong>Units</strong></td><td>Destroyers, Cruisers, Submarines</td></tr>
-                    <tr><td><strong>Resources</strong></td><td>Oil, Ammunition</td></tr>
+                    <tr><td><strong>Cost</strong></td><td>3 naval AP</td></tr>
                     <tr><td><strong>Effective vs</strong></td><td>Enemy naval forces</td></tr>
                 </table>
             </div>
@@ -271,7 +278,7 @@
                 <p class="templatecontentpleft">Launch ICBMs or nukes for devastating strikes.</p>
                 <table class="templatetable">
                     <tr><td><strong>Units</strong></td><td>ICBMs, Nukes</td></tr>
-                    <tr><td><strong>Requirement</strong></td><td>At least 1 Silo</td></tr>
+                    <tr><td><strong>Requirement</strong></td><td>At least 1 ICBM or nuke in stock (silos only set how many you can hold)</td></tr>
                     <tr><td><strong>Effect</strong></td><td>ICBMs: destroy units + damage a random province. Nukes: one chosen province (see above)</td></tr>
                 </table>
             </div>
@@ -288,9 +295,10 @@
             <div class="templatedivflex2left">
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">celebration</span> On Victory</h3>
                 <table class="templatetable">
-                    <tr><td><strong>Resource Transfer</strong></td><td>Claim enemy resources</td></tr>
-                    <tr><td><strong>Reparations</strong></td><td>Daily gold payments</td></tr>
-                    <tr><td><strong>Truce Timer</strong></td><td>Cannot be attacked back immediately</td></tr>
+                    <tr><td><strong>Resource Transfer</strong></td><td>Morale break or unconditional surrender: you take 20% of every resource the loser has (30% with Looting Teams). Conditional surrender: 10%</td></tr>
+                    <tr><td><strong>Daily plunder</strong></td><td>After a war ended by morale break or surrender, the winner takes a further 20% of every one of the loser's resources each day for 7 days (5% if the war was Raze). Wars ended by an agreed peace deal don't do this</td></tr>
+                    <tr><td><strong>Truce Timer</strong></td><td>The side that declared the war can't declare on the same nation again for 3 days. The other side can't declare back for 24 hours</td></tr>
+                    <tr><td><strong>Civilian losses</strong></td><td>A won ground attack kills 1&ndash;3% of the hit province's population (bombers: 2&ndash;6%, and also destroy some enemy soldiers and tanks)</td></tr>
                 </table>
             </div>
             <div class="templatedivflex2left">
@@ -303,6 +311,45 @@
                     <li>Don't overextend - watch your morale</li>
                     <li>Build silos before investing in WMDs</li>
                 </ul>
+            </div>
+        </div>
+
+        <!-- How a War Ends -->
+        <table class="templatetable">
+            <tr>
+                <th><span class="material-icons-outlined">handshake</span> How a War Ends</th>
+            </tr>
+        </table>
+
+        <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">schedule</span> Timing</h3>
+                <table class="templatetable">
+                    <tr><td><strong>Minimum length</strong></td><td>A war must run 24 hours before it can end by peace deal or surrender. Only a morale break (0 morale) can end it sooner</td></tr>
+                    <tr><td><strong>Auto-end</strong></td><td>A war nobody ends is closed automatically after 7 days</td></tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">mail</span> Peace Offer</h3>
+                <p class="templatecontentpleft">Either side can propose peace and name resources the other side must hand over. The war ends when the other side accepts, and only the agreed terms change hands.</p>
+            </div>
+        </div>
+
+        <div class="templatedivflex2 menuflex tutorialdiv card-align-row">
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">flag</span> Surrender</h3>
+                <p class="templatecontentpleft">A surrender needs both sides: you offer it, your enemy accepts or rejects it. If rejected, the war goes on.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Conditional</strong></td><td>The war ends and the winner takes 10% of every resource. No further penalty</td></tr>
+                    <tr><td><strong>Unconditional</strong></td><td>The winner takes the full spoils (20%, or 30% with Looting Teams) and your military size cap is halved for 5 days</td></tr>
+                </table>
+            </div>
+            <div class="templatedivflex2left">
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">diversity_3</span> Allies (Mutual Defense)</h3>
+                <p class="templatecontentpleft">When you are attacked, your Mutual Defense partners can join the war against the aggressor as a counter-attack. The aggressor stays the aggressor.</p>
+                <table class="templatetable">
+                    <tr><td><strong>Joining</strong></td><td>The ally must be within war range of the aggressor, not have ended another war in the last 3 days, and not have a Non-Aggression Pact with the aggressor</td></tr>
+                </table>
             </div>
         </div>
 
@@ -319,19 +366,16 @@
                 <p class="templatecontentpleft">Attacking costs <strong>action points</strong> only. Defending is free: you automatically field all your units of the attacked domain.</p>
                 <ul class="templatecontentpleft">
                     <li><strong>Reduce incoming damage</strong> and protect your resources</li>
-                    <li><strong>Field units</strong>: your whole standing army of that domain defends</li>
-                    <li><strong>Citizen Army</strong>: If you have no active standard units defending, a civilian militia will automatically activate, inflicting small but guaranteed casualties on the attacker</li>
+                    <li><strong>Field units</strong>: your whole standing army of the attacked branch defends (ground: soldiers, tanks, artillery; air: fighters, bombers, apaches; naval: destroyers, cruisers, submarines)</li>
+                    <li><strong>Citizen Army</strong>: If you have no ground units left when a ground attack hits, a civilian militia fights instead. It can't win, but kills about 4&ndash;25% of every unit type the attacker sent (typically 10&ndash;20%, more for bigger nations). Air and naval attacks don't face it</li>
                 </ul>
             </div>
             <div class="templatedivflex2left">
-                <h3 class="templatecontentheader"><span class="material-icons-outlined">edit</span> How to Organize Defense</h3>
+                <h3 class="templatecontentheader"><span class="material-icons-outlined">edit</span> No Defense Setup Needed</h3>
+                <p class="templatecontentpleft">There is nothing to organize: defense is automatic. Every unit you own in the attacked branch fights, so the best defense is a large, balanced army in all three branches.</p>
                 <table class="templatetable">
-                    <tr><td><strong>Step 1</strong></td><td>Go to Wars page</td></tr>
-                    <tr><td><strong>Step 2</strong></td><td>Click "Organize Defense" button</td></tr>
-                    <tr><td><strong>Step 3</strong></td><td>Select exactly 3 unit types</td></tr>
-                    <tr><td><strong>Step 4</strong></td><td>Click "Save Defense Selection"</td></tr>
+                    <tr><td><strong>Entrenchment</strong></td><td>Ground units dug in defend up to +30% stronger (+10% per level, max level 3)</td></tr>
                 </table>
-                <p class="templatecontentpleft"><strong>Pro Tip:</strong> Choose your strongest unit types for maximum damage reduction.</p>
             </div>
         </div>
 
