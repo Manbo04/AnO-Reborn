@@ -26,7 +26,7 @@ def _lumber(db, uid):
 def truce():
     made = []
 
-    def _make(war_type):
+    def _make(war_type, a_morale=100, d_morale=0, status=None):
         with get_db_connection() as conn:
             db = conn.cursor()
             ids = []
@@ -50,9 +50,9 @@ def truce():
             # defender_morale 0 -> attacker (winner) beat the defender (loser)
             db.execute(
                 "INSERT INTO wars (attacker, defender, war_type, agressor_message, start_date, "
-                "last_visited, peace_date, attacker_morale, defender_morale) "
-                "VALUES (%s, %s, %s, 'test', %s, %s, %s, 100, 0) RETURNING id",
-                (winner, loser, war_type, now, now, now),
+                "last_visited, peace_date, attacker_morale, defender_morale, status) "
+                "VALUES (%s, %s, %s, 'test', %s, %s, %s, %s, %s, COALESCE(%s, 'active')) RETURNING id",
+                (winner, loser, war_type, now, now, now, a_morale, d_morale, status),
             )
             war_id = db.fetchone()[0]
             conn.commit()
@@ -103,3 +103,18 @@ def test_reparations_run_once_per_day(truce):
             conn.cursor().execute("DELETE FROM task_runs WHERE task_name = 'war_reparation_tax'")
             conn.commit()
 
+
+
+@pytest.mark.parametrize("kwargs", [
+    {"a_morale": 100, "d_morale": 100},  # surrender: spoils already paid once
+    {"a_morale": 60, "d_morale": 40, "status": "ended"},  # auto-expired white peace
+])
+def test_no_daily_plunder_without_morale_break(truce, kwargs):
+    from app_core.game_ticks.taxes import war_reparation_tax
+
+    winner, loser = truce("Sustained", **kwargs)
+    war_reparation_tax()
+    with get_db_connection() as conn:
+        db = conn.cursor()
+        assert _lumber(db, loser) == 1000
+        assert _lumber(db, winner) == 0

@@ -7,7 +7,7 @@
 {# Only rendered for logged-out visitors now; logged-in players get the in-game
    Command Briefing tour instead (see app_core/main/routes.py::tutorial). #}
 <link href="{{ url_for('static', filename='tutorial.css') }}?v=12" rel="stylesheet" type="text/css" />
-<script defer src="{{ url_for('static', filename='tutorial.js') }}?v=12"></script>
+<script defer src="{{ url_for('static', filename='tutorial.js') }}?v=13"></script>
 {% endblock %}
 {% from "tutorial_chapter_extras.html" import chapter_video_block, chapter_follow_block %}
 {% block body %}
@@ -305,7 +305,7 @@
                             <div class="tutorial-widget" data-widget="tax-calc">
                                 <h4><span class="material-icons-outlined">calculate</span> Live tax calculator</h4>
                                 <div class="tutorial-slider-row">
-                                    <label>Population: <strong data-tax-pop-label>500,000</strong></label>
+                                    <label>Working-age population: <strong data-tax-pop-label>500,000</strong></label>
                                     <input type="range" data-tax-pop min="0" max="5000000" step="50000" value="500000" />
                                 </div>
                                 <div class="tutorial-slider-row">
@@ -313,7 +313,7 @@
                                     <input type="range" data-tax-land min="0" max="50" value="5" />
                                 </div>
                                 <label class="templatecheckmarklabel"><input type="checkbox" data-tax-cg checked> Consumer goods fully supplied (+50%)</label>
-                                <label class="templatecheckmarklabel"><input type="checkbox" data-tax-food checked> Rations supplied (no −30% penalty)</label>
+                                <label class="templatecheckmarklabel"><input type="checkbox" data-tax-food checked> Rations reach your people (unchecked = none do, −30%)</label>
                                 <div class="tutorial-result-box" data-tax-result></div>
                             </div>
                         </div>

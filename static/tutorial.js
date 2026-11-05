@@ -346,7 +346,7 @@
             var hourly = pop * base;
             if (cgCheck && cgCheck.checked) hourly *= cgMult;
             if (foodCheck && !foodCheck.checked) hourly *= noFood;
-            hourly *= 1 + Math.min(land * landMult, 1);
+            hourly *= 1 + Math.min(Math.max(land - 1, 0) * landMult, 1); // first land slot gives no bonus
             if (resultEl) {
                 resultEl.innerHTML =
                     "<strong>$" +
