@@ -5,7 +5,7 @@
 <head>
     <meta charset="utf-8">
     <title>{% block seo_title %}{% block title %}{% endblock %} | Affairs and Order · MMO Nation Game{% endblock %}</title>
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/titleimage.png') }}?v=3">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/titleimage.png') }}?v=4">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -20,7 +20,7 @@
     <meta property="og:title" content="{% block og_title %}Affairs and Order · MMO Nation Game{% endblock %}">
     <meta property="og:description" content="{% block og_description %}Affairs and Order is a browser-based massively multiplayer nation building game where you can simulate your very own country.{% endblock %}">
     <meta property="og:url" content="{{ request.url if request else 'https://affairsandorder.org/' }}">
-    <meta property="og:image" content="{% block og_image %}{{ url_for('static', filename='images/titleimage.png', _external=True) }}?v=3{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ url_for('static', filename='images/titleimage.png', _external=True) }}?v=4{% endblock %}">
     <meta property="og:image:width" content="{% block og_image_width %}498{% endblock %}">
     <meta property="og:image:height" content="{% block og_image_height %}498{% endblock %}">
 
@@ -28,7 +28,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{% block twitter_title %}Affairs and Order · MMO Nation Game{% endblock %}">
     <meta name="twitter:description" content="{% block twitter_description %}Affairs and Order is a browser-based massively multiplayer nation building game where you can simulate your very own country.{% endblock %}">
-    <meta name="twitter:image" content="{% block twitter_image %}{{ url_for('static', filename='images/titleimage.png', _external=True) }}?v=3{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ url_for('static', filename='images/titleimage.png', _external=True) }}?v=4{% endblock %}">
 
     <meta name="theme-color" content="#1c2029" id="meta-theme-color">
     <script>
@@ -219,7 +219,7 @@
     }
     </style>
 
-    <link rel="icon" href="{{ url_for('static', filename='images/titleimage.png') }}?v=3" type="image/png">
+    <link rel="icon" href="{{ url_for('static', filename='images/titleimage.png') }}?v=4" type="image/png">
     <!-- Google Analytics + AdSense are loaded by static/js/cookie-consent.js, only after
          the visitor accepts the cookie banner (see partials/cookie_consent.html). -->
     <script>
@@ -271,7 +271,7 @@
         {% endif %}
 
         <a class="navbarparenttitle" href="/">
-            <img alt="A&O bird icon" src="{{ url_for('static', filename='images/titleimage.png') }}?v=3" class="navbarparenttitleimage" /> Affairs and Order</a>
+            <img alt="A&O bird icon" src="{{ url_for('static', filename='images/titleimage.png') }}?v=4" class="navbarparenttitleimage" /> Affairs and Order</a>
 
         {% if session.get('user_id') != None %}
         <button type="button" class="theme-toggle-btn navbar-theme-toggle" data-theme-toggle onclick="toggleTheme()" aria-label="Switch to light mode" title="Switch to light mode">
@@ -650,7 +650,7 @@
             <div class="templatedivflex2left footerchild">
 
                 <h1 class="footertitle navbarparenttitle">
-                    <img alt="A&O bird icon" src="{{ url_for('static', filename='images/titleimage.png') }}?v=3" class="navbarparenttitleimage footertitleicon" /> Affairs and Order</h1>
+                    <img alt="A&O bird icon" src="{{ url_for('static', filename='images/titleimage.png') }}?v=4" class="navbarparenttitleimage footertitleicon" /> Affairs and Order</h1>
 
 
                 <div class="footercopyright">© {{ now().year if now is defined else 2026 }}</div>

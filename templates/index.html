@@ -15,7 +15,7 @@
       "gamePlatform": "Web browser",
       "applicationCategory": "Game",
       "operatingSystem": "Any",
-      "image": "{{ url_for('static', filename='images/titleimage.png', _external=True) }}?v=3",
+      "image": "{{ url_for('static', filename='images/titleimage.png', _external=True) }}?v=4",
       "publisher": { "@id": "https://affairsandorder.org/#organization" },
       "offers": {
         "@type": "Offer",
@@ -332,7 +332,7 @@ footer .flinks{display:flex;gap:16px;flex-wrap:wrap}footer a{color:var(--muted);
         <circle class="r2" cx="100" cy="100" r="84" stroke="rgba(95,212,255,.8)" stroke-width="2" stroke-dasharray="60 40 10 40"/>
         <circle cx="100" cy="100" r="62" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
       </svg>
-      <img src="{{ url_for('static', filename='landing/img/logo.png') }}" alt="">
+      <img src="{{ url_for('static', filename='landing/img/logo.png') }}?v=20261105" alt="">
     </div>
     <div class="word display" id="introWord"></div>
     <div class="load-row">
@@ -344,7 +344,7 @@ footer .flinks{display:flex;gap:16px;flex-wrap:wrap}footer a{color:var(--muted);
 <div id="drawer" aria-hidden="true">
   <div class="scrim" data-close></div>
   <aside class="panel" role="dialog" aria-modal="true" aria-labelledby="ltitle">
-    <div class="dhead"><img src="{{ url_for('static', filename='landing/img/logo.png') }}" alt=""><button class="xbtn" type="button" data-close aria-label="Close">✕</button></div>
+    <div class="dhead"><img src="{{ url_for('static', filename='landing/img/logo.png') }}?v=20261105" alt=""><button class="xbtn" type="button" data-close aria-label="Close">✕</button></div>
     <h2 class="display dtitle" id="ltitle" data-text="Welcome back, commander">Welcome back, commander</h2>
     <p class="dsub">Your nation kept running while you were away. Sign in to see what changed.</p>
     <div class="qrow">
@@ -367,7 +367,7 @@ footer .flinks{display:flex;gap:16px;flex-wrap:wrap}footer a{color:var(--muted);
 <div id="cursor"></div><div id="cdot"></div>
 
 <nav id="nav">
-  <a class="brand" href="/"><img src="{{ url_for('static', filename='landing/img/logo.png') }}" alt="Affairs and Order"><span>AFFAIRS &amp; ORDER</span></a>
+  <a class="brand" href="/"><img src="{{ url_for('static', filename='landing/img/logo.png') }}?v=20261105" alt="Affairs and Order"><span>AFFAIRS &amp; ORDER</span></a>
   <div class="links"><a href="#story">The Game</a><a href="#world">Live World</a><a href="/signup">Enlist</a></div>
   <div class="right">
     <button id="snd" type="button" aria-pressed="false" aria-label="Toggle sound"><i></i><i></i><i></i><i></i><b>SOUND</b></button>
@@ -379,10 +379,10 @@ footer .flinks{display:flex;gap:16px;flex-wrap:wrap}footer a{color:var(--muted);
 <header id="hero">
   <div class="shake">
     <div class="slides" id="slides">
-      <div class="slide" style="background-image:url({{ url_for('static', filename='landing/img/war.jpg') }})"></div>
-      <div class="slide" style="background-image:url({{ url_for('static', filename='landing/img/tank.jpg') }})"></div>
-      <div class="slide" style="background-image:url({{ url_for('static', filename='landing/img/soldier.jpg') }})"></div>
-      <div class="slide" style="background-image:url({{ url_for('static', filename='landing/img/fighterjet.jpg') }})"></div>
+      <div class="slide" style="background-image:url({{ url_for('static', filename='landing/img/war.jpg') }}?v=20261105)"></div>
+      <div class="slide" style="background-image:url({{ url_for('static', filename='landing/img/tank.jpg') }}?v=20261105)"></div>
+      <div class="slide" style="background-image:url({{ url_for('static', filename='landing/img/soldier.jpg') }}?v=20261105)"></div>
+      <div class="slide" style="background-image:url({{ url_for('static', filename='landing/img/fighterjet.jpg') }}?v=20261105)"></div>
     </div>
     <div class="tear"></div>
   </div>
@@ -422,21 +422,21 @@ footer .flinks{display:flex;gap:16px;flex-wrap:wrap}footer a{color:var(--muted);
 <section id="story">
   <div class="pin">
     <div class="chap" data-i="0">
-      <div class="bg" style="background-image:url({{ url_for('static', filename='landing/img/market.jpg') }})"></div>
+      <div class="bg" style="background-image:url({{ url_for('static', filename='landing/img/market.jpg') }}?v=20261105)"></div>
       <div class="giant">Economy</div>
       <div class="copy"><div class="tag">Chapter I · Economy</div><h3 class="display" data-text="Command the Market"></h3>
         <p>Mine, refine and manufacture. Every hour your provinces produce, your people eat and your treasury moves. Trade on a live order book run entirely by players.</p>
         <ul><li>Hourly ticks</li><li>Player order book</li><li>Bonds &amp; loans</li></ul></div>
     </div>
     <div class="chap" data-i="1">
-      <div class="bg" style="background-image:url({{ url_for('static', filename='landing/img/coalition2.jpg') }})"></div>
+      <div class="bg" style="background-image:url({{ url_for('static', filename='landing/img/coalition2.jpg') }}?v=20261105)"></div>
       <div class="giant">Diplomacy</div>
       <div class="copy"><div class="tag">Chapter II · Diplomacy</div><h3 class="display" data-text="Forge Coalitions"></h3>
         <p>Sign treaties, pool a coalition bank, send aid to allies. Or run spies and sabotage behind their backs. Every alliance is one betrayal away from war.</p>
         <ul><li>Coalitions</li><li>Treaties</li><li>Espionage</li></ul></div>
     </div>
     <div class="chap" data-i="2">
-      <div class="bg" style="background-image:url({{ url_for('static', filename='landing/img/nuke.jpg') }})"></div>
+      <div class="bg" style="background-image:url({{ url_for('static', filename='landing/img/nuke.jpg') }}?v=20261105)"></div>
       <div class="giant">Warfare</div>
       <div class="copy"><div class="tag">Chapter III · Warfare</div><h3 class="display" data-text="Wage Total War"></h3>
         <p>Tanks, jets, navies and missiles. Keep your armies supplied, shield your cities with Iron Dome, and break your enemy before they break you.</p>
