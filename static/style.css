@@ -17120,6 +17120,8 @@ body.page-upgrades .quick-research .quick-research-hint {
     margin: 0 0 6px;
     opacity: .8;
 }
+body.page-upgrades .quick-research .quick-research-intro { color: var(--colorOne); padding-bottom: 12px; }
+body.page-upgrades .quick-research h3.templatecontentheadercenter { margin-top: 12px; }
 
 
 /* --- static/css/chat.css --- */
