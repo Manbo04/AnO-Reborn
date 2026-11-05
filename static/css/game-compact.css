@@ -879,3 +879,6 @@ body.page-upgrades .tech-grid-form .warflexparentcolors > .templatedivflex2left:
     align-self: center;
     float: none;
 }
+body.page-upgrades .tech-grid-form .warflexparentcolors > .templatedivflex2left:not(:has(.unitimage)) > ul {
+    line-height: 1.35;
+}
