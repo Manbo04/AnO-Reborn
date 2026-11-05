@@ -22,8 +22,21 @@
   }
   function fromHash() {
     var h = (location.hash || '').replace('#', '');
-    for (var i = 0; i < tabs.length; i++) if (tabs[i].getAttribute('data-tab') === h) return i;
-    return 0;
+    for (var i = 0; i < tabs.length; i++) if (tabs[i].getAttribute('data-tab') === h) return { i: i, el: null };
+    // In-page jump link (e.g. #grp-industry): open the tab that holds the target
+    // instead of falling back to Overview, then scroll to it.
+    var el = h ? document.getElementById(h) : null;
+    var panel = el ? el.closest('.ptabpanel') : null;
+    var idx = panel ? panels.indexOf(panel) : -1;
+    if (idx >= 0) return { i: idx, el: el };
+    return { i: 0, el: null, unknown: !!h };
+  }
+  function applyHash(isInitial) {
+    var r = fromHash();
+    // An unrecognised hash on a later hashchange must not yank the user off their tab.
+    if (r.unknown && !isInitial) return;
+    select(r.i, false, false);
+    if (r.el) r.el.scrollIntoView();
   }
   tabs.forEach(function (t, i) {
     t.addEventListener('click', function () { select(i, false, true); });
@@ -36,8 +49,8 @@
       if (n !== null) { ev.preventDefault(); select(n, true, true); }
     });
   });
-  select(fromHash(), false, false);
-  window.addEventListener('hashchange', function () { select(fromHash(), false, false); });
+  applyHash(true);
+  window.addEventListener('hashchange', function () { applyHash(false); });
 
   // Building search: filters rows inside the panel it belongs to; hides empty groups.
   Array.prototype.forEach.call(root.querySelectorAll('.bld-search'), function (input) {

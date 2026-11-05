@@ -17073,6 +17073,37 @@ body.page-messages .templatecontentpleft {
     margin: 0;
 }
 
+/* --- Upgrades: Quick research panel (was mostly empty padding) --- */
+body.page-upgrades .quick-research {
+    padding: 10px 14px;
+    margin-bottom: 10px !important;
+}
+body.page-upgrades .quick-research h3.templatecontentheadercenter {
+    margin: 0 0 4px;
+    font-size: 1.05rem;
+}
+body.page-upgrades .quick-research p.templatecontentpleft {
+    margin: 2px 0 6px;
+    padding: 0;
+    font-size: 13.5px;
+    line-height: 1.4;
+    text-align: left;
+}
+body.page-upgrades .quick-research form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 10px;
+    align-items: center;
+}
+body.page-upgrades .quick-research form label { display: none !important; }
+body.page-upgrades .quick-research form .templateselect { grid-column: 1; grid-row: 1; margin: 0; width: 100%; }
+body.page-upgrades .quick-research form button { grid-column: 2; grid-row: 1; margin: 0; width: auto; }
+body.page-upgrades .quick-research form #tech_description { grid-column: 1 / -1; grid-row: 2; margin: 0; }
+@media (max-width: 600px) {
+    body.page-upgrades .quick-research form { grid-template-columns: 1fr; }
+    body.page-upgrades .quick-research form button { grid-column: 1; grid-row: 3; }
+}
+
 
 /* --- static/css/chat.css --- */
 /* Coalition chat + nation direct messages — mobile-first. */
