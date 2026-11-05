@@ -29,7 +29,7 @@ claimed before work -- see `app_core/game_ticks/common.py::claim_tick_period`);
 | manpower_increase | `tasks.task_manpower_increase` | `5 */4 * * *` | per hour |
 | market_auto_orders | `tasks.task_market_auto_orders` | `13 * * * *` | none (must be idempotent) |
 | natural_disasters | `tasks.task_natural_disasters` | `15 * * * *` | per hour |
-| patreon_gem_grant | `tasks.task_patreon_gem_grant` | `0 12 1 * *` | none (must be idempotent) |
+| patreon_gem_grant | `tasks.task_patreon_gem_grant` | `0 12 * 1 *` | none (must be idempotent) |
 | population_growth | `tasks.task_population_growth` | `45 * * * *` | per hour |
 | produce_unit_stockpiles | `tasks.task_produce_unit_stockpiles` | `35 * * * *` | per hour |
 | recurring_bank_trades | `tasks.task_recurring_bank_trades` | `7,22,37,52 * * * *` | none (must be idempotent) |
