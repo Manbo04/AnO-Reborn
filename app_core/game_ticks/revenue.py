@@ -1148,8 +1148,25 @@ def generate_province_revenue():  # Runs each hour
             # PHASE 3: Apply pension crisis gold penalties
             pension_penalties = {}  # user_id -> penalty_amount
             if variables.FEATURE_PHASE3_WORKFORCE:
+                # The pension is a flat per-tick cost, but provinces are processed
+                # in chunks and every chunk that contains one of a nation's
+                # provinces sees that nation. Bill it only in the chunk holding
+                # the nation's lowest province id, otherwise a nation spread over
+                # N chunks pays N x per hour (Discord, 2026-11-04: 10K/tick shown
+                # instead of 5K).
+                chunk_province_ids = {row[0] for row in infra_ids}
+                dbdict.execute(
+                    "SELECT userId, MIN(id) AS first_id FROM provinces "
+                    "WHERE userId = ANY(%s) GROUP BY userId",
+                    (all_user_ids,),
+                )
+                pension_first_province = {
+                    row["userid"]: row["first_id"] for row in dbdict.fetchall()
+                }
                 for user_id, debuff_info in workforce_debuffs.items():
                     gold_penalty = debuff_info.get("gold_penalty", 0)
+                    if pension_first_province.get(user_id) not in chunk_province_ids:
+                        gold_penalty = 0
                     if gold_penalty > 0:
                         gold_deductions[user_id] = (
                             gold_deductions.get(user_id, 0) + gold_penalty
