@@ -257,20 +257,6 @@ def calc_province_population_delta(
     return growth - starvation_deaths
 
 
-def _trait_level_mods(db, user_ids=None):
-    """{user_id: (happiness_bonus, home_mult)} for nations with a trait/blessing; {} on any
-    failure so the population tick can never be broken by the traits feature."""
-    try:
-        from app_core.traits import modifiers
-
-        return {
-            uid: (m["happiness_pct"], m["pop_cap_mult"])
-            for uid, m in modifiers.load_all(db).items()
-        }
-    except Exception:
-        return {}
-
-
 def get_population_growth(cId, db=None):
     """Read-only projection of this tick's population growth for one
     nation, for display on the nation page (Discord suggestion from
@@ -412,15 +398,12 @@ def get_population_growth(cId, db=None):
                     sum(covers) / nation["pop"] * 100 if nation["pop"] else 100.0
                 ),
             }
-            _hb, _hm = _trait_level_mods(active_db).get(cId, (0.0, 1.0))
             sim = population2.simulate_nation(
                 rows,
                 b_map,
                 min(1.0, rations_ratio),
                 cId in hc,
                 grace_period,
-                happiness_bonus=_hb,
-                home_mult=_hm,
             )
             for row in rows:
                 n_c, n_w, n_e = sim[row["id"]]
@@ -665,9 +648,7 @@ def population_growth():  # Function for growing population
             by_user = {}
             for r in all_provinces:
                 by_user.setdefault(r["userid"], []).append(r)
-            _trait_mods = _trait_level_mods(db)
             for uid, rows in by_user.items():
-                _hb, _hm = _trait_mods.get(uid, (0.0, 1.0))
                 sg = (user_total_provinces.get(uid, 1) <= 1) and (
                     user_total_land.get(uid, 1) <= 20
                 )
@@ -678,8 +659,6 @@ def population_growth():  # Function for growing population
                         nation_ctx[uid].get("rations_ratio", 0),
                         uid in hc_users,
                         sg,
-                        happiness_bonus=_hb,
-                        home_mult=_hm,
                     )
                 )
             conn.commit()

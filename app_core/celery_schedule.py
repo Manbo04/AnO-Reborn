@@ -163,10 +163,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "tasks.task_assembly_tick",
         "schedule": get_crontab_env("ASSEMBLY_TICK_CRON", crontab(minute="*/5")),
     },
-    "nation_traits": {
-        "task": "tasks.task_nation_traits",
-        "schedule": get_crontab_env("NATION_TRAITS_CRON", crontab(minute="*/10")),
-    },
     "bot_nations": {
         "task": "tasks.task_bot_nations",
         "schedule": get_crontab_env("BOT_NATIONS_CRON", crontab(minute="50")),

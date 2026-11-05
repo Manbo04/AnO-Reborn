@@ -234,8 +234,7 @@ def _scale_down(c, w, e, remove):
 
 
 def simulate_nation(
-    provs, buildings_map, food_ratio, healthcare, starve_grace, now=None,
-    happiness_bonus=0.0, home_mult=1.0,
+    provs, buildings_map, food_ratio, healthcare, starve_grace, now=None
 ):
     """provs: dicts with id, population, pop_children/working/elderly,
     citycount, land, happiness, pollution (one nation). Returns
@@ -246,13 +245,10 @@ def simulate_nation(
     for p in provs:
         b = buildings_map.get(p["id"], {})
         home_count = homes(p.get("citycount"), p.get("land"), b)
-        if home_mult != 1.0:  # unique-nation trait (e.g. Hive City housing)
-            home_count = int(home_count * home_mult)
         c, w, e = _norm(p)
         dc, dw, de = step_province(
             {"pop_children": c, "pop_working": w, "pop_elderly": e,
-             "happiness": min(100.0, max(0.0, float(p.get("happiness") or 0) + happiness_bonus)),
-             "pollution": p.get("pollution")},
+             "happiness": p.get("happiness"), "pollution": p.get("pollution")},
             int(b.get("hospitals", 0) or 0), home_count, food_ratio, healthcare, grace,
         )
         c, w, e = max(0, c + dc), max(0, w + dw), max(0, e + de)
