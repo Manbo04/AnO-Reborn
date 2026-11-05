@@ -1180,61 +1180,6 @@ def generate_province_revenue():  # Runs each hour
                         )
                         pension_penalties[user_id] = gold_penalty
 
-            # Write all gold deductions in batch
-            try:
-                if gold_deductions:
-                    # Sorted so every batch takes row locks in the same order
-                    # (unordered batches deadlocked with other writers, 09:25
-                    # 2026-11-05).
-                    gold_updates = sorted(
-                        (
-                            (amount, user_id)
-                            for user_id, amount in gold_deductions.items()
-                            if amount > 0
-                        ),
-                        key=lambda row: row[1],
-                    )
-                    if gold_updates:
-                        ledger.take_gold_batch(db, gold_updates)
-                        log_verbose(f"Batch updated gold for {len(gold_updates)} users")
-                        # Revenue history ledger: one batched INSERT per
-                        # chunk in its own savepoint (never fails the tick).
-                        from app_core.game_ticks.revenue_history import (
-                            record_gold_ledger,
-                        )
-
-                        ledger_rows = []
-                        for amount, user_id in gold_updates:
-                            pension = pension_penalties.get(user_id, 0)
-                            ledger_rows.append(
-                                (user_id, "building_upkeep", -(amount - pension))
-                            )
-                            if pension:
-                                ledger_rows.append(
-                                    (user_id, "pension_crisis", -pension)
-                                )
-                        record_gold_ledger(db, ledger_rows)
-                        if pension_penalties:
-                            log_verbose(
-                                f"Applied pension crisis penalties "
-                                f"to {len(pension_penalties)} users"
-                            )
-
-                        try:
-                            from database import invalidate_user_cache
-
-                            for user_id, _ in gold_updates:
-                                try:
-                                    invalidate_user_cache(user_id)
-                                except Exception:
-                                    pass
-                        except Exception:
-                            pass
-            except Exception as e:
-                conn.rollback()
-                revenue_write_failed = True
-                handle_exception(e, "generate_province_revenue")
-
             # Write all province changes in batch
             # (happiness, productivity, pollution, consumer_spending, energy, rations)
             try:
@@ -1407,6 +1352,67 @@ def generate_province_revenue():  # Runs each hour
                     conn.rollback()
                     revenue_write_failed = True
                     handle_exception(e, "generate_province_revenue")
+
+            # Gold is written AFTER resources on purpose: player purchases
+            # (building_purchase) lock user_economy first and stats second, so
+            # the tick must take locks in the same order or the two deadlock
+            # (Postgres log 2026-11-05 09:25: tick held stats waiting on
+            # user_economy, a 153.6M-gold building purchase held user_economy
+            # waiting on stats).
+            # Write all gold deductions in batch
+            try:
+                if gold_deductions:
+                    # Sorted so every batch takes row locks in the same order
+                    # (unordered batches deadlocked with other writers, 09:25
+                    # 2026-11-05).
+                    gold_updates = sorted(
+                        (
+                            (amount, user_id)
+                            for user_id, amount in gold_deductions.items()
+                            if amount > 0
+                        ),
+                        key=lambda row: row[1],
+                    )
+                    if gold_updates:
+                        ledger.take_gold_batch(db, gold_updates)
+                        log_verbose(f"Batch updated gold for {len(gold_updates)} users")
+                        # Revenue history ledger: one batched INSERT per
+                        # chunk in its own savepoint (never fails the tick).
+                        from app_core.game_ticks.revenue_history import (
+                            record_gold_ledger,
+                        )
+
+                        ledger_rows = []
+                        for amount, user_id in gold_updates:
+                            pension = pension_penalties.get(user_id, 0)
+                            ledger_rows.append(
+                                (user_id, "building_upkeep", -(amount - pension))
+                            )
+                            if pension:
+                                ledger_rows.append(
+                                    (user_id, "pension_crisis", -pension)
+                                )
+                        record_gold_ledger(db, ledger_rows)
+                        if pension_penalties:
+                            log_verbose(
+                                f"Applied pension crisis penalties "
+                                f"to {len(pension_penalties)} users"
+                            )
+
+                        try:
+                            from database import invalidate_user_cache
+
+                            for user_id, _ in gold_updates:
+                                try:
+                                    invalidate_user_cache(user_id)
+                                except Exception:
+                                    pass
+                        except Exception:
+                            pass
+            except Exception as e:
+                conn.rollback()
+                revenue_write_failed = True
+                handle_exception(e, "generate_province_revenue")
 
             # Education deltas (savepoint so failure does not roll back resources)
             try:
