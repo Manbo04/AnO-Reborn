@@ -703,19 +703,28 @@ def war_reparation_tax():
         dbdict = conn.cursor(cursor_factory=RealDictCursor)
         db.execute(
             "SELECT id, peace_date, attacker, attacker_morale, "
-            "defender, defender_morale FROM wars WHERE (peace_date IS NOT "
+            "defender, defender_morale, status FROM wars WHERE (peace_date IS NOT "
             "NULL) AND (peace_offer_id IS NULL)"
         )
         truces = db.fetchall()
 
         for state in truces:
-            war_id, peace_date, attacker, a_morale, defender, d_morale = state
+            war_id, peace_date, attacker, a_morale, defender, d_morale, status = state
 
             # Remove peace records older than one week (604800 seconds)
             if peace_date < (time.time() - 604800):
                 db.execute("DELETE FROM wars WHERE id=%s", (war_id,))
 
-            # Transfer resources to attacker (winner)
+            # Daily plunder is only for wars that ended by a morale break (the
+            # loser's morale is 0, so the winner is known). Auto-expired wars
+            # are white peace (no winner, no reparations) and surrender wars
+            # already paid their spoils once (conditional: no further penalty);
+            # with both morales above 0 the old code guessed the winner wrong
+            # and robbed the side that had just won the surrender.
+            elif status == "ended" or (a_morale > 0 and d_morale > 0):
+                continue
+
+            # Transfer resources to the winner
             else:
                 if d_morale <= 0:
                     winner = attacker

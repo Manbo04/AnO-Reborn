@@ -1247,13 +1247,21 @@ def update_info():
         # Location changing
         new_location = request.form.get("countryLocation")
 
-        from app_core.economy.biome_buildings import CANONICAL_BIOMES as continents
+        from app_core.economy.biome_buildings import (
+            ALL_MINE_BUILDINGS,
+            CANONICAL_BIOMES as continents,
+        )
 
         if new_location not in continents and new_location not in ["", "none"]:
             return error(400, "No such continent")
 
-        if new_location not in ["", "none"]:
-            # Reset raw-extraction buildings when changing biome/location.
+        db.execute("SELECT location FROM stats WHERE id=%s", (cId,))
+        _loc_row = db.fetchone()
+        current_location = _loc_row[0] if _loc_row else None
+
+        if new_location not in ["", "none"] and new_location != current_location:
+            # Reset raw-extraction buildings only on a real biome change
+            # (re-saving the same biome must never wipe your mines).
             # Legacy schema used proInfra rows keyed by province id; normalized
             # schema stores these in user_buildings keyed by user_id.
             db.execute(
@@ -1263,18 +1271,9 @@ def update_info():
                 FROM building_dictionary bd
                 WHERE ub.building_id = bd.building_id
                   AND ub.user_id = %s
-                  AND bd.name IN (
-                      'pumpjacks',
-                      'coal_mines',
-                      'bauxite_mines',
-                      'copper_mines',
-                      'uranium_mines',
-                      'lead_mines',
-                      'iron_mines',
-                      'lumber_mills'
-                  )
+                  AND bd.name = ANY(%s)
                 """,
-                (cId,),
+                (cId, list(ALL_MINE_BUILDINGS)),
             )
             db.execute("UPDATE stats SET location=%s WHERE id=%s", (new_location, cId))
 
