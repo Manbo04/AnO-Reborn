@@ -10,19 +10,19 @@
  */
 
 body.nation-cyberpunk-theme {
-    --background: #0b0807;
-    --foreground: #120d0c;
-    --foregroundTwo: #181110;
-    --foregroundThree: #1e1514;
-    --foregroundFour: #261a18;
-    --border: #4a3a16;
+    --background: #0d1117;
+    --foreground: #11161d;
+    --foregroundTwo: #161b22;
+    --foregroundThree: #1b212a;
+    --foregroundFour: #202733;
+    --border: #2d333b;
     --colorOne: #d4d9e0;
-    --accent: #d4af37;
-    --accent-hover: #e6c65a;
-    --accent-subtle: #2a2108;
-    --gold: #d4af37;
+    --accent: #4ec9b0;
+    --accent-hover: #6fe0c8;
+    --accent-subtle: #12302b;
+    --gold: #d7ba7d;
     --success: #56d364;
-    --danger: #c0392b;
+    --danger: #f85149;
     --text-secondary: #8b949e;
     /* Mobile tables pin their label column with a solid zebra background
        (game-layout.css) -- without these, light-theme visitors got white
@@ -30,16 +30,16 @@ body.nation-cyberpunk-theme {
     --tableOne: var(--foreground);
     --tableTwo: var(--foregroundTwo);
 
-    --game-glass-bg: rgba(18, 13, 12, 0.82);
-    --game-glass-bg-strong: rgba(18, 13, 12, 0.95);
-    --game-glass-border: rgba(212, 175, 55, 0.35);
+    --game-glass-bg: rgba(17, 22, 29, 0.78);
+    --game-glass-bg-strong: rgba(17, 22, 29, 0.94);
+    --game-glass-border: rgba(78, 201, 176, 0.25);
 
     color-scheme: dark;
 }
 
 /* Static, flat background: no animation, no texture, no canvas. */
 body.nation-cyberpunk-theme .game-page-overlay {
-    background: linear-gradient(180deg, rgba(11, 8, 7, 0.8) 0%, rgba(11, 8, 7, 0.94) 65%, #0b0807 100%);
+    background: linear-gradient(180deg, rgba(13, 17, 23, 0.8) 0%, rgba(13, 17, 23, 0.94) 65%, #0d1117 100%);
 }
 
 body.nation-cyberpunk-theme .game-hero,

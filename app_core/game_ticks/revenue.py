@@ -68,16 +68,6 @@ from app_core.economy.project_bonuses import project_output_bonus
 
 
 
-def _trait_mods(db):
-    """Unique-nation-trait modifiers ({} on any failure: the tick never depends on traits)."""
-    try:
-        from app_core.traits import modifiers
-
-        return modifiers.load_all(db)
-    except Exception:
-        return {}
-
-
 def generate_province_revenue():  # Runs each hour
     from database import get_db_connection, rollback_db_cursor
     from psycopg2.extras import RealDictCursor, execute_batch
@@ -562,7 +552,6 @@ def generate_province_revenue():  # Runs each hour
             # Track education updates from aging to batch-write once
             education_deltas = {}  # province_id -> {edu_none, edu_highschool, edu_college}
 
-            trait_mods = _trait_mods(db)
             for province_id, user_id, land, productivity in infra_ids:
                 # PHASE 3: Apply population aging using preloaded in-memory data.
                 # This avoids per-province query/update churn during hourly revenue tick.
@@ -694,16 +683,6 @@ def generate_province_revenue():  # Runs each hour
                                 * variables.DEFAULT_PRODUCTIVITY_PRODUCTION_MULTIPLIER
                             )
                             plus_amount_multiplier *= productivity_multiplier
-
-                        # UNIQUE NATION TRAITS (e.g. Hive City): industry output, food output
-                        # and upkeep multipliers; absent for every ordinary nation.
-                        _tm = trait_mods.get(user_id)
-                        if _tm:
-                            if unit in ("farms", "fisheries"):
-                                plus_amount_multiplier *= _tm["food_mult"]
-                            elif unit_category == "industry":
-                                plus_amount_multiplier *= _tm["industry_mult"]
-                            operating_costs *= _tm["upkeep_mult"]
 
                         # CHEAPER MATERIALS
                         if unit_category == "industry" and upgrades.get("cheapermaterials"):

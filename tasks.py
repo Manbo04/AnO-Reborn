@@ -435,24 +435,6 @@ def task_check_achievements():
     _run_with_deadlock_retries(check_achievements, "check_achievements")
 
 
-@celery.task(name="tasks.task_nation_traits")
-@leader_only(ttl_seconds=540)
-def task_nation_traits():
-    """Every 10 min: unique-nation-trait daily steps (the Golden Throne's dawn sacrifice).
-    Idempotent: a holder's dawn runs once per Vilnius day no matter how often this fires."""
-    from database import get_db_connection
-    from app_core.traits import registry
-
-    if registry.disabled():  # kill switch
-        return {"disabled": True}
-    with get_db_connection() as conn:
-        cur = conn.cursor()
-        result = registry.run_daily(cur)
-        conn.commit()
-    logger.info("task_nation_traits: %s", result)
-    return result
-
-
 @celery.task(name="tasks.task_bot_nations")
 @leader_only(ttl_seconds=900)
 def task_bot_nations():
