@@ -327,7 +327,7 @@
 
                 <form action="/war/{{ war_id }}/attack" method="POST" class="quick-action-btn-form">
                     <input type="hidden" name="action" value="recon_flight">
-                    <button type="submit" class="game-btn game-btn-secondary game-btn-sm" {% if status.air_ap < 2 %}disabled{% endif %} title="Costs 2 Air AP. Requires >= 1 Fighter or Bomber. Gives +25 Intel. At 50+ Intel enemy units are revealed!">
+                    <button type="submit" class="game-btn game-btn-secondary game-btn-sm" {% if status.air_ap < 2 %}disabled{% endif %} title="Costs 2 Air AP. Requires >= 1 Fighter or Bomber. Gives +25 Intel (max 100). At 50+ Intel enemy units are revealed. Every attack you launch uses up 25 Intel.">
                         <span class="material-icons-outlined">flight_takeoff</span> Recon Flight (2 Air AP)
                     </button>
                 </form>
