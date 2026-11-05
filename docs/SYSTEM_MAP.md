@@ -11,31 +11,31 @@ claimed before work -- see `app_core/game_ticks/common.py::claim_tick_period`);
 
 | beat entry | task | schedule (UTC) | gate |
 |---|---|---|---|
-| ai_agent | `tasks.task_ai_agent` | `30 */1 * * *` | none (must be idempotent) |
-| assembly_tick | `tasks.task_assembly_tick` | `*/5 * * * *` | min interval 300s |
-| backfill_missing_resources | `tasks.task_backfill_missing_resources` | `15 1 * * *` | none (must be idempotent) |
-| backup_database | `tasks.task_backup_database` | `10 3 * * *` | none (must be idempotent) |
-| bond_tick | `tasks.task_bond_tick` | `50 4 * * *` | per day |
-| bot_nations | `tasks.task_bot_nations` | `50 * * * *` | none (must be idempotent) |
-| bot_war_ai | `tasks.task_bot_war_ai` | `*/5 * * * *` | none (must be idempotent) |
-| check_achievements | `tasks.task_check_achievements` | `*/30 * * * *` | none (must be idempotent) |
-| cleanup_old_spyinfo | `tasks.task_cleanup_old_spyinfo` | `30 2 * * *` | none (must be idempotent) |
-| cleanup_orphan_user_rows | `tasks.task_cleanup_orphan_user_rows` | `10 1 * * *` | none (must be idempotent) |
-| economy_snapshot | `tasks.task_economy_snapshot` | `0 */1 * * *` | none (must be idempotent) |
-| execute_trade_agreements | `tasks.task_execute_trade_agreements` | `*/15 * * * *` | min interval 65s |
-| generate_province_revenue | `tasks.task_generate_province_revenue` | `25 * * * *` | per hour |
-| global_tick | `tasks.task_global_tick` | `*/10 * * * *` | min interval 540s |
-| loan_interest | `tasks.task_loan_interest` | `40 * * * *` | per hour |
-| manpower_increase | `tasks.task_manpower_increase` | `5 */4 * * *` | per hour |
-| market_auto_orders | `tasks.task_market_auto_orders` | `13 * * * *` | none (must be idempotent) |
-| natural_disasters | `tasks.task_natural_disasters` | `15 * * * *` | per hour |
-| patreon_gem_grant | `tasks.task_patreon_gem_grant` | `0 12 * 1 *` | none (must be idempotent) |
-| population_growth | `tasks.task_population_growth` | `45 * * * *` | per hour |
-| produce_unit_stockpiles | `tasks.task_produce_unit_stockpiles` | `35 * * * *` | per hour |
-| recurring_bank_trades | `tasks.task_recurring_bank_trades` | `7,22,37,52 * * * *` | none (must be idempotent) |
-| tax_income | `tasks.task_tax_income` | `0 * * * *` | per hour |
-| war_auto_expiry | `tasks.task_war_auto_expiry` | `50 * * * *` | per hour |
-| war_reparation_tax | `tasks.task_war_reparation_tax` | `0 0 * * *` | per day |
+| ai_agent | `tasks.task_ai_agent` | <crontab: 30 */1 * * * (m/h/dM/MY/d)> | none (must be idempotent) |
+| assembly_tick | `tasks.task_assembly_tick` | <crontab: */5 * * * * (m/h/dM/MY/d)> | min interval 300s |
+| backfill_missing_resources | `tasks.task_backfill_missing_resources` | <crontab: 15 1 * * * (m/h/dM/MY/d)> | none (must be idempotent) |
+| backup_database | `tasks.task_backup_database` | <crontab: 10 3 * * * (m/h/dM/MY/d)> | none (must be idempotent) |
+| bond_tick | `tasks.task_bond_tick` | <crontab: 50 4 * * * (m/h/dM/MY/d)> | per day |
+| bot_nations | `tasks.task_bot_nations` | <crontab: 50 * * * * (m/h/dM/MY/d)> | none (must be idempotent) |
+| bot_war_ai | `tasks.task_bot_war_ai` | <crontab: */5 * * * * (m/h/dM/MY/d)> | none (must be idempotent) |
+| check_achievements | `tasks.task_check_achievements` | <crontab: */30 * * * * (m/h/dM/MY/d)> | none (must be idempotent) |
+| cleanup_old_spyinfo | `tasks.task_cleanup_old_spyinfo` | <crontab: 30 2 * * * (m/h/dM/MY/d)> | none (must be idempotent) |
+| cleanup_orphan_user_rows | `tasks.task_cleanup_orphan_user_rows` | <crontab: 10 1 * * * (m/h/dM/MY/d)> | none (must be idempotent) |
+| economy_snapshot | `tasks.task_economy_snapshot` | <crontab: 0 */1 * * * (m/h/dM/MY/d)> | none (must be idempotent) |
+| execute_trade_agreements | `tasks.task_execute_trade_agreements` | <crontab: */15 * * * * (m/h/dM/MY/d)> | min interval 65s |
+| generate_province_revenue | `tasks.task_generate_province_revenue` | <crontab: 25 * * * * (m/h/dM/MY/d)> | per hour |
+| global_tick | `tasks.task_global_tick` | <crontab: */10 * * * * (m/h/dM/MY/d)> | min interval 540s |
+| loan_interest | `tasks.task_loan_interest` | <crontab: 40 * * * * (m/h/dM/MY/d)> | per hour |
+| manpower_increase | `tasks.task_manpower_increase` | <crontab: 5 */4 * * * (m/h/dM/MY/d)> | per hour |
+| market_auto_orders | `tasks.task_market_auto_orders` | <crontab: 13 * * * * (m/h/dM/MY/d)> | none (must be idempotent) |
+| natural_disasters | `tasks.task_natural_disasters` | <crontab: 15 * * * * (m/h/dM/MY/d)> | per hour |
+| patreon_gem_grant | `tasks.task_patreon_gem_grant` | <crontab: 0 12 1 * * (m/h/dM/MY/d)> | none (must be idempotent) |
+| population_growth | `tasks.task_population_growth` | <crontab: 45 * * * * (m/h/dM/MY/d)> | per hour |
+| produce_unit_stockpiles | `tasks.task_produce_unit_stockpiles` | <crontab: 35 * * * * (m/h/dM/MY/d)> | per hour |
+| recurring_bank_trades | `tasks.task_recurring_bank_trades` | <crontab: 7,22,37,52 * * * * (m/h/dM/MY/d)> | none (must be idempotent) |
+| tax_income | `tasks.task_tax_income` | <crontab: 0 * * * * (m/h/dM/MY/d)> | per hour |
+| war_auto_expiry | `tasks.task_war_auto_expiry` | <crontab: 50 * * * * (m/h/dM/MY/d)> | per hour |
+| war_reparation_tax | `tasks.task_war_reparation_tax` | <crontab: 0 0 * * * (m/h/dM/MY/d)> | per day |
 
 Sub-steps gated inside `global_tick` (per hour): `military_maintenance`, `war_supply_regen`
 
@@ -141,7 +141,7 @@ every writer listed there can create or destroy value.
 | reparation_tax | `countries.py`<br>`repositories/country_repository.py` | -- |
 | requests | `app_core/coalitions/routes.py`<br>`countries.py`<br>`repositories/country_repository.py` | -- |
 | reset_codes | `change.py`<br>`login_verification.py` | -- |
-| resource_dictionary | -- | `action_loop.py`<br>`ai_agent.py`<br>`app.py`<br>`app_core/admin/repositories.py`<br>`app_core/bots/service.py`<br>`app_core/coalition_bank/services.py`<br>`app_core/coalitions/routes.py`<br>`app_core/economy/building_purchase.py`<br>`app_core/economy/ledger.py`<br>`app_core/economy/military_upkeep.py`<br>`app_core/economy/province_power.py`<br>`app_core/events/routes.py`<br>`app_core/game_ticks/disasters.py`<br>`app_core/game_ticks/food.py`<br>`app_core/game_ticks/maintenance.py`<br>`app_core/game_ticks/population.py`<br>`app_core/game_ticks/revenue.py`<br>`app_core/game_ticks/taxes.py`<br>`app_core/game_ticks/unit_production.py`<br>`app_core/intelligence/repositories.py`<br>`app_core/market/repositories.py`<br>`app_core/military/repositories.py`<br>`app_core/trade_agreements/repositories.py`<br>`bot_api.py`<br>`countries.py`<br>`db_check.py`<br>`province.py`<br>`services/country_service.py`<br>`signup.py`<br>`units.py` |
+| resource_dictionary | -- | `action_loop.py`<br>`ai_agent.py`<br>`app.py`<br>`app_core/admin/repositories.py`<br>`app_core/bots/service.py`<br>`app_core/coalition_bank/services.py`<br>`app_core/coalitions/routes.py`<br>`app_core/economy/building_purchase.py`<br>`app_core/economy/ledger.py`<br>`app_core/economy/military_upkeep.py`<br>`app_core/economy/military_upkeep_v2.py`<br>`app_core/economy/province_power.py`<br>`app_core/events/routes.py`<br>`app_core/game_ticks/disasters.py`<br>`app_core/game_ticks/food.py`<br>`app_core/game_ticks/maintenance.py`<br>`app_core/game_ticks/population.py`<br>`app_core/game_ticks/revenue.py`<br>`app_core/game_ticks/taxes.py`<br>`app_core/game_ticks/unit_production.py`<br>`app_core/intelligence/repositories.py`<br>`app_core/market/repositories.py`<br>`app_core/military/repositories.py`<br>`app_core/trade_agreements/repositories.py`<br>`bot_api.py`<br>`countries.py`<br>`db_check.py`<br>`province.py`<br>`services/country_service.py`<br>`signup.py`<br>`units.py` |
 | revenue | `action_loop.py`<br>`app_core/military/repositories.py`<br>`province.py` | `services/country_service.py` |
 | signup_attempts | `app_core/auth/email_auth.py`<br>`app_core/auth/google_auth.py`<br>`signup.py` | `app_core/admin/repositories.py` |
 | site_visits | `app_core/analytics/service.py` | -- |
@@ -156,14 +156,14 @@ every writer listed there can create or destroy value.
 | trade_events | `helpers.py` | -- |
 | trades | `app_core/market/repositories.py`<br>`countries.py`<br>`repositories/country_repository.py` | `app_core/admin/repositories.py` |
 | treaties | `app_core/coalitions/routes.py` | -- |
-| unit_dictionary | -- | `ai_agent.py`<br>`app_core/bots/service.py`<br>`app_core/economy/military_upkeep.py`<br>`app_core/game_ticks/maintenance.py`<br>`app_core/game_ticks/unit_production.py`<br>`app_core/intelligence/repositories.py`<br>`app_core/military/manpower.py`<br>`app_core/military/repositories.py`<br>`app_core/tutorial/tour.py`<br>`bot_api.py`<br>`countries.py`<br>`services/country_service.py`<br>`signup.py`<br>`statistics.py`<br>`units.py`<br>`wars/action_points.py`<br>`wars/aftermath.py`<br>`wars/nuclear.py`<br>`wars/routes.py` |
+| unit_dictionary | -- | `ai_agent.py`<br>`app_core/bots/service.py`<br>`app_core/economy/military_upkeep.py`<br>`app_core/economy/military_upkeep_v2.py`<br>`app_core/game_ticks/maintenance.py`<br>`app_core/game_ticks/unit_production.py`<br>`app_core/intelligence/repositories.py`<br>`app_core/military/manpower.py`<br>`app_core/military/repositories.py`<br>`app_core/tutorial/tour.py`<br>`bot_api.py`<br>`countries.py`<br>`services/country_service.py`<br>`signup.py`<br>`statistics.py`<br>`units.py`<br>`wars/action_points.py`<br>`wars/aftermath.py`<br>`wars/nuclear.py`<br>`wars/routes.py` |
 | user_achievements | -- | `app_core/game_ticks/achievements.py`<br>`countries.py` |
 | user_active_days | `app_core/analytics/service.py` | -- |
 | **user_buildings** | `action_loop.py`<br>`app_core/economy/building_purchase.py`<br>`countries.py`<br>`province.py`<br>`repositories/country_repository.py`<br>`wars/nuclear.py`<br>`wars/service.py` | `ai_agent.py`<br>`app_core/economy/consumer_goods.py`<br>`app_core/economy/province_energy.py`<br>`app_core/economy/province_health.py`<br>`app_core/economy/province_power.py`<br>`app_core/game_ticks/disasters.py`<br>`app_core/game_ticks/energy.py`<br>`app_core/game_ticks/food.py`<br>`app_core/game_ticks/maintenance.py`<br>`app_core/game_ticks/population.py`<br>`app_core/game_ticks/population2.py`<br>`app_core/game_ticks/revenue.py`<br>`app_core/game_ticks/taxes.py`<br>`app_core/game_ticks/unit_production.py`<br>`app_core/military/repositories.py`<br>`app_core/onboarding/service.py`<br>`app_core/referrals/service.py`<br>`app_core/tutorial/tour.py`<br>`services/country_service.py`<br>`services/province_service.py`<br>`wars/routes.py` |
 | user_cosmetics | `app_core/store/repositories.py` | -- |
 | **user_economy** | `action_loop.py`<br>`app_core/admin/repositories.py`<br>`app_core/economy/ledger.py`<br>`app_core/game_ticks/taxes.py`<br>`countries.py`<br>`repositories/country_repository.py`<br>`signup.py` | `ai_agent.py`<br>`app.py`<br>`app_core/bots/service.py`<br>`app_core/economy/building_purchase.py`<br>`app_core/economy/province_power.py`<br>`app_core/events/routes.py`<br>`app_core/game_ticks/disasters.py`<br>`app_core/game_ticks/food.py`<br>`app_core/game_ticks/maintenance.py`<br>`app_core/game_ticks/population.py`<br>`app_core/game_ticks/revenue.py`<br>`app_core/game_ticks/unit_production.py`<br>`app_core/intelligence/repositories.py`<br>`app_core/market/repositories.py`<br>`app_core/military/repositories.py`<br>`app_core/trade_agreements/repositories.py`<br>`bot_api.py`<br>`db_check.py`<br>`province.py`<br>`services/country_service.py`<br>`statistics.py`<br>`units.py` |
 | user_loans | `app_core/game_ticks/loan_interest.py`<br>`app_core/loans/repositories.py` | -- |
-| **user_military** | `app_core/bots/service.py`<br>`app_core/game_ticks/maintenance.py`<br>`app_core/intelligence/repositories.py`<br>`app_core/military/repositories.py`<br>`countries.py`<br>`repositories/country_repository.py`<br>`signup.py`<br>`units.py`<br>`wars/aftermath.py`<br>`wars/nuclear.py`<br>`wars/routes.py` | `ai_agent.py`<br>`app_core/economy/military_upkeep.py`<br>`app_core/military/manpower.py`<br>`app_core/tutorial/tour.py`<br>`bot_api.py`<br>`services/country_service.py`<br>`statistics.py`<br>`wars/action_points.py` |
+| **user_military** | `app_core/bots/service.py`<br>`app_core/game_ticks/maintenance.py`<br>`app_core/intelligence/repositories.py`<br>`app_core/military/repositories.py`<br>`countries.py`<br>`repositories/country_repository.py`<br>`signup.py`<br>`units.py`<br>`wars/aftermath.py`<br>`wars/nuclear.py`<br>`wars/routes.py` | `ai_agent.py`<br>`app_core/economy/military_upkeep.py`<br>`app_core/economy/military_upkeep_v2.py`<br>`app_core/military/manpower.py`<br>`app_core/tutorial/tour.py`<br>`bot_api.py`<br>`services/country_service.py`<br>`statistics.py`<br>`wars/action_points.py` |
 | user_tech | `action_loop.py`<br>`countries.py`<br>`repositories/country_repository.py`<br>`wars/routes.py` | `app_core/economy/province_power.py`<br>`app_core/game_ticks/revenue.py`<br>`app_core/main/routes.py`<br>`app_core/military/iron_dome.py`<br>`app_core/upgrades/repositories.py`<br>`province.py`<br>`services/country_service.py` |
 | user_unit_stockpile | `app_core/military/repositories.py` | `app_core/game_ticks/unit_production.py` |
 | users | `app.py`<br>`app_core/analytics/service.py`<br>`app_core/auth/email_auth.py`<br>`app_core/auth/google_auth.py`<br>`app_core/auth/routes.py`<br>`app_core/auth/totp.py`<br>`app_core/bots/service.py`<br>`app_core/coalitions/routes.py`<br>`app_core/onboarding/customization.py`<br>`app_core/referrals/service.py`<br>`app_core/vacation.py`<br>`change.py`<br>`countries.py`<br>`database.py`<br>`login.py`<br>`repositories/country_repository.py`<br>`signup.py` | `admin_reset_password.py`<br>`app_core/admin/repositories.py`<br>`app_core/bonds/repositories.py`<br>`app_core/bots/war_ai.py`<br>`app_core/bounties/repositories.py`<br>`app_core/chat/repositories.py`<br>`app_core/chat/routes.py`<br>`app_core/coalition_bank/services.py`<br>`app_core/community/repositories.py`<br>`app_core/currency/repositories.py`<br>`app_core/currency_market/repositories.py`<br>`app_core/currency_unions/repositories.py`<br>`app_core/currency_unions/services.py`<br>`app_core/economy/ledger.py`<br>`app_core/game_engine/routes.py`<br>`app_core/game_map/routes.py`<br>`app_core/game_ticks/bond_tick.py`<br>`app_core/game_ticks/maintenance.py`<br>`app_core/game_ticks/population.py`<br>`app_core/game_ticks/taxes.py`<br>`app_core/game_ticks/war_expiry.py`<br>`app_core/identity_diagnostics.py`<br>`app_core/intelligence/repositories.py`<br>`app_core/main/routes.py`<br>`app_core/market/repositories.py`<br>`app_core/onboarding/service.py`<br>`app_core/patreon/repositories.py`<br>`app_core/social_cards/routes.py`<br>`app_core/store/repositories.py`<br>`app_core/trade_agreements/repositories.py`<br>`app_core/treaties/repositories.py`<br>`app_core/tutorial/tour.py`<br>`app_core/world_affairs/repositories.py`<br>`app_core/world_map/routes.py`<br>`bot_api.py`<br>`check_counts.py`<br>`check_tokens.py`<br>`db_check.py`<br>`email_utils.py`<br>`helpers.py`<br>`login_verification.py`<br>`province.py`<br>`services/country_service.py`<br>`statistics.py`<br>`tasks.py`<br>`wars/action_points.py`<br>`wars/history.py`<br>`wars/nuclear.py`<br>`wars/routes.py` |
