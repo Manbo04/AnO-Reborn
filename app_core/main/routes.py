@@ -27,14 +27,54 @@ def index():
 
 def _hub_context():
     from app_core.chat import repositories as chat_repo
-    from app_core.community import repositories as community_repo
 
     user_id = session["user_id"]
     with get_request_cursor() as db:
         db.execute("SELECT username FROM users WHERE id=%s", (user_id,))
         row = db.fetchone()
         username = row[0] if row else None
+        chat_history = chat_repo.list_global_chat_messages()
 
+    online_sender_ids = []
+    for m in chat_history:
+        sid = m["sender_id"]
+        if sid not in online_sender_ids:
+            online_sender_ids.append(sid)
+        if len(online_sender_ids) >= 4:
+            break
+
+    return dict(
+        username=username,
+        chat_history=chat_history,
+        online_sender_ids=online_sender_ids,
+        **_hub_global_stats(),
+    )
+
+
+_HUB_GLOBAL_TTL_SECONDS = 30
+
+
+def _hub_global_stats():
+    """Hub numbers/news/threads identical for every viewer, cached 30s.
+
+    These were ~11 queries on every home-page view for every player; none of
+    them are per-user, and 30s of staleness is invisible on "nations online"
+    style counters.
+    """
+    from database import query_cache
+
+    cached = query_cache.get("hub_global_stats")
+    if cached is not None:
+        return cached
+    stats = _build_hub_global_stats()
+    query_cache.set("hub_global_stats", stats, ttl_seconds=_HUB_GLOBAL_TTL_SECONDS)
+    return stats
+
+
+def _build_hub_global_stats():
+    from app_core.community import repositories as community_repo
+
+    with get_request_cursor() as db:
         db.execute(
             "SELECT COUNT(*) FROM users WHERE last_active > now() - interval '5 minutes'"
         )
@@ -109,24 +149,13 @@ def _hub_context():
                 "href": f"/country/id={uid}",
             })
 
-        chat_history = chat_repo.list_global_chat_messages()
-        online_sender_ids = []
-        for m in chat_history:
-            sid = m["sender_id"]
-            if sid not in online_sender_ids:
-                online_sender_ids.append(sid)
-            if len(online_sender_ids) >= 4:
-                break
 
     return dict(
-        username=username,
         nations_online=nations_online,
         total_nations=total_nations,
         wars_now=wars_now,
         messages_today=messages_today,
         news=news,
-        chat_history=chat_history,
-        online_sender_ids=online_sender_ids,
         recent_threads=community_repo.list_threads(limit=4),
         recent_devlog=community_repo.list_devlog_entries(limit=3),
     )
