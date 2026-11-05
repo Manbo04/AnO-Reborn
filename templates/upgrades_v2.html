@@ -198,13 +198,11 @@
 
     <div class="templatedivcontent">
 
-        <p class="templatecontentpleft landingpagecontent">Country projects are ample, expensive public works endeavours that can increase production, decrease upkeep costs, increase efficacy in war, and even unlock new technologies to improve your economy and military. All projects are researched using {{ research_cost_resource }}.
-        </p>
-
         {% if tech_rows and tech_rows|length > 0 %}
         <div class="infodiv mb-md quick-research">
+            <p class="templatecontentpleft quick-research-intro">Country projects are ample, expensive public works endeavours that can increase production, decrease upkeep costs, increase efficacy in war, and even unlock new technologies to improve your economy and military. All projects are researched using {{ research_cost_resource }}.</p>
             <h3 class="templatecontentheadercenter">Quick research</h3>
-            <p class="templatecontentpleft">Search any technology, including ones not yet shown as cards below. Research cost is paid in {{ research_cost_resource }}.</p>
+            <p class="templatecontentpleft quick-research-hint">Search any technology, including ones not yet shown as cards below.</p>
             <form method="POST" action="/start_research">
                 <label for="tech_id">Technology</label>
                 <select class="templateselect" name="tech_id" id="tech_id" required onchange="anoUpdateTechDescription()">
