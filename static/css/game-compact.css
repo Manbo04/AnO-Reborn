@@ -831,3 +831,20 @@ body.page-upgrades .quick-research .quick-research-hint {
 }
 body.page-upgrades .quick-research .quick-research-intro { color: var(--colorOne); padding-bottom: 12px; }
 body.page-upgrades .quick-research h3.templatecontentheadercenter { margin-top: 12px; }
+
+/* --- Upgrades cards: every title starts at the same height ---
+   The image column must not absorb the card's spare height (that pushed
+   titles down by a different amount per card); the text column takes it. */
+body.page-upgrades .tech-grid-form .warflexparentcolors {
+    justify-content: flex-start !important;
+}
+body.page-upgrades .tech-grid-form .warflexparentcolors > .templatedivflex2left:has(.unitimage) {
+    flex: 0 0 auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    align-self: stretch;
+}
+body.page-upgrades .tech-grid-form .warflexparentcolors > .templatedivflex2left:not(:has(.unitimage)) {
+    flex: 1 1 auto !important;
+    align-self: stretch;
+}
