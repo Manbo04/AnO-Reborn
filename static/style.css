@@ -17104,6 +17104,23 @@ body.page-upgrades .quick-research form #tech_description { grid-column: 1 / -1;
     body.page-upgrades .quick-research form button { grid-column: 1; grid-row: 3; }
 }
 
+/* --- Upgrades: intro + quick research share ONE panel --- */
+body.page-upgrades .quick-research .quick-research-intro {
+    margin: 0 0 10px;
+    padding: 0 0 10px;
+    border-bottom: 1px solid var(--game-glass-border);
+    font-size: 14px;
+    line-height: 1.45;
+    text-align: left;
+}
+body.page-upgrades .quick-research h3.templatecontentheadercenter {
+    text-align: left;
+}
+body.page-upgrades .quick-research .quick-research-hint {
+    margin: 0 0 6px;
+    opacity: .8;
+}
+
 
 /* --- static/css/chat.css --- */
 /* Coalition chat + nation direct messages — mobile-first. */
