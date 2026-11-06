@@ -108,8 +108,12 @@
     }
   ],
   "poll_message_id": "1565827459235184641",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1563624248763883550",
   "title": "[Discussion] War rules after the hit-and-run fix: surrender, allies, nukes",
-  "url": "https://discord.com/channels/708006319658893385/1563624248763883550"
+  "url": "https://discord.com/channels/708006319658893385/1563624248763883550",
+  "votes": {
+    "no": 3,
+    "yes": 6
+  }
 }

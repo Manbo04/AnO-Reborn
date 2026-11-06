@@ -28,8 +28,12 @@
     }
   ],
   "poll_message_id": "1565827468261327060",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1564446311007125525",
   "title": "Available/Unlocked Projects",
-  "url": "https://discord.com/channels/708006319658893385/1564446311007125525"
+  "url": "https://discord.com/channels/708006319658893385/1564446311007125525",
+  "votes": {
+    "no": 0,
+    "yes": 9
+  }
 }

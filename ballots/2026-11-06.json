@@ -1,0 +1,25 @@
+{
+  "channel_id": "1556457101025353888",
+  "closes_at": "2026-11-13T16:00:00Z",
+  "header_message_id": "1568366553651613747",
+  "id": "2026-11-06",
+  "items": [
+    {
+      "message_id": "1568366554775560213",
+      "question": "UI Improvements",
+      "suggestion_id": "1566289342295711764"
+    },
+    {
+      "message_id": "1568366557661368414",
+      "question": "Reduce pop size",
+      "suggestion_id": "1567383389982556220"
+    },
+    {
+      "message_id": "1568366562635817083",
+      "question": "Morale, War type, War reward changes.",
+      "suggestion_id": "1567424496854376548"
+    }
+  ],
+  "opened_at": "2026-11-06T20:48:45Z",
+  "tallied": false
+}

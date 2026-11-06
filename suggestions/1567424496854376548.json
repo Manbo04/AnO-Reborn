@@ -1,5 +1,6 @@
 {
   "author_id": "429129579039555584",
+  "ballot_id": "2026-11-06",
   "created_at": "2026-11-04T06:25:21Z",
   "kind": "suggestion",
   "last_message_id": "1567586761226584085",
@@ -256,7 +257,8 @@
       "text": "For the demands? They are like that so you either have a day to recover before the 3 day war truce thing is up or it’s a week with additions and stuff because it’s a reward I want you to be able to maintain if you choose to actively get involved over and over"
     }
   ],
-  "status": "new",
+  "poll_message_id": "1568366562635817083",
+  "status": "voting",
   "thread_id": "1567424496854376548",
   "title": "Morale, War type, War reward changes.",
   "url": "https://discord.com/channels/708006319658893385/1567424496854376548"

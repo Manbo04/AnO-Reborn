@@ -28,8 +28,12 @@
     }
   ],
   "poll_message_id": "1565827455342608521",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1563555971593150546",
   "title": "Nuke limitations",
-  "url": "https://discord.com/channels/708006319658893385/1563555971593150546"
+  "url": "https://discord.com/channels/708006319658893385/1563555971593150546",
+  "votes": {
+    "no": 4,
+    "yes": 6
+  }
 }

@@ -28,8 +28,12 @@
     }
   ],
   "poll_message_id": "1565827471339684001",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1565398726476955668",
   "title": "Scale back population requirements for buildings",
-  "url": "https://discord.com/channels/708006319658893385/1565398726476955668"
+  "url": "https://discord.com/channels/708006319658893385/1565398726476955668",
+  "votes": {
+    "no": 2,
+    "yes": 7
+  }
 }
