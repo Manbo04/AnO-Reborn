@@ -15,7 +15,7 @@ mechanic, update its section here in the same PR.
 | minute | tick | what it does | gate |
 |---|---|---|---|
 | :00 | `tax_income` | gold from population (age-weighted), consumer-goods bonus | once per hour |
-| :00, :10, … | `global_tick` | resource consumption; **military upkeep** and **war supply regen** once per hour inside it | upkeep/supply once per hour |
+| :00, :10, … | `global_tick` | resource consumption; **military upkeep** and **war action-point regen** once per hour inside it (the gate key is still named `war_supply_regen`) | upkeep/AP regen once per hour |
 | :13 | `market_auto_orders` | players' standing market orders | ⚠ ungated |
 | :15 | `natural_disasters` | random disasters | once per hour |
 | :25 | `generate_province_revenue` | building production **and building upkeep**, pollution/happiness | once per hour |
@@ -134,11 +134,14 @@ Rules:
   "Blockaded" badge on war and market pages. 🔒 `tests/test_naval_blockade.py`
 - **One-screen attack page** (`/war/<war_id>/attack`):
   Unified attack interface replacing the old multi-step flow. Includes segmented tabs
-  (Ground / Air / Naval / Special), live supply and AP cost estimates, Max buttons,
+  (Ground / Air / Naval / Special), live AP cost estimates, Max buttons,
   instant Dig In and Recon Flight actions, entrenchment, intel, and blockade indicators.
   Old `/warchoose/<war_id>` GET route redirects here automatically.
-- **Supply**: attacker *and* defender pay unit supply from their own pool; a
-  defender can only field what its supply covers (`wars/supply.py`).
+- **No supply system** (removed 2026-10-11): attacks cost action points only and
+  defenders field their whole standing army. `wars/supply.py` now only holds the
+  Citizen Army: when the defender has no combat-capable troops in the attacked
+  domain, a militia fights instead and kills 4%-25% of each attacking unit type
+  (curve scales with population and provinces; cannot win the battle).
 - **Aftermath**: won ground/bomber attacks kill civilians only in the attacked province
   (ground 1%/2%/3%, bombers 2%/4%/6% for close/definite/annihilation); bombers also
   hit soldiers/tanks (`wars/aftermath.py`). Losing a battle no longer freezes growth.
