@@ -35,28 +35,7 @@ def get_unusable_units(user_id: int) -> set:
             """,
             (user_id,),
         )
-        unusable = {name for name, stock in db.fetchall() if stock == 0}
-
-        # Upkeep v2: after the grace period a unit is unusable when any
-        # resource it consumes (money excluded) is at 0.
-        from app_core.economy import military_upkeep_v2 as v2
-
-        if v2.v2_active():
-            unusable -= set(v2.v2_unit_names())
-            db.execute(
-                """
-                SELECT rd.name, COALESCE(ue.quantity, 0)
-                FROM resource_dictionary rd
-                LEFT JOIN user_economy ue
-                  ON ue.resource_id = rd.resource_id AND ue.user_id = %s
-                """,
-                (user_id,),
-            )
-            stock = {name: qty for name, qty in db.fetchall()}
-            for unit, costs in v2.UPKEEP_V2.items():
-                if any(stock.get(r, 0) == 0 for r in costs if r != "money"):
-                    unusable.add(unit)
-        return unusable
+        return {name for name, stock in db.fetchall() if stock == 0}
 
 
 # Blueprint for units

@@ -549,18 +549,6 @@ def global_tick():
 
                 cost_rows = military_upkeep_rows(dbdict)
 
-            money_rows = [r for r in cost_rows if r["resource_id"] is None]
-            cost_rows = [r for r in cost_rows if r["resource_id"] is not None]
-            if money_rows:
-                # Military upkeep v2: gold per unit, clamped at zero like resources.
-                ledger.take_gold_batch(
-                    db,
-                    [(int(r["required_amount"]), r["user_id"]) for r in money_rows],
-                    page_size=500,
-                )
-                for r in money_rows:
-                    users_processed.add(r["user_id"])
-
             if cost_rows:
                 impacted_users = sorted({row["user_id"] for row in cost_rows})
                 impacted_resources = sorted({row["resource_id"] for row in cost_rows})
