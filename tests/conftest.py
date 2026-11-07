@@ -33,6 +33,18 @@ LEGACY_SCHEMA_TEST_MODULES = {
 }
 
 
+def pytest_sessionstart(session):
+    """Stop before anything runs if the database looks like production (see tests/_prod_guard.py)."""
+    from tests._prod_guard import production_reason
+
+    reason = production_reason()
+    if reason:
+        pytest.exit(
+            f"Refusing to run tests against production ({reason}). Use a local, CI or test-realm database.",
+            returncode=3,
+        )
+
+
 def pytest_collection_modifyitems(config, items):
     if os.getenv("RUN_LEGACY_SCHEMA_TESTS") == "1":
         return

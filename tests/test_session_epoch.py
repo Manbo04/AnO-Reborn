@@ -29,6 +29,25 @@ def client():
         yield c
 
 
+_CREATED_USER_IDS = []
+
+
+@pytest.fixture(autouse=True)
+def _purge_created_users():
+    """Every user this module creates is removed afterwards, pass or fail."""
+    _CREATED_USER_IDS.clear()
+    yield
+    from database import get_db_connection
+    from tests._db_cleanup import purge_users
+
+    if _CREATED_USER_IDS:
+        with get_db_connection() as conn:
+            db = conn.cursor()
+            purge_users(db, list(_CREATED_USER_IDS))
+            conn.commit()
+        _CREATED_USER_IDS.clear()
+
+
 def _create_user():
     with get_db_cursor() as db:
         username = f"epoch_{uuid.uuid4().hex[:8]}"
@@ -42,6 +61,7 @@ def _create_user():
             (username, email, hashed, "1970-01-01", "normal"),
         )
         user_id = db.fetchone()[0]
+    _CREATED_USER_IDS.append(user_id)
     return user_id
 
 
