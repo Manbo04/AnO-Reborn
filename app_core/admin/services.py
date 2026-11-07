@@ -37,6 +37,7 @@ _ACTION_LABELS = {
     "province_deleted": ("Province Deleted", "muted"),
     "province_created": ("Province Created", "info"),
     "nation_reset": ("Nation Reset", "danger"),
+    "feature_flag_set": ("Feature Flag", "warning"),
 }
 
 # How long a "view as" session stays valid without the admin explicitly

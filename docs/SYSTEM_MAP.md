@@ -215,6 +215,7 @@ Tables no static query touches (dynamic SQL, scripts, or dead): `coalition_membe
 | `/admin/flags` | GET | `app_core.admin.routes:admin_flags` |
 | `/admin/flags/create` | POST | `app_core.admin.routes:admin_flags_create` |
 | `/admin/flags/set` | POST | `app_core.admin.routes:admin_flags_set` |
+| `/admin/guardrails` | GET | `app_core.admin.routes:admin_guardrails` |
 | `/admin/live-feed` | GET | `app_core.admin.routes:admin_live_feed` |
 | `/admin/migrate_treaties` | POST | `app_core.admin.routes:admin_migrate_treaties` |
 | `/admin/view-as/exit` | POST | `app_core.admin.routes:admin_view_as_exit` |
