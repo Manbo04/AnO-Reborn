@@ -41,6 +41,14 @@ def build_report(nations, scenario_spec: str, cost: float | None) -> tuple[str, 
         if cost is not None:
             row += f" {_n(b['median_hours_to_afford'])} | {_n(a['median_hours_to_afford'])} |"
         lines.append(row)
+    bc, ac = before["curve"], after["curve"]
+    f = lambda x, d=3: "n/a" if x is None else f"{x:.{d}f}"
+    lines += [
+        "",
+        f"Curve: gini {f(bc['gini_income'])} -> {f(ac['gini_income'])}; income-vs-wealth slope {f(bc['income_wealth_slope'], 2)} -> {f(ac['income_wealth_slope'], 2)}; "
+        f"top-10% income share {f(bc['top_decile_income_share'], 2)} -> {f(ac['top_decile_income_share'], 2)}; "
+        f"richest 10% idle >2d: {f(bc['top_decile_idle_share'], 2)}",
+    ]
     results = evaluate(before, after)
     lines += ["", "Guardrails:"]
     lines += [f"- {'PASS' if r.ok else 'FAIL'} {r.name}: {r.detail}" for r in results]

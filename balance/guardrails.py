@@ -9,6 +9,8 @@ MAX_SHARE_NET_LE_0_RISE = 0.05  # absolute, e.g. 10% -> at most 15%
 MAX_MEDIAN_NET_DROP = 0.25  # relative drop in median active net income
 MAX_NEW_PLAYER_NET_DROP = 0.20  # new players are protected more tightly
 MIN_NEW_PLAYER_NET = 0.0  # a new player must never be pushed below break-even
+MAX_GINI_RISE = 0.03  # income inequality may not jump (snowball guard)
+MAX_SLOPE_RISE = 0.05  # income-vs-wealth slope may not steepen (snowball guard)
 
 
 @dataclass
@@ -47,7 +49,20 @@ def _new_player_rule(before: dict, after: dict) -> Result:
     return Result("new_player_net", ok, f"{bn:,.0f} -> {an:,.0f} gold/hr ({drop * 100:.1f}% drop, max {MAX_NEW_PLAYER_NET_DROP * 100:.0f}%, floor {MIN_NEW_PLAYER_NET:.0f})")
 
 
-RULES: List[Callable[[dict, dict], Result]] = [_share_rule, _median_rule, _new_player_rule]
+def _snowball_rule(before: dict, after: dict) -> Result:
+    bc, ac = before.get("curve") or {}, after.get("curve") or {}
+    bg, ag = bc.get("gini_income"), ac.get("gini_income")
+    bs, as_ = bc.get("income_wealth_slope"), ac.get("income_wealth_slope")
+    if None in (bg, ag, bs, as_):
+        return Result("snowball", True, "not enough data to measure the curve (not checked)")
+    ok = (ag - bg) <= MAX_GINI_RISE + 1e-12 and (as_ - bs) <= MAX_SLOPE_RISE + 1e-12
+    return Result(
+        "snowball", ok,
+        f"gini {bg:.3f} -> {ag:.3f} (max rise {MAX_GINI_RISE}); income-vs-wealth slope {bs:.2f} -> {as_:.2f} (max rise {MAX_SLOPE_RISE})",
+    )
+
+
+RULES: List[Callable[[dict, dict], Result]] = [_share_rule, _median_rule, _new_player_rule, _snowball_rule]
 
 
 def evaluate(before: dict, after: dict) -> List[Result]:

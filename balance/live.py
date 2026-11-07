@@ -48,4 +48,6 @@ def thresholds() -> dict:
         "max_median_net_drop": guardrails.MAX_MEDIAN_NET_DROP,
         "max_new_player_net_drop": guardrails.MAX_NEW_PLAYER_NET_DROP,
         "min_new_player_net": guardrails.MIN_NEW_PLAYER_NET,
+        "max_gini_rise": guardrails.MAX_GINI_RISE,
+        "max_slope_rise": guardrails.MAX_SLOPE_RISE,
     }
