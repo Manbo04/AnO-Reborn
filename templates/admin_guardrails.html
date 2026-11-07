@@ -66,6 +66,31 @@
     </div>
     {% endif %}
 
+    <div class="gr-card">
+      <h2>Retention</h2>
+      <div class="gr-grid">
+        {% for d in ('d1', 'd7', 'd30') %}
+        <div class="gr-stat">Still around after {{ d[1:] }} day{{ 's' if d != 'd1' else '' }}<b>{{ '{:.0f}%'.format(summary.retention[d].rate * 100) if summary.retention[d].rate is not none else 'n/a' }}</b>{{ summary.retention[d].retained }} of {{ summary.retention[d].matured }}</div>
+        {% endfor %}
+      </div>
+      <p class="gr-note">{{ summary.retention.basis }}. The game keeps only each nation's latest activity time, not a daily history, so this is "last seen on or after day N", not "logged in on exactly day N". Nations with no activity record count as not retained (D1: {{ summary.retention.d1.no_activity_record }}).</p>
+    </div>
+
+    <div class="gr-card gr-scroll">
+      <h2>What players do</h2>
+      {% if summary.activity.collecting %}
+        <p class="gr-note">No counter data yet. Turn on the <code>activity_counters</code> flag in <a href="/admin/flags">Feature flags</a>; counts appear within a minute of the first actions. {% if summary.activity.error %}({{ summary.activity.error }}){% endif %}</p>
+      {% else %}
+      <table class="gr-table">
+        <tr><th>Cohort</th><th>Actions</th><th>Most common (share)</th></tr>
+        {% for name in ('top10', 'new', 'other') %}{% if summary.activity.cohorts.get(name) %}
+        <tr><td>{{ name }}</td><td>{{ summary.activity.cohorts[name].total }}</td><td>{% for a in summary.activity.cohorts[name].actions[:6] %}{{ a.action }} {{ '{:.0f}%'.format(a.share * 100) }}{% if not loop.last %}, {% endif %}{% endfor %}</td></tr>
+        {% endif %}{% endfor %}
+      </table>
+      <p class="gr-note">{{ summary.activity.days_with_data }} days of data. Distinct active users per day (estimate): {% for r in summary.activity.distinct_active_by_day[-7:] %}{{ r.day }}: {{ r.total }}{% if not loop.last %}; {% endif %}{% endfor %}. {{ summary.activity.note }}</p>
+      {% endif %}
+    </div>
+
     <div class="gr-card gr-scroll">
       <table class="gr-table">
         <tr><th>Group</th><th>Nations</th><th>Median net / hr</th><th>Share &le; 0</th><th>Median hours to afford 50M</th></tr>

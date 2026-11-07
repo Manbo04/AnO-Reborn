@@ -92,6 +92,7 @@ def summarise(nations: List[Nation], reference_cost: Optional[float] = None) -> 
         "archetypes": {},
         "curve": curve_shape(nations),
         "money": money_block(nations),
+        "retention": retention(nations),
     }
     for name in ("new", "median", "whale", "ai"):
         g = groups[name]
@@ -161,3 +162,29 @@ def curve_shape(nations: List[Nation]) -> dict:
 def with_net(nation: Nation, new_net: float) -> Nation:
     return replace(nation, net_per_hour=new_net)
 
+
+RETENTION_DAYS = (1, 7, 30)
+MAX_PLAUSIBLE_AGE_DAYS = 3650  # anything older is a bad signup date (the database has 1970-01-01 rows)
+
+
+def retention(nations: Iterable[Nation], days=RETENTION_DAYS) -> dict:
+    """Last-seen retention from data that already exists (signup date and last_active).
+
+    A nation counts as retained at day N when its last recorded activity is on or after signup + N days,
+    among human nations old enough to have had day N. This is NOT classic "logged in on exactly day N":
+    the game keeps only the latest activity time per nation, not a per-day history, and login_events
+    covers only a fraction of players. Nations with no activity record are counted as not retained and
+    reported separately so the gap is visible.
+    """
+    humans = [n for n in nations if not n.is_ai and n.age_days < MAX_PLAUSIBLE_AGE_DAYS]
+    out: dict = {"basis": "last_active on or after signup + N days (not exact day-N logins)"}
+    for d in days:
+        matured = [n for n in humans if n.age_days >= d]
+        retained = [n for n in matured if n.idle_days < 9999 and (n.age_days - n.idle_days) >= d]
+        out[f"d{d}"] = {
+            "matured": len(matured),
+            "retained": len(retained),
+            "rate": (len(retained) / len(matured)) if matured else None,
+            "no_activity_record": sum(1 for n in matured if n.idle_days >= 9999),
+        }
+    return out

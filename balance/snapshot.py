@@ -94,6 +94,24 @@ def fetch_flows(dsn: str | None = None) -> dict:
         conn.close()
 
 
+def fetch_activity(dsn: str | None = None) -> dict:
+    """Activity breakdown from the aggregated counters, read-only."""
+    dsn = dsn or os.environ.get("BALANCE_DATABASE_URL")
+    if not dsn:
+        raise RuntimeError("Set BALANCE_DATABASE_URL (a read-only connection). DATABASE_URL is not used on purpose.")
+    import psycopg2
+
+    from . import activity
+
+    conn = psycopg2.connect(dsn)
+    try:
+        conn.set_session(readonly=True, autocommit=True)
+        with conn.cursor() as cur:
+            return activity.fetch(cur)
+    finally:
+        conn.close()
+
+
 def anonymise(rows, now: dt.datetime, seed: int = 0) -> List[Nation]:
     rng = random.Random(seed)
     rows = list(rows)

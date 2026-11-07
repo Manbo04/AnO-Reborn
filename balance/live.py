@@ -10,7 +10,7 @@ import threading
 import time
 from typing import Optional, Tuple
 
-from . import economy, guardrails, snapshot
+from . import activity, economy, guardrails, snapshot
 from .metrics import summarise
 
 LIVE_CACHE_SECONDS = 300
@@ -33,9 +33,11 @@ def current_summary(force: bool = False) -> Tuple[Optional[dict], Optional[str]]
             cur.execute(snapshot.SNAPSHOT_SQL)
             rows = cur.fetchall()
             flows = economy.fetch_flows(cur)
+            activity_data = activity.fetch(cur)
         when = dt.datetime.now(dt.timezone.utc)
         summary = summarise(snapshot.anonymise(rows, when), reference_cost=50_000_000)
         summary["flows"] = flows
+        summary["activity"] = activity_data
         summary["as_of"] = when.strftime("%Y-%m-%d %H:%M UTC")
     except Exception as exc:  # the page must render even if the query fails
         return None, f"Could not read live numbers: {exc}"

@@ -845,6 +845,11 @@ def create_app():
 
     csrf = CSRFProtect(app)
     csrf.exempt(bot_api.bp)
+
+    # Aggregated activity counters (flag activity_counters, off by default; stores no user ids).
+    from app_core.activity import init_activity
+
+    init_activity(app)
     # Only the webhook view, not the whole store_bp blueprint — the rest of
     # store_bp is player-facing and must keep normal CSRF protection. The
     # webhook's auth boundary is the Stripe signature check inside the view.
