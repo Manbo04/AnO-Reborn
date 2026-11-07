@@ -295,6 +295,9 @@ def flush(force: bool = False) -> bool:
 
 def init_activity(app) -> None:
     """Register the after_request hook. Cheap and fully guarded."""
+    import atexit
+
+    atexit.register(lambda: flush(force=True))  # a worker restart loses at most FLUSH_SECONDS of counts
 
     @app.after_request
     def _count_activity(response):
