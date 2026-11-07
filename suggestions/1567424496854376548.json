@@ -3,7 +3,7 @@
   "ballot_id": "2026-11-06",
   "created_at": "2026-11-04T06:25:21Z",
   "kind": "suggestion",
-  "last_message_id": "1567586761226584085",
+  "last_message_id": "1568366575390691331",
   "last_player_message_at": "2026-11-04T17:10:08Z",
   "messages": [
     {
@@ -255,6 +255,16 @@
       "id": "1567586761226584085",
       "staff": false,
       "text": "For the demands? They are like that so you either have a day to recover before the 3 day war truce thing is up or it’s a week with additions and stuff because it’s a reward I want you to be able to maintain if you choose to actively get involved over and over"
+    },
+    {
+      "at": "2026-11-06T20:48:50Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1568366575390691331",
+      "staff": false,
+      "text": "<@429129579039555584> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1568366562635817083\nVoting closes <t:1794585600:F>. If Yes wins, it gets built."
     }
   ],
   "poll_message_id": "1568366562635817083",

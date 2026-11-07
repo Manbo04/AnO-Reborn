@@ -3,7 +3,7 @@
   "ballot_id": "2026-11-06",
   "created_at": "2026-11-01T03:14:39Z",
   "kind": "suggestion",
-  "last_message_id": "1566289342295711764",
+  "last_message_id": "1568366556415528976",
   "last_player_message_at": "2026-11-01T03:14:39Z",
   "messages": [
     {
@@ -15,6 +15,16 @@
       "id": "1566289342295711764",
       "staff": false,
       "text": "1. Provinces page only fits 30 cards. Those with more have to scroll all the way to the bottom to change page, possibly more than once.\n+ Please add the change page function above the cards, preferably with a text box addition so those with 1000 provinces can type in the number.\n++ Consider changing the numbering/indexing of the provinces? Say - 'NationName' + 'Province#' eg. celessmob4 so we can directly type it into a text box and get there instead of scrolling past 6 pages of provinces and searching in 30 cards. (Also maybe people will use shorter simpler names so the rest of us can refer to them easily. 😛 instead of Grand Imperial Supreme Highland Dream Celestial Empire of the Fourth Golden Reign of Industrial Revolutionary Army)\n\n2. Reassess the Information available for Provinces in one page. Now, to check on my nation 'health' status, I need to go to Overview - to see unemployment numbers, Mass Purchase to see Powered/Unpowered (and also guess how much power I have in excess in every province unless I go to it province by province...)\n+ Consider to put it all in one screen. Overhaul the Nation View page - remove resources tab/card, on Desktop there is already a resources collapsible table on the right side (I don't play on mobile). Merge that with the Provinces tab/card. Add more relevant info - beyond stable/unstable, powered/unpowered, add numbers there like 35/25 Unpowered (keep the colors, great visual clues), cities used/total, land used/total. Move unstable & unpowered provinces to the top of the list. With province links please so we can quickly fix the problems shown.\n++ Consider moving the non-essential stuff to another page - stuff like about, currency, government, achievements"
+    },
+    {
+      "at": "2026-11-06T20:48:45Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1568366556415528976",
+      "staff": false,
+      "text": "<@249007223454433292> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1568366554775560213\nVoting closes <t:1794585600:F>. If Yes wins, it gets built."
     }
   ],
   "poll_message_id": "1568366554775560213",

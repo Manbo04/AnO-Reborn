@@ -3,7 +3,7 @@
   "ballot_id": "2026-11-06",
   "created_at": "2026-11-04T03:42:00Z",
   "kind": "suggestion",
-  "last_message_id": "1567487368699838505",
+  "last_message_id": "1568366560727408714",
   "last_player_message_at": "2026-11-04T10:35:11Z",
   "messages": [
     {
@@ -55,6 +55,16 @@
       "id": "1567487368699838505",
       "staff": false,
       "text": "Food is basically worthless and this is the only game I've seen a resource go for 1 ppu"
+    },
+    {
+      "at": "2026-11-06T20:48:46Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1568366560727408714",
+      "staff": false,
+      "text": "<@429129579039555584> this is now up for the community vote: https://discord.com/channels/708006319658893385/1556457101025353888/1568366557661368414\nVoting closes <t:1794585600:F>. If Yes wins, it gets built."
     }
   ],
   "poll_message_id": "1568366557661368414",
