@@ -976,5 +976,4 @@ Order check: index of last power plant in BUILDINGS = 6 ; first ENERGY_CONSUMERS
 
 ## Not found / open questions
 - Whether `building_dictionary` rows (DB) carry other prices that some code path still reads (the `enrich_building_row` function overrides `gold_cost` from variables, app_core/economy/building_costs.py:403-420).
-- Whether `/build_structure` with negative quantity blocks selling during war (see UNCLEAR above).
 - Build time/queue: none found; `build_structure` completes instantly in one transaction (action_loop.py:48-96).
