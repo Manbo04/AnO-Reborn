@@ -71,3 +71,20 @@ every change in a nation's gold equals its ledger rows, nothing goes negative or
 same period moves nothing, and the hourly result stays smooth (a jump over 25% fails). Two mutation tests prove it can
 fail: an off-ledger gold leak, and a one-hour double charge (the #259 shape).
 
+## Retention and what players do
+
+- **Retention D1/D7/D30** is computed from data that already exists (signup date and `last_active`): a nation counts
+  as retained at day N when it was last seen on or after signup + N days. This is **not** classic "logged in on exactly
+  day N": the game keeps only the latest activity time per nation, and `login_events` covers only a fraction of players
+  (measured 2026-11-07: 61 of 309 users). Nations with no activity record count as not retained and are reported
+  separately. If a per-day history is ever needed, turn the counters below into a per-nation daily flag (a game change).
+- **What players do** comes from `activity_daily` / `activity_daily_users`, filled by `app_core/activity.py` behind the
+  `activity_counters` feature flag (off by default). After a successful POST on a mapped route it adds one count per
+  (UTC day, action, cohort) in memory and flushes at most every 30 seconds in one short transaction with a lock timeout.
+  No user ids are stored: distinct active users per day come from a 1024-byte HyperLogLog sketch built from a keyed hash
+  (about 3% error, cannot be reversed to ids). Cohorts are `new` (signed up under 7 days ago), `top10` (richest 10% by gold
+  of humans active in the last 7 days) and `other`, assigned in memory when the action happens.
+- Action types: build, military, declare_war, attack, peace, trade, research, diplomacy, coalition_bank, finance, politics,
+  espionage. The list is `ACTION_RULES` in `app_core/activity.py`; a test fails if a mapped route disappears.
+- Data older than 90 days is pruned on flush. A worker restart loses at most 30 seconds of counts.
+
