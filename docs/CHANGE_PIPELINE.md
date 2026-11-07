@@ -102,6 +102,7 @@ Studio practice: feature flags, canary releases, kill switches, grace periods.
 
 ### G6: Door test and live verification (QA, certification)
 - The existing 6-point door test, live in Chrome as account 16 (new and old player, 390px mobile).
+- **Stage the state yourself.** A feature that needs a second player, a war, or any other special state is tested by creating that state, never left unverified because it "needs another player". Use an AI nation as the counterpart, or the test realm. To stage a war: use the test account to declare war on an AI nation through the normal in-game route, run the checks while the war is active, then end it by the normal route (peace) and check again. Record the staged setup and result in the PR.
 - **First-tick observation:** record real before and after numbers from the actual tick, compared to the G3 prediction. A mismatch beyond tolerance triggers the rollback trigger.
 - Check ledger, auth and validation on every new mutating route.
 
