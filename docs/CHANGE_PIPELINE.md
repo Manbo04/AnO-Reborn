@@ -162,6 +162,8 @@ Core pillars, the dev process itself (problem, design, build, test, learn), mech
 
 Outside reviewers with game-design experience are welcome at Gate 4 and their notes go in the design doc's decision log.
 
+Study list for these topics: `docs/DESIGN_STUDY_CHECKLIST.md`. Every design doc answers the late-game substance, skill-improvement and dead-time checks in section 4c of the template.
+
 ## 9. Rules for AI sessions
 
 1. Before changing any cost, rate, cap, upkeep, income, tax, fee, loot or war-range value, name the class (A to D) and follow its gates.

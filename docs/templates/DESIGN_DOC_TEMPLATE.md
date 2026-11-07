@@ -44,6 +44,16 @@ If this change forces a change in another system, that change belongs in this do
 - **Hibernation check:** does the change make late players wait between upgrades with nothing to do? Attach the share of top-decile nations idle for more than 2 days.
 - **Mechanics checks:** probability and RNG used (what variance, can it be farmed), player psychology (what will players feel and do), and who the audience is (daily-check players, not constant players).
 
+## 4c. Late-game substance, skill and dead time
+Progression attracts players; substance keeps them once growth slows.
+- **Late-game substance check:** what does a top-decile player do with their time after growth slows? "Grow more" is not an answer; a doc that says only that is rejected. Name the activity (war, diplomacy, coalition projects, trade, rivalry).
+- **Skill-improvement check:** does this give players something to get better at, not just wait for or spend on? Say what skill and how a better player shows it.
+- **Dead-time audit:** list every timer and cooldown this adds (build, research, training, cooldown) and what the player can do while it runs. Any added waiting with nothing else to do must be removed, shortened, or paired with other activity.
+
+| Timer / cooldown | Length | What the player can do meanwhile |
+|---|---|---|
+| | | |
+
 ## 5. Alternatives considered
 1. <option> rejected because
 2. <option> rejected because
