@@ -112,3 +112,37 @@ def test_fixture_end_to_end_report():
     assert ok and "Guardrails:" in text
     text, ok = report.build_report(ns, "military_upkeep:0.0002", None)
     assert not ok and "BREACHED" in text
+
+
+def test_gini_equal_and_unequal():
+    assert metrics.gini([5, 5, 5, 5]) == pytest.approx(0.0, abs=1e-9)
+    assert metrics.gini([0, 0, 0, 100]) == pytest.approx(0.75, abs=1e-9)
+    assert metrics.gini([0, 0]) is None and metrics.gini([3]) is None
+
+
+def test_loglog_slope_detects_taper_and_snowball():
+    gold = [10 ** (i / 3) for i in range(1, 16)]
+    assert metrics.loglog_slope(gold, [g ** 0.5 for g in gold]) == pytest.approx(0.5, abs=1e-6)
+    assert metrics.loglog_slope(gold, [g ** 1.4 for g in gold]) == pytest.approx(1.4, abs=1e-6)
+    assert metrics.loglog_slope([1, 2, 3], [1, 2, 3]) is None  # too few points
+
+
+def test_curve_shape_hibernation_signal():
+    ns = [nation(i, 100 + i, gold=1000 * (i + 1), idle=(5 if False else 0.0)) for i in range(20)]
+    assert metrics.curve_shape(ns)["top_decile_idle_share"] == 0.0
+    ns[-1] = nation(19, 119, gold=10 ** 9, idle=3.0)  # richest, idle 3 days but still active (<=7)
+    ns[-2] = nation(18, 118, gold=10 ** 8, idle=3.0)
+    assert metrics.curve_shape(ns)["top_decile_idle_share"] == 1.0
+
+
+def test_snowball_guardrail_trips_when_rich_get_richer():
+    ns = [nation(i, 1000 + 10 * i, gold=10 ** 6 * (i + 1)) for i in range(40)]
+
+    def snowball(nations):  # richer nations earn much more after the change
+        return [metrics.with_net(n, n.net_per_hour * (1 + n.gold / 10 ** 7)) for n in nations]
+
+    before, after = metrics.summarise(ns), metrics.summarise(snowball(ns))
+    res = {r.name: r for r in guardrails.evaluate(before, after)}
+    assert not res["snowball"].ok
+    flat = metrics.summarise(simulate.flat_cost_per_hour(1)(ns))
+    assert {r.name: r for r in guardrails.evaluate(before, flat)}["snowball"].ok

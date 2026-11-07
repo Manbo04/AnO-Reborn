@@ -17,6 +17,11 @@ not bare gold.
 share of active nations at net income <= 0 may rise at most 5 points; median net income may fall
 at most 25%; new players may fall at most 20% and never below zero.
 
+Snowball guard: income inequality (gini) may rise at most 0.03 and the income-vs-wealth log-log slope at
+most 0.05. The report and `/admin/guardrails` also show the top-10% income share and the share of the
+richest 10% who have been idle for over 2 days (a hibernation signal). Late-game activity is only
+measured by idleness; counting what players actually do needs action logging, which does not exist yet.
+
 **Loop checks** (`balance/loops.py`): numbers for the recruit-after-tick, raid, sell-back loop and
 for buy/sell round trips.
 

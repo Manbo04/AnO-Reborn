@@ -30,6 +30,17 @@
       <p class="gr-note">As of {{ summary.as_of }}. {{ summary.n_total }} nations in the snapshot including AI.</p>
     </div>
 
+    <div class="gr-card">
+      <h2>Progression curve and staleness</h2>
+      <div class="gr-grid">
+        <div class="gr-stat">Income inequality (gini)<b>{{ '{:.3f}'.format(summary.curve.gini_income) if summary.curve.gini_income is not none else 'n/a' }}</b></div>
+        <div class="gr-stat">Income vs wealth slope<b>{{ '{:.2f}'.format(summary.curve.income_wealth_slope) if summary.curve.income_wealth_slope is not none else 'n/a' }}</b></div>
+        <div class="gr-stat">Top 10% share of income<b>{{ '{:.0f}%'.format(summary.curve.top_decile_income_share * 100) if summary.curve.top_decile_income_share is not none else 'n/a' }}</b></div>
+        <div class="gr-stat">Richest 10% idle over 2 days<b>{{ '{:.0f}%'.format(summary.curve.top_decile_idle_share * 100) if summary.curve.top_decile_idle_share is not none else 'n/a' }}</b></div>
+      </div>
+      <p class="gr-note">Slope below 1 means income grows slower than wealth (a tapering curve); above 1 means richer nations earn proportionally more (snowball). A high idle share among the richest suggests late players have nothing to do. Late-game activity is only measured by idleness for now; counting what players do needs action logging.</p>
+    </div>
+
     <div class="gr-card gr-scroll">
       <table class="gr-table">
         <tr><th>Group</th><th>Nations</th><th>Median net / hr</th><th>Share &le; 0</th><th>Median hours to afford 50M</th></tr>
@@ -50,6 +61,7 @@
   <div class="gr-card">
     <h2>Rules a change must hold</h2>
     <ul>
+      <li>Income inequality (gini) may rise at most {{ limits.max_gini_rise }} and the income-vs-wealth slope at most {{ limits.max_slope_rise }}.</li>
       <li>Share of active nations at net income &le; 0 may rise at most {{ (limits.max_share_net_le_0_rise * 100)|round|int }} points.</li>
       <li>Median net income may fall at most {{ (limits.max_median_net_drop * 100)|round|int }}%.</li>
       <li>New players may fall at most {{ (limits.max_new_player_net_drop * 100)|round|int }}% and never below zero.</li>

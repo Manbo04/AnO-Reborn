@@ -29,7 +29,8 @@ Common root causes: no stated problem, unchecked facts, no exploit review, no si
 4. **Systems, not patches.** Changes are placed on a system map first (economy, military, war, population). If a change forces a second change elsewhere, both go in one design.
 5. **Players are testers, not victims.** Large changes get visibility before they go live, and a path for feedback.
 6. **Reversible by default.** Anything that touches the economy ships behind a flag or with a prepared revert.
-7. **Say what you did.** Every shipped change gets a plain-language note with the reason.
+7. **Serve a pillar.** Every design names the game pillar it serves and checks the curve for snowballing and staleness (design doc sections 0 and 4b).
+8. **Say what you did.** Every shipped change gets a plain-language note with the reason.
 
 ## 2. Change classes (decides how many gates apply)
 
@@ -155,7 +156,13 @@ Update the Status column in the PR that ships each tool.
 
 Surrender rules, ally-join timing, MDP range, special weapons supply and morale, iron dome cap, standing-military score refund, upkeep v3 (derived from income per the balance spec), war ranges (population-based), small-beats-big strategy.
 
-## 8. Rules for AI sessions
+## 8. Design references (what a design review should cover)
+
+Core pillars, the dev process itself (problem, design, build, test, learn), mechanical analysis (what each system takes in and gives out), player psychology, constructive iteration on feedback, probability and RNG, progression curves, economy modelling, taking a system apart to see why it works, and the target audience. For this game the audience checks in about once a day, so features that need constant attention are the wrong shape. Presentation polish and feature framing matter less here than mechanics and curves.
+
+Outside reviewers with game-design experience are welcome at Gate 4 and their notes go in the design doc's decision log.
+
+## 9. Rules for AI sessions
 
 1. Before changing any cost, rate, cap, upkeep, income, tax, fee, loot or war-range value, name the class (A to D) and follow its gates.
 2. Never state a game rule to a player without a code reference. If unsure, say so and check.

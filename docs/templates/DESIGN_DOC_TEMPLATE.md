@@ -5,6 +5,9 @@
 - **Status:** draft / in review / approved / shipped / reverted
 - **Date:** <YYYY-MM-DD>
 
+## 0. Core pillars (required)
+Name the game pillars this change serves (for example: meaningful choices, small players can still win, wars have consequences, the economy rewards activity). State which pillar it strengthens and which it could weaken. A change that serves no pillar is not ready.
+
 ## 1. Problem (Gate 0)
 - Who is affected, and how many (count from the database, not a guess):
 - Evidence (ticket links, Discord links, queries):
@@ -33,6 +36,13 @@ If this change forces a change in another system, that change belongs in this do
 - What changes, in plain terms:
 - Numbers, expressed in MI-hours (hours of the median active nation's net income), not bare figures:
 - What the player can see (where they learn why a number moved):
+
+## 4b. Progression curve, snowball and staleness
+- **Curve shape:** new players should progress fast (cheap early provinces, land, cities, buildings) and growth should taper as a nation gets large. Describe the curve this change gives and attach the harness curve numbers (income inequality, income-vs-wealth slope).
+- **Snowball check:** can the leader convert a lead into a bigger lead with no limit (loot, compounding income, cheaper everything)? What slows them?
+- **Staleness check:** a good curve alone does not stop a game going stale. What does a late-game nation do besides grow? Name the second game for late players (conflict, diplomacy, projects, trade, rivalry) this change feeds or ignores.
+- **Hibernation check:** does the change make late players wait between upgrades with nothing to do? Attach the share of top-decile nations idle for more than 2 days.
+- **Mechanics checks:** probability and RNG used (what variance, can it be farmed), player psychology (what will players feel and do), and who the audience is (daily-check players, not constant players).
 
 ## 5. Alternatives considered
 1. <option> rejected because
