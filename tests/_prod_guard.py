@@ -26,3 +26,16 @@ def production_reason(env=None):
         if any(m in host.lower() for m in PRODUCTION_HOST_MARKERS):
             return f"database host {host}"
     return None
+
+
+def refuse_production():
+    """Abort the pytest run if the environment looks like production. Call at import time of any test
+    module that writes data (tests/conftest.py is a protected file, so the hook lives here instead)."""
+    import pytest
+
+    reason = production_reason()
+    if reason:
+        pytest.exit(
+            f"Refusing to run tests against production ({reason}). Use a local, CI or test-realm database.",
+            returncode=3,
+        )

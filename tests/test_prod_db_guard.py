@@ -1,7 +1,9 @@
 """The production-database guard that stops the suite before it can touch real data."""
 import pytest
 
-from tests._prod_guard import production_reason
+from tests._prod_guard import production_reason, refuse_production
+
+refuse_production()  # runs when this module is collected, i.e. on every full run
 
 pytestmark = pytest.mark.no_server
 
@@ -33,12 +35,10 @@ def test_local_ci_and_test_realm_environments_are_allowed(env):
     assert production_reason(env) is None
 
 
-def test_the_suite_start_hook_exits_on_production(monkeypatch):
-    import tests.conftest as c
-
+def test_refuse_production_exits_the_run(monkeypatch):
     monkeypatch.setenv("DATABASE_URL", "postgresql://u:p@x.railway.internal:5432/railway")
     with pytest.raises(BaseException) as exc:
-        c.pytest_sessionstart(None)
+        refuse_production()
     assert "Refusing to run tests against production" in str(exc.value)
 
 

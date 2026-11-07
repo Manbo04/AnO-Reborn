@@ -29,6 +29,10 @@ def client():
         yield c
 
 
+from tests._prod_guard import refuse_production
+
+refuse_production()  # this module writes users; never let it run against production
+
 _CREATED_USER_IDS = []
 
 
