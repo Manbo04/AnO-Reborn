@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+{% block title %}Feature flags{% endblock %}
+{% block body %}
+<style>
+  .fl-wrap { max-width: 960px; margin: 0 auto; padding: 16px; }
+  .fl-card { background: var(--bg2, #1e2a38); border: 1px solid #2c3e50; border-radius: 8px; padding: 14px; margin: 12px 0; }
+  .fl-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; justify-content: space-between; }
+  .fl-key { font-family: monospace; font-weight: 700; }
+  .fl-state { padding: 2px 10px; border-radius: 999px; font-size: .85em; }
+  .fl-on { background: #1b5e20; color: #c8e6c9; }
+  .fl-off { background: #37474f; color: #cfd8dc; }
+  .fl-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 10px; }
+  .fl-row input[type=number], .fl-row input[type=text] { padding: 8px; min-width: 0; }
+  .fl-note { opacity: .8; font-size: .9em; margin: 4px 0 0; }
+  .fl-btn { padding: 10px 16px; min-height: 44px; }
+</style>
+<div class="fl-wrap">
+  <h1>Feature flags</h1>
+  <p class="fl-note">Master switch off means off for everyone. Percent picks a stable slice of nations. A flip reaches every process within 15 seconds. Every change is written to the admin log.</p>
+
+  {% for f in flags %}
+  <form class="fl-card" action="/admin/flags/set" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="key" value="{{ f.key }}">
+    <div class="fl-head">
+      <span class="fl-key">{{ f.key }}</span>
+      <span class="fl-state {{ 'fl-on' if f.enabled else 'fl-off' }}">{{ 'ON for ' ~ f.rollout_percent ~ '%' if f.enabled else 'OFF for everyone' }}</span>
+    </div>
+    <p class="fl-note">{{ f.description or 'No description.' }}</p>
+    <p class="fl-note"><strong>Rollback trigger:</strong> {{ f.rollback_trigger or 'none written' }}</p>
+    <div class="fl-row">
+      <label><input type="checkbox" name="enabled" {{ 'checked' if f.enabled }}> Enabled</label>
+      <label>Percent of nations
+        <input type="number" name="rollout_percent" min="0" max="100" step="1" value="{{ f.rollout_percent }}" style="width:90px">
+      </label>
+      <button class="fl-btn" type="submit">Save</button>
+    </div>
+    {% if f.updated_by %}<p class="fl-note">Last changed by {{ f.updated_by }}{% if f.updated_at %} at {{ f.updated_at.strftime('%Y-%m-%d %H:%M UTC') }}{% endif %}</p>{% endif %}
+  </form>
+  {% else %}
+  <div class="fl-card">No flags yet. Create one below before shipping a class C or D change.</div>
+  {% endfor %}
+
+  <form class="fl-card" action="/admin/flags/create" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <h2>New flag</h2>
+    <div class="fl-row">
+      <input type="text" name="key" placeholder="upkeep_v3" required pattern="[a-z][a-z0-9_]{2,63}" aria-label="Flag key">
+      <input type="text" name="description" placeholder="What it changes" aria-label="Description" style="flex:1">
+    </div>
+    <div class="fl-row">
+      <input type="text" name="rollback_trigger" placeholder="Rollback trigger, e.g. more than 10% of canary nations at net income below 0" required style="flex:1" aria-label="Rollback trigger">
+    </div>
+    <div class="fl-row">
+      <label><input type="checkbox" name="enabled"> Enabled</label>
+      <label>Percent <input type="number" name="rollout_percent" min="0" max="100" step="1" value="5" style="width:90px"></label>
+      <button class="fl-btn" type="submit">Create</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
