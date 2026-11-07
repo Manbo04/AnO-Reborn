@@ -253,7 +253,7 @@ def update_manpower_and_gold(db, cId, gold_delta, manpower_delta):
     elif gold_delta < 0:
         ledger.take_gold(db, cId, -gold_delta)
     db.execute(
-        "UPDATE stats SET manpower = GREATEST(0, manpower + %s) WHERE id=%s",
+        "UPDATE stats SET manpower = LEAST(2147483647, GREATEST(0, manpower + %s)) WHERE id=%s",
         (manpower_delta, cId),
     )
 

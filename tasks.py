@@ -229,7 +229,7 @@ def _manpower_increase():
         if manpower_updates:
             execute_batch(
                 db,
-                "UPDATE stats SET manpower = GREATEST(0, manpower + %s) WHERE id=%s",
+                "UPDATE stats SET manpower = LEAST(2147483647, GREATEST(0, manpower + %s)) WHERE id=%s",
                 manpower_updates,
                 page_size=100,
             )
