@@ -38,7 +38,7 @@ echo "4/5 scrubbing personal data"
 psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f testrealm/scrub.sql
 if [ -n "${TESTREALM_SHARED_PASSWORD:-}" ]; then
   HASH="$(python3 -c 'import bcrypt,sys;print(bcrypt.hashpw(sys.argv[1].encode(),bcrypt.gensalt()).decode())' "$TESTREALM_SHARED_PASSWORD")"
-  psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -v h="$HASH" -c "UPDATE users SET hash = :'h' WHERE auth_type <> 'bot'"
+  psql "$TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -v h="$HASH" -c "UPDATE users SET hash = :'h', auth_type = 'normal' WHERE auth_type <> 'bot'"
   echo "   shared tester password set"
 fi
 
