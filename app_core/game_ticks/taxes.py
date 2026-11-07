@@ -775,4 +775,20 @@ def war_reparation_tax():
                             resource, resource_amount * (1 / 5), winner
                         )
 
+                # Resources the loser parked in a coalition bank are taxed at the
+                # same rate when the flag is on (closes the bank-parking dodge).
+                from app_core.game_ticks import reparation_bank
+
+                if reparation_bank.enabled():
+                    reparation_bank.tax_bank_balance(
+                        db,
+                        loser,
+                        winner,
+                        (1 / 20) if war_type == "Raze" else (1 / 5),
+                        Economy.resources,
+                    )
+                    # commit now: the next truce's transfer_resources uses its own
+                    # connection and must not wait on this one's row locks
+                    conn.commit()
+
 
