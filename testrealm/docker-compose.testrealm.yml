@@ -1,0 +1,57 @@
+# Test realm stack: its own Postgres, Redis, web and tick workers. Nothing here talks to production
+# or to real players. Outbound services (Discord, email, Stripe, Patreon, Sentry) get no credentials.
+#
+#   docker compose -f testrealm/docker-compose.testrealm.yml -p anotest up -d --build
+#   TEST_DATABASE_URL=postgresql://ano_test:ano_test@localhost:15432/ano_test testrealm/build.sh
+#
+# NOT YET RUN. First start needs a check of the boot logs; see docs/TEST_REALM.md.
+x-env: &env
+  ENVIRONMENT: TEST
+  SECRET_KEY: test-realm-secret-change-me
+  DATABASE_URL: postgresql://ano_test:ano_test@postgres:5432/ano_test
+  PG_DATABASE: ano_test
+  PG_USER: ano_test
+  PG_PASSWORD: ano_test
+  PG_HOST: postgres
+  PG_PORT: "5432"
+  REDIS_URL: redis://redis:6379/0
+  REQUIRE_EMAIL_VERIFICATION: "false"
+  # Deliberately empty so nothing can reach real people:
+  DISCORD_BOT_TOKEN: ""
+  DISCORD_WEBHOOK_URL: ""
+  DISCORD_CLIENT_ID: ""
+  DISCORD_CLIENT_SECRET: ""
+  RESEND_API_KEY: ""
+  EMAIL_HOST: ""
+  STRIPE_SECRET_KEY: ""
+  STRIPE_WEBHOOK_SECRET: ""
+  PATREON_ACCESS_TOKEN: ""
+  SENTRY_DSN: ""
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment: {POSTGRES_DB: ano_test, POSTGRES_USER: ano_test, POSTGRES_PASSWORD: ano_test}
+    ports: ["127.0.0.1:15432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: {test: ["CMD-SHELL", "pg_isready -U ano_test"], interval: 10s, timeout: 5s, retries: 5}
+  redis:
+    image: redis:7-alpine
+    healthcheck: {test: ["CMD", "redis-cli", "ping"], interval: 10s, timeout: 5s, retries: 5}
+  web:
+    build: {context: .., dockerfile: Dockerfile}
+    environment: *env
+    ports: ["127.0.0.1:18080:8080"]
+    depends_on: {postgres: {condition: service_healthy}, redis: {condition: service_healthy}}
+  worker:
+    build: {context: .., dockerfile: Dockerfile}
+    environment: *env
+    command: celery -A tasks worker --loglevel=INFO --concurrency=2
+    depends_on: {postgres: {condition: service_healthy}, redis: {condition: service_healthy}}
+  beat:
+    build: {context: .., dockerfile: Dockerfile}
+    environment: *env
+    command: python scripts/run_beat_if_leader.py
+    depends_on: {postgres: {condition: service_healthy}, redis: {condition: service_healthy}}
+volumes:
+  pgdata:
