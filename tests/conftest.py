@@ -205,16 +205,3 @@ def _patch_economy_get_particular_resources():
         yield
     finally:
         importlib.reload = orig_reload
-
-
-@pytest.fixture(autouse=True)
-def _pin_upkeep_v2_clock(monkeypatch):
-    """Upkeep v2 switched on at UPKEEP_V2_START (2026-11-06 19:00 UTC). Tests whose
-    mocked cursors predate v2 must not depend on the wall clock, or CI turns red the
-    moment the date passes. Calls that pass an explicit `now` keep real behaviour."""
-    try:
-        from app_core.economy import military_upkeep_v2 as v2
-    except Exception:
-        return
-    real = v2.v2_active
-    monkeypatch.setattr(v2, "v2_active", lambda now=None: real(now) if now is not None else False)
