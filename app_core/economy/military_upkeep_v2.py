@@ -1,20 +1,16 @@
 """Military upkeep v2 (Dede, 2026-11-05, from #military-recommendations).
 
-Numbers are per unit, per GAME YEAR (24 hourly ticks = 1 year, i.e. 24h IRL).
-Each tick charges 1/24 of them, rounded up per nation and resource. ``money``
-is gold, everything else is a resource name from resource_dictionary. Units not listed here keep the legacy
+Per unit, per hourly upkeep tick. ``money`` is gold, everything else is a
+resource name from resource_dictionary. Units not listed here keep the legacy
 single-resource upkeep in unit_dictionary. Nothing is charged before
 UPKEEP_V2_START (24h grace period after the announcement).
 """
 
-import math
 from datetime import datetime, timezone
 
 UPKEEP_V2_START = datetime(2026, 11, 6, 19, 0, tzinfo=timezone.utc)
 
-TICKS_PER_YEAR = 24
-
-UPKEEP_V2 = {  # per unit, per game year
+UPKEEP_V2 = {
     "soldiers": {"money": 75_000, "rations": 1},
     "artillery": {"ammunition": 1, "money": 38_000_000},
     "tanks": {"gasoline": 1, "ammunition": 1, "steel": 2, "money": 45_000_000},
@@ -43,7 +39,7 @@ def v2_unit_names():
 
 
 def describe(unit_name):
-    """Annual cost, e.g. '75,000 money, 1 rations' (per year), for a unit, or '' if it has no v2 entry."""
+    """'75,000 money, 1 rations' for a unit, or '' if it has no v2 entry."""
     costs = UPKEEP_V2.get(unit_name)
     if not costs:
         return ""
@@ -80,7 +76,7 @@ def v2_rows(cursor, user_id=None):
             "user_id": uid,
             "resource_id": None if res == "money" else ids[res],
             "resource": res,
-            "required_amount": math.ceil(amount / TICKS_PER_YEAR),
+            "required_amount": amount,
         }
         for (uid, res), amount in totals.items()
     ]
