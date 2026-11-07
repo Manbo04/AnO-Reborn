@@ -2,16 +2,6 @@ import pytest
 from unittest.mock import MagicMock, patch
 import countries
 
-
-@pytest.fixture(autouse=True)
-def _pin_upkeep_v2_clock(monkeypatch):
-    """These mocked cursors predate upkeep v2 (live since 2026-11-06 19:00 UTC); keep
-    them independent of the wall clock. Explicit `now` calls keep real behaviour."""
-    from app_core.economy import military_upkeep_v2 as v2
-    real = v2.v2_active
-    monkeypatch.setattr(v2, "v2_active", lambda now=None: real(now) if now is not None else False)
-
-
 @pytest.mark.no_server
 def test_monetary_net_deducts_full_building_upkeep_when_treasury_empty():
     """
