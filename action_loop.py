@@ -119,6 +119,19 @@ def demolish_structure(
         db = conn.cursor()
         db.execute("SELECT pg_advisory_xact_lock(%s)", (user_id,))
 
+        # Same rule as the classic sell routes: no liquidating buildings during an
+        # active war, so defenders cannot cash out what an opponent is paying to hit.
+        db.execute(
+            "SELECT 1 FROM wars WHERE (attacker = %s OR defender = %s) "
+            "AND peace_date IS NULL LIMIT 1",
+            (user_id, user_id),
+        )
+        if db.fetchone():
+            raise ActionLoopError(
+                "Buildings cannot be sold while you are at war. "
+                "Resolve the war through peace or its normal outcome first."
+            )
+
         db.execute(
             """
             SELECT name, display_name FROM building_dictionary
