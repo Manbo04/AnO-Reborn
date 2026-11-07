@@ -48,6 +48,18 @@ If any item is unverified, say so in the PR; do not say "shipped/done".
 
 ---
 
+## Change pipeline (balance, economy, war)
+
+Any change to a cost, rate, cap, upkeep, income, tax, fee, loot or war-range value follows
+`docs/CHANGE_PIPELINE.md`: name the class (A hotfix, B fix, C tuning, D system), write the
+problem and the numeric metric first, check every quoted rule against the code, run the exploit
+checklist (`docs/templates/EXPLOIT_CHECKLIST.md`), simulate, ship class C/D behind a feature
+flag with a written rollback trigger, add a row to `docs/ECONOMY_CHANGELOG.md`, and tell players
+why. Never state a game rule to a player without a code reference. Anything that moves a signed
+balance pillar goes to Dede first.
+
+---
+
 ## ⛔ NEVER `railway up` against prod-validator
 
 `prod-validator` is the **production Postgres database** (despite the name), and
