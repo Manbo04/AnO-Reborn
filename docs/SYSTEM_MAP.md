@@ -63,13 +63,13 @@ every writer listed there can create or destroy value.
 | coalition_messages | `app_core/chat/repositories.py` | `app_core/main/routes.py` |
 | coalitions_legacy | -- | `app_core/admin/repositories.py`<br>`app_core/world_map/repositories.py` |
 | col_applications | -- | `app_core/coalitions/routes.py` |
-| col_bank_contributions | `app_core/coalitions/routes.py` | -- |
+| col_bank_contributions | `app_core/coalitions/routes.py`<br>`app_core/game_ticks/reparation_bank.py` | -- |
 | col_bank_recurring_trade_runs | `app_core/game_ticks/recurring_bank_trades.py` | `app_core/coalition_bank/services.py`<br>`bot_api.py` |
 | col_bank_recurring_trades | `app_core/coalition_bank/services.py`<br>`app_core/game_ticks/recurring_bank_trades.py` | `bot_api.py` |
 | col_bank_trades | `app_core/coalition_bank/services.py` | `bot_api.py` |
-| col_bank_transactions | `app_core/coalition_bank/services.py`<br>`app_core/coalitions/routes.py` | `bot_api.py` |
+| col_bank_transactions | `app_core/coalition_bank/services.py`<br>`app_core/coalitions/routes.py`<br>`app_core/game_ticks/reparation_bank.py` | `bot_api.py` |
 | col_role_names | `app_core/coalitions/routes.py` | -- |
-| colbanks | `app_core/admin/repositories.py`<br>`app_core/coalition_bank/services.py`<br>`app_core/coalitions/routes.py`<br>`app_core/game_ticks/bond_tick.py`<br>`app_core/game_ticks/recurring_bank_trades.py`<br>`repositories/country_repository.py` | -- |
+| colbanks | `app_core/admin/repositories.py`<br>`app_core/coalition_bank/services.py`<br>`app_core/coalitions/routes.py`<br>`app_core/game_ticks/bond_tick.py`<br>`app_core/game_ticks/recurring_bank_trades.py`<br>`app_core/game_ticks/reparation_bank.py`<br>`repositories/country_repository.py` | -- |
 | colbanksrequests | `app_core/coalitions/routes.py`<br>`repositories/country_repository.py` | -- |
 | colnames | `app_core/coalitions/routes.py`<br>`database.py`<br>`repositories/country_repository.py` | `app.py`<br>`app_core/admin/repositories.py`<br>`app_core/coalition_bank/services.py`<br>`app_core/coalitions/repositories.py`<br>`app_core/game_engine/routes.py`<br>`app_core/game_ticks/taxes.py`<br>`app_core/main/routes.py`<br>`app_core/market/repositories.py`<br>`app_core/social_cards/routes.py`<br>`app_core/world_map/repositories.py`<br>`bot_api.py`<br>`countries.py`<br>`province.py`<br>`services/country_service.py`<br>`statistics.py` |
 | cosmetics | -- | `app_core/chat/repositories.py`<br>`app_core/social_cards/routes.py`<br>`app_core/store/repositories.py`<br>`services/country_service.py`<br>`statistics.py` |
