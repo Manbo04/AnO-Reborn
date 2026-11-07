@@ -41,6 +41,31 @@
       <p class="gr-note">Slope below 1 means income grows slower than wealth (a tapering curve); above 1 means richer nations earn proportionally more (snowball). A high idle share among the richest suggests late players have nothing to do. Late-game activity is only measured by idleness for now; counting what players do needs action logging.</p>
     </div>
 
+    <div class="gr-card">
+      <h2>Money supply</h2>
+      <div class="gr-grid">
+        <div class="gr-stat">Total gold in the game<b>{{ '{:,.0f}'.format(summary.money.total_supply) }}</b></div>
+        <div class="gr-stat">Held by humans<b>{{ '{:,.0f}'.format(summary.money.human_supply) }}</b></div>
+        <div class="gr-stat">Held by AI nations<b>{{ '{:,.0f}'.format(summary.money.ai_supply) }}</b></div>
+        <div class="gr-stat">Median active nation holds<b>{{ '{:,.0f}'.format(summary.money.median_active_gold) if summary.money.median_active_gold is not none else 'n/a' }}</b></div>
+        <div class="gr-stat">Top 10% of active hold<b>{{ '{:.0f}%'.format(summary.money.top10_share_of_active * 100) if summary.money.top10_share_of_active is not none else 'n/a' }}</b></div>
+      </div>
+    </div>
+
+    {% if summary.flows %}
+    <div class="gr-card gr-scroll">
+      <h2>Gold created and destroyed, last {{ summary.flows.days|length }} days</h2>
+      <table class="gr-table">
+        <tr><th>Source</th><th>Kind</th><th>Total gold</th></tr>
+        {% for name, row in summary.flows.categories.items() %}
+        <tr><td>{{ name }}</td><td>{{ row.kind }}</td><td>{{ '{:,.0f}'.format(row.total) }}</td></tr>
+        {% endfor %}
+        <tr><td>loan interest (inferred, not in the ledger)</td><td>sink</td><td>{{ '{:,.0f}'.format(summary.flows.loan_interest_per_hour_inferred) }} per hour, {{ summary.flows.active_loans }} loans</td></tr>
+      </table>
+      <p class="gr-note">Created {{ '{:,.0f}'.format(summary.flows.created) }}, destroyed {{ '{:,.0f}'.format(summary.flows.destroyed) }}, moved to coalition banks {{ '{:,.0f}'.format(summary.flows.moved) }} (ledgered). Not in the ledger, so not counted: {% for x in summary.flows.not_in_ledger %}{{ x.flow }}{% if not loop.last %}, {% endif %}{% endfor %}. Reasons are in <code>balance/README.md</code>.</p>
+    </div>
+    {% endif %}
+
     <div class="gr-card gr-scroll">
       <table class="gr-table">
         <tr><th>Group</th><th>Nations</th><th>Median net / hr</th><th>Share &le; 0</th><th>Median hours to afford 50M</th></tr>

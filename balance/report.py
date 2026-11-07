@@ -22,7 +22,7 @@ def _n(x):
     return "n/a" if x is None else ("never" if x == float("inf") else f"{x:,.1f}")
 
 
-def build_report(nations, scenario_spec: str, cost: float | None) -> tuple[str, bool]:
+def build_report(nations, scenario_spec: str, cost: float | None, flows: dict | None = None) -> tuple[str, bool]:
     before = summarise(nations, cost)
     after = summarise(parse_scenario(scenario_spec)(nations), cost)
     lines = [
@@ -49,6 +49,21 @@ def build_report(nations, scenario_spec: str, cost: float | None) -> tuple[str, 
         f"top-10% income share {f(bc['top_decile_income_share'], 2)} -> {f(ac['top_decile_income_share'], 2)}; "
         f"richest 10% idle >2d: {f(bc['top_decile_idle_share'], 2)}",
     ]
+    bm, am = before["money"], after["money"]
+    g = lambda x: "n/a" if x is None else f"{x:,.0f}"
+    lines += [
+        f"Money: total supply {g(bm['total_supply'])} (humans {g(bm['human_supply'])}, AI {g(bm['ai_supply'])}); "
+        f"median active nation holds {g(bm['median_active_gold'])}; top 10% of active hold "
+        f"{f(bm['top10_share_of_active'], 2)} of active gold",
+    ]
+    if flows:
+        c = flows["categories"]
+        lines += ["", f"Gold flows, last {len(flows['days'])} days (ledger): created {g(flows['created'])}, "
+                  f"destroyed {g(flows['destroyed'])}, moved to coalition banks {g(flows['moved'])}"]
+        lines += [f"- {k} ({v['kind']}): {g(v['total'])}" for k, v in c.items()]
+        lines += [f"- loan interest (sink, not in ledger, inferred upper bound): {g(flows['loan_interest_per_hour_inferred'])}/hr "
+                  f"across {flows.get('active_loans', 0)} active loans"]
+        lines += ["Not in the ledger: " + "; ".join(f"{x['flow']} ({x['kind']})" for x in flows["not_in_ledger"])]
     results = evaluate(before, after)
     lines += ["", "Guardrails:"]
     lines += [f"- {'PASS' if r.ok else 'FAIL'} {r.name}: {r.detail}" for r in results]
@@ -68,13 +83,15 @@ def main(argv=None) -> int:
     a = p.parse_args(argv)
     if a.live:
         nations = snapshot.fetch_nations()
+        flows = snapshot.fetch_flows()
         if a.save:
             snapshot.save(nations, a.save)
     elif a.snapshot:
         nations = snapshot.load(a.snapshot)
+        flows = None
     else:
         p.error("give --snapshot FILE or --live")
-    text, ok = build_report(nations, a.scenario, a.cost)
+    text, ok = build_report(nations, a.scenario, a.cost, flows)
     print(text)
     return 0 if ok else 1
 

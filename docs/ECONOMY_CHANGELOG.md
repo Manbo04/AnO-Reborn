@@ -13,3 +13,5 @@ One row per change that moves income, costs, upkeep, loot, population, influence
 | 2026-11-05 | #271 | B | AI nations hidden from the countries list | | Live (573 to 307 listed) | Bots stay targetable |
 | 2026-11-06 | #280-#283 | D | Military upkeep v2 charged from 19:00 | Upkeep derived from income | Reverted | Raids by recruit-after-tick and sell-back; players could not afford upkeep |
 | 2026-11-07 | #287 | A | Revert of upkeep v2 | | Live | Dormant module kept (guard blocks deleting its test) |
+| 2026-11-07 | economy metrics PR | B | Harness and dashboard now report money supply, gold created/destroyed by source, loan interest in net income, plus an N-tick conservation test | Unexplained gold changes fail CI | In review | Measurement only; no game numbers changed. Finding: the ledger shows about 1.5T gold/day created but the whole supply is 5.9T, so large unledgered sinks (purchases) exist |
+

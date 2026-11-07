@@ -29,7 +29,8 @@ SELECT u.auth_type,
        COALESCE(s.gold, 0),
        u.date,
        u.last_active,
-       COALESCE(h.net, 0)
+       COALESCE(h.net, 0),
+       COALESCE(l.interest_due, 0)
 FROM users u
 LEFT JOIN stats s ON s.id = u.id
 LEFT JOIN (
@@ -38,6 +39,12 @@ LEFT JOIN (
     WHERE recorded_at > now() - interval '24 hours'
     GROUP BY user_id
 ) h ON h.user_id = u.id
+LEFT JOIN (
+    SELECT user_id, SUM(balance * interest_rate) AS interest_due
+    FROM user_loans
+    WHERE status = 'active'
+    GROUP BY user_id
+) l ON l.user_id = u.id
 WHERE NOT COALESCE(u.hidden_from_rankings, FALSE) OR u.auth_type = 'bot'
 """
 
@@ -69,12 +76,32 @@ def fetch_nations(dsn: str | None = None, now: dt.datetime | None = None, seed: 
     return anonymise(rows, now, seed)
 
 
+def fetch_flows(dsn: str | None = None) -> dict:
+    """Faucet/sink table from the ledger, read-only, same connection rules as fetch_nations."""
+    dsn = dsn or os.environ.get("BALANCE_DATABASE_URL")
+    if not dsn:
+        raise RuntimeError("Set BALANCE_DATABASE_URL (a read-only connection). DATABASE_URL is not used on purpose.")
+    import psycopg2
+
+    from .economy import fetch_flows as _fetch
+
+    conn = psycopg2.connect(dsn)
+    try:
+        conn.set_session(readonly=True, autocommit=True)
+        with conn.cursor() as cur:
+            return _fetch(cur)
+    finally:
+        conn.close()
+
+
 def anonymise(rows, now: dt.datetime, seed: int = 0) -> List[Nation]:
     rng = random.Random(seed)
     rows = list(rows)
     rng.shuffle(rows)
     out: List[Nation] = []
-    for i, (auth_type, gold, join_date, last_active, net_24h) in enumerate(rows):
+    for i, row in enumerate(rows):
+        auth_type, gold, join_date, last_active, net_24h = row[:5]
+        loan_interest = float(row[5]) if len(row) > 5 and row[5] is not None else 0.0
         try:
             joined = dt.datetime.strptime(str(join_date), "%Y-%m-%d").replace(tzinfo=dt.timezone.utc)
             age = max(0.0, (now - joined).total_seconds() / 86400)
@@ -89,7 +116,9 @@ def anonymise(rows, now: dt.datetime, seed: int = 0) -> List[Nation]:
             Nation(
                 idx=i,
                 gold=int(gold),
-                net_per_hour=float(net_24h) / WINDOW_HOURS,
+                # ledger net per hour minus loan interest due per hour (interest has no ledger row)
+                net_per_hour=float(net_24h) / WINDOW_HOURS - loan_interest,
+                loan_interest_per_hour=loan_interest,
                 age_days=age,
                 idle_days=idle,
                 is_ai=(auth_type == "bot"),

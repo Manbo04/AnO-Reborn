@@ -39,3 +39,35 @@ trades yet. Treat results as the tax-side economy.
 
 `balance/fixtures/synthetic_snapshot.json` is **synthetic** (seeded, fake). It exists so tests
 run without a database. Do not read game conclusions from it. Run `--live` for real numbers.
+
+## Money supply and faucets/sinks (economy.py)
+
+`python -m balance.report --live ...` and `/admin/guardrails` now show:
+
+- **Money supply:** total gold, humans vs AI, median active nation, top-10% share (from `stats`).
+- **Gold created and destroyed**, last 7 days, by source, from `nation_revenue_history` (real tick data, read-only SELECT).
+  Kinds: `tax` creates gold (faucet); `building_upkeep` and `pension_crisis` destroy it (sinks);
+  `coalition_tax` only moves it to a coalition bank (transfer). A category the harness does not know is
+  shown as `unclassified`, never dropped, and a test fails when a new ledger category has no kind.
+- **Net income per hour** now subtracts loan interest due (`user_loans`, active loans). It is an upper bound
+  because the tick takes at most the borrower's gold.
+
+### What still cannot be included, and why
+
+| Flow | Why it is missing |
+|---|---|
+| Loan interest in the ledger | The tick takes gold with no ledger row (`loan_interest.py`). Estimated from `user_loans` instead. Pinned by a test so a fix is noticed. |
+| Market trades | Gold moves between two nations, so supply is unchanged; there is no trade ledger to attribute a per-nation net. |
+| Military upkeep | Paid in resources, not gold. The gold version (v2) was reverted in #287. |
+| One-off spending (buildings, units, research) | Spent at purchase time with no ledger row; not an hourly income. |
+| Gifts and admin grants | Credit gold with no ledger row. |
+
+Closing these needs a purchase and gift ledger in the game, which is a game change and out of scope here.
+
+### N-tick conservation test
+
+`tests/test_economy_conservation.py` runs the real hourly ticks for 24 simulated hours on real nations and checks:
+every change in a nation's gold equals its ledger rows, nothing goes negative or non-finite, a repeat run in the
+same period moves nothing, and the hourly result stays smooth (a jump over 25% fails). Two mutation tests prove it can
+fail: an off-ledger gold leak, and a one-hour double charge (the #259 shape).
+
