@@ -90,13 +90,8 @@
             {% endfor %}
         </div>
 
-        {% if info.upkeep_v2 and info.upkeep_v2_active %}
-        <p class="mil-upkeep"><span class="material-icons-outlined">autorenew</span>Upkeep per unit, per tick: {{ info.upkeep_v2 }}</p>
-        {% elif info.maintenance_per_tick > 0 %}
+        {% if info.maintenance_per_tick > 0 %}
         <p class="mil-upkeep"><span class="material-icons-outlined">autorenew</span>Upkeep {{ info.maintenance_per_tick | commas }} {{ (info.maintenance_resource or '') | replace('_', ' ') }} per tick</p>
-        {% endif %}
-        {% if info.upkeep_v2 and not info.upkeep_v2_active %}
-        <p class="mil-upkeep"><span class="material-icons-outlined">schedule</span>From 6 Nov 19:00 UTC, per unit, per tick: {{ info.upkeep_v2 }}</p>
         {% endif %}
 
         {% if u.stockpile %}
