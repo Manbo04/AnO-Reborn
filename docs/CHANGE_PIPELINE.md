@@ -144,9 +144,9 @@ Studio practice: blameless post-mortem; balance changelog; KPI review at 24h, 72
 | G2 | Exploit checklist | `docs/templates/EXPLOIT_CHECKLIST.md` | Available |
 | G6 | Door test | `CLAUDE.md` section "Door test" | Available |
 | G8 | Economy change log | `docs/ECONOMY_CHANGELOG.md` | Available |
-| G5 | Feature flags and kill switch | `app_core/feature_flags.py`, admin page `/admin/flags` | In progress |
-| G3 | Balance harness and guardrails | `balance/` | In progress |
-| G3 | Guardrail dashboard | admin page `/admin/guardrails` | In progress |
+| G5 | Feature flags and kill switch | `app_core/feature_flags.py`, admin page `/admin/flags` | Available |
+| G3 | Balance harness and guardrails | `balance/` (`python -m balance.report`) | Available |
+| G3 | Guardrail dashboard | admin page `/admin/guardrails` | Available |
 | G4 | Test realm | `docs/TEST_REALM.md` | Scripts first; provisioning needs a cost decision from Dede |
 
 Update the Status column in the PR that ships each tool.

@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+{% block title %}Balance guardrails{% endblock %}
+{% block body %}
+<style>
+  .gr-wrap { max-width: 960px; margin: 0 auto; padding: 16px; }
+  .gr-card { background: var(--bg2, #1e2a38); border: 1px solid #2c3e50; border-radius: 8px; padding: 14px; margin: 12px 0; }
+  .gr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+  .gr-stat b { display: block; font-size: 1.4em; }
+  .gr-note { opacity: .8; font-size: .9em; margin: 4px 0 0; }
+  .gr-scroll { overflow-x: auto; }
+  .gr-table { border-collapse: collapse; width: 100%; min-width: 520px; }
+  .gr-table th, .gr-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #2c3e50; }
+  .gr-err { background: #4a1c1c; color: #ffcdd2; border-radius: 6px; padding: 10px; }
+  .gr-nav a { margin-right: 14px; }
+</style>
+<div class="gr-wrap">
+  <p class="gr-nav"><a href="/admin/flags">Feature flags</a><a href="/admin/guardrails?refresh=1">Refresh now</a></p>
+  <h1>Balance guardrails</h1>
+  <p class="gr-note">Live numbers from the same harness used before a change ships (<code>balance/</code>). Income covers tax, building upkeep, coalition tax and pension crisis from the last 24 hours; it does not include military upkeep, loans or market trades. Cached for 5 minutes.</p>
+
+  {% if error %}
+    <div class="gr-err">{{ error }}</div>
+  {% elif summary %}
+    <div class="gr-card">
+      <div class="gr-grid">
+        <div class="gr-stat">Active nations<b>{{ summary.n_active }}</b></div>
+        <div class="gr-stat">MI-hour (median net, gold/hr)<b>{{ '{:,.0f}'.format(summary.mi_hour) if summary.mi_hour is not none else 'n/a' }}</b></div>
+        <div class="gr-stat">Share at net income &le; 0<b>{{ '{:.1f}%'.format(summary.share_net_le_0 * 100) if summary.share_net_le_0 is not none else 'n/a' }}</b></div>
+      </div>
+      <p class="gr-note">As of {{ summary.as_of }}. {{ summary.n_total }} nations in the snapshot including AI.</p>
+    </div>
+
+    <div class="gr-card gr-scroll">
+      <table class="gr-table">
+        <tr><th>Group</th><th>Nations</th><th>Median net / hr</th><th>Share &le; 0</th><th>Median hours to afford 50M</th></tr>
+        {% for key, label in [('new','New player (7 days or less)'),('median','Active humans'),('whale','Whales (top 5% gold)'),('ai','AI nations')] %}
+        {% set r = summary.archetypes[key] %}
+        <tr>
+          <td>{{ label }}</td>
+          <td>{{ r.n }}</td>
+          <td>{{ '{:,.0f}'.format(r.median_net) if r.median_net is not none else 'n/a' }}</td>
+          <td>{{ '{:.0f}%'.format(r.share_net_le_0 * 100) if r.share_net_le_0 is not none else 'n/a' }}</td>
+          <td>{% if r.median_hours_to_afford is none %}n/a{% elif r.median_hours_to_afford > 100000 %}never{% else %}{{ '{:,.1f}'.format(r.median_hours_to_afford) }}{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+  {% endif %}
+
+  <div class="gr-card">
+    <h2>Rules a change must hold</h2>
+    <ul>
+      <li>Share of active nations at net income &le; 0 may rise at most {{ (limits.max_share_net_le_0_rise * 100)|round|int }} points.</li>
+      <li>Median net income may fall at most {{ (limits.max_median_net_drop * 100)|round|int }}%.</li>
+      <li>New players may fall at most {{ (limits.max_new_player_net_drop * 100)|round|int }}% and never below zero.</li>
+    </ul>
+    <p class="gr-note">Run a scenario before shipping: <code>python -m balance.report --live --scenario "military_upkeep:0.0005"</code>. See <code>docs/CHANGE_PIPELINE.md</code>.</p>
+  </div>
+</div>
+{% endblock %}

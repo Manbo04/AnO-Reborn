@@ -450,3 +450,17 @@ def admin_flags_set():
 @login_required
 def admin_flags_create():
     return _flags_post(create=True)
+
+
+# ---- Balance guardrail dashboard (docs/CHANGE_PIPELINE.md, gate 3) ----
+@admin_bp.route("/admin/guardrails", methods=["GET"])
+@login_required
+def admin_guardrails():
+    denied = admin_only_guard(session.get("user_id"))
+    if denied:
+        return denied
+    from balance.live import current_summary, thresholds
+
+    refresh = request.args.get("refresh") == "1"
+    summary, err = current_summary(force=refresh)
+    return render_template("admin_guardrails.html", summary=summary, error=err, limits=thresholds())
