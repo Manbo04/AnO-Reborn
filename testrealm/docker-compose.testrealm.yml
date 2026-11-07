@@ -4,7 +4,7 @@
 #   docker compose -f testrealm/docker-compose.testrealm.yml -p anotest up -d --build
 #   TEST_DATABASE_URL=postgresql://ano_test:ano_test@localhost:15432/ano_test testrealm/build.sh
 #
-# NOT YET RUN. First start needs a check of the boot logs; see docs/TEST_REALM.md.
+# First run 2026-11-07 on the vivobook: boots clean, /health 200. See docs/TEST_REALM.md.
 x-env: &env
   ENVIRONMENT: TEST
   SECRET_KEY: test-realm-secret-change-me
@@ -16,6 +16,8 @@ x-env: &env
   PG_PORT: "5432"
   REDIS_URL: redis://redis:6379/0
   REQUIRE_EMAIL_VERIFICATION: "false"
+  # Honoured only when ENVIRONMENT is not PROD; lets testers log in without a captcha key.
+  SKIP_RECAPTCHA: "1"
   # Deliberately empty so nothing can reach real people:
   DISCORD_BOT_TOKEN: ""
   DISCORD_WEBHOOK_URL: ""
@@ -30,25 +32,30 @@ x-env: &env
 
 services:
   postgres:
+    restart: unless-stopped
     image: postgres:17-alpine
     environment: {POSTGRES_DB: ano_test, POSTGRES_USER: ano_test, POSTGRES_PASSWORD: ano_test}
     ports: ["127.0.0.1:15432:5432"]
     volumes: [pgdata:/var/lib/postgresql/data]
     healthcheck: {test: ["CMD-SHELL", "pg_isready -U ano_test"], interval: 10s, timeout: 5s, retries: 5}
   redis:
+    restart: unless-stopped
     image: redis:7-alpine
     healthcheck: {test: ["CMD", "redis-cli", "ping"], interval: 10s, timeout: 5s, retries: 5}
   web:
+    restart: unless-stopped
     build: {context: .., dockerfile: Dockerfile}
     environment: *env
     ports: ["127.0.0.1:18080:8080"]
     depends_on: {postgres: {condition: service_healthy}, redis: {condition: service_healthy}}
   worker:
+    restart: unless-stopped
     build: {context: .., dockerfile: Dockerfile}
     environment: *env
     command: celery -A tasks worker --loglevel=INFO --concurrency=2
     depends_on: {postgres: {condition: service_healthy}, redis: {condition: service_healthy}}
   beat:
+    restart: unless-stopped
     build: {context: .., dockerfile: Dockerfile}
     environment: *env
     command: python scripts/run_beat_if_leader.py

@@ -86,7 +86,7 @@ Studio practice: Riot and Blizzard review win-rate and pick-rate bands and run i
 ### G4: Review and playtest (Design review, alpha)
 Studio practice: peer design review; internal alpha; a public test realm (Blizzard PTR, Paradox open-beta branch).
 - **Peer review:** a second reviewer (another agent or Dede) reads the G1 doc and the G2/G3 output, not just the diff. They sign the class C/D checklist.
-- **Test realm:** a copy of production with a snapshot of real data where players can try the change for 24 to 72 hours before it goes live. This does not exist yet; building it is the highest-value infrastructure item (see section 6).
+- **Test realm:** a copy of production with a snapshot of real data where players can try the change for 24 to 72 hours before it goes live. It now exists on the vivobook (`docs/TEST_REALM.md`).
 - **Interim until a realm exists:** announce class D designs publicly with a feedback window, and run the change on a small cohort behind a flag (G5).
 - **Player advisory group:** a small named group (for example Josh, Kaiser, Chel, Silent) gets class D designs early and is asked to break them. EVE's Council of Stellar Management and Paradox beta testers work this way. Turn the loudest critics into the best testers.
 - **Fail:** unresolved exploit found in playtest = back to G2.
@@ -148,7 +148,7 @@ Studio practice: blameless post-mortem; balance changelog; KPI review at 24h, 72
 | G5 | Feature flags and kill switch | `app_core/feature_flags.py`, admin page `/admin/flags` | Available |
 | G3 | Balance harness and guardrails | `balance/` (`python -m balance.report`) | Available |
 | G3 | Guardrail dashboard | admin page `/admin/guardrails` | Available |
-| G4 | Test realm | `docs/TEST_REALM.md` | Scripts first; provisioning needs a cost decision from Dede |
+| G4 | Test realm | `docs/TEST_REALM.md` | Running on the vivobook since 2026-11-07 |
 
 Update the Status column in the PR that ships each tool.
 
