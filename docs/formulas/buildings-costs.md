@@ -256,7 +256,7 @@ Selling buildings is blocked while the nation has any war with `peace_date IS NU
                 )
 
 ```
-STALE COMMENT: province.py:2005 says "Targetable buildings can be sold for a 75% refund", but the code on this route credits `totalPrice` (100% of discounted gold, `wantedUnits * price`, province.py:1970-1977) plus 100% of resources (province.py:2060-2067 `credit_resources`). The mass-sell path has the same war check (province.py:2569). The single-building route `/build_structure` with a negative quantity calls `demolish_structure` (province.py:1304-1311), which has NO war check in action_loop.py:99-209. No war check appears in `build_structure_action` between its start (province.py:1264) and the `demolish_structure` call (province.py:1304-1311), so a negative `quantity` posted to `/build_structure` appears to bypass the war sell lock; this was not exercised live.
+STALE COMMENT: province.py:2005 says "Targetable buildings can be sold for a 75% refund", but the code on this route credits `totalPrice` (100% of discounted gold, `wantedUnits * price`, province.py:1970-1977) plus 100% of resources (province.py:2060-2067 `credit_resources`). The mass-sell path has the same war check (province.py:2569).
 
 ### Building classes (which slot a building uses)
 **What it is:** "city" buildings need city slots, "land" buildings need land slots.
