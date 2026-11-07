@@ -21,6 +21,7 @@ class Nation:
     idle_days: float
     is_ai: bool = False
     military_gold_value: int = 0  # gold value of units, used by upkeep scenarios
+    loan_interest_per_hour: float = 0.0  # already subtracted from net_per_hour; kept for reporting
 
     @property
     def active(self) -> bool:
@@ -79,6 +80,8 @@ def archetypes(nations: List[Nation]) -> Dict[str, List[Nation]]:
 
 def summarise(nations: List[Nation], reference_cost: Optional[float] = None) -> dict:
     """Numbers for the report and the guardrails."""
+    from .economy import money_block
+
     groups = archetypes(nations)
     active = groups["median"]
     out: dict = {
@@ -88,6 +91,7 @@ def summarise(nations: List[Nation], reference_cost: Optional[float] = None) -> 
         "share_net_le_0": (sum(1 for n in active if n.net_per_hour <= 0) / len(active)) if active else None,
         "archetypes": {},
         "curve": curve_shape(nations),
+        "money": money_block(nations),
     }
     for name in ("new", "median", "whale", "ai"):
         g = groups[name]
@@ -156,3 +160,4 @@ def curve_shape(nations: List[Nation]) -> dict:
 
 def with_net(nation: Nation, new_net: float) -> Nation:
     return replace(nation, net_per_hour=new_net)
+
