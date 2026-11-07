@@ -401,3 +401,52 @@ def admin_identity_diagnostics():
 
     return jsonify({"count": len(rows), "rows": rows})
 
+
+
+# ---- Feature flags / kill switch (docs/CHANGE_PIPELINE.md, gate 5) ----
+@admin_bp.route("/admin/flags", methods=["GET"])
+@login_required
+def admin_flags():
+    denied = admin_only_guard(session.get("user_id"))
+    if denied:
+        return denied
+    from app_core.feature_flags import list_flags
+
+    return render_template("admin_flags.html", flags=list_flags())
+
+
+def _flags_post(create):
+    from app_core.feature_flags import set_flag
+
+    denied = admin_only_guard(session.get("user_id"))
+    if denied:
+        return denied
+    uid = session.get("user_id")
+    key = (request.form.get("key") or "").strip()
+    try:
+        set_flag(
+            key,
+            enabled=request.form.get("enabled") == "on",
+            rollout_percent=request.form.get("rollout_percent", "100"),
+            actor=f"admin:{uid}",
+            admin_user_id=uid,
+            description=request.form.get("description"),
+            rollback_trigger=request.form.get("rollback_trigger"),
+            create=create,
+        )
+        flash(f"Flag {key} saved.", "success")
+    except ValueError as exc:
+        flash(str(exc), "error")
+    return redirect("/admin/flags")
+
+
+@admin_bp.route("/admin/flags/set", methods=["POST"])
+@login_required
+def admin_flags_set():
+    return _flags_post(create=False)
+
+
+@admin_bp.route("/admin/flags/create", methods=["POST"])
+@login_required
+def admin_flags_create():
+    return _flags_post(create=True)
