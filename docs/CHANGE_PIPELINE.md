@@ -102,6 +102,7 @@ Studio practice: feature flags, canary releases, kill switches, grace periods.
 
 ### G6: Door test and live verification (QA, certification)
 - The existing 6-point door test, live in Chrome as account 16 (new and old player, 390px mobile).
+- **Stage the state yourself.** A feature that needs a second player, a war, or any other special state is tested by creating that state, never left unverified because it "needs another player". Use an AI nation as the counterpart, or the test realm. To stage a war: use the test account to declare war on an AI nation through the normal in-game route, run the checks while the war is active, then end it by the normal route (peace) and check again. Record the staged setup and result in the PR.
 - **First-tick observation:** record real before and after numbers from the actual tick, compared to the G3 prediction. A mismatch beyond tolerance triggers the rollback trigger.
 - Check ledger, auth and validation on every new mutating route.
 
@@ -161,6 +162,8 @@ Surrender rules, ally-join timing, MDP range, special weapons supply and morale,
 Core pillars, the dev process itself (problem, design, build, test, learn), mechanical analysis (what each system takes in and gives out), player psychology, constructive iteration on feedback, probability and RNG, progression curves, economy modelling, taking a system apart to see why it works, and the target audience. For this game the audience checks in about once a day, so features that need constant attention are the wrong shape. Presentation polish and feature framing matter less here than mechanics and curves.
 
 Outside reviewers with game-design experience are welcome at Gate 4 and their notes go in the design doc's decision log.
+
+Study list for these topics: `docs/DESIGN_STUDY_CHECKLIST.md`. Every design doc answers the late-game substance, skill-improvement and dead-time checks in section 4c of the template.
 
 ## 9. Rules for AI sessions
 
