@@ -109,6 +109,9 @@ def _call_repeat(app, monkeypatch, entry, war_row, owned, special=None):
         def attach_units(self, units, count):
             calls["attach"] = (dict(units), count)
 
+        def session_dict(self):
+            return {"user_id": self.user_id, "war_id": self.war_id}
+
     monkeypatch.setattr(wr, "Units", FakeUnits)
     monkeypatch.setattr(wr.Military, "get_military", staticmethod(lambda cid: dict(owned)))
     monkeypatch.setattr(wr.Military, "get_special", staticmethod(lambda cid: dict(special or {})))
