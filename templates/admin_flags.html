@@ -2,17 +2,22 @@
 {% block title %}Feature flags{% endblock %}
 {% block body %}
 <style>
-  .fl-wrap { max-width: 960px; margin: 0 auto; padding: 16px; }
-  .fl-card { background: var(--bg2, #1e2a38); border: 1px solid #2c3e50; border-radius: 8px; padding: 14px; margin: 12px 0; }
-  .fl-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; justify-content: space-between; }
-  .fl-key { font-family: monospace; font-weight: 700; }
-  .fl-state { padding: 2px 10px; border-radius: 999px; font-size: .85em; }
-  .fl-on { background: #1b5e20; color: #c8e6c9; }
-  .fl-off { background: #37474f; color: #cfd8dc; }
-  .fl-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 10px; }
-  .fl-row input[type=number], .fl-row input[type=text] { padding: 8px; min-width: 0; }
-  .fl-note { opacity: .8; font-size: .9em; margin: 4px 0 0; }
-  .fl-btn { padding: 10px 16px; min-height: 44px; }
+  .fl-wrap { max-width: 960px; margin: 0 auto; padding: 16px; color: inherit; }
+  .fl-wrap h1 { margin: 6px 0 10px; }
+  .fl-wrap a { text-decoration: underline; }
+  .fl-card { background: rgba(127,127,127,.10); border: 1px solid rgba(127,127,127,.40); border-radius: 10px; padding: 16px; margin: 14px 0; color: inherit; }
+  .fl-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+  .fl-key { font-family: monospace; font-weight: 700; font-size: 1.05em; }
+  .fl-state { padding: 3px 12px; border-radius: 999px; font-size: .85em; font-weight: 600; white-space: nowrap; }
+  .fl-on { background: #1b5e20; color: #fff; }
+  .fl-off { background: #546e7a; color: #fff; }
+  .fl-row { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: center; margin-top: 12px; }
+  .fl-row label { display: inline-flex; align-items: center; gap: 8px; margin: 0; color: inherit; }
+  .fl-row input[type=checkbox] { width: 20px; height: 20px; margin: 0; }
+  .fl-row input[type=number], .fl-row input[type=text] { padding: 8px; min-width: 0; margin: 0; }
+  .fl-row .fl-grow { flex: 1 1 220px; }
+  .fl-note { opacity: .85; font-size: .92em; margin: 6px 0 0; line-height: 1.5; color: inherit; }
+  .fl-btn { padding: 10px 18px; min-height: 44px; margin-left: auto; }
 </style>
 <div class="fl-wrap">
   <p><a href="/admin/guardrails">Balance guardrails</a></p>
@@ -47,10 +52,10 @@
     <h2>New flag</h2>
     <div class="fl-row">
       <input type="text" name="key" placeholder="upkeep_v3" required pattern="[a-z][a-z0-9_]{2,63}" aria-label="Flag key">
-      <input type="text" name="description" placeholder="What it changes" aria-label="Description" style="flex:1">
+      <input type="text" name="description" placeholder="What it changes" aria-label="Description" class="fl-grow">
     </div>
     <div class="fl-row">
-      <input type="text" name="rollback_trigger" placeholder="Rollback trigger, e.g. more than 10% of canary nations at net income below 0" required style="flex:1" aria-label="Rollback trigger">
+      <input type="text" name="rollback_trigger" placeholder="Rollback trigger, e.g. more than 10% of canary nations at net income below 0" required class="fl-grow" aria-label="Rollback trigger">
     </div>
     <div class="fl-row">
       <label><input type="checkbox" name="enabled"> Enabled</label>
