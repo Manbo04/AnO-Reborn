@@ -822,7 +822,7 @@ def repeat_attack(war_id):
             return error(400, err)
         session["enemy_id"] = eId
         session["war_domain"] = None
-        session["attack_units"] = attack_units.__dict__
+        session["attack_units"] = attack_units.session_dict()
         _stamp_attack_session()
         return _resolve_special_attack(attack_units, eId, target)
 
@@ -843,7 +843,7 @@ def repeat_attack(war_id):
 
     session["enemy_id"] = eId
     session["war_domain"] = domain
-    session["attack_units"] = attack_units.__dict__
+    session["attack_units"] = attack_units.session_dict()
     _stamp_attack_session()
     return redirect("/warResult")
 
@@ -955,7 +955,7 @@ def war_attack(war_id):
 
             session["enemy_id"] = eId
             session["war_domain"] = None
-            session["attack_units"] = attack_units.__dict__
+            session["attack_units"] = attack_units.session_dict()
             _stamp_attack_session()
             return _resolve_special_attack(attack_units, eId, target)
 
@@ -988,7 +988,7 @@ def war_attack(war_id):
 
         session["enemy_id"] = eId
         session["war_domain"] = domain
-        session["attack_units"] = attack_units.__dict__
+        session["attack_units"] = attack_units.session_dict()
         _stamp_attack_session()
         return redirect("/warResult")
 
@@ -1091,7 +1091,7 @@ def warChoose(war_id):
         if return_error:
             return error(400, return_error)
         session["enemy_id"] = enemy_id
-        session["attack_units"] = attack_units.__dict__
+        session["attack_units"] = attack_units.session_dict()
         _stamp_attack_session()
         return redirect("/waramount")
 
@@ -1165,7 +1165,7 @@ def warAmount():
                     )
                     if not ok_ap:
                         return error(400, ap_err)
-            session["attack_units"] = attack_units.__dict__
+            session["attack_units"] = attack_units.session_dict()
             return redirect("/warResult")
         elif len(units_name) == 1:
             amount_str = request.form.get(units_name[0])
@@ -1181,7 +1181,7 @@ def warAmount():
             err_valid = attack_units.attach_units(selected_units, 1)
             if err_valid:
                 return error(400, err_valid)
-            session["attack_units"] = attack_units.__dict__
+            session["attack_units"] = attack_units.session_dict()
             return redirect("/wartarget")
         else:
             return error(400, "Invalid attack request. Please start again.")

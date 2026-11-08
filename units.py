@@ -405,6 +405,18 @@ class Units(Military):
             self._unusable_units_cache = get_unusable_units(self.user_id)
         return self._unusable_units_cache
 
+    def session_dict(self) -> dict:
+        """JSON-safe copy of this object for ``session["attack_units"]``.
+
+        ``__dict__`` also carries private lazy caches (``_unusable_units_cache``
+        is a ``set``) that appear mid-fight. Storing the live ``__dict__`` in
+        the session made the cookie save raise ``TypeError: Object of type set
+        is not JSON serializable`` after an ICBM strike had already consumed
+        the missile (500 error, 2026-11-04). Underscore attributes are not
+        ``__init__`` parameters, so ``rebuild_from_dict`` drops them anyway.
+        """
+        return {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
+
     # this is needed because we can't store object in server side cache :(
     @classmethod
     def rebuild_from_dict(cls, sess_dict):
