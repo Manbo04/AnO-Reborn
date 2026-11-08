@@ -18,6 +18,7 @@ from .repositories import (
     move_stockpile_to_military,
 )
 from app_core.upgrades.services import get_upgrades
+import variables
 
 # Each carrier extends the reach of the owner's air wing -- reuses the same
 # "building/unit raises another unit's cap" shape army_bases already uses
@@ -151,8 +152,14 @@ def process_sell_units(db, cId, units, wantedUnits, mildict):
     resources = unit_costs["resource_costs"]
     manpower_per_unit = unit_costs["manpower_cost"]
     totalPrice = wantedUnits * price
-    
+
     sell_deltas = {res: wantedUnits * amt for res, amt in resources.items()}
+    from app_core.feature_flags import is_on
+    if is_on("ledger_sellback_haircut", cId):
+        # Ledger Lite: closes the buy-after-tick, raid, sell-back loop players reported.
+        pct = variables.LEDGER_SELLBACK_PERCENT
+        totalPrice = totalPrice * pct // 100
+        sell_deltas = {res: amt * pct // 100 for res, amt in sell_deltas.items()}
     adjust_resources_batch(db, cId, sell_deltas)
     
     remove_units(db, cId, unit_id, wantedUnits)

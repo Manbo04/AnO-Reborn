@@ -914,8 +914,8 @@ def create_app():
     def inject_trade_fees():
         """Trade fee percents for market/trade forms (app_core/market/fees.py)."""
         return {
-            "trade_fee_percent": TRADE_FEE_PERCENT,
-            "union_trade_fee_percent": UNION_TRADE_FEE_PERCENT,
+            "trade_fee_percent": __import__("app_core.market.fees", fromlist=["x"]).base_fee_percent(),
+            "union_trade_fee_percent": __import__("app_core.market.fees", fromlist=["x"]).union_fee_percent(),
         }
 
     @app.context_processor

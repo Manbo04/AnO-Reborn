@@ -1270,6 +1270,12 @@ BOND_CAP_PER_POPULATION = 30  # $ of total outstanding (listed+active) bond prin
 # direct trade) on top of / out of the traded amount, and removed from the
 # economy -- simulates transport costs.
 TRADE_FEE_PERCENT = 5
+# Ledger Lite (flag "ledger_low_fee", default off): fee cut so the market is worth using.
+# Strings so fractional percents stay exact (see app_core/market/fees.py).
+LEDGER_TRADE_FEE_PERCENT = "0.5"
+LEDGER_UNION_TRADE_FEE_PERCENT = "0.25"
+# Ledger Lite (flag "ledger_sellback_haircut"): share of gold + resources a unit sell-back returns.
+LEDGER_SELLBACK_PERCENT = 50
 # Reduced fee between two members of the same currency union.
 UNION_TRADE_FEE_PERCENT = 2
 
