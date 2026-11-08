@@ -43,6 +43,7 @@ NAV_SECTIONS: list[dict[str, Any]] = [
                 "icon": "local_grocery_store",
                 "tabs": [
                     ("Market", "local_grocery_store", "/market", ("/market",)),
+                    ("Ledger", "account_balance", "/ledger", ("/ledger",)),
                     (
                         "Trade Agreements",
                         "handshake",

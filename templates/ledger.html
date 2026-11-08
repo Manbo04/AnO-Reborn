@@ -1,0 +1,183 @@
+{% extends "layout.html" %}{% block title %} Ledger {% endblock %}{% block body_class %} page-market page-econ page-ledger game-page-v2{% endblock %}{% block body %}
+{% from 'macros/game_ui.html' import game_hero %}
+{% macro hrs(h) %}{% if h is none %}n/a{% elif h >= 10000 %}9,999+ h{% elif h >= 100 %}{{ "{:,.0f}".format(h) }} h{% else %}{{ "%.1f"|format(h) }} h{% endif %}{% endmacro %}
+{% macro tone(h) %}{{ 'bad' if h is not none and h < 24 else ('warn' if h is not none and h < 72 else 'ok') }}{% endmacro %}
+{% set inv = industry %}
+{% set stuck = inv | selectattr('limiter') | list %}
+<style>
+.page-ledger .ld{--ld-bg:var(--game-glass-bg-strong,var(--foreground));--ld-in:var(--foregroundTwo,rgba(255,255,255,.06));--ld-bd:var(--border,rgba(255,255,255,.14));display:grid;gap:18px}
+.page-ledger .ld-sec{background:var(--ld-bg);border:1px solid var(--ld-bd);border-radius:16px;padding:20px 22px;color:var(--colorOne)}
+.page-ledger .ld-h{display:flex;align-items:center;gap:10px;margin:0 0 4px;font-size:18px;font-weight:700}
+.page-ledger .ld-h .material-icons-outlined{color:var(--accent);font-size:22px}
+.page-ledger .ld-sub{margin:0 0 16px;color:var(--text-secondary);font-size:13px}
+.page-ledger .ld-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.page-ledger .ld-tile{background:var(--ld-in);border:1px solid var(--ld-bd);border-radius:12px;padding:12px 14px;min-width:0}
+.page-ledger .ld-tile small{display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary)}
+.page-ledger .ld-tile b{display:block;font-size:22px;margin-top:2px;font-variant-numeric:tabular-nums}
+.page-ledger .ld-tile span{font-size:12px;color:var(--text-secondary)}
+.page-ledger .ld-alert{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:12px;border:1px solid var(--ld-bd);background:var(--ld-in);margin-bottom:16px;font-size:14px}
+.page-ledger .ld-alert.bad{border-color:var(--danger);background:color-mix(in srgb,var(--danger) 14%,transparent)}
+.page-ledger .ld-alert.ok{border-color:var(--success);background:color-mix(in srgb,var(--success) 12%,transparent)}
+.page-ledger .ld-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.page-ledger .ld-card{background:var(--ld-in);border:1px solid var(--ld-bd);border-radius:14px;padding:16px;display:grid;gap:12px;min-width:0}
+.page-ledger .ld-card.bad{border-color:var(--danger)}.page-ledger .ld-card.warn{border-color:var(--gold)}
+.page-ledger .ld-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.page-ledger .ld-name{font-weight:700;font-size:15px}.page-ledger .ld-meta{font-size:12px;color:var(--text-secondary)}
+.page-ledger .ld-pct{font-size:26px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.page-ledger .ld-pct.ok{color:var(--success)}.page-ledger .ld-pct.warn{color:var(--gold)}.page-ledger .ld-pct.bad{color:var(--danger)}
+.page-ledger .ld-bar{height:10px;border-radius:999px;background:var(--foregroundFour,rgba(255,255,255,.12));overflow:hidden}
+.page-ledger .ld-bar i{display:block;height:100%;border-radius:999px;background:var(--accent)}
+.page-ledger .ld-bar.ok i{background:var(--success)}.page-ledger .ld-bar.warn i{background:var(--gold)}.page-ledger .ld-bar.bad i{background:var(--danger)}
+.page-ledger .ld-chips{display:flex;flex-wrap:wrap;gap:6px}
+.page-ledger .ld-chip{display:inline-flex;gap:6px;align-items:center;font-size:12px;font-weight:500;padding:4px 10px;border-radius:999px;border:1px solid var(--ld-bd);background:var(--ld-bg);font-variant-numeric:tabular-nums}
+.page-ledger .ld-chip.ok{border-color:var(--success);color:var(--success)}.page-ledger .ld-chip.warn{border-color:var(--gold);color:var(--gold)}.page-ledger .ld-chip.bad{border-color:var(--danger);color:var(--danger)}
+.page-ledger .ld-chip b{font-weight:700}
+.page-ledger .ld-out{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding-top:10px;border-top:1px dashed var(--ld-bd)}
+.page-ledger .ld-out span{color:var(--text-secondary)}
+.page-ledger .ld-two{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.page-ledger .ld-big{font-size:34px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.page-ledger .ld-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed var(--ld-bd);font-size:13px}.page-ledger .ld-row:last-child{border:0}
+.page-ledger .ld-note{margin:14px 0 0;font-size:12px;color:var(--text-secondary)}
+.page-ledger svg text{fill:var(--text-secondary);font-size:10px}
+@media(max-width:560px){.page-ledger .ld-sec{padding:16px 14px}.page-ledger .ld-cards{grid-template-columns:1fr}}
+</style>
+<div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/coalition.jpg') }}');"></div>
+<div class="game-page-overlay"></div>
+<div class="templatediv">
+  {% call game_hero('Ledger', badge_icon='account_balance', subtitle='Where your economy is stuck, what your people need, and how the world looks. A read-only preview on the test realm.') %}
+  <div class="game-row mb-hero-actions">
+    <a class="game-btn game-btn-secondary game-btn-sm" href="#ld-industry"><span class="material-icons-outlined">factory</span>Industry</a>
+    <a class="game-btn game-btn-secondary game-btn-sm" href="#ld-needs"><span class="material-icons-outlined">shopping_basket</span>Needs</a>
+    <a class="game-btn game-btn-secondary game-btn-sm" href="#ld-budget"><span class="material-icons-outlined">payments</span>Budget</a>
+    <a class="game-btn game-btn-secondary game-btn-sm" href="#ld-gazette"><span class="material-icons-outlined">newspaper</span>Gazette</a>
+  </div>
+  {% endcall %}
+
+  <div class="templatedivcontent ld">
+
+    <section class="ld-sec" id="ld-industry" aria-labelledby="ld-i-h">
+      <h2 class="ld-h" id="ld-i-h"><span class="material-icons-outlined" aria-hidden="true">factory</span>Industry</h2>
+      <p class="ld-sub">A building runs only as many units as its scarcest input allows, rounded down, the same as the hourly tick.</p>
+      {% if not inv %}
+        <div class="ld-alert"><span class="material-icons-outlined">info</span><div>You have no refineries, mills or factories yet. Build one in a province and its inputs will show here.</div></div>
+      {% else %}
+        {% set total = inv | sum(attribute='count') %}{% set running = inv | sum(attribute='running') %}
+        <div class="ld-tiles">
+          <div class="ld-tile"><small>Buildings</small><b>{{ total }}</b><span>{{ inv | length }} types</span></div>
+          <div class="ld-tile"><small>Running</small><b>{{ running }} <span style="font-size:14px">of {{ total }}</span></b><span>{{ (100 * running / total) | round | int }}% of capacity</span></div>
+          <div class="ld-tile"><small>Stuck types</small><b class="{{ 'ec-bad' if stuck else 'ec-good' }}">{{ stuck | length }}</b><span>{{ 'need an input' if stuck else 'all supplied' }}</span></div>
+          <div class="ld-tile"><small>Upkeep / hour</small><b>${{ inv | sum(attribute='upkeep') | commas }}</b><span>on running units</span></div>
+        </div>
+        {% if stuck %}
+        <div class="ld-alert bad"><span class="material-icons-outlined" style="color:var(--danger)">report</span><div><strong>Bottleneck.</strong>
+          {% for r in stuck %}{{ r.label }} run {{ r.running }} of {{ r.count }}, short on {{ r.limiter | replace('_',' ') }}{% if not loop.last %}; {% endif %}{% endfor %}.
+          Buy the missing input on the <a href="/market" style="color:var(--accent)">Market</a>.</div></div>
+        {% else %}
+        <div class="ld-alert ok"><span class="material-icons-outlined" style="color:var(--success)">check_circle</span><div><strong>No bottleneck.</strong> Every building has all its inputs.</div></div>
+        {% endif %}
+        <div class="ld-cards">
+        {% for r in inv | sort(attribute='pct') %}
+          {% set t = 'ok' if r.pct >= 100 else ('warn' if r.pct >= 50 else 'bad') %}
+          <article class="ld-card {{ '' if t == 'ok' else t }}">
+            <div class="ld-top">
+              <div><div class="ld-name">{{ r.label }}</div><div class="ld-meta">{{ r.count }} built · {{ r.running }} running</div></div>
+              <div class="ld-pct {{ t }}">{{ r.pct }}%</div>
+            </div>
+            <div class="ld-bar {{ t }}" role="img" aria-label="{{ r.pct }} percent running"><i style="width: {{ r.pct }}%"></i></div>
+            <div class="ld-chips">
+              {% for i in r.inputs %}<span class="ld-chip {{ tone(i.hours) }}"><b>{{ i.res | replace('_',' ') | title }}</b> {{ i.need_hr | commas }}/h · {{ hrs(i.hours) }}</span>{% endfor %}
+            </div>
+            <div class="ld-out"><span>Makes per hour</span><strong>{{ r.out_hr | commas }} {{ r.out_res | replace('_',' ') }} <span>/ {{ r.out_full | commas }}</span></strong></div>
+          </article>
+        {% endfor %}
+        </div>
+      {% endif %}
+    </section>
+
+    <section class="ld-sec" id="ld-needs" aria-labelledby="ld-n-h">
+      <h2 class="ld-h" id="ld-n-h"><span class="material-icons-outlined" aria-hidden="true">shopping_basket</span>Needs</h2>
+      <p class="ld-sub">{{ needs.people | commas }} people. A bar is full when stock covers 24 hours.</p>
+      <div class="ld-two">
+      {% for t in needs.tiers %}
+        {% set tn = 'ok' if t.pct >= 100 else ('warn' if t.pct >= 40 else 'bad') %}
+        <div class="ld-card {{ '' if tn == 'ok' else tn }}">
+          <div class="ld-top"><div><div class="ld-name">Tier {{ t.tier }} · {{ t.name }}</div><div class="ld-meta">{{ t.res | replace('_',' ') | title }}</div></div>
+            <span class="ld-chip {{ tn }}">{{ 'Covered' if tn == 'ok' else ('Thin' if tn == 'warn' else 'Short') }}</span></div>
+          <div class="ld-big">{{ hrs(t.hours) }}</div>
+          <div class="ld-bar {{ tn }}" role="img" aria-label="Tier {{ t.tier }} {{ t.pct }} percent covered"><i style="width: {{ t.pct }}%"></i></div>
+          <div class="ld-row"><span>Need per hour</span><strong>{{ t.need_hr | commas }}</strong></div>
+          <div class="ld-row"><span>In stock</span><strong>{{ t.have | commas }}</strong></div>
+        </div>
+      {% endfor %}
+        <div class="ld-card" style="opacity:.75;border-style:dashed">
+          <div class="ld-top"><div><div class="ld-name">Tier 3 · Prosperity</div><div class="ld-meta">Components, silver, diamonds</div></div><span class="ld-chip">Proposed</span></div>
+          <div class="ld-meta">Not active on this realm. It is the luxury tier in the design.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ld-sec" id="ld-budget" aria-labelledby="ld-b-h">
+      <h2 class="ld-h" id="ld-b-h"><span class="material-icons-outlined" aria-hidden="true">payments</span>Budget</h2>
+      <p class="ld-sub">What the proposed income formula would pay you next to what you are paid now. Nothing is changed.</p>
+      {% if budget.new is none %}
+        <div class="ld-alert"><span class="material-icons-outlined">info</span><div>No shadow income calculated for your nation yet. It refreshes with each shadow run.</div></div>
+      {% else %}
+        {% set mx = [budget.old, budget.new] | max %}
+        <div class="ld-tiles">
+          <div class="ld-tile"><small>Paid now / h</small><b>${{ budget.old | fmt }}</b><span>${{ budget.old | commas }}</span></div>
+          <div class="ld-tile"><small>Proposed / h</small><b>${{ budget.new | fmt }}</b><span>${{ budget.new | commas }}</span></div>
+          <div class="ld-tile"><small>Change</small><b class="{{ 'ec-good' if budget.delta is not none and budget.delta >= 0 else 'ec-bad' }}">{% if budget.delta is none %}n/a{% else %}{{ '+' if budget.delta >= 0 }}{{ budget.delta }}%{% endif %}</b><span>per hour</span></div>
+          <div class="ld-tile"><small>Your rank</small><b>{{ budget.rank }}</b><span>of {{ budget.of }} nations</span></div>
+        </div>
+        <div class="ld-row" style="border:0"><span>Paid now</span><span></span></div>
+        <div class="ld-bar"><i style="width: {{ (100 * budget.old / mx) | round(1) }}%"></i></div>
+        <div class="ld-row" style="border:0"><span>Proposed</span><span></span></div>
+        <div class="ld-bar ok"><i style="width: {{ (100 * budget.new / mx) | round(1) }}%"></i></div>
+        <p class="ld-note">Proposed = today's income × a rank multiplier for cities and industry (median nation unchanged) × an overextension factor for nations above 40 provinces. Food, consumer goods and population effects stay as they are.</p>
+      {% endif %}
+    </section>
+
+    <section class="ld-sec" id="ld-gazette" aria-labelledby="ld-g-h">
+      <h2 class="ld-h" id="ld-g-h"><span class="material-icons-outlined" aria-hidden="true">newspaper</span>Gazette</h2>
+      <p class="ld-sub">The state of the whole realm, from the hourly snapshots.</p>
+      {% set L = gazette.latest %}
+      {% if not L %}
+        <div class="ld-alert"><span class="material-icons-outlined">info</span><div>No snapshots yet.</div></div>
+      {% else %}
+        <div class="ld-tiles">
+          <div class="ld-tile"><small>Human gold</small><b>{{ L.total | fmt }}</b><span>all human nations</span></div>
+          <div class="ld-tile"><small>Median nation</small><b>{{ L.median | fmt }}</b><span>{{ L.humans }} nations</span></div>
+          <div class="ld-tile"><small>Top-10% share</small><b class="ec-warn">{{ (L.top10 * 100) | round(1) }}%</b><span>of all gold</span></div>
+          <div class="ld-tile"><small>Largest nation</small><b class="ec-bad">{{ (gazette.top1 * 100) | round(0) | int }}%</b><span>of all human gold</span></div>
+        </div>
+        <div class="ld-two">
+          {% if gazette.rows | length > 1 %}
+          {% set n = gazette.rows | length %}
+          {% set lo = (gazette.rows | map(attribute='top10') | min) %}{% set hi = (gazette.rows | map(attribute='top10') | max) %}
+          {% set span = (hi - lo) if hi > lo else 0.0001 %}
+          <div class="ld-card">
+            <div class="ld-top"><div><div class="ld-name">Top-10% share</div><div class="ld-meta">last {{ n }} snapshots · {{ (lo*100) | round(1) }}% to {{ (hi*100) | round(1) }}%</div></div></div>
+            <svg viewBox="0 0 400 90" width="100%" role="img" aria-label="Top-10 percent share over time">
+              <polygon fill="var(--accent)" fill-opacity=".15" points="0,82 {% for r in gazette.rows %}{{ (loop.index0 * 400 / (n - 1)) | round(1) }},{{ (72 - (r.top10 - lo) / span * 60) | round(1) }} {% endfor %}400,82"/>
+              <polyline fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" points="{% for r in gazette.rows %}{{ (loop.index0 * 400 / (n - 1)) | round(1) }},{{ (72 - (r.top10 - lo) / span * 60) | round(1) }} {% endfor %}"/>
+              <circle cx="400" cy="{{ (72 - (gazette.rows[-1].top10 - lo) / span * 60) | round(1) }}" r="4" fill="var(--accent)"/>
+              <text x="0" y="90">oldest</text><text x="400" y="90" text-anchor="end">now</text>
+            </svg>
+          </div>
+          {% endif %}
+          <div class="ld-card">
+            <div class="ld-top"><div><div class="ld-name">World stockpile cover</div><div class="ld-meta">how long the world's stock lasts at today's need</div></div></div>
+            {% for c in gazette.cover %}
+              {% set big = c.days > 9999 %}
+              <div class="ld-row"><span>{{ c.res | replace('_',' ') | title }}</span>
+                <strong class="{{ 'ec-warn' if big else ('ec-bad' if c.days < 7 else '') }}">{% if big %}{{ (c.days / 365) | round(0) | int | commas }} years{% else %}{{ "%.1f"|format(c.days) }} days{% endif %}</strong></div>
+            {% endfor %}
+            <p class="ld-note" style="margin:0">A huge cover means a good never needs trading. A cover of days means it is scarce.</p>
+          </div>
+        </div>
+      {% endif %}
+    </section>
+
+  </div>
+</div>
+{% endblock %}
