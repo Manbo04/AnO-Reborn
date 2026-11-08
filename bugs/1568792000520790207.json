@@ -2,8 +2,8 @@
   "author_id": "307290318590705667",
   "created_at": "2026-11-08T00:59:19Z",
   "kind": "bug",
-  "last_message_id": "1568792000520790207",
-  "last_player_message_at": "2026-11-08T00:59:19Z",
+  "last_message_id": "1568963617485881445",
+  "last_player_message_at": "2026-11-08T12:21:16Z",
   "messages": [
     {
       "at": "2026-11-08T00:59:19Z",
@@ -14,6 +14,136 @@
       "id": "1568792000520790207",
       "staff": false,
       "text": "Had over 70b suddenly disappear while I was going to the coalition tab"
+    },
+    {
+      "at": "2026-11-08T12:09:45Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1568960721901981739",
+      "staff": false,
+      "text": "<@307290318590705667> which number dropped, your own gold or the coalition bank balance? and roughly what time (UTC) and what you clicked right before it happened (deposit, withdraw, buying something)? a screenshot of the number before and after would help me find it, i can't see a gold history on our side"
+    },
+    {
+      "at": "2026-11-08T12:13:59Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1568961786361937922",
+      "staff": false,
+      "text": "When I posted it and I didn't have a screenshot as I didn't expect it to drop to ~1,100ish according to the message it was yesterday around 8:59 pm. Bank page did reload with 3 messages about donations but I couldn't find any logs saying I made cash donations"
+    },
+    {
+      "at": "2026-11-08T12:17:34Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1568962687248105595",
+      "staff": false,
+      "text": "It was probably from the stupid ahh upkeep thing that happened then got reverted Cro"
+    },
+    {
+      "at": "2026-11-08T12:18:04Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1568962813542670337",
+      "staff": false,
+      "text": "Every 1m infantry was about  2b upkeep a tick"
+    },
+    {
+      "at": "2026-11-08T12:18:11Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1568962841942298635",
+      "staff": false,
+      "text": "Ah"
+    },
+    {
+      "at": "2026-11-08T12:18:36Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1568962946653224995",
+      "staff": false,
+      "text": "When I originally looked at it it didn't say I was losing much from upkeep"
+    },
+    {
+      "at": "2026-11-08T12:18:58Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1568963039888146613",
+      "staff": false,
+      "text": "Yeah it was suddenly active then suddenly removed after a bit"
+    },
+    {
+      "at": "2026-11-08T12:19:10Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1568963089238597695",
+      "staff": false,
+      "text": "Welp 70b isn't much of an issue"
+    },
+    {
+      "at": "2026-11-08T12:19:17Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1568963118611038290",
+      "staff": false,
+      "text": "Chump change"
+    },
+    {
+      "at": "2026-11-08T12:19:27Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1568963160512139299",
+      "staff": false,
+      "text": "Speaking of can I have 70b"
+    },
+    {
+      "at": "2026-11-08T12:19:33Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1568963184616931552",
+      "staff": false,
+      "text": "<@307290318590705667> thanks, that helps. two things: what did the 3 donation messages say word for word, and was the ~1,100 your gold number in the top bar? did anything else change at the same moment (buildings, units, a trade)? one more check on my side: did you do the bank deposit/withdraw routine at around 8:37pm the day before too (you moved about 73b in and out then)"
+    },
+    {
+      "at": "2026-11-08T12:20:45Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1568963488200527873",
+      "staff": false,
+      "text": "Sounds about right"
+    },
+    {
+      "at": "2026-11-08T12:21:16Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1568963617485881445",
+      "staff": false,
+      "text": "The page reloaded with 3 popups about successful deposits and I couldn't find any records at the time"
     }
   ],
   "thread_id": "1568792000520790207",

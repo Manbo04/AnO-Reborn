@@ -2,8 +2,8 @@
   "author_id": "307290318590705667",
   "created_at": "2026-11-04T15:16:24Z",
   "kind": "bug",
-  "last_message_id": "1567558141493645462",
-  "last_player_message_at": "2026-11-04T15:16:24Z",
+  "last_message_id": "1568962543379292222",
+  "last_player_message_at": "2026-11-08T12:17:00Z",
   "messages": [
     {
       "at": "2026-11-04T15:16:24Z",
@@ -17,6 +17,126 @@
       "id": "1567558141493645462",
       "staff": false,
       "text": "E"
+    },
+    {
+      "at": "2026-11-08T12:05:56Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1568959761276338308",
+      "staff": false,
+      "text": "<@307290318590705667> so the refineries aren't broken, here's the math for Bion. aluminium refinery = 64 base x 1.45 productivity x 1.104 specialisation x 0.39 workforce efficiency = 40.2. the 0.39 is the nation-wide one: your buildings need about 824M workers (steel mills 378M, geothermal 193M, farms 150M, component factories 100M) and you only have 323M jobs filled, so everything you make runs at 39% even buildings that employ no workers. vertical integration is 0 because it only counts bauxite mines in the same province as the refineries, mines in other provinces don't count. more working pop/education or fewer worker-heavy buildings brings it up"
+    },
+    {
+      "at": "2026-11-08T12:09:45Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1568960718709989537",
+      "staff": false,
+      "text": "<@710359818329915443> is this a bot or you?"
+    },
+    {
+      "at": "2026-11-08T12:10:29Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1568960902756306997",
+      "staff": false,
+      "text": "Because steel and aluminum do get produced locally so the vertical can't be zero"
+    },
+    {
+      "at": "2026-11-08T12:10:40Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1568960951624015904",
+      "staff": true,
+      "text": "Both"
+    },
+    {
+      "at": "2026-11-08T12:11:07Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1568961064341864649",
+      "staff": true,
+      "text": "let me have a closer look"
+    },
+    {
+      "at": "2026-11-08T12:11:07Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1568961065490845828",
+      "staff": false,
+      "text": "The zero was coming from the component factories"
+    },
+    {
+      "at": "2026-11-08T12:11:15Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1568961098286108713",
+      "staff": false,
+      "text": "So that can't be zero"
+    },
+    {
+      "at": "2026-11-08T12:11:29Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1568961156805034066",
+      "staff": true,
+      "text": "can I ask for your nation again?"
+    },
+    {
+      "at": "2026-11-08T12:16:01Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1568962298457100402",
+      "staff": true,
+      "text": "<@307290318590705667>"
+    },
+    {
+      "at": "2026-11-08T12:16:12Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1568962341008318585",
+      "staff": true,
+      "text": "Bion right?"
+    },
+    {
+      "at": "2026-11-08T12:16:19Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1568962371295121469",
+      "staff": false,
+      "text": "Aye"
+    },
+    {
+      "at": "2026-11-08T12:17:00Z",
+      "attachments": [],
+      "author": "Justinian",
+      "author_id": "307290318590705667",
+      "bot": false,
+      "id": "1568962543379292222",
+      "staff": false,
+      "text": "The aluminum mills I was wondering why they only made half the amount since they don't require workers"
     }
   ],
   "thread_id": "1567558141493645462",
