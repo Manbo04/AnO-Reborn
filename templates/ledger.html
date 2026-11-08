@@ -39,7 +39,25 @@
 .page-ledger .ld-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed var(--ld-bd);font-size:13px}.page-ledger .ld-row:last-child{border:0}
 .page-ledger .ld-note{margin:14px 0 0;font-size:12px;color:var(--text-secondary)}
 .page-ledger svg text{fill:var(--text-secondary);font-size:10px}
-@media(max-width:560px){.page-ledger .ld-sec{padding:16px 14px}.page-ledger .ld-cards{grid-template-columns:1fr}}
+.page-ledger .ld p,.page-ledger .ld-sub,.page-ledger .ld-note,.page-ledger .ld-meta,.page-ledger .ld-alert div{line-height:1.4}
+@media(max-width:560px){
+.page-ledger .game-hero{padding:12px 14px}
+.page-ledger .game-hero h1{font-size:22px;margin:0 0 6px}
+.page-ledger .game-hero-sub{display:none}
+.page-ledger .mb-hero-actions{flex-wrap:nowrap;overflow-x:auto;gap:6px;margin-top:6px;padding-bottom:2px}
+.page-ledger .mb-hero-actions a{flex:none}
+.page-ledger .ld{gap:12px}
+.page-ledger .ld-sec{padding:14px 12px}
+.page-ledger .ld-h{font-size:16px}
+.page-ledger .ld-sub{margin-bottom:10px;font-size:12px}
+.page-ledger .ld-tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.page-ledger .ld-tile{padding:8px 10px}.page-ledger .ld-tile b{font-size:18px}
+.page-ledger .ld-cards,.page-ledger .ld-two{grid-template-columns:1fr;gap:8px}
+.page-ledger .ld-card{padding:12px;gap:8px}
+.page-ledger .ld-pct{font-size:20px}.page-ledger .ld-big{font-size:24px}
+.page-ledger .ld-alert{padding:10px 12px;font-size:13px;margin-bottom:10px}
+.page-ledger .ld-row{padding:5px 0}
+}
 </style>
 <div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/coalition.jpg') }}');"></div>
 <div class="game-page-overlay"></div>
