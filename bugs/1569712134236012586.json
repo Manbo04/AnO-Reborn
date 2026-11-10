@@ -1,0 +1,22 @@
+{
+  "author_id": "465912833352138768",
+  "created_at": "2026-11-10T13:55:36Z",
+  "kind": "bug",
+  "last_message_id": "1569712134236012586",
+  "last_player_message_at": "2026-11-10T13:55:36Z",
+  "messages": [
+    {
+      "at": "2026-11-10T13:55:36Z",
+      "attachments": [],
+      "author": "JoshMD",
+      "author_id": "465912833352138768",
+      "bot": false,
+      "id": "1569712134236012586",
+      "staff": false,
+      "text": "The percent of people reached by distribution due to my nation being over concert size gets lower as I build more homes and seems to never recover if my nation goes back into concert size"
+    }
+  ],
+  "thread_id": "1569712134236012586",
+  "title": "People reached by distribution going down the more houses I have",
+  "url": "https://discord.com/channels/708006319658893385/1569712134236012586"
+}
