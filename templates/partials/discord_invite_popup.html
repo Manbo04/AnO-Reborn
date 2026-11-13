@@ -3,7 +3,8 @@
   <div class="adp-backdrop" data-adp-close></div>
   <div class="adp-panel">
     <button type="button" class="adp-x" aria-label="Close" data-adp-close>&times;</button>
-    <h2 id="ano-discord-title">Join the community on Discord</h2>
+    <div class="adp-eyebrow">Community</div>
+    <h2 id="ano-discord-title">Join the Discord</h2>
     <p>Ask questions, report bugs, find a coalition and get help from players and staff.</p>
     <a class="adp-join" href="https://discord.gg/SEae3Ua" target="_blank" rel="noopener noreferrer" data-adp-close>Join our Discord</a>
     <button type="button" class="adp-later" data-adp-close>Maybe later</button>
@@ -12,13 +13,17 @@
 <style>
 #ano-discord-popup[hidden]{display:none}
 #ano-discord-popup{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px}
-#ano-discord-popup .adp-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6)}
-#ano-discord-popup .adp-panel{position:relative;width:100%;max-width:360px;box-sizing:border-box;padding:22px 20px 16px;border-radius:14px;text-align:center;background:var(--game-surface-2,#1a2035);color:var(--game-text-primary,#fff);border:1px solid var(--game-border,#2a3150);box-shadow:0 12px 40px rgba(0,0,0,.5)}
-#ano-discord-popup h2{margin:0 0 8px;font-size:1.15rem;line-height:1.25}
-#ano-discord-popup p{margin:0 0 16px;font-size:.92rem;line-height:1.4;color:var(--game-text-secondary,#a0a8c0)}
-#ano-discord-popup .adp-join{display:block;padding:12px;border-radius:10px;background:#5865f2;color:#fff;font-weight:600;text-decoration:none}
-#ano-discord-popup .adp-later{margin-top:8px;padding:8px;background:none;border:0;color:var(--game-text-secondary,#a0a8c0);font-size:.85rem;cursor:pointer}
-#ano-discord-popup .adp-x{position:absolute;top:6px;right:10px;background:none;border:0;color:inherit;font-size:1.6rem;line-height:1;cursor:pointer;opacity:.7}
+#ano-discord-popup .adp-backdrop{position:absolute;inset:0;background:rgba(2,5,9,.78)}
+#ano-discord-popup .adp-panel{position:relative;width:100%;max-width:340px;box-sizing:border-box;padding:24px 22px 14px;text-align:left;background:#070b12;color:#eef3f8;border:1px solid rgba(255,255,255,.12);border-top:2px solid #5fd4ff;border-radius:0;clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px);box-shadow:0 24px 60px -12px rgba(0,0,0,.8)}
+#ano-discord-popup .adp-eyebrow{font:500 11px "JetBrains Mono",ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:#5fd4ff;margin-bottom:6px}
+#ano-discord-popup h2{margin:0 0 10px;font:600 26px/1.1 Oswald,Impact,"Arial Narrow",sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#eef3f8}
+#ano-discord-popup p{margin:0 0 18px;font:400 14px/1.5 Inter,system-ui,sans-serif;color:#8a97a8}
+#ano-discord-popup .adp-join{display:block;padding:13px 16px;text-align:center;text-decoration:none;color:#fff;font:600 15px Oswald,Impact,"Arial Narrow",sans-serif;letter-spacing:.18em;text-transform:uppercase;background:linear-gradient(90deg,#1e9ac9,#2bb6ea);clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+#ano-discord-popup .adp-join:hover{filter:brightness(1.1)}
+#ano-discord-popup .adp-later{display:block;width:100%;margin-top:6px;padding:10px;background:none;border:0;color:#8a97a8;font:500 11px "JetBrains Mono",ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;cursor:pointer}
+#ano-discord-popup .adp-later:hover{color:#eef3f8}
+#ano-discord-popup .adp-x{position:absolute;top:8px;right:12px;background:none;border:0;color:#8a97a8;font-size:22px;line-height:1;cursor:pointer}
+#ano-discord-popup .adp-x:hover{color:#eef3f8}
 </style>
 <script>
 (function(){
