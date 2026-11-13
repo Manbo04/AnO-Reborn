@@ -263,6 +263,7 @@ Tables no static query touches (dynamic SQL, scripts, or dead): `coalition_membe
 | `/api/tutorial/progress` | GET | `app_core.tutorial.routes:tutorial_progress` |
 | `/api/world_map/nodes` | GET | `app_core.world_map.routes:get_nodes` |
 | `/api/world_map/nodes/<int:node_id>/attack` | POST | `app_core.world_map.routes:declare_siege` |
+| `/apple-touch-icon.png` | GET | `app_core.main.routes:favicon_root` |
 | `/assembly` | GET,POST | `app_core.game_engine.routes:assembly` |
 | `/assembly/propose` | GET,POST | `app_core.game_engine.routes:assembly_propose` |
 | `/assembly/vote/<int:proposal_id>` | POST | `app_core.game_engine.routes:assembly_vote` |
@@ -352,6 +353,7 @@ Tables no static query touches (dynamic SQL, scripts, or dead): `coalition_membe
 | `/embargo/<target_id>` | POST | `app_core.market.routes:embargo_nation` |
 | `/embargo/<target_id>/remove` | POST | `app_core.market.routes:remove_embargo_endpoint` |
 | `/establish_coalition` | GET,POST | `app_core.coalitions.routes:establish_coalition` |
+| `/favicon.ico` | GET | `app_core.main.routes:favicon_root` |
 | `/find_targets` | GET,POST | `wars.routes:find_targets` |
 | `/flag/<flag_type>/<int:flag_id>` | GET | `app_core.main.routes:serve_flag` |
 | `/forgot_password` | GET | `app_core.auth.routes:forget_password` |
