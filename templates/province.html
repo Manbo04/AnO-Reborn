@@ -2600,6 +2600,457 @@
                     </div>
                     <div class="menudiv">
 
+                        <h2 class="templatecontentheaderleft">Machinery Works</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units.get("machinery_works", 0) }} Machinery Works</h3>
+
+                                <p class="templatecontentpleft">Machinery works turn steel and components into machinery. Every industrial building slowly wears out and needs machinery to keep running at full output.</p>
+                                <ul class="building-info">{{ "machinery_works" | building_info(upgrades) }}</ul>
+                                {% if industry_bonus and industry_bonus.get("machinery_works") %}{% set _ib = industry_bonus["machinery_works"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced locally){% endif %}</ul>{% if _ib.unit_outputs %}<ul title="Productivity, national projects, specialisation, integration and workforce all included">Actual output here right now: {% for _res, _amt in _ib.unit_outputs %}{{ _amt | weight_fmt }} {{ _res | replace('_', ' ') }}{% if not loop.last %}, {% endif %}{% endfor %} per building per hour</ul>{% endif %}{% endif %}
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="machinery_works" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/machinery_works/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/machinery_works/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename=game_asset_path('buildings', 'machinery_works')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Cement Works</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units.get("cement_works", 0) }} Cement Works</h3>
+
+                                <p class="templatecontentpleft">Cement works burn lumber and coal into cement. Every new building and expansion needs cement to be built.</p>
+                                <ul class="building-info">{{ "cement_works" | building_info(upgrades) }}</ul>
+                                {% if industry_bonus and industry_bonus.get("cement_works") %}{% set _ib = industry_bonus["cement_works"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced locally){% endif %}</ul>{% if _ib.unit_outputs %}<ul title="Productivity, national projects, specialisation, integration and workforce all included">Actual output here right now: {% for _res, _amt in _ib.unit_outputs %}{{ _amt | weight_fmt }} {{ _res | replace('_', ' ') }}{% if not loop.last %}, {% endif %}{% endfor %} per building per hour</ul>{% endif %}{% endif %}
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="cement_works" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/cement_works/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/cement_works/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename=game_asset_path('buildings', 'cement_works')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Textile Mills</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units.get("textile_mills", 0) }} Textile Mills</h3>
+
+                                <p class="templatecontentpleft">Textile mills turn lumber and oil into textiles, the base of clothing and luxury goods.</p>
+                                <ul class="building-info">{{ "textile_mills" | building_info(upgrades) }}</ul>
+                                {% if industry_bonus and industry_bonus.get("textile_mills") %}{% set _ib = industry_bonus["textile_mills"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced locally){% endif %}</ul>{% if _ib.unit_outputs %}<ul title="Productivity, national projects, specialisation, integration and workforce all included">Actual output here right now: {% for _res, _amt in _ib.unit_outputs %}{{ _amt | weight_fmt }} {{ _res | replace('_', ' ') }}{% if not loop.last %}, {% endif %}{% endfor %} per building per hour</ul>{% endif %}{% endif %}
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="textile_mills" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/textile_mills/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/textile_mills/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename=game_asset_path('buildings', 'textile_mills')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Clothing Factories</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units.get("clothing_factories", 0) }} Clothing Factories</h3>
+
+                                <p class="templatecontentpleft">Clothing factories make clothing from textiles. Clothing is a comfort need of your population.</p>
+                                <ul class="building-info">{{ "clothing_factories" | building_info(upgrades) }}</ul>
+                                {% if industry_bonus and industry_bonus.get("clothing_factories") %}{% set _ib = industry_bonus["clothing_factories"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced locally){% endif %}</ul>{% if _ib.unit_outputs %}<ul title="Productivity, national projects, specialisation, integration and workforce all included">Actual output here right now: {% for _res, _amt in _ib.unit_outputs %}{{ _amt | weight_fmt }} {{ _res | replace('_', ' ') }}{% if not loop.last %}, {% endif %}{% endfor %} per building per hour</ul>{% endif %}{% endif %}
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="clothing_factories" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/clothing_factories/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/clothing_factories/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename=game_asset_path('buildings', 'clothing_factories')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Chemical Plants</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units.get("chemical_plants", 0) }} Chemical Plants</h3>
+
+                                <p class="templatecontentpleft">Chemical plants refine oil and coal into chemicals, the base of medicine, fertilizer and plastics.</p>
+                                <ul class="building-info">{{ "chemical_plants" | building_info(upgrades) }}</ul>
+                                {% if industry_bonus and industry_bonus.get("chemical_plants") %}{% set _ib = industry_bonus["chemical_plants"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced locally){% endif %}</ul>{% if _ib.unit_outputs %}<ul title="Productivity, national projects, specialisation, integration and workforce all included">Actual output here right now: {% for _res, _amt in _ib.unit_outputs %}{{ _amt | weight_fmt }} {{ _res | replace('_', ' ') }}{% if not loop.last %}, {% endif %}{% endfor %} per building per hour</ul>{% endif %}{% endif %}
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="chemical_plants" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/chemical_plants/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/chemical_plants/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename=game_asset_path('buildings', 'chemical_plants')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Pharmaceutical Labs</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units.get("pharmaceutical_labs", 0) }} Pharmaceutical Labs</h3>
+
+                                <p class="templatecontentpleft">Pharmaceutical labs turn chemicals and rations into medicine, used by hospitals.</p>
+                                <ul class="building-info">{{ "pharmaceutical_labs" | building_info(upgrades) }}</ul>
+                                {% if industry_bonus and industry_bonus.get("pharmaceutical_labs") %}{% set _ib = industry_bonus["pharmaceutical_labs"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced locally){% endif %}</ul>{% if _ib.unit_outputs %}<ul title="Productivity, national projects, specialisation, integration and workforce all included">Actual output here right now: {% for _res, _amt in _ib.unit_outputs %}{{ _amt | weight_fmt }} {{ _res | replace('_', ' ') }}{% if not loop.last %}, {% endif %}{% endfor %} per building per hour</ul>{% endif %}{% endif %}
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="pharmaceutical_labs" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/pharmaceutical_labs/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/pharmaceutical_labs/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename=game_asset_path('buildings', 'pharmaceutical_labs')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Fertilizer Plants</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units.get("fertilizer_plants", 0) }} Fertilizer Plants</h3>
+
+                                <p class="templatecontentpleft">Fertilizer plants turn chemicals and coal into fertilizer that raises farm yields.</p>
+                                <ul class="building-info">{{ "fertilizer_plants" | building_info(upgrades) }}</ul>
+                                {% if industry_bonus and industry_bonus.get("fertilizer_plants") %}{% set _ib = industry_bonus["fertilizer_plants"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced locally){% endif %}</ul>{% if _ib.unit_outputs %}<ul title="Productivity, national projects, specialisation, integration and workforce all included">Actual output here right now: {% for _res, _amt in _ib.unit_outputs %}{{ _amt | weight_fmt }} {{ _res | replace('_', ' ') }}{% if not loop.last %}, {% endif %}{% endfor %} per building per hour</ul>{% endif %}{% endif %}
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="fertilizer_plants" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/fertilizer_plants/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/fertilizer_plants/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename=game_asset_path('buildings', 'fertilizer_plants')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Plastics Plants</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units.get("plastics_plants", 0) }} Plastics Plants</h3>
+
+                                <p class="templatecontentpleft">Plastics plants turn chemicals and oil into plastics, an input of electronics.</p>
+                                <ul class="building-info">{{ "plastics_plants" | building_info(upgrades) }}</ul>
+                                {% if industry_bonus and industry_bonus.get("plastics_plants") %}{% set _ib = industry_bonus["plastics_plants"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced locally){% endif %}</ul>{% if _ib.unit_outputs %}<ul title="Productivity, national projects, specialisation, integration and workforce all included">Actual output here right now: {% for _res, _amt in _ib.unit_outputs %}{{ _amt | weight_fmt }} {{ _res | replace('_', ' ') }}{% if not loop.last %}, {% endif %}{% endfor %} per building per hour</ul>{% endif %}{% endif %}
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="plastics_plants" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/plastics_plants/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/plastics_plants/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename=game_asset_path('buildings', 'plastics_plants')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Electronics Factories</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units.get("electronics_factories", 0) }} Electronics Factories</h3>
+
+                                <p class="templatecontentpleft">Electronics factories combine components, aluminium and plastics into electronics.</p>
+                                <ul class="building-info">{{ "electronics_factories" | building_info(upgrades) }}</ul>
+                                {% if industry_bonus and industry_bonus.get("electronics_factories") %}{% set _ib = industry_bonus["electronics_factories"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced locally){% endif %}</ul>{% if _ib.unit_outputs %}<ul title="Productivity, national projects, specialisation, integration and workforce all included">Actual output here right now: {% for _res, _amt in _ib.unit_outputs %}{{ _amt | weight_fmt }} {{ _res | replace('_', ' ') }}{% if not loop.last %}, {% endif %}{% endfor %} per building per hour</ul>{% endif %}{% endif %}
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="electronics_factories" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/electronics_factories/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/electronics_factories/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename=game_asset_path('buildings', 'electronics_factories')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Vehicle Works</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units.get("vehicle_works", 0) }} Vehicle Works</h3>
+
+                                <p class="templatecontentpleft">Vehicle works build vehicles from steel, aluminium and electronics.</p>
+                                <ul class="building-info">{{ "vehicle_works" | building_info(upgrades) }}</ul>
+                                {% if industry_bonus and industry_bonus.get("vehicle_works") %}{% set _ib = industry_bonus["vehicle_works"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced locally){% endif %}</ul>{% if _ib.unit_outputs %}<ul title="Productivity, national projects, specialisation, integration and workforce all included">Actual output here right now: {% for _res, _amt in _ib.unit_outputs %}{{ _amt | weight_fmt }} {{ _res | replace('_', ' ') }}{% if not loop.last %}, {% endif %}{% endfor %} per building per hour</ul>{% endif %}{% endif %}
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="vehicle_works" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/vehicle_works/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/vehicle_works/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename=game_asset_path('buildings', 'vehicle_works')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="menudiv">
+
+                        <h2 class="templatecontentheaderleft">Luxury Workshops</h2>
+
+                        <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
+                            <div class="templatedivflex2left">
+
+                                <h3 class="templatecontentheadercenter">You have {{ units.get("luxury_workshops", 0) }} Luxury Workshops</h3>
+
+                                <p class="templatecontentpleft">Luxury workshops craft luxury goods from silver, diamonds and textiles for the richest tier of needs.</p>
+                                <ul class="building-info">{{ "luxury_workshops" | building_info(upgrades) }}</ul>
+                                {% if industry_bonus and industry_bonus.get("luxury_workshops") %}{% set _ib = industry_bonus["luxury_workshops"] %}<ul title="More of this building in this province = bigger bonus, with diminishing returns">Specialisation bonus: +{{ _ib.scale }}% output{% if _ib.integration is not none %} &middot; Vertical integration: +{{ _ib.integration }}% ({{ _ib.self_sufficiency }}% of inputs produced locally){% endif %}</ul>{% if _ib.unit_outputs %}<ul title="Productivity, national projects, specialisation, integration and workforce all included">Actual output here right now: {% for _res, _amt in _ib.unit_outputs %}{{ _amt | weight_fmt }} {{ _res | replace('_', ' ') }}{% if not loop.last %}, {% endif %}{% endfor %} per building per hour</ul>{% endif %}{% endif %}
+
+                                <div class="purchasemilitarydiv">
+                                    <input class="loginsignupinput" autocomplete="off" name="luxury_workshops" type="number" placeholder="Amount" />
+
+                                    <div class="templatedivflex2 divflex2center">
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/luxury_workshops/' ~ province['id']) }}
+
+                                        </div>
+                                        <div class="templatedivflex2left flexchildvanilla">
+
+                                            {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/luxury_workshops/' ~ province['id']) }}
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="templatedivflex2right province-card-media">
+
+
+
+                                <img alt="Image" tabindex="0" class="unitimage" loading="lazy" src="{{ url_for('static', filename=game_asset_path('buildings', 'luxury_workshops')) }}?v=2" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="menudiv">
+
                         <h2 class="templatecontentheaderleft">Ammunition Factories</h2>
 
                         <div class="templatedivflex2 menuflex warflexparentcolors card-align-row">
