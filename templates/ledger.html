@@ -158,12 +158,11 @@
       <p class="ld-sub">Eleven new goods and who needs them. A chip says Active when its rule is switched on in this realm.</p>
       <div class="ld-two">
       {% for g in goods %}
-        <div class="ld-card">
-          <div class="ld-top"><div><div class="ld-name">{{ g.res }}</div><div class="ld-meta">{{ g.building }} · you own {{ g.owned }}</div></div>
+        <div class="ld-card" style="padding:10px 12px">
+          <div class="ld-top" style="margin-bottom:2px"><div class="ld-name">{{ g.res }}</div>
             <span class="ld-chip {{ 'ok' if g.live else '' }}">{{ 'Active' if g.live else 'Shadow' }}</span></div>
-          <div class="ld-row"><span>In stock</span><strong>{{ big(g.stock) }}</strong></div>
-          <div class="ld-row"><span>Recipe / hr</span><strong>{{ g.recipe }}</strong></div>
-          <div class="ld-meta">{{ g.use }}</div>
+          <div class="ld-meta">{{ g.building }} x{{ g.owned }} · {{ g.recipe }}</div>
+          <div class="ld-row" style="padding:2px 0 0"><span class="ld-meta">{{ g.use }}</span><strong>{{ big(g.stock) }}</strong></div>
         </div>
       {% endfor %}
       </div>

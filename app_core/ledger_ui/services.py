@@ -150,7 +150,8 @@ GOODS = [
 def goods(db, uid):
     from app_core.feature_flags import is_on
 
-    stock = _stock(db, uid)
+    db.execute("SELECT rd.name, COALESCE(ue.quantity,0) FROM user_economy ue JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id WHERE ue.user_id=%s", (uid,))
+    stock = {r[0]: r[1] for r in db.fetchall()}
     db.execute(
         "SELECT bd.name, COALESCE(SUM(ub.quantity),0) FROM user_buildings ub JOIN building_dictionary bd "
         "ON bd.building_id = ub.building_id WHERE ub.user_id=%s GROUP BY bd.name", (uid,))
