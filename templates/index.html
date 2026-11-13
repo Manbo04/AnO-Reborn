@@ -357,7 +357,6 @@ footer .flinks{display:flex;gap:16px;flex-wrap:wrap}footer a{color:var(--muted);
   <a class="brand" href="/"><img src="{{ url_for('static', filename='landing/img/logo.png') }}?v=20261105" alt="Affairs and Order"><span>AFFAIRS &amp; ORDER</span></a>
   <div class="links"><a href="#story">The Game</a><a href="#goals">Goals</a><a href="/signup">Enlist</a><a href="https://discord.gg/SEae3Ua" target="_blank" rel="noopener noreferrer">Discord</a></div>
   <div class="right">
-    <button id="snd" type="button" aria-pressed="false" aria-label="Toggle sound"><i></i><i></i><i></i><i></i><b>SOUND</b></button>
     <button class="loginbtn" type="button" data-login>Log in</button>
     <a class="btn primary small mag" href="/signup">Play Free</a>
   </div>
@@ -487,27 +486,8 @@ function scramble(el,text,dur=700){
     el.textContent=out;if(k<1)requestAnimationFrame(f)})(t0);
 }
 
-/* ---------- audio (synthesized, off by default) ---------- */
-const A={on:false};
-function audioInit(){
-  const ac=new (window.AudioContext||window.webkitAudioContext)();A.ac=ac;
-  A.master=ac.createGain();A.master.gain.value=0;A.master.connect(ac.destination);
-  const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=260;lp.Q.value=6;lp.connect(A.master);
-  [55,55.6,82.4,27.5].forEach((f,i)=>{const o=ac.createOscillator();o.type=i===3?'sine':'sawtooth';o.frequency.value=f;const g=ac.createGain();g.gain.value=i===3?.35:.08;o.connect(g).connect(lp);o.start()});
-  const lfo=ac.createOscillator();lfo.frequency.value=.07;const lg=ac.createGain();lg.gain.value=140;lfo.connect(lg).connect(lp.frequency);lfo.start();
-  const buf=ac.createBuffer(1,ac.sampleRate*2,ac.sampleRate),d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;A.noise=buf;
-  const n=ac.createBufferSource();n.buffer=buf;n.loop=true;const bp=ac.createBiquadFilter();bp.type='bandpass';bp.frequency.value=90;const ng=ac.createGain();ng.gain.value=.25;n.connect(bp).connect(ng).connect(A.master);n.start();
-}
-function boom(v=1){if(!A.on)return;const ac=A.ac,t=ac.currentTime;
-  const n=ac.createBufferSource();n.buffer=A.noise;const f=ac.createBiquadFilter();f.type='lowpass';f.frequency.setValueAtTime(900,t);f.frequency.exponentialRampToValueAtTime(60,t+1.2);
-  const g=ac.createGain();g.gain.setValueAtTime(.9*v,t);g.gain.exponentialRampToValueAtTime(.001,t+1.4);n.connect(f).connect(g).connect(ac.destination);n.start(t);n.stop(t+1.5);
-  const o=ac.createOscillator();o.frequency.setValueAtTime(90,t);o.frequency.exponentialRampToValueAtTime(28,t+.9);const og=ac.createGain();og.gain.setValueAtTime(.7*v,t);og.gain.exponentialRampToValueAtTime(.001,t+1);o.connect(og).connect(ac.destination);o.start(t);o.stop(t+1.1)}
-function blip(f=1400){if(!A.on)return;const ac=A.ac,t=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();o.type='square';o.frequency.value=f;g.gain.setValueAtTime(.03,t);g.gain.exponentialRampToValueAtTime(.0001,t+.06);o.connect(g).connect(ac.destination);o.start(t);o.stop(t+.07)}
-function whoosh(){if(!A.on)return;const ac=A.ac,t=ac.currentTime,n=ac.createBufferSource();n.buffer=A.noise;const f=ac.createBiquadFilter();f.type='bandpass';f.Q.value=2;f.frequency.setValueAtTime(300,t);f.frequency.exponentialRampToValueAtTime(3000,t+.5);const g=ac.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.35,t+.25);g.gain.exponentialRampToValueAtTime(.0001,t+.7);n.connect(f).connect(g).connect(ac.destination);n.start(t);n.stop(t+.8)}
-$('#snd').addEventListener('click',()=>{
-  try{if(!A.ac)audioInit();A.on=!A.on;A.ac.resume();A.master.gain.setTargetAtTime(A.on?.32:0,A.ac.currentTime,.4);
-  $('#snd').classList.toggle('on',A.on);$('#snd').setAttribute('aria-pressed',A.on);if(A.on)boom(.6)}catch(e){}
-});
+/* ---------- sound removed (2026-11-13): no SFX on the landing page ---------- */
+function boom(){}function blip(){}function whoosh(){}
 
 /* ---------- intro ---------- */
 const word="AFFAIRS & ORDER";
