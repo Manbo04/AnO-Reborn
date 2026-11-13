@@ -7,212 +7,65 @@
 <div class="game-page-overlay"></div>
 
 <div class="templatediv">
-    {{ game_hero(user.username ~ "'s Account", badge_icon='perm_identity', badge_text='Member since ' ~ user["date"]) }}
+
 
     <div class="templatedivcontent">
+    <div class="game-glass acct-id">
+        <div class="acct-avatar" aria-hidden="true">{{ user.username[:1]|upper }}</div>
+        <div class="acct-id-main">
+            <h1>{{ user.username }}</h1>
+            <p class="acct-since">Member since {{ user["date"] }}</p>
+            <div class="acct-chips">
+                <span class="acct-chip {{ 'ok' if has_2fa_enabled else 'warn' }}"><span class="material-icons-outlined">{{ 'verified_user' if has_2fa_enabled else 'gpp_maybe' }}</span>2FA {{ 'on' if has_2fa_enabled else 'off' }}</span>
+                <span class="acct-chip {{ 'ok' if has_recovery_key else 'warn' }}"><span class="material-icons-outlined">key</span>{{ 'Recovery key set' if has_recovery_key else 'No recovery key' }}</span>
+                <span class="acct-chip {{ 'ok' if user.get('discord_id') else '' }}"><span class="material-icons-outlined">forum</span>Discord {{ 'linked' if user.get('discord_id') else 'not linked' }}</span>
+            </div>
+        </div>
+        <button type="button" onclick="confirmLogout()" class="acct-logout" aria-label="Log out"><span class="material-icons-outlined">logout</span><span class="acct-logout-t">Log out</span></button>
+    </div>
 
         <form action="/change" method="POST">
-        {% call game_glass_panel('Account Information', icon='badge', style='margin-bottom: var(--game-space-lg, 24px);') %}
-                <div class="templateoutertablediv">
-                    <table class="templatetable templatetable2">
-                        <tr>
-                            <th>Category</th>
-                            <th>Value</th>
-                            <th>Change Info</th>
-                        </tr>
-                        <tr>
-                            <td>Country:</td>
-                            <td>{{ user["username"] }}</td>
-                            <td><input class="loginsignupinput" name="name" placeholder="New name" /></td>
-                        </tr>
-                        <tr>
-                            <td>Email:</td>
-                            <td>
-                                <span id="emailDisplayValue">Hidden</span>
-                                <button type="button" class="templatedivbutton templatecenteredbutton" style="padding: 3px 10px; margin-left: 8px; width: auto;" onclick="openRevealEmailModal()">
-                                    <span class="material-icons-outlined" style="font-size: 16px; vertical-align: middle;">visibility</span> Show
-                                </button>
-                            </td>
-                            <td><input class="loginsignupinput" name="email" placeholder="New email" /></td>
-                        </tr>
-                        <tr>
-                            <td>Password:</td>
-                            <td>************</td>
-                            <td>{{ game_button('Reset password', icon='lock_reset', formaction='/account/request_password_reset') }}</td>
-                        </tr>
-                        <tr>
-                            <td>Date joined:</td>
-                            <td>{{ user["date"] }}</td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td>Discord:</td>
-                            <td>{% if user.get('discord_id') %}Linked{% else %}Not Linked{% endif %}</td>
-                            <td>
-                                <button formaction="/discord" formmethod="GET" name="intent" value="link" type="submit" class="templatedivbutton templatecenteredbutton discordbutton" style="width: auto; padding: 5px 15px;">
-                                    <span class="material-icons-outlined">link</span>{% if user.get('discord_id') %}Relink{% else %}Link{% endif %} Discord
-                                </button>
-                            </td>
-                        </tr>
-                    </table>
+        {% call game_glass_panel('Account Information', icon='badge', extra_class='acct-details', style='margin:0 0 var(--game-space-md, 16px);') %}
+            <div class="acct-rows">
+                <div class="acct-row">
+                    <div class="acct-label">Nation name</div>
+                    <div class="acct-val">{{ user["username"] }}</div>
+                    <div class="acct-act"><input class="loginsignupinput" name="name" placeholder="New name" aria-label="New nation name" /></div>
                 </div>
-
-                <div class="account-action-form" style="margin-top: 15px;">
-                    {% if has_password %}
-                    <input class="loginsignupinput account-action-form-input" type="password" name="current_password" placeholder="Enter current password to save details" required />
-                    {% endif %}
-                    {{ game_button('Save Details', icon='save') }}
+                <div class="acct-row">
+                    <div class="acct-label">Email</div>
+                    <div class="acct-val">
+                        <span id="emailDisplayValue">Hidden</span>
+                        <button type="button" class="acct-link" onclick="openRevealEmailModal()"><span class="material-icons-outlined">visibility</span>Show</button>
+                    </div>
+                    <div class="acct-act"><input class="loginsignupinput" name="email" placeholder="New email" aria-label="New email" /></div>
                 </div>
+                <div class="acct-row">
+                    <div class="acct-label">Password</div>
+                    <div class="acct-val">************</div>
+                    <div class="acct-act">{{ game_button('Reset password', icon='lock_reset', formaction='/account/request_password_reset') }}</div>
+                </div>
+                <div class="acct-row">
+                    <div class="acct-label">Discord</div>
+                    <div class="acct-val">{% if user.get('discord_id') %}Linked{% else %}Not linked{% endif %}</div>
+                    <div class="acct-act">
+                        <button formaction="/discord" formmethod="GET" name="intent" value="link" type="submit" class="templatedivbutton templatecenteredbutton discordbutton">
+                            <span class="material-icons-outlined">link</span>{% if user.get('discord_id') %}Relink{% else %}Link{% endif %} Discord
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="account-action-form acct-save">
+                {% if has_password %}
+                <input class="loginsignupinput account-action-form-input" type="password" name="current_password" placeholder="Enter current password to save details" required />
+                {% endif %}
+                {{ game_button('Save Details', icon='save') }}
+            </div>
         {% endcall %}
         </form>
 
-        {% if referral_dashboard %}
-        {% call game_glass_panel('Invite Friends', icon='diversity_3', style='margin-bottom: var(--game-space-lg, 24px);') %}
-            <p class="templatecontentpleft">
-                Share your link — friends get <strong>{{ referral_dashboard.invitee_bonus_summary }}</strong> once their email is verified and they have been active for 2 days.
-                You earn more gold and resources for each day they keep playing (Day 1, 3, 7, and 14).
-            </p>
-            <div class="referral-link-row">
-                <input
-                    type="text"
-                    class="loginsignupinput referral-link-input"
-                    id="referral-link-input"
-                    readonly
-                    value="{{ referral_dashboard.referral_link }}"
-                    aria-label="Referral signup link"
-                    onclick="this.select()"
-                />
-                <button type="button" class="templatedivbutton templatecenteredbutton" onclick="copyReferralLink()">
-                    <span class="material-icons-outlined">content_copy</span>Copy link
-                </button>
-            </div>
-            <p class="templatecontentpleft referral-code-line">
-                Your code: <code>{{ referral_dashboard.referral_code }}</code>
-            </p>
-            {% if referral_dashboard.referred_by_username %}
-            <p class="templatecontentpleft referral-code-line">
-                You were invited by: <strong>{{ referral_dashboard.referred_by_username }}</strong>
-            </p>
-            {% endif %}
-
-            <h3 class="templatecontentheaderleft referral-subheader">Your milestone goals (per invitee)</h3>
-            <ul class="referral-milestone-list">
-                {% for goal in referral_dashboard.milestone_goals %}
-                <li>Day {{ goal.days }} active — {{ goal.summary }}</li>
-                {% endfor %}
-            </ul>
-
-            <h3 class="templatecontentheaderleft referral-subheader">Players you invited ({{ referral_dashboard.total_invitees }})</h3>
-            {% if referral_dashboard.invitees %}
-            <div class="templateoutertablediv">
-                <table class="templatetable templatetable2 referral-invitees-table">
-                    <tr>
-                        <th>Nation</th>
-                        <th>Days active</th>
-                        <th>Next goal</th>
-                        <th>You earned</th>
-                    </tr>
-                    {% for inv in referral_dashboard.invitees %}
-                    <tr>
-                        <td>{{ inv.username }}</td>
-                        <td>{{ inv.days_active }}</td>
-                        <td>
-                            {% if inv.next_milestone %}Day {{ inv.next_milestone }}{% else %}All milestones{% endif %}
-                            {% if not inv.is_verified %}<span class="referral-pending-tag">(awaiting verify)</span>{% endif %}
-                        </td>
-                        <td>{{ inv.earned_summary }}</td>
-                    </tr>
-                    {% endfor %}
-                </table>
-            </div>
-            {% else %}
-            <p class="templatecontentpleft">No signups from your link yet. Post it on Discord or send to friends!</p>
-            {% endif %}
-        {% endcall %}
-        <script>
-        function copyReferralLink() {
-            var input = document.getElementById('referral-link-input');
-            if (!input) return;
-            input.select();
-            navigator.clipboard.writeText(input.value).catch(function () {});
-        }
-        </script>
-        {% endif %}
-
-        {% call game_glass_panel('Discord Bot Link', icon='smart_toy', style='margin-bottom: var(--game-space-lg, 24px);') %}
-            <p style="margin-bottom: 10px; opacity: 0.8;">Generate a one-time code to link your nation to the Affairs &amp; Order Discord bot. Codes stay on this page until they expire ({{ discord_link_ttl_minutes }} minutes) or you use them in Discord.</p>
-
-            {% if discord_bot_link %}
-            <div class="discord-bot-link-panel" id="discord-bot-link-panel" role="region" aria-label="Active Discord bot link code">
-                <p class="discord-bot-link-label">Your active link code <span class="discord-bot-link-expiry">(expires {{ discord_bot_link.expires_display }})</span></p>
-                <div class="discord-bot-link-row">
-                    <input
-                        type="text"
-                        class="loginsignupinput discord-bot-link-input"
-                        id="discord-link-code-input"
-                        readonly
-                        value="{{ discord_bot_link.code }}"
-                        aria-label="Discord bot link code"
-                        onclick="this.select()"
-                    />
-                    <button type="button" class="templatedivbutton discord-copy-btn" onclick="copyDiscordLinkCode()">
-                        <span class="material-icons-outlined">content_copy</span>Copy code
-                    </button>
-                    <button type="button" class="templatedivbutton discord-copy-btn" onclick="copyDiscordRegisterCommand()">
-                        <span class="material-icons-outlined">terminal</span>Copy command
-                    </button>
-                </div>
-                <p class="discord-bot-link-command">Discord: <code id="discord-register-command">/register code:{{ discord_bot_link.code }}</code></p>
-                <p class="discord-bot-link-copied" id="discord-link-copied-msg" hidden aria-live="polite">Copied to clipboard.</p>
-            </div>
-            {% endif %}
-
-            <form action="/generate_discord_link_code" method="POST" class="account-action-form">
-                {% if has_password %}
-                <input class="loginsignupinput account-action-form-input" type="password" name="password" placeholder="Enter current password" required />
-                {% endif %}
-                {{ game_button('Generate Bot Link Code', icon='smart_toy') }}
-            </form>
-
-            <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                <h4 style="margin: 0 0 10px; font-size: 1rem;">Discord Display on Nation Page</h4>
-                {% if user.discord_id %}
-                <form action="/account/toggle_show_discord" method="POST">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <input type="hidden" name="form_submitted" value="1"/>
-                    <p style="margin-bottom: 8px; opacity: 0.85;">
-                        Linked Discord account: <strong>{% if user.discord_username %}{{ user.discord_username }}{% else %}ID {{ user.discord_id }}{% endif %}</strong>
-                    </p>
-                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 12px;">
-                        <input type="checkbox" name="show_discord" value="1" {% if user.show_discord %}checked{% endif %} style="width: 18px; height: 18px; cursor: pointer;">
-                        <span>Show my Discord name on my nation page</span>
-                    </label>
-                    {{ game_button('Save setting', icon='visibility') }}
-                </form>
-                {% else %}
-                <p style="margin-bottom: 0; opacity: 0.8;">
-                    No Discord account linked. Generate a bot link code above and run <code>/register</code> in Discord, or sign in via Discord, to link your account.
-                </p>
-                {% endif %}
-            </div>
-        {% endcall %}
-
-        {% call game_glass_panel('Backup Recovery Key', icon='key', style='margin-bottom: var(--game-space-lg, 24px);') %}
-            {% if not has_recovery_key %}
-            <p style="margin-bottom: 10px; padding: 10px 12px; background: rgba(255, 193, 7, 0.15); border-left: 3px solid #ffc107;">
-                You don't have a backup recovery key yet — generate one now while you can log in.
-            </p>
-            {% endif %}
-            <p style="margin-bottom: 10px; opacity: 0.8;">Generate a recovery key to regain access to your account if you lose your password. <strong>Save it securely</strong>, it will only be shown once.</p>
-            <form action="/generate_recovery_key" method="POST" class="account-action-form">
-                {% if has_password %}
-                <input class="loginsignupinput account-action-form-input" type="password" name="password" placeholder="Enter current password to generate" required />
-                {% endif %}
-                {{ game_button('Generate Key', icon='key') }}
-            </form>
-        {% endcall %}
-
-        {% call game_glass_panel('Two-Factor Authentication', icon='verified_user', style='margin-bottom: var(--game-space-lg, 24px);') %}
+        <div class="acct-grid">
+        {% call game_glass_panel('Two-Factor Authentication', icon='verified_user', style='margin:0;') %}
             {% if has_2fa_enabled %}
             <p style="margin-bottom: 10px; padding: 10px 12px; background: rgba(45, 159, 111, 0.15); border-left: 3px solid #2d9f6f;">
                 <span class="material-icons-outlined" style="vertical-align: middle; font-size: 1.1rem;">check_circle</span>
@@ -293,31 +146,160 @@
 
             </div>
         {% endcall %}
+
+        {% call game_glass_panel('Backup Recovery Key', icon='key', style='margin:0;') %}
+            {% if not has_recovery_key %}
+            <p style="margin-bottom: 10px; padding: 10px 12px; background: rgba(255, 193, 7, 0.15); border-left: 3px solid #ffc107;">
+                You don't have a backup recovery key yet — generate one now while you can log in.
+            </p>
+            {% endif %}
+            <p style="margin-bottom: 10px; opacity: 0.8;">Generate a recovery key to regain access to your account if you lose your password. <strong>Save it securely</strong>, it will only be shown once.</p>
+            <form action="/generate_recovery_key" method="POST" class="account-action-form">
+                {% if has_password %}
+                <input class="loginsignupinput account-action-form-input" type="password" name="password" placeholder="Enter current password to generate" required />
+                {% endif %}
+                {{ game_button('Generate Key', icon='key') }}
+            </form>
+        {% endcall %}
+
+        {% call game_glass_panel('Discord Bot Link', icon='smart_toy', style='margin:0;') %}
+            <p style="margin-bottom: 10px; opacity: 0.8;">Generate a one-time code to link your nation to the Affairs &amp; Order Discord bot. Codes stay on this page until they expire ({{ discord_link_ttl_minutes }} minutes) or you use them in Discord.</p>
+
+            {% if discord_bot_link %}
+            <div class="discord-bot-link-panel" id="discord-bot-link-panel" role="region" aria-label="Active Discord bot link code">
+                <p class="discord-bot-link-label">Your active link code <span class="discord-bot-link-expiry">(expires {{ discord_bot_link.expires_display }})</span></p>
+                <div class="discord-bot-link-row">
+                    <input
+                        type="text"
+                        class="loginsignupinput discord-bot-link-input"
+                        id="discord-link-code-input"
+                        readonly
+                        value="{{ discord_bot_link.code }}"
+                        aria-label="Discord bot link code"
+                        onclick="this.select()"
+                    />
+                    <button type="button" class="templatedivbutton discord-copy-btn" onclick="copyDiscordLinkCode()">
+                        <span class="material-icons-outlined">content_copy</span>Copy code
+                    </button>
+                    <button type="button" class="templatedivbutton discord-copy-btn" onclick="copyDiscordRegisterCommand()">
+                        <span class="material-icons-outlined">terminal</span>Copy command
+                    </button>
+                </div>
+                <p class="discord-bot-link-command">Discord: <code id="discord-register-command">/register code:{{ discord_bot_link.code }}</code></p>
+                <p class="discord-bot-link-copied" id="discord-link-copied-msg" hidden aria-live="polite">Copied to clipboard.</p>
+            </div>
+            {% endif %}
+
+            <form action="/generate_discord_link_code" method="POST" class="account-action-form">
+                {% if has_password %}
+                <input class="loginsignupinput account-action-form-input" type="password" name="password" placeholder="Enter current password" required />
+                {% endif %}
+                {{ game_button('Generate Bot Link Code', icon='smart_toy') }}
+            </form>
+
+            <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                <h4 style="margin: 0 0 10px; font-size: 1rem;">Discord Display on Nation Page</h4>
+                {% if user.discord_id %}
+                <form action="/account/toggle_show_discord" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <input type="hidden" name="form_submitted" value="1"/>
+                    <p style="margin-bottom: 8px; opacity: 0.85;">
+                        Linked Discord account: <strong>{% if user.discord_username %}{{ user.discord_username }}{% else %}ID {{ user.discord_id }}{% endif %}</strong>
+                    </p>
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 12px;">
+                        <input type="checkbox" name="show_discord" value="1" {% if user.show_discord %}checked{% endif %} style="width: 18px; height: 18px; cursor: pointer;">
+                        <span>Show my Discord name on my nation page</span>
+                    </label>
+                    {{ game_button('Save setting', icon='visibility') }}
+                </form>
+                {% else %}
+                <p style="margin-bottom: 0; opacity: 0.8;">
+                    No Discord account linked. Generate a bot link code above and run <code>/register</code> in Discord, or sign in via Discord, to link your account.
+                </p>
+                {% endif %}
+            </div>
+        {% endcall %}
+
+        {% if referral_dashboard %}
+        {% call game_glass_panel('Invite Friends', icon='diversity_3', style='margin:0;') %}
+            <p class="templatecontentpleft">
+                Share your link — friends get <strong>{{ referral_dashboard.invitee_bonus_summary }}</strong> once their email is verified and they have been active for 2 days.
+                You earn more gold and resources for each day they keep playing (Day 1, 3, 7, and 14).
+            </p>
+            <div class="referral-link-row">
+                <input
+                    type="text"
+                    class="loginsignupinput referral-link-input"
+                    id="referral-link-input"
+                    readonly
+                    value="{{ referral_dashboard.referral_link }}"
+                    aria-label="Referral signup link"
+                    onclick="this.select()"
+                />
+                <button type="button" class="templatedivbutton templatecenteredbutton" onclick="copyReferralLink()">
+                    <span class="material-icons-outlined">content_copy</span>Copy link
+                </button>
+            </div>
+            <p class="templatecontentpleft referral-code-line">
+                Your code: <code>{{ referral_dashboard.referral_code }}</code>
+            </p>
+            {% if referral_dashboard.referred_by_username %}
+            <p class="templatecontentpleft referral-code-line">
+                You were invited by: <strong>{{ referral_dashboard.referred_by_username }}</strong>
+            </p>
+            {% endif %}
+
+            <h3 class="templatecontentheaderleft referral-subheader">Your milestone goals (per invitee)</h3>
+            <ul class="referral-milestone-list">
+                {% for goal in referral_dashboard.milestone_goals %}
+                <li>Day {{ goal.days }} active — {{ goal.summary }}</li>
+                {% endfor %}
+            </ul>
+
+            <h3 class="templatecontentheaderleft referral-subheader">Players you invited ({{ referral_dashboard.total_invitees }})</h3>
+            {% if referral_dashboard.invitees %}
+            <div class="templateoutertablediv">
+                <table class="templatetable templatetable2 referral-invitees-table">
+                    <tr>
+                        <th>Nation</th>
+                        <th>Days active</th>
+                        <th>Next goal</th>
+                        <th>You earned</th>
+                    </tr>
+                    {% for inv in referral_dashboard.invitees %}
+                    <tr>
+                        <td>{{ inv.username }}</td>
+                        <td>{{ inv.days_active }}</td>
+                        <td>
+                            {% if inv.next_milestone %}Day {{ inv.next_milestone }}{% else %}All milestones{% endif %}
+                            {% if not inv.is_verified %}<span class="referral-pending-tag">(awaiting verify)</span>{% endif %}
+                        </td>
+                        <td>{{ inv.earned_summary }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+            {% else %}
+            <p class="templatecontentpleft">No signups from your link yet. Post it on Discord or send to friends!</p>
+            {% endif %}
+        {% endcall %}
+        <script>
+        function copyReferralLink() {
+            var input = document.getElementById('referral-link-input');
+            if (!input) return;
+            input.select();
+            navigator.clipboard.writeText(input.value).catch(function () {});
+        }
+        </script>
+        {% endif %}
+        </div>
     </div>
-
-    {% call game_glass_panel('Danger Zone', icon='warning', style='margin-top: var(--game-space-lg, 24px);') %}
+    {% call game_glass_panel('Danger Zone', icon='warning', extra_class='acct-danger') %}
         <form method="POST" id="deleteAccountForm">
-            <div class="templatedivflex2 menuflex">
-                <div class="templatedivflex2left">
-                    <button type="button" onclick="openResetModal()" class="templatedivbutton templatecenteredbutton" style="background: #f39c12;"><span class="material-icons-outlined">
-                        restart_alt
-                        </span>Reset account</button>
-                </div>
-                <div class="templatedivflex2left">
-
-                    <button type="button" onclick="confirmDeleteAccount()" class="templatedivbutton templatecenteredbutton redactionbutton"><span class="material-icons-outlined">
-                                cancel
-                                </span>Delete account</button>
-
-                </div>
-
-                <div class="templatedivflex2left">
-
-                    <button type="button" onclick="confirmLogout()" class="templatedivbutton templatecenteredbutton redactionbutton"><span class="material-icons-outlined">
-                            arrow_forward
-                            </span>Log Out</button>
-
-                </div>
+            <p class="acct-danger-text">These actions cannot be undone.</p>
+            <div class="acct-danger-actions">
+                <button type="button" onclick="openResetModal()" class="acct-btn-warn"><span class="material-icons-outlined">restart_alt</span>Reset account</button>
+                <button type="button" onclick="confirmDeleteAccount()" class="acct-btn-danger"><span class="material-icons-outlined">cancel</span>Delete account</button>
             </div>
         </form>
     {% endcall %}
@@ -500,6 +482,50 @@
 .account-action-form .templatedivbutton {
     width: auto;
     min-width: 220px;
+}
+
+/* ===== Account page (2026-11-13 redesign, mobile-first) ===== */
+.acct-id{display:flex;flex-wrap:wrap;align-items:center;gap:12px 14px;padding:14px;margin-bottom:var(--game-space-md,16px)}
+.acct-avatar{flex:0 0 auto;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:#fff;font:700 22px/1 var(--f-display,inherit)}
+.acct-id-main{flex:1 1 180px;min-width:0}
+.acct-id-main h1{margin:0;font-size:1.25rem;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acct-since{margin:2px 0 8px;font-size:.85rem;color:var(--text-secondary);white-space:nowrap}
+.acct-chips{display:flex;flex-wrap:wrap;gap:6px}
+.acct-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:.75rem;font-weight:600;border:1px solid var(--border);color:var(--text-secondary);background:rgba(127,127,127,.12)}
+.acct-chip .material-icons-outlined{font-size:14px}
+.acct-chip.ok{color:#2d9f6f;border-color:rgba(45,159,111,.5);background:rgba(45,159,111,.12)}
+.acct-chip.warn{color:#d98a00;border-color:rgba(217,138,0,.5);background:rgba(217,138,0,.12)}
+.acct-logout{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--colorOne);font:600 .85rem inherit;cursor:pointer}
+.acct-logout:hover{border-color:var(--danger,#e53935);color:var(--danger,#e53935)}
+.acct-rows{display:flex;flex-direction:column}
+.acct-row{display:grid;grid-template-columns:1fr;gap:6px;padding:12px 0;border-top:1px solid var(--border)}
+.acct-row:first-child{border-top:0;padding-top:0}
+.acct-label{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary)}
+.acct-val{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-weight:600;min-width:0;overflow-wrap:anywhere}
+.acct-link{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border:0;border-radius:6px;background:transparent;color:var(--accent);font:600 .85rem inherit;cursor:pointer}
+.acct-link .material-icons-outlined{font-size:16px}
+.acct-act .loginsignupinput,.acct-act .templatedivbutton{width:100%;margin:0}
+.acct-save{margin-top:14px}
+.acct-grid{column-count:1;margin-bottom:var(--game-space-md,16px)}
+.acct-grid>.game-panel{margin:0 0 var(--game-space-md,16px)!important;break-inside:avoid}
+#vacationSetting .game-setting-info{flex:1 1 100%}
+#vacationSetting form{flex:1 1 100%;display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+#vacationSetting .game-setting-desc{font-size:.8rem;line-height:1.45}
+.acct-grid .templatecontentheaderleft{font-size:1rem}
+.acct-danger-text{margin:0 0 10px;font-size:.85rem;color:var(--text-secondary)}
+.acct-danger-actions{display:flex;flex-wrap:wrap;gap:10px}
+.acct-btn-warn,.acct-btn-danger{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;background:transparent;font:600 .85rem inherit;cursor:pointer}
+.acct-btn-warn{border:1px solid #d98a00;color:#d98a00}
+.acct-btn-danger{border:1px solid var(--danger,#e53935);color:var(--danger,#e53935)}
+.acct-btn-warn:hover{background:rgba(217,138,0,.14)}.acct-btn-danger:hover{background:rgba(229,57,53,.14)}
+.acct-danger .templatecontentheaderleft{background:transparent;border-left-color:var(--danger,#e53935)}
+@media (max-width:479px){.acct-logout-t{display:none}.acct-logout{padding:8px}.acct-id{flex-wrap:nowrap}.acct-avatar{width:44px;height:44px;font-size:19px}.acct-id-main{flex:1 1 0}}
+@media (min-width:760px){
+  .acct-id{padding:18px 20px}
+  .acct-avatar{width:64px;height:64px;font-size:26px}
+  .acct-id-main h1{font-size:1.6rem}
+  .acct-row{grid-template-columns:150px 1fr minmax(220px,300px);align-items:center;gap:16px}
+  .acct-grid{column-count:2;column-gap:var(--game-space-md,16px)}
 }
 </style>
 
