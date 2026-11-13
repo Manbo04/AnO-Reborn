@@ -998,7 +998,7 @@ def generate_province_revenue():  # Runs each hour
                         plus_amount_multiplier *= debuff_info.get(
                             "efficiency_multiplier", 1.0
                         )
-                        if unit_category in ("industry", "processing"):
+                        if unit_category in ("industry", "processing") and unit not in ("farms", "fisheries"):
                             plus_amount_multiplier *= wear_factor.get(user_id, 1.0)
                         if unit == "farms":
                             plus_amount_multiplier *= goods_eff["farm"].get(user_id, 1.0)

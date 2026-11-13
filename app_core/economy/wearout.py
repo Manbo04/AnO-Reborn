@@ -17,10 +17,13 @@ RAMP_START = 0.10
 CATEGORIES = ("industry", "processing")
 
 
+FOOD_EXEMPT = ("farms", "fisheries")  # rations are protected: food buildings never wear out
+
+
 def worn_buildings():
     out = []
     for c in CATEGORIES:
-        out += variables.INFRA_TYPE_BUILDINGS.get(c, [])
+        out += [b for b in variables.INFRA_TYPE_BUILDINGS.get(c, []) if b not in FOOD_EXEMPT]
     return out
 
 
