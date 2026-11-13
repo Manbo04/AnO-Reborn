@@ -2,7 +2,7 @@
   "author_id": "465912833352138768",
   "created_at": "2026-11-10T13:55:36Z",
   "kind": "bug",
-  "last_message_id": "1569981635334643753",
+  "last_message_id": "1570846392555937974",
   "last_player_message_at": "2026-11-11T07:46:30Z",
   "messages": [
     {
@@ -24,6 +24,16 @@
       "id": "1569981635334643753",
       "staff": false,
       "text": "I guess Comfort ceiling?\n\nI'm guessing it's because your current population is over the comfort ceiling."
+    },
+    {
+      "at": "2026-11-13T17:02:44Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1570846392555937974",
+      "staff": false,
+      "text": "<@465912833352138768> sorry for the slow reply. that drop is how it's built: once your nation is over its comfort size, each distribution building only reaches sqrt(comfort/people) of its normal amount. comfort comes from cities, land and happiness, not homes, so more homes means more people but the same comfort, and the reach drops. it recalculates every hour, so it should go back to 100% once you're under comfort. i added an explanation on the page. if it stays low after you're under, tell me your nation name and i'll look"
     }
   ],
   "thread_id": "1569712134236012586",

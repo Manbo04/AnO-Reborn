@@ -1,8 +1,9 @@
 {
   "author_id": "429129579039555584",
+  "ballot_id": "2026-11-13",
   "created_at": "2026-11-09T03:12:49Z",
   "kind": "suggestion",
-  "last_message_id": "1569227542303477903",
+  "last_message_id": "1570846388793774102",
   "last_player_message_at": "2026-11-09T05:50:00Z",
   "messages": [
     {
@@ -74,9 +75,20 @@
       "id": "1569227542303477903",
       "staff": false,
       "text": "Changing it to one vote is just delaying it until the game gets bigger"
+    },
+    {
+      "at": "2026-11-13T17:02:44Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1570846388793774102",
+      "staff": false,
+      "text": "<@429129579039555584> world assembly is one nation one vote now, live. it used to be weighted by nation size so the big ones had control. it still passes on more than half for with at least 5 votes. josh's point stands that it can get gamed later with alts, we'll watch it"
     }
   ],
-  "status": "new",
+  "poll_message_id": "1570919760428929055",
+  "status": "voting",
   "thread_id": "1569187985667133590",
   "title": "Vote weight changes",
   "url": "https://discord.com/channels/708006319658893385/1569187985667133590"

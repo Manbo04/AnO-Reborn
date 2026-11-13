@@ -268,8 +268,12 @@
     }
   ],
   "poll_message_id": "1568366562635817083",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1567424496854376548",
   "title": "Morale, War type, War reward changes.",
-  "url": "https://discord.com/channels/708006319658893385/1567424496854376548"
+  "url": "https://discord.com/channels/708006319658893385/1567424496854376548",
+  "votes": {
+    "no": 1,
+    "yes": 6
+  }
 }

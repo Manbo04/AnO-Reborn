@@ -28,8 +28,12 @@
     }
   ],
   "poll_message_id": "1568366554775560213",
-  "status": "voting",
+  "status": "passed",
   "thread_id": "1566289342295711764",
   "title": "UI Improvements",
-  "url": "https://discord.com/channels/708006319658893385/1566289342295711764"
+  "url": "https://discord.com/channels/708006319658893385/1566289342295711764",
+  "votes": {
+    "no": 0,
+    "yes": 6
+  }
 }

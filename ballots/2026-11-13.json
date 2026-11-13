@@ -1,0 +1,15 @@
+{
+  "channel_id": "1556457101025353888",
+  "closes_at": "2026-11-20T16:00:00Z",
+  "header_message_id": "1570919758629568604",
+  "id": "2026-11-13",
+  "items": [
+    {
+      "message_id": "1570919760428929055",
+      "question": "Vote weight changes",
+      "suggestion_id": "1569187985667133590"
+    }
+  ],
+  "opened_at": "2026-11-13T21:54:16Z",
+  "tallied": false
+}
