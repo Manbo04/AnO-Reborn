@@ -9,6 +9,7 @@ from app_core.economy.building_costs import (
     CITY_UNITS,
     LAND_UNITS,
     apply_policy_gold_discount,
+    ledger_cement_cost,
     get_slot_type,
 )
 import variables
@@ -122,6 +123,7 @@ def purchase_building(
     unit_gold = apply_policy_gold_discount(name, prices[f"{name}_price"], policies)
     total_gold = int(unit_gold) * quantity
     resources_data = dict(prices.get(f"{name}_resource") or {})
+    resources_data.update(ledger_cement_cost(name, unit_gold))
 
     db.execute("SELECT gold FROM stats WHERE id=%s", (user_id,))
     gold_row = db.fetchone()

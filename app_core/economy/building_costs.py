@@ -171,6 +171,21 @@ def apply_policy_gold_discount(building_name: str, gold: float, policies: list |
     return price
 
 
+CEMENT_GOLD_PER_UNIT = 100_000  # ledger_cement: 1 Cement per 100k gold of building price (first guess, tune in realm)
+
+
+def ledger_cement_cost(name: str, gold) -> dict:
+    """Flag ledger_cement: every building also needs Cement to be built. Not refunded on sell (that is the sink)."""
+    try:
+        from app_core.feature_flags import is_on
+
+        if name != "cement_works" and is_on("ledger_cement") and name in (CITY_UNITS | LAND_UNITS):
+            return {"cement": max(1, int(gold // CEMENT_GOLD_PER_UNIT))}
+    except Exception:
+        pass
+    return {}
+
+
 def get_build_cost(building_name: str, policies: list | None = None) -> dict:
     """Return gold, resources, and a player-facing display string."""
     name = _normalize_building_name(building_name)
@@ -181,6 +196,7 @@ def get_build_cost(building_name: str, policies: list | None = None) -> dict:
 
     gold = apply_policy_gold_discount(name, prices[price_key], policies)
     resources = dict(prices.get(f"{name}_resource") or {})
+    resources.update(ledger_cement_cost(name, gold))
     display_name = BUILDING_DISPLAY_NAMES.get(
         name, name.replace("_", " ").capitalize()
     )

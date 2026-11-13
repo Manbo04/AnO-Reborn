@@ -51,3 +51,7 @@ INSERT INTO building_dictionary (name, display_name, category, base_cost, effect
 ALTER TABLE spyinfo ADD COLUMN IF NOT EXISTS luxury_goods BIGINT DEFAULT 0;
 ALTER TABLE colbanks ADD COLUMN IF NOT EXISTS luxury_goods BIGINT DEFAULT 0;
 COMMIT;
+
+BEGIN;
+INSERT INTO feature_flags (key, enabled, rollout_percent) VALUES ('ledger_cement', false, 100) ON CONFLICT (key) DO NOTHING;
+COMMIT;
