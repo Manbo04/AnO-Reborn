@@ -21,5 +21,6 @@ def ledger_home():
             "needs": services.needs(db, uid),
             "budget": services.budget(db, uid),
             "gazette": services.gazette(db),
+            "goods": services.goods(db, uid),
         }
     return render_template("ledger.html", **data)

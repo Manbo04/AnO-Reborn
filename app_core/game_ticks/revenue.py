@@ -351,6 +351,16 @@ def generate_province_revenue():  # Runs each hour
                 logging.exception("wearout failed; running without wear this tick")
                 wear_factor = {}
 
+            # Goods use (flag ledger_goods_use): clothing/medicine/fertilizer/prosperity needs.
+            goods_eff = {"farm": {}, "happy": {}}
+            try:
+                from app_core.economy import goods_use
+
+                goods_eff = goods_use.apply(dbdict, all_user_ids, resources_map, resource_deltas)
+            except Exception:
+                logging.exception("goods_use failed; running without it this tick")
+                goods_eff = {"farm": {}, "happy": {}}
+
             # No blanket user_economy prefill here.
             # Resource writes below already use UPSERT and create missing rows lazily,
             # avoiding N(users*resources) conflict checks on every hourly run.
@@ -978,6 +988,8 @@ def generate_province_revenue():  # Runs each hour
                         )
                         if unit_category in ("industry", "processing"):
                             plus_amount_multiplier *= wear_factor.get(user_id, 1.0)
+                        if unit == "farms":
+                            plus_amount_multiplier *= goods_eff["farm"].get(user_id, 1.0)
 
                         # Function for _plus
                         for resource, amount in plus.items():
@@ -1122,6 +1134,13 @@ def generate_province_revenue():  # Runs each hour
                 if user_id not in user_provinces:
                     user_provinces[user_id] = []
                 user_provinces[user_id].append(province_id)
+
+            # Goods-use happiness (flag ledger_goods_use)
+            for _uid, _delta in goods_eff["happy"].items():
+                for _pid in user_provinces.get(_uid, []):
+                    if _pid in provinces_data:
+                        _h = provinces_data[_pid].get("happiness", 50)
+                        provinces_data[_pid]["happiness"] = min(100, max(0, _h + _delta))
 
             # Apply happiness bonuses from policies before batch write
             for user_id, prov_ids in user_provinces.items():

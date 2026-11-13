@@ -90,7 +90,7 @@
   {% endcall %}
 
   <div class="templatedivcontent ld">
-    <nav class="ld-jump" aria-label="Sections"><a href="#ld-industry"><span class="material-icons-outlined">factory</span>Industry</a><a href="#ld-needs"><span class="material-icons-outlined">shopping_basket</span>Needs</a><a href="#ld-budget"><span class="material-icons-outlined">payments</span>Budget</a><a href="#ld-gazette"><span class="material-icons-outlined">newspaper</span>Gazette</a></nav>
+    <nav class="ld-jump" aria-label="Sections"><a href="#ld-industry"><span class="material-icons-outlined">factory</span>Industry</a><a href="#ld-needs"><span class="material-icons-outlined">shopping_basket</span>Needs</a><a href="#ld-goods"><span class="material-icons-outlined">category</span>Goods</a><a href="#ld-budget"><span class="material-icons-outlined">payments</span>Budget</a><a href="#ld-gazette"><span class="material-icons-outlined">newspaper</span>Gazette</a></nav>
 
     <section class="ld-sec" id="ld-industry" aria-labelledby="ld-i-h">
       <h2 class="ld-h" id="ld-i-h"><span class="material-icons-outlined" aria-hidden="true">factory</span>Industry</h2>
@@ -150,6 +150,22 @@
           <div class="ld-top"><div><div class="ld-name">Tier 3 · Prosperity</div><div class="ld-meta">Components, silver, diamonds</div></div><span class="ld-chip">Proposed</span></div>
           <div class="ld-meta">Not active on this realm. It is the luxury tier in the design.</div>
         </div>
+      </div>
+    </section>
+
+    <section class="ld-sec" id="ld-goods" aria-labelledby="ld-go-h">
+      <h2 class="ld-h" id="ld-go-h"><span class="material-icons-outlined" aria-hidden="true">category</span>New goods</h2>
+      <p class="ld-sub">Eleven new goods and who needs them. A chip says Active when its rule is switched on in this realm.</p>
+      <div class="ld-two">
+      {% for g in goods %}
+        <div class="ld-card">
+          <div class="ld-top"><div><div class="ld-name">{{ g.res }}</div><div class="ld-meta">{{ g.building }} · you own {{ g.owned }}</div></div>
+            <span class="ld-chip {{ 'ok' if g.live else '' }}">{{ 'Active' if g.live else 'Shadow' }}</span></div>
+          <div class="ld-row"><span>In stock</span><strong>{{ big(g.stock) }}</strong></div>
+          <div class="ld-row"><span>Recipe / hr</span><strong>{{ g.recipe }}</strong></div>
+          <div class="ld-meta">{{ g.use }}</div>
+        </div>
+      {% endfor %}
       </div>
     </section>
 

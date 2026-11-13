@@ -129,3 +129,41 @@ def gazette(db):
         db.connection.rollback()
         top1 = 0.0
     return {"rows": rows, "latest": latest, "first": first, "cover": cover, "pop": pop, "top1": top1}
+
+
+# New atlas goods: (resource, producer building, used by, flag that makes it matter)
+GOODS = [
+    ("machinery", "machinery_works", "Wear-out of every mine, mill and factory", "ledger_wearout"),
+    ("cement", "cement_works", "Needed to build any building", "ledger_cement"),
+    ("textiles", "textile_mills", "Clothing and luxury goods", None),
+    ("clothing", "clothing_factories", "Population comfort need", "ledger_goods_use"),
+    ("chemicals", "chemical_plants", "Medicine, fertilizer, plastics", None),
+    ("medicine", "pharmaceutical_labs", "Hospitals", "ledger_goods_use"),
+    ("fertilizer", "fertilizer_plants", "Farms: up to +20% rations", "ledger_goods_use"),
+    ("plastics", "plastics_plants", "Electronics", None),
+    ("electronics", "electronics_factories", "Prosperity need, vehicles", "ledger_goods_use"),
+    ("vehicles", "vehicle_works", "Prosperity need", "ledger_goods_use"),
+    ("luxury_goods", "luxury_workshops", "Prosperity need", "ledger_goods_use"),
+]
+
+
+def goods(db, uid):
+    from app_core.feature_flags import is_on
+
+    stock = _stock(db, uid)
+    db.execute(
+        "SELECT bd.name, COALESCE(SUM(ub.quantity),0) FROM user_buildings ub JOIN building_dictionary bd "
+        "ON bd.building_id = ub.building_id WHERE ub.user_id=%s GROUP BY bd.name", (uid,))
+    owned = {r[0]: int(r[1]) for r in db.fetchall()}
+    out = []
+    for res, bld, use, flag in GOODS:
+        rec = variables.NEW_INFRA.get(bld, {})
+        minus = ", ".join("%s %s" % (v, k.replace("_", " ")) for k, v in (rec.get("minus") or {}).items())
+        plus = list((rec.get("plus") or {}).values())
+        out.append({
+            "res": res.replace("_", " ").title(), "stock": int(stock.get(res, 0) or 0),
+            "building": bld.replace("_", " ").title(), "owned": owned.get(bld, 0),
+            "recipe": "%s -> %s" % (minus, plus[0] if plus else 0), "use": use,
+            "live": bool(flag and is_on(flag, uid)),
+        })
+    return out
