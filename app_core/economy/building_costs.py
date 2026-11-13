@@ -71,6 +71,7 @@ LAND_UNITS = frozenset(
         "component_factories",
         "steel_mills",
         "ammunition_factories",
+        "machinery_works",
         "aluminium_refineries",
         "oil_refineries",
         "firewatch_towers",

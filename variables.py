@@ -294,6 +294,10 @@ BUILDING_EMPLOYMENT_MATRICES = {
         "worker_count": 100000,
         "education": {"edu_highschool": 0.4, "edu_college": 0.6},
     },
+    "machinery_works": {
+        "worker_count": 80000,
+        "education": {"edu_highschool": 0.5, "edu_college": 0.5},
+    },
     "steel_mills": {
         "worker_count": 90000,
         "education": {"edu_none": 0.6, "edu_highschool": 0.4},
@@ -344,6 +348,7 @@ POLICY_SUBSIDIES_AFFECTED_BUILDINGS = [
     "industrial_district",
     "component_factories",
     "ammunition_factories",
+    "machinery_works",
     "steel_mills",
     "coal_burners",
     "oil_burners",
@@ -391,6 +396,7 @@ RESOURCES = [
     "aluminium",
     "gasoline",
     "ammunition",
+    "machinery",
 ]
 
 ENERGY_UNITS = [
@@ -424,6 +430,7 @@ ENERGY_CONSUMERS = [
     "component_factories",
     "steel_mills",
     "ammunition_factories",
+    "machinery_works",
     "aluminium_refineries",
     "oil_refineries",
 ]
@@ -503,6 +510,7 @@ INFRA_TYPE_BUILDINGS = {
         "component_factories",
         "steel_mills",
         "ammunition_factories",
+        "machinery_works",
         "aluminium_refineries",
         "oil_refineries",
     ],
@@ -543,6 +551,7 @@ BUILDINGS = [
     "component_factories",
     "steel_mills",
     "ammunition_factories",
+    "machinery_works",
     "aluminium_refineries",
     "oil_refineries",
     "food_banks",
@@ -727,6 +736,10 @@ INFRA = {  # Display values — synced to NEW_INFRA engine values (units/hr per 
     "ammunition_factories_convert_minus": [{"copper": 40}, {"lead": 80}],
     "ammunition_factories_plus": {"ammunition": 48},
     "ammunition_factories_effect": [{"pollution": 3}],
+    "machinery_works_money": 55000,
+    "machinery_works_convert_minus": [{"steel": 30}, {"components": 12}],
+    "machinery_works_plus": {"machinery": 24},
+    "machinery_works_effect": [{"pollution": 4}],
     "aluminium_refineries_money": 42000,
     "aluminium_refineries_convert_minus": [{"bauxite": 256}],
     "aluminium_refineries_plus": {"aluminium": 64},
@@ -983,6 +996,8 @@ PROVINCE_UNIT_PRICES = {
     "steel_mills_resource": {"iron": 60000, "coal": 40000, "lumber": 30000},
     "ammunition_factories_price": 10000000,
     "ammunition_factories_resource": {"iron": 25000, "copper": 15000},
+    "machinery_works_price": 14000000,
+    "machinery_works_resource": {"iron": 30000, "copper": 20000},
     "aluminium_refineries_price": 5500000,
     "aluminium_refineries_resource": {"iron": 40000, "lumber": 20000},
     "oil_refineries_price": 9000000,
@@ -1206,6 +1221,12 @@ NEW_INFRA = {  # (NEW INFRA)
         "money": 60000,
         "minus": {"coal": 38, "iron": 67},
         "plus": {"steel": 48},
+        "eff": {"pollution": 4},
+    },
+    "machinery_works": {
+        "money": 55000,
+        "minus": {"steel": 30, "components": 12},
+        "plus": {"machinery": 24},
         "eff": {"pollution": 4},
     },
     "ammunition_factories": {

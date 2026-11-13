@@ -341,6 +341,16 @@ def generate_province_revenue():  # Runs each hour
             # This avoids race conditions with other tasks modifying resources
             resource_deltas = {uid: {} for uid in all_user_ids}
 
+            # Wear-out (flag ledger_wearout): Machinery use + output factor per nation.
+            wear_factor = {}
+            try:
+                from app_core.economy import wearout
+
+                wear_factor = wearout.apply(dbdict, all_user_ids, resources_map, resource_deltas)
+            except Exception:
+                logging.exception("wearout failed; running without wear this tick")
+                wear_factor = {}
+
             # No blanket user_economy prefill here.
             # Resource writes below already use UPSERT and create missing rows lazily,
             # avoiding N(users*resources) conflict checks on every hourly run.
@@ -966,6 +976,8 @@ def generate_province_revenue():  # Runs each hour
                         plus_amount_multiplier *= debuff_info.get(
                             "efficiency_multiplier", 1.0
                         )
+                        if unit_category in ("industry", "processing"):
+                            plus_amount_multiplier *= wear_factor.get(user_id, 1.0)
 
                         # Function for _plus
                         for resource, amount in plus.items():
