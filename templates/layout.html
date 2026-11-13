@@ -281,6 +281,9 @@
 
         <div class="navbarparentloginsignupdiv">
             {% if session.get('user_id') == None %}
+            <a class="loginsignup" href="https://discord.gg/SEae3Ua" target="_blank" rel="noopener noreferrer"><span class="material-icons-outlined">
+                    forum
+                </span>Community</a>
             <a class="loginsignup" href="/login"><span class="material-icons-outlined">
                     login
                 </span>Login</a>
@@ -332,6 +335,9 @@
                         <a class="{{ 'active' if request.path.startswith('/tutorial') else '' }}" href="/tutorial"><span class="material-icons-outlined">
                             school
                         </span>Tutorial</a>
+                        <a href="https://discord.gg/SEae3Ua" target="_blank" rel="noopener noreferrer"><span class="material-icons-outlined">
+                            forum
+                        </span>Join our Discord</a>
                         {% if session.get('user_id') in admin_user_ids %}
                         <a class="{{ 'active' if request.path.startswith('/admin') else '' }}" href="/admin/command-center"><span class="material-icons-outlined">
                             admin_panel_settings
@@ -427,6 +433,9 @@
         <a class="menubara" href="/tutorial"><span class="material-icons-outlined">
                 school
             </span>Tutorial</a>
+        <a class="menubara" href="https://discord.gg/SEae3Ua" target="_blank" rel="noopener noreferrer"><span class="material-icons-outlined">
+                forum
+            </span>Join our Discord</a>
         {% if session.get('user_id') in admin_user_ids %}
         <a class="menubara" href="/admin/command-center"><span class="material-icons-outlined">
                 admin_panel_settings
@@ -658,6 +667,7 @@
                     <a href="/login">Login</a>
                     <a href="/signup">Sign up</a>
 
+                    <a href="https://discord.gg/SEae3Ua" target="_blank" rel="noopener noreferrer">Community Discord</a>
                     <a href="/mechanics">Game Mechanics</a>
                     <a href="/privacy">Privacy Policy</a>
                     <a href="/terms">Terms of Service</a>
