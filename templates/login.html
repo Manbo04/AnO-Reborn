@@ -62,7 +62,7 @@
   $('#eye').addEventListener('click',()=>{const p=$('#password'),show=p.type==='password';p.type=show?'text':'password';$('#eye').textContent=show?'HIDE':'SHOW'});
   $('#login-form').addEventListener('submit',e=>{if(!$('#username').value.trim()||!$('#password').value){e.preventDefault();$('#lerr').textContent='Enter your nation name or email, and your password.'}});
   const fx=$('#fx'),g=fx.getContext('2d');function sz(){fx.width=innerWidth*DPR;fx.height=innerHeight*DPR}sz();addEventListener('resize',sz);
-  const P=Array.from({length:innerWidth<760?40:90},()=>({x:Math.random(),y:Math.random(),v:Math.random()*.0012+.0004,r:Math.random()*1.6+.4,hot:Math.random()<.35,d:Math.random()*6}));
+  const P=Array.from({length:innerWidth<760?16:32},()=>({x:Math.random(),y:Math.random(),v:Math.random()*.0012+.0004,r:Math.random()*1.6+.4,hot:Math.random()<.35,d:Math.random()*6}));
   (function loop(){if(!reduce){g.clearRect(0,0,fx.width,fx.height);for(const p of P){p.y-=p.v;p.d+=.01;if(p.y<-.02){p.y=1.02;p.x=Math.random()}g.beginPath();g.arc((p.x+Math.sin(p.d)*.01)*fx.width,p.y*fx.height,p.r*DPR,0,7);g.fillStyle=p.hot?'rgba(255,150,70,.6)':'rgba(150,215,255,.45)';g.fill()}}requestAnimationFrame(loop)})();
 })();
 {% endraw %}

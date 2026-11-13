@@ -603,8 +603,8 @@ function fitCanvas(c,scale=1){c.width=c.offsetWidth*DPR*scale;c.height=c.offsetH
 const fog=$('#fog'),fg=fog.getContext('2d'),fx=$('#fx'),g=fx.getContext('2d');
 function sizeHero(){fitCanvas(fog,.35);fitCanvas(fx)}sizeHero();addEventListener('resize',sizeHero);
 const puffs=Array.from({length:9},()=>({x:Math.random(),y:.45+Math.random()*.6,r:.25+Math.random()*.35,v:(Math.random()*.4+.15)*(Math.random()<.5?-1:1)/1000,c:Math.random()<.3?'255,120,70':'120,170,210'}));
-const parts=[],N=innerWidth<760?50:130;
-function spawn(any){return{x:Math.random()*fx.width,y:any?Math.random()*fx.height:fx.height+20,r:(Math.random()*1.9+.4)*DPR,v:Math.random()*.7+.2,d:Math.random()*6.28,hot:Math.random()<.4,a:Math.random()*.6+.3,s:Math.random()<.06}}
+const parts=[],N=innerWidth<760?18:34;
+function spawn(any){return{x:Math.random()*fx.width,y:any?Math.random()*fx.height:fx.height+20,r:(Math.random()*1.9+.4)*DPR,v:Math.random()*.7+.2,d:Math.random()*6.28,hot:Math.random()<.4,a:Math.random()*.6+.3,s:Math.random()<.02}}
 for(let i=0;i<N;i++)parts.push(spawn(true));
 (function fl(){if(heroVisible){
   const W=fog.width,H=fog.height;fg.clearRect(0,0,W,H);
@@ -727,7 +727,7 @@ initGlobe();
 /* ---------- warp finale ---------- */
 const warp=$('#warp'),wg=warp.getContext('2d');let warpOn=false,speed=2,target=2;
 function sizeWarp(){fitCanvas(warp)}sizeWarp();addEventListener('resize',sizeWarp);
-const stars=Array.from({length:innerWidth<760?260:520},()=>({x:(Math.random()-.5)*2,y:(Math.random()-.5)*2,z:Math.random()}));
+const stars=Array.from({length:innerWidth<760?110:220},()=>({x:(Math.random()-.5)*2,y:(Math.random()-.5)*2,z:Math.random()}));
 new IntersectionObserver(([e])=>warpOn=e.isIntersecting).observe(warp);
 const cta=$('#finalCta');cta.addEventListener('pointerenter',()=>{target=26;whoosh()});cta.addEventListener('pointerleave',()=>target=2);
 (function wl(){requestAnimationFrame(wl);if(!warpOn)return;speed+=(target-speed)*.06;const W=warp.width,H=warp.height,cxw=W/2,cyw=H/2;
