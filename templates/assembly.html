@@ -188,11 +188,11 @@
                                 <button name="vote" value="abstain" type="submit" class="game-btn game-btn-secondary{% if prop.my_vote == 'abstain' %} is-mine{% endif %}">Abstain</button>
                             </form>
 
-                            {% set total_votes = ((prop.votes_for or 0) + (prop.votes_against or 0) + (prop.votes_abstain or 0))|round(1) %}
+                            {% set total_votes = ((prop.votes_for or 0) + (prop.votes_against or 0) + (prop.votes_abstain or 0))|int %}
                             <div class="assembly-tally">
-                                <span class="game-badge game-badge-good">For {{ prop.votes_for|round(1) }}</span>
-                                <span class="game-badge game-badge-bad">Against {{ prop.votes_against|round(1) }}</span>
-                                <span class="game-badge game-badge-warn">Abstain {{ prop.votes_abstain|round(1) }}</span>
+                                <span class="game-badge game-badge-good">For {{ prop.votes_for|int }}</span>
+                                <span class="game-badge game-badge-bad">Against {{ prop.votes_against|int }}</span>
+                                <span class="game-badge game-badge-warn">Abstain {{ prop.votes_abstain|int }}</span>
                                 <span class="game-badge game-badge-subtle">Total {{ total_votes }}</span>
                                 {% if prop.my_vote %}<span class="game-faint" style="align-self: center;">You voted {{ prop.my_vote }}</span>{% endif %}
                             </div>
@@ -232,9 +232,9 @@
                                 <span class="game-badge {{ 'game-badge-good' if prop.status == 'passed' else 'game-badge-bad' }}">{{ prop.status|capitalize }}</span>
                             </div>
                             {% if prop.text %}<p class="assembly-item-text" style="margin-bottom: 6px;">{{ prop.text }}</p>{% endif %}
-                            {% set total_res_votes = ((prop.votes_for or 0) + (prop.votes_against or 0) + (prop.votes_abstain or 0))|round(1) %}
+                            {% set total_res_votes = ((prop.votes_for or 0) + (prop.votes_against or 0) + (prop.votes_abstain or 0))|int %}
                             <div class="game-spread game-faint" style="font-size: 11.5px; margin-bottom: 4px;">
-                                <span>For {{ prop.votes_for|round(1) }} &middot; Against {{ prop.votes_against|round(1) }} &middot; Abstain {{ prop.votes_abstain|round(1) }}</span>
+                                <span>For {{ prop.votes_for|int }} &middot; Against {{ prop.votes_against|int }} &middot; Abstain {{ prop.votes_abstain|int }}</span>
                                 <span>Total: {{ total_res_votes }}</span>
                             </div>
                             <div style="height: 5px; display: flex; border-radius: 3px; overflow: hidden; background: var(--surfaceTwo, rgba(255,255,255,0.08));">

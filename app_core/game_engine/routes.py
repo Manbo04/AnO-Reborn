@@ -1,6 +1,6 @@
 import logging
 from flask import Blueprint, render_template, request, redirect, session, flash
-from helpers import login_required, empty_state, is_theme_v2_enabled, get_influence
+from helpers import login_required, empty_state, is_theme_v2_enabled
 from database import get_request_cursor
 from psycopg2.extras import RealDictCursor
 from app_core.coalitions.repositories import _coalition_id_for_user
@@ -88,9 +88,9 @@ def assembly():
         # Fetch open proposals
         open_proposals = _safe_fetch("open proposals", '''
             SELECT ap.*,
-                   COALESCE(SUM(CASE WHEN av.vote = 'for' THEN av.weight ELSE 0 END), 0) as votes_for,
-                   COALESCE(SUM(CASE WHEN av.vote = 'against' THEN av.weight ELSE 0 END), 0) as votes_against,
-                   COALESCE(SUM(CASE WHEN av.vote = 'abstain' THEN av.weight ELSE 0 END), 0) as votes_abstain,
+                   COALESCE(SUM(CASE WHEN av.vote = 'for' THEN 1 ELSE 0 END), 0) as votes_for,
+                   COALESCE(SUM(CASE WHEN av.vote = 'against' THEN 1 ELSE 0 END), 0) as votes_against,
+                   COALESCE(SUM(CASE WHEN av.vote = 'abstain' THEN 1 ELSE 0 END), 0) as votes_abstain,
                    (SELECT vote FROM assembly_votes WHERE proposal_id = ap.id AND voter_id = %s LIMIT 1) as my_vote,
                    pu.username as proposer_name, tu.username as target_name
             FROM assembly_proposals ap
@@ -105,9 +105,9 @@ def assembly():
         # Fetch closed proposals
         closed_proposals = _safe_fetch("closed proposals", '''
             SELECT ap.*,
-                   COALESCE(SUM(CASE WHEN av.vote = 'for' THEN av.weight ELSE 0 END), 0) as votes_for,
-                   COALESCE(SUM(CASE WHEN av.vote = 'against' THEN av.weight ELSE 0 END), 0) as votes_against,
-                   COALESCE(SUM(CASE WHEN av.vote = 'abstain' THEN av.weight ELSE 0 END), 0) as votes_abstain,
+                   COALESCE(SUM(CASE WHEN av.vote = 'for' THEN 1 ELSE 0 END), 0) as votes_for,
+                   COALESCE(SUM(CASE WHEN av.vote = 'against' THEN 1 ELSE 0 END), 0) as votes_against,
+                   COALESCE(SUM(CASE WHEN av.vote = 'abstain' THEN 1 ELSE 0 END), 0) as votes_abstain,
                    tu.username as target_name
             FROM assembly_proposals ap
             LEFT JOIN assembly_votes av ON ap.id = av.proposal_id
@@ -205,7 +205,6 @@ def assembly_propose():
 @bp.route("/assembly/vote/<int:proposal_id>", methods=["POST"])
 @login_required
 def assembly_vote(proposal_id):
-    import math
     user_id = session.get("user_id")
     vote = request.form.get("vote")
 
@@ -226,9 +225,9 @@ def assembly_vote(proposal_id):
             flash("You cannot vote on proposals directly targeting your nation.", "danger")
             return redirect("/assembly")
 
-        # Calculate vote weight using computed influence (users.influence does not exist)
-        influence = get_influence(user_id, db=db) or 0
-        weight = max(1.0, math.sqrt(influence))
+        # One nation, one vote. Tallies count voters (not this column), so
+        # every vote carries the same weight regardless of nation size.
+        weight = 1.0
 
         try:
             db.execute('''

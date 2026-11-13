@@ -62,10 +62,15 @@ def build_population_needs(
             per = variables.RATIONS_DISTRIBUTION_PER_BUILDING[b] * eff
             if per > 0:
                 tiers.append(f"{math.ceil(missing / per):,} {b.replace('_', ' ')}")
-        note = (
-            f"each building reaches {ds['efficiency_percent']}% of normal (nation is over comfort size)"
-            if eff < 1 else ""
-        )
+        note = ""
+        if eff < 1:
+            note = (
+                f"each building reaches {ds['efficiency_percent']}% of normal "
+                "because your nation is over its comfort size. Comfort grows "
+                "with cities, land and happiness (not homes), so more people "
+                "means less reach per building. It returns to 100% once your "
+                "population is back under comfort."
+            )
         rows.append(_row(
             "distribution", "People reached by distribution", "people",
             pop, cap, cap >= pop,

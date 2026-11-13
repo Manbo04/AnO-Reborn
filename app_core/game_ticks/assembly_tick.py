@@ -32,8 +32,8 @@ def run_assembly_tick():
                 # Fetch votes for this proposal
                 cur.execute('''
                     SELECT
-                        COALESCE(SUM(CASE WHEN vote = 'for' THEN weight ELSE 0 END), 0) as for_w,
-                        COALESCE(SUM(CASE WHEN vote = 'against' THEN weight ELSE 0 END), 0) as against_w,
+                        COALESCE(SUM(CASE WHEN vote = 'for' THEN 1 ELSE 0 END), 0) as for_w,
+                        COALESCE(SUM(CASE WHEN vote = 'against' THEN 1 ELSE 0 END), 0) as against_w,
                         COUNT(voter_id) as turnout
                     FROM assembly_votes WHERE proposal_id = %s
                 ''', (prop_id,))
