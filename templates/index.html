@@ -31,7 +31,7 @@
 {% if recaptcha_site_key %}<script src="https://www.google.com/recaptcha/api.js" async defer></script>{% endif %}
 <style>
 {% raw %}
-/* Layout: cinematic single-scroll — intro gate, hero reel, pinned story, live globe, warp finale */
+/* Layout: cinematic single-scroll — intro gate, hero reel, pinned story, warp finale */
 :root{
   --bg:#05080d; --ink:#eef3f8; --muted:#8a97a8; --accent:#1e9ac9; --accent2:#5fd4ff; --hot:#ff5a36;
   --line:rgba(255,255,255,.12);
@@ -218,9 +218,6 @@ nav .right{display:flex;align-items:center;gap:10px}
 @keyframes drip{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
 
 /* ---------- TICKER ---------- */
-.ticker{border-block:1px solid var(--line);background:#070c13;overflow:hidden;white-space:nowrap;padding:14px 0;position:relative;z-index:2}
-.ticker .track{display:inline-flex;gap:48px;animation:marq 45s linear infinite;font:600 13px var(--f-display);letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
-.ticker b{color:var(--hot);font-weight:600}.ticker em{color:var(--accent2);font-style:normal}
 @keyframes marq{to{transform:translateX(-50%)}}
 
 /* ---------- PINNED STORY ---------- */
@@ -253,22 +250,14 @@ h2{font-size:clamp(38px,9vw,88px);margin:12px 0 18px}
 .reveal{opacity:0;transform:translateY(40px);transition:opacity .9s,transform .9s cubic-bezier(.2,.8,.2,1)}
 .reveal.in{opacity:1;transform:none}
 
-/* globe */
-.globe-wrap{position:relative;margin-top:36px;border:1px solid var(--line);background:radial-gradient(ellipse at 50% 55%,#0d2238 0%,#05080d 65%);height:min(78vh,720px);min-height:460px;overflow:hidden;touch-action:pan-y}
-#globe{position:absolute;left:0;top:0;width:100%;height:100%;cursor:grab;display:block}
-#globe:active{cursor:grabbing}
-.globe-wrap .stars{position:absolute;inset:0;background-image:radial-gradient(1px 1px at 20% 30%,#fff8,transparent),radial-gradient(1px 1px at 70% 20%,#fff6,transparent),radial-gradient(1px 1px at 40% 80%,#fff5,transparent),radial-gradient(1px 1px at 85% 65%,#fff7,transparent),radial-gradient(1px 1px at 10% 70%,#fff5,transparent),radial-gradient(1px 1px at 55% 45%,#fff4,transparent);pointer-events:none}
-.feed{position:absolute;right:10px;top:10px;width:min(280px,70%);font:500 11px/1.45 var(--f-mono);color:#c9d6e3;pointer-events:none;z-index:2}
-.feed div{background:rgba(5,8,13,.78);border-left:2px solid var(--hot);padding:7px 10px;margin-bottom:6px;animation:feedIn .5s ease;backdrop-filter:blur(4px)}
-.feed div.t{border-color:var(--accent2)}
-.feed div.you{border-color:#ffd166;color:#ffe7a8}
-@keyframes feedIn{from{opacity:0;transform:translateX(20px)}}
-.globe-hint{position:absolute;left:12px;bottom:12px;z-index:2;font:500 10px var(--f-mono);letter-spacing:.14em;color:var(--muted);display:flex;flex-direction:column;gap:8px;pointer-events:none}
-.globe-hint .k{display:flex;gap:16px;flex-wrap:wrap}
-.globe-hint .k span::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
-.k .a::before{background:var(--hot)}.k .t::before{background:var(--accent2)}.k .y::before{background:#ffd166}
-.globe-hint .cta{color:var(--ink);animation:blink 1.6s infinite}
-.globe-load{position:absolute;inset:0;display:grid;place-items:center;font:500 11px var(--f-mono);letter-spacing:.2em;color:var(--muted)}
+.goals{display:grid;grid-template-columns:1fr;gap:1px;margin-top:32px;background:var(--line);border:1px solid var(--line)}
+.goal{background:var(--bg);padding:22px 18px}
+.goal h3{font:600 20px/1.2 var(--f-display);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px}
+.goal p{color:var(--muted);font-size:15px;line-height:1.55;max-width:46ch}
+.alpha{display:flex;flex-direction:column;gap:12px;margin-top:24px;padding:16px 18px;border:1px solid var(--accent);background:rgba(30,154,201,.08)}
+.abadge{align-self:flex-start;font:600 12px var(--f-display);letter-spacing:.18em;text-transform:uppercase;background:var(--accent);color:#04121a;padding:4px 10px}
+.atext{font-size:15px;line-height:1.5;color:var(--ink)}.atext a{color:var(--accent2);text-decoration:underline}
+@media (min-width:760px){.goals{grid-template-columns:repeat(3,1fr)}.goal{padding:28px 24px}.alpha{flex-direction:row;align-items:center}}
 
 .pillars{display:grid;grid-template-columns:1fr 1fr;gap:1px;margin-top:36px;background:var(--line);border:1px solid var(--line)}
 .pillar{background:var(--bg);padding:28px 18px}
@@ -303,9 +292,7 @@ footer{padding:28px 16px calc(28px + env(safe-area-inset-bottom,0px));border-top
   .rail div i{width:3px;height:44px}
   .rail div i b{transform-origin:top}
   section.block{padding-block:140px;padding-inline:36px}
-  .pillars{grid-template-columns:repeat(4,1fr)}
 }
-@media (max-width:1099px){.globe-wrap{height:min(620px,80vh);min-height:520px}#globe{top:92px;height:calc(100% - 92px - 52px)}.feed{left:10px;right:10px;width:auto}.feed div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
 @media (max-width:759px){.hud .coord{display:none}.op{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dots{gap:6px}.dots button{width:16px}.eyebrow{letter-spacing:.18em;font-size:10px}.sub{font-size:15px}.ctas .btn{padding:14px 22px;font-size:14px}.scroll-cue{display:none}.hero-foot{grid-template-columns:1fr auto}.op{font-size:9px;letter-spacing:.12em}}
 /* custom ring cursor removed (2026-11-13): use the normal system cursor */
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
@@ -368,7 +355,7 @@ footer .flinks{display:flex;gap:16px;flex-wrap:wrap}footer a{color:var(--muted);
 
 <nav id="nav">
   <a class="brand" href="/"><img src="{{ url_for('static', filename='landing/img/logo.png') }}?v=20261105" alt="Affairs and Order"><span>AFFAIRS &amp; ORDER</span></a>
-  <div class="links"><a href="#story">The Game</a><a href="#world">Live World</a><a href="/signup">Enlist</a><a href="https://discord.gg/SEae3Ua" target="_blank" rel="noopener noreferrer">Discord</a></div>
+  <div class="links"><a href="#story">The Game</a><a href="#goals">Goals</a><a href="/signup">Enlist</a><a href="https://discord.gg/SEae3Ua" target="_blank" rel="noopener noreferrer">Discord</a></div>
   <div class="right">
     <button id="snd" type="button" aria-pressed="false" aria-label="Toggle sound"><i></i><i></i><i></i><i></i><b>SOUND</b></button>
     <button class="loginbtn" type="button" data-login>Log in</button>
@@ -392,20 +379,20 @@ footer .flinks{display:flex;gap:16px;flex-wrap:wrap}footer a{color:var(--muted);
   <div class="sweep"></div>
   <div class="scan"></div>
     <div class="hud"><i></i><i></i><i></i><i></i>
-    <div class="rec">LIVE · WORLD FEED</div>
+    <div class="rec">EARLY ALPHA</div>
     <div class="coord" id="coord">LAT 54.6872 N<br>LON 25.2797 E</div>
   </div>
   <div class="hero-inner">
   <div class="hero-copy" id="heroCopy">
-    <div class="eyebrow">Massively Multiplayer Nation Simulator</div>
+    <div class="eyebrow">Nation simulator · early alpha</div>
     <h1 class="title display">
       <span class="line"><span class="glow">Build a Nation.</span></span>
       <span class="line"><span class="stroke">Rule the World.</span></span>
     </h1>
-    <p class="sub">Grow provinces, run an economy, forge coalitions and go to war against real players in a persistent world that never stops ticking.</p>
+    <p class="sub">A deep multiplayer simulation of how nations work: population, economy, diplomacy and war, played by real people on an hourly tick.</p>
     <div class="ctas">
       <a class="btn primary mag" href="/signup">Play Free ▸</a>
-      <a class="btn ghost mag" href="#world">Enter the War Room</a>
+      <a class="btn ghost mag" href="#goals">Our goals</a>
     </div>
     <div class="returning">Already have a nation? <button type="button" data-login>Log in and resume command ▸</button></div>
   </div>
@@ -417,7 +404,6 @@ footer .flinks{display:flex;gap:16px;flex-wrap:wrap}footer a{color:var(--muted);
   </div>
 </header>
 
-<div class="ticker"><div class="track" id="ticker"></div></div>
 
 <section id="story">
   <div class="pin">
@@ -451,27 +437,20 @@ footer .flinks{display:flex;gap:16px;flex-wrap:wrap}footer a{color:var(--muted);
   </div>
 </section>
 
-<section class="block" id="world">
+<section class="block" id="goals">
   <div class="reveal">
-    <div class="kicker">War Room · Live</div>
-    <h2 class="display">The world<br>never sleeps.</h2>
-    <p class="lead">While you're offline, wars rage, markets swing and coalitions shift. Spin the globe. Tap anywhere to order a strike.</p>
+    <div class="kicker">Why we are building this</div>
+    <h2 class="display">A nation simulator<br>you can learn from.</h2>
+    <p class="lead">Affairs &amp; Order is a game first, and we want it to be a serious simulation too: one where you can see why an economy grows, a population shrinks or an alliance breaks.</p>
   </div>
-  <div class="globe-wrap reveal">
-    <div class="stars"></div>
-    <div class="globe-load" id="globeLoad">ESTABLISHING SATELLITE LINK…</div>
-    <canvas id="globe"></canvas>
-    <div class="feed" id="feed"></div>
-    <div class="globe-hint">
-      <div class="cta">▸ DRAG TO ROTATE · TAP TO STRIKE</div>
-      <div class="k"><span class="a">OFFENSIVES</span><span class="t">TRADE</span><span class="y">YOUR ORDERS</span></div>
-    </div>
+  <div class="goals reveal">
+    <div class="goal"><h3>Systems that depend on each other</h3><p>Population, production, trade, treaties and war all feed into one another on an hourly tick, so every decision has consequences you can trace.</p></div>
+    <div class="goal"><h3>Useful in the classroom</h3><p>We are aiming for a simulation that economics, politics and international relations courses can use alongside a game anyone can enjoy.</p></div>
+    <div class="goal"><h3>Real players, not scripts</h3><p>Markets, coalitions and wars are driven by people, and balance changes go to a community vote.</p></div>
   </div>
-  <div class="pillars reveal">
-    <div class="pillar"><div class="big display" data-count="24">0<small>/7</small></div><div class="lbl">Persistent world</div></div>
-    <div class="pillar"><div class="big display" data-count="60">0<small>min</small></div><div class="lbl">Per economy tick</div></div>
-    <div class="pillar"><div class="big display" data-count="100">0<small>%</small></div><div class="lbl">Free to play</div></div>
-    <div class="pillar"><div class="big display" data-count="0">0<small>installs</small></div><div class="lbl">Browser &amp; mobile</div></div>
+  <div class="alpha reveal">
+    <div class="abadge">Early alpha</div>
+    <div class="atext"><strong>Playable today, still being built.</strong> Expect rough edges and changing numbers. Found a bug or have an idea? Tell us on <a href="https://discord.gg/SEae3Ua" target="_blank" rel="noopener noreferrer">Discord</a>.</div>
   </div>
 </section>
 
@@ -491,8 +470,6 @@ footer .flinks{display:flex;gap:16px;flex-wrap:wrap}footer a{color:var(--muted);
 
 {% include 'partials/cookie_consent.html' %}
 <script>window.ANO_ASSETS={{ url_for('static', filename='landing/')|tojson }};</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <script>
 {% raw %}const ASSET=window.ANO_ASSETS;
 document.body.classList.add('locked');
@@ -587,7 +564,7 @@ function go(i,first){
 let mx=0,my=0,px=innerWidth/2,py=innerHeight/2,cx=px,cy=py;
 addEventListener('pointermove',e=>{px=e.clientX;py=e.clientY;mx=px/innerWidth-.5;my=py/innerHeight-.5;
   $('#coord').innerHTML=`LAT ${(54.6872+my*3).toFixed(4)} N<br>LON ${(25.2797+mx*5).toFixed(4)} E`},{passive:true});
-$$('a,button,#globe').forEach(el=>{el.addEventListener('pointerenter',()=>{$('#cursor').classList.add('hot');blip()});el.addEventListener('pointerleave',()=>$('#cursor').classList.remove('hot'))});
+$$('a,button').forEach(el=>{el.addEventListener('pointerenter',()=>{$('#cursor').classList.add('hot');blip()});el.addEventListener('pointerleave',()=>$('#cursor').classList.remove('hot'))});
 $$('.mag').forEach(b=>{b.addEventListener('pointermove',e=>{const r=b.getBoundingClientRect();b.style.transform=`translate(${(e.clientX-r.left-r.width/2)*.25}px,${(e.clientY-r.top-r.height/2)*.35}px)`});b.addEventListener('pointerleave',()=>b.style.transform='')});
 const heroEl=$('#hero');let heroVisible=true;
 new IntersectionObserver(([e])=>heroVisible=e.isIntersecting).observe(heroEl);
@@ -615,9 +592,6 @@ for(let i=0;i<N;i++)parts.push(spawn(true));
     g.fillStyle=p.hot?`rgba(255,${130+(p.d*40%60|0)},60,${p.a})`:`rgba(150,215,255,${p.a*.6})`;g.fill()}}
   }requestAnimationFrame(fl)})();
 
-/* ---------- ticker ---------- */
-const news=["<b>⚔ WAR</b> Northreach declares war on Ostmark","<em>▲ MARKET</em> Steel up 14% on wartime demand","<b>☢ STRIKE</b> Missile intercepted by Iron Dome over Valoria","<em>✦ TREATY</em> Meridia and Cascadia sign non-aggression pact","<b>⚔ WAR</b> Naval blockade breaks after 6 hours","<em>▲ MARKET</em> Rations shortage hits the south","<em>✦ COALITION</em> New alliance founded: Iron Pact"];
-$('#ticker').innerHTML=[...news,...news].map(n=>`<span>${n}</span>`).join('<span>·</span>');
 
 /* ---------- pinned story ---------- */
 const story=$('#story'),chaps=$$('.chap'),railItems=$$('#rail div');let chapOn=-1;
@@ -638,91 +612,6 @@ $$('.reveal').forEach(el=>io.observe(el));
 function count(el){const to=+el.dataset.count,sm=el.querySelector('small').outerHTML,t0=performance.now(),from=to===0?99:0;(function s(t){const k=Math.min((t-t0)/1500,1),e=1-Math.pow(1-k,3),v=Math.round(from+(to-from)*e);el.innerHTML=v+sm;if(k<1)requestAnimationFrame(s)})(t0)}
 addEventListener('scroll',()=>$('#nav').classList.toggle('solid',scrollY>40),{passive:true});
 
-/* ---------- 3D globe ---------- */
-const NATIONS=[["Northreach",60,-100],["Cascadia",45,-122],["Ostmark",50,15],["Valoria",44,4],["Meridia",-15,-55],["Solvara",25,45],["Kestrel",35,105],["Drakonia",58,60],["Iron Pact",-25,135],["Novaya",62,35],["Zarvia",5,20],["Helmgard",37,-95],["Tasmar",-34,20],["Oriel",36,139]];
-let globeReady=false,globeVisible=false;
-function initGlobe(){
-  if(!window.THREE||!window.topojson){$('#globeLoad').textContent='SATELLITE LINK OFFLINE';return}
-  const canvas=$('#globe'),wrap=canvas.parentElement;
-  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});renderer.setPixelRatio(DPR);
-  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(42,1,.1,100);camera.position.set(0,0,3.3);
-  const world=new THREE.Group();scene.add(world);world.rotation.x=.35;
-  function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;const t=Math.tan(21*Math.PI/180);camera.position.z=Math.max(3.2,1.32/(t*Math.min(w/h,1)));camera.updateProjectionMatrix()}
-  resize();addEventListener('resize',resize);
-  const R=1,ll=(lat,lon,r=R)=>{const phi=(90-lat)*Math.PI/180,th=(lon+180)*Math.PI/180;return new THREE.Vector3(-r*Math.sin(phi)*Math.cos(th),r*Math.cos(phi),r*Math.sin(phi)*Math.sin(th))};
-  world.add(new THREE.Mesh(new THREE.SphereGeometry(R*.995,64,64),new THREE.MeshBasicMaterial({color:0x061424})));
-  // atmosphere
-  const atm=new THREE.ShaderMaterial({side:THREE.BackSide,blending:THREE.AdditiveBlending,transparent:true,
-    vertexShader:'varying vec3 n;void main(){n=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-    fragmentShader:'varying vec3 n;void main(){float i=pow(.72-dot(n,vec3(0,0,1.)),3.);gl_FragColor=vec4(.25,.75,1.,1.)*i;}'});
-  scene.add(new THREE.Mesh(new THREE.SphereGeometry(R*1.18,64,64),atm));
-  // inner rim
-  const rim=new THREE.ShaderMaterial({transparent:true,blending:THREE.AdditiveBlending,
-    vertexShader:'varying vec3 n;void main(){n=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-    fragmentShader:'varying vec3 n;void main(){float i=pow(1.-abs(dot(n,vec3(0,0,1.))),2.5);gl_FragColor=vec4(.3,.8,1.,i*.55);}'});
-  world.add(new THREE.Mesh(new THREE.SphereGeometry(R*1.002,64,64),rim));
-  // glow sprite texture
-  const gc=document.createElement('canvas');gc.width=gc.height=64;const gx=gc.getContext('2d'),grd=gx.createRadialGradient(32,32,0,32,32,32);grd.addColorStop(0,'rgba(255,255,255,1)');grd.addColorStop(.25,'rgba(255,255,255,.6)');grd.addColorStop(1,'rgba(255,255,255,0)');gx.fillStyle=grd;gx.fillRect(0,0,64,64);
-  const glowTex=new THREE.CanvasTexture(gc);
-  // land dots from topojson
-  fetch(ASSET+'land.json').then(r=>r.json()).then(topo=>{
-    const W=720,H=360,mc=document.createElement('canvas');mc.width=W;mc.height=H;const m=mc.getContext('2d');m.fillStyle='#fff';
-    const land=topojson.feature(topo,topo.objects.land);
-    const polys=land.features.flatMap(f=>f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates);
-    for(const poly of polys){for(const off of[-W,0,W]){m.beginPath();for(const ring of poly){let prev=null,shift=0;ring.forEach(([lon,lat],k)=>{let x=(lon+180)/360*W;if(prev!==null){const dx=x+shift-prev;if(dx>W/2)shift-=W;else if(dx<-W/2)shift+=W}x+=shift;prev=x;const y=(90-lat)/180*H;k?m.lineTo(x+off,y):m.moveTo(x+off,y)});m.closePath()}m.fill('evenodd')}}
-    const px=m.getImageData(0,0,W,H).data,pts=[],cols=[],n=innerWidth<760?14000:26000,ga=Math.PI*(3-Math.sqrt(5));
-    for(let i=0;i<n;i++){const y=1-(i/(n-1))*2,rr=Math.sqrt(1-y*y),th=ga*i,lat=Math.asin(y)*180/Math.PI,lon=((th*180/Math.PI)%360)-180;
-      if(lat<-60)continue;const ix=Math.floor((lon+180)/360*W),iy=Math.floor((90-lat)/180*H);if(px[(iy*W+ix)*4+3]>128){const v=ll(lat,lon,R*1.003);pts.push(v.x,v.y,v.z);const b=.55+Math.random()*.45;cols.push(.35*b,.8*b,1*b)}}
-    const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));
-    world.add(new THREE.Points(geo,new THREE.PointsMaterial({size:innerWidth<760?.014:.011,vertexColors:true,transparent:true,opacity:.95})));
-    $('#globeLoad').remove();globeReady=true;
-  }).catch(()=>{$('#globeLoad').textContent='SATELLITE LINK OFFLINE'});
-  // nation markers
-  const markers=NATIONS.map(([name,lat,lon])=>{const p=ll(lat,lon,R*1.005);
-    const dot=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:0xffffff,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));dot.scale.set(.06,.06,1);dot.position.copy(p);world.add(dot);
-    const ring=new THREE.Mesh(new THREE.RingGeometry(.02,.026,40),new THREE.MeshBasicMaterial({color:0x5fd4ff,transparent:true,side:THREE.DoubleSide,depthWrite:false}));ring.position.copy(p);ring.lookAt(p.clone().multiplyScalar(2));world.add(ring);
-    return{name,lat,lon,p,ring,ph:Math.random()}});
-  // arcs
-  const arcs=[],impacts=[];
-  function launch(from,toVec,kind){
-    const a=from.p.clone(),b=toVec.clone().normalize().multiplyScalar(R*1.005),d=a.distanceTo(b),h=R+d*.45;
-    const c1=a.clone().lerp(b,.25).normalize().multiplyScalar(h),c2=a.clone().lerp(b,.75).normalize().multiplyScalar(h);
-    const curve=new THREE.CubicBezierCurve3(a,c1,c2,b),P=curve.getPoints(90);
-    const col=kind==='a'?0xff5a36:kind==='y'?0xffd166:0x5fd4ff;
-    const geo=new THREE.BufferGeometry().setFromPoints(P),line=new THREE.Line(geo,new THREE.LineBasicMaterial({color:col,transparent:true,opacity:.95,blending:THREE.AdditiveBlending}));geo.setDrawRange(0,0);world.add(line);
-    const head=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:col,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));head.scale.set(.09,.09,1);world.add(head);
-    arcs.push({line,geo,head,P,t:0,kind,b,col,speed:kind==='y'?.012:.007+Math.random()*.004});
-  }
-  function impact(pos,col){const m=new THREE.Mesh(new THREE.RingGeometry(.01,.018,48),new THREE.MeshBasicMaterial({color:col,transparent:true,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,depthWrite:false}));m.position.copy(pos);m.lookAt(pos.clone().multiplyScalar(2));world.add(m);
-    const f=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:col,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));f.position.copy(pos);world.add(f);impacts.push({m,f,t:0})}
-  function feed(txt,cls){const f=$('#feed'),d=document.createElement('div');if(cls)d.className=cls;f.prepend(d);scramble(d,txt,500);while(f.children.length>(innerWidth<1100?2:4))f.lastChild.remove()}
-  function randomEvent(){if(!globeVisible)return;const a=markers[Math.random()*markers.length|0];let b;do b=markers[Math.random()*markers.length|0];while(b===a);const atk=Math.random()<.6;
-    launch(a,b.p,atk?'a':'t');feed(atk?`⚔ ${a.name} launched an offensive on ${b.name}`:`⇄ ${a.name} shipped resources to ${b.name}`,atk?'':'t')}
-  setInterval(randomEvent,1400);
-  // interaction
-  let drag=false,moved=0,lx=0,ly=0,vy=.0018,vx=0,auto=.0018;
-  canvas.addEventListener('pointerdown',e=>{drag=true;moved=0;lx=e.clientX;ly=e.clientY;canvas.setPointerCapture(e.pointerId)});
-  canvas.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-lx,dy=e.clientY-ly;moved+=Math.abs(dx)+Math.abs(dy);lx=e.clientX;ly=e.clientY;vy=dx*.005;vx=dy*.004;world.rotation.y+=vy;world.rotation.x=Math.max(-1,Math.min(1,world.rotation.x+vx))});
-  const ray=new THREE.Raycaster(),hitSphere=new THREE.Mesh(new THREE.SphereGeometry(R,32,32),new THREE.MeshBasicMaterial({visible:false}));world.add(hitSphere);
-  canvas.addEventListener('pointerup',e=>{drag=false;if(moved>8)return;const r=canvas.getBoundingClientRect();
-    ray.setFromCamera({x:(e.clientX-r.left)/r.width*2-1,y:-(e.clientY-r.top)/r.height*2+1},camera);const hit=ray.intersectObject(hitSphere)[0];if(!hit)return;
-    const local=world.worldToLocal(hit.point.clone());const lat=Math.asin(local.y/local.length())*180/Math.PI;
-    const from=markers.reduce((best,m)=>{const d=m.p.distanceTo(local);return d>.5&&(!best||d<best.d)?{m,d}:best},null)?.m||markers[0];
-    launch(from,local,'y');feed(`★ STRIKE ORDERED from ${from.name} → ${Math.abs(lat).toFixed(1)}°${lat>=0?'N':'S'}`,'you');blip(900);vy=0});
-  new IntersectionObserver(([e])=>globeVisible=e.isIntersecting).observe(wrap);
-  const clock=new THREE.Clock();
-  (function render(){requestAnimationFrame(render);if(!globeVisible)return;const t=clock.getElapsedTime();
-    if(!drag){vy+=(auto-vy)*.02;world.rotation.y+=vy;vx*=.9}
-    markers.forEach(m=>{const k=(t*.6+m.ph)%1;m.ring.scale.setScalar(1+k*3);m.ring.material.opacity=1-k});
-    for(let i=arcs.length-1;i>=0;i--){const a=arcs[i];a.t+=a.speed;const n=a.P.length,head=Math.min(a.t,1),tail=Math.max(0,a.t-.55);
-      const hi=Math.floor(head*(n-1)),ti=Math.floor(Math.min(tail,1)*(n-1));a.geo.setDrawRange(ti,Math.max(0,hi-ti+1));a.head.position.copy(a.P[hi]);a.head.visible=a.t<1;
-      if(a.t>=1&&!a.hit){a.hit=true;impact(a.b,a.col);if(a.kind!=='t')boom(a.kind==='y'?.8:.25)}
-      if(tail>=1){world.remove(a.line,a.head);a.geo.dispose();arcs.splice(i,1)}}
-    for(let i=impacts.length-1;i>=0;i--){const p=impacts[i];p.t+=.015;p.m.scale.setScalar(1+p.t*9);p.m.material.opacity=1-p.t;p.f.scale.setScalar(.25*(1-p.t)+.01);p.f.material.opacity=1-p.t;if(p.t>=1){world.remove(p.m,p.f);impacts.splice(i,1)}}
-    renderer.render(scene,camera)})();
-  globeVisible=true;randomEvent();randomEvent();
-}
-initGlobe();
 
 /* ---------- warp finale ---------- */
 const warp=$('#warp'),wg=warp.getContext('2d');let warpOn=false,speed=2,target=2;
