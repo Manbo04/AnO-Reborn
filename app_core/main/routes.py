@@ -161,6 +161,15 @@ def _build_hub_global_stats():
     )
 
 
+@bp.route("/favicon.ico")
+@bp.route("/apple-touch-icon.png")
+def favicon_root():
+    """Google and browsers probe these root paths regardless of <link> tags."""
+    if request.path.startswith("/apple"):
+        return send_from_directory("static/images", "apple-touch-icon.png")
+    return send_from_directory("static", "favicon.ico")
+
+
 @bp.route("/robots.txt")
 def robots():
     return send_from_directory("static", "robots.txt")

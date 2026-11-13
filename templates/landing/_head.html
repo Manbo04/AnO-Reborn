@@ -22,8 +22,10 @@
 <meta name="twitter:image" content="{{ url_for('static', filename='images/titleimage.png', _external=True) }}?v=4">
 <meta name="theme-color" content="#05080d">
 <meta name="color-scheme" content="dark">
-<link rel="icon" href="{{ url_for('static', filename='images/titleimage.png') }}?v=4" type="image/png">
-<link rel="apple-touch-icon" href="{{ url_for('static', filename='images/titleimage.png') }}?v=4">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="48x48" href="{{ url_for('static', filename='images/icon-48.png') }}?v=5">
+<link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='images/icon-192.png') }}?v=5">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}?v=5">
 {# Self-hosted fonts: same privacy rule as layout.html — no Google Fonts CDN before consent. #}
 <link rel="preload" href="{{ url_for('static', filename='landing/fonts/Oswald-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{{ url_for('static', filename='landing/fonts.css') }}?v=1">
