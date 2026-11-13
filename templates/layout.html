@@ -621,6 +621,7 @@
         {% endif %}
         {% if not session.get('tour_active') %}{% include 'partials/onboarding_checklist.html' %}{% endif %}
         {% include 'partials/onboarding_tutorial_popup.html' %}
+        {% if session.get('user_id') %}{% include 'partials/discord_invite_popup.html' %}{% endif %}
         {% if session.get('user_id') %}{% include 'partials/section_tabs.html' %}{% endif %}
         {% block body %} {% endblock %}
 

@@ -1,0 +1,37 @@
+{# One-time Discord invite popup. Shown once per browser (localStorage), never over the tutorial popup. #}
+<div id="ano-discord-popup" role="dialog" aria-modal="true" aria-labelledby="ano-discord-title" hidden>
+  <div class="adp-backdrop" data-adp-close></div>
+  <div class="adp-panel">
+    <button type="button" class="adp-x" aria-label="Close" data-adp-close>&times;</button>
+    <h2 id="ano-discord-title">Join the community on Discord</h2>
+    <p>Ask questions, report bugs, find a coalition and get help from players and staff.</p>
+    <a class="adp-join" href="https://discord.gg/SEae3Ua" target="_blank" rel="noopener noreferrer" data-adp-close>Join our Discord</a>
+    <button type="button" class="adp-later" data-adp-close>Maybe later</button>
+  </div>
+</div>
+<style>
+#ano-discord-popup[hidden]{display:none}
+#ano-discord-popup{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px}
+#ano-discord-popup .adp-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+#ano-discord-popup .adp-panel{position:relative;width:100%;max-width:360px;box-sizing:border-box;padding:22px 20px 16px;border-radius:14px;text-align:center;background:var(--game-surface-2,#1a2035);color:var(--game-text-primary,#fff);border:1px solid var(--game-border,#2a3150);box-shadow:0 12px 40px rgba(0,0,0,.5)}
+#ano-discord-popup h2{margin:0 0 8px;font-size:1.15rem;line-height:1.25}
+#ano-discord-popup p{margin:0 0 16px;font-size:.92rem;line-height:1.4;color:var(--game-text-secondary,#a0a8c0)}
+#ano-discord-popup .adp-join{display:block;padding:12px;border-radius:10px;background:#5865f2;color:#fff;font-weight:600;text-decoration:none}
+#ano-discord-popup .adp-later{margin-top:8px;padding:8px;background:none;border:0;color:var(--game-text-secondary,#a0a8c0);font-size:.85rem;cursor:pointer}
+#ano-discord-popup .adp-x{position:absolute;top:6px;right:10px;background:none;border:0;color:inherit;font-size:1.6rem;line-height:1;cursor:pointer;opacity:.7}
+</style>
+<script>
+(function(){
+  var K='ano_discord_popup_v1',el=document.getElementById('ano-discord-popup');
+  if(!el)return;
+  try{if(localStorage.getItem(K))return;}catch(e){}
+  function close(){el.hidden=true;try{localStorage.setItem(K,'1');}catch(e){}}
+  el.addEventListener('click',function(e){if(e.target.closest('[data-adp-close]'))close();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!el.hidden)close();});
+  setTimeout(function(){
+    var tut=document.getElementById('onboarding-tutorial-popup');
+    if(tut&&!tut.hidden)return;
+    el.hidden=false;
+  },6000);
+})();
+</script>
