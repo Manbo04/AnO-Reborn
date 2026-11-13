@@ -346,20 +346,32 @@ def generate_province_revenue():  # Runs each hour
             try:
                 from app_core.economy import wearout
 
+                dbdict.execute("SAVEPOINT ledger_wearout_sp")
                 wear_factor = wearout.apply(dbdict, all_user_ids, resources_map, resource_deltas)
+                dbdict.execute("RELEASE SAVEPOINT ledger_wearout_sp")
             except Exception:
                 logging.exception("wearout failed; running without wear this tick")
                 wear_factor = {}
+                try:
+                    dbdict.execute("ROLLBACK TO SAVEPOINT ledger_wearout_sp")
+                except Exception:
+                    pass
 
             # Goods use (flag ledger_goods_use): clothing/medicine/fertilizer/prosperity needs.
             goods_eff = {"farm": {}, "happy": {}}
             try:
                 from app_core.economy import goods_use
 
+                dbdict.execute("SAVEPOINT ledger_goods_sp")
                 goods_eff = goods_use.apply(dbdict, all_user_ids, resources_map, resource_deltas)
+                dbdict.execute("RELEASE SAVEPOINT ledger_goods_sp")
             except Exception:
                 logging.exception("goods_use failed; running without it this tick")
                 goods_eff = {"farm": {}, "happy": {}}
+                try:
+                    dbdict.execute("ROLLBACK TO SAVEPOINT ledger_goods_sp")
+                except Exception:
+                    pass
 
             # No blanket user_economy prefill here.
             # Resource writes below already use UPSERT and create missing rows lazily,
