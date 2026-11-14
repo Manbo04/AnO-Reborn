@@ -681,6 +681,11 @@ def province(pId):
             query_cache.set(
                 "building_dictionary_active_v2", normalized_buildings, ttl_seconds=600
             )
+        from app_core.economy.ledger_goods import is_hidden as _ledger_hidden
+
+        normalized_buildings = [
+            b for b in normalized_buildings if not _ledger_hidden(b["name"])
+        ]
 
         infra = variables.INFRA
         prices = variables.PROVINCE_UNIT_PRICES
