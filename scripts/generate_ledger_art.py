@@ -267,10 +267,9 @@ def building_svg(name, good, kind):
 <g transform="translate(40 0)">{_plant(kind, accent)}</g>
 <rect y="620" width="1500" height="380" fill="url(#ground)"/>
 <path d="M0 700h1500M0 800h1500M0 900h1500" stroke="#ffffff" stroke-opacity=".04" stroke-width="3"/>
-<path d="M560 1000L700 620h100l140 380z" fill="#1a2027"/><path d="M750 650v60M750 760v70M750 880v90" stroke="#d9c27a" stroke-opacity=".5" stroke-width="8"/>
-<circle cx="1290" cy="800" r="240" fill="url(#glow)"/>
-<circle cx="1290" cy="800" r="132" fill="#161c23" stroke="{accent}" stroke-width="8"/>
-<g transform="translate(1190 700) scale(4)">{draw()}</g>
+<circle cx="750" cy="805" r="230" fill="url(#glow)"/>
+<circle cx="750" cy="805" r="132" fill="#161c23" stroke="{accent}" stroke-width="8"/>
+<g transform="translate(650 705) scale(4)">{draw()}</g>
 </svg>
 '''
 
