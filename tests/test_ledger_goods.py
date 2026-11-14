@@ -324,16 +324,10 @@ def test_ledger_migrations_exist_and_only_add():
 def test_ledger_migrations_are_idempotent_and_leave_flags_off():
     from database import get_db_connection
 
-    try:
-        ctx = get_db_connection()
-        conn = ctx.__enter__()
-    except Exception:
-        pytest.skip("no database")
+    ctx = get_db_connection()
+    conn = ctx.__enter__()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT to_regclass('public.feature_flags')")
-        if cur.fetchone()[0] is None:
-            pytest.skip("no feature_flags table")
         cur.execute("SELECT key, enabled FROM feature_flags WHERE key LIKE 'ledger_%%'")
         before = dict(cur.fetchall())
         cur.execute("SELECT COUNT(*) FROM resource_dictionary")
@@ -362,16 +356,10 @@ def test_ledger_migrations_are_idempotent_and_leave_flags_off():
 def test_fresh_schema_ships_every_ledger_flag_off():
     from database import get_db_connection
 
-    try:
-        ctx = get_db_connection()
-        conn = ctx.__enter__()
-    except Exception:
-        pytest.skip("no database")
+    ctx = get_db_connection()
+    conn = ctx.__enter__()
     try:
         cur = conn.cursor()
-        cur.execute("SELECT to_regclass('public.feature_flags')")
-        if cur.fetchone()[0] is None:
-            pytest.skip("no feature_flags table")
         cur.execute("SELECT key FROM feature_flags WHERE key LIKE 'ledger_%%' AND enabled")
         on = [r[0] for r in cur.fetchall()]
         conn.commit()
