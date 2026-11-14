@@ -54,6 +54,17 @@ from typing import Optional  # noqa: E402
 from influence_formula import influence_subquery_sql  # noqa: E402
 
 
+def _ledger_bank_frozen(db, user_id):
+    """Ledger Lite (flag ledger_bank_blockade): a blockaded nation cannot move bank funds."""
+    from app_core.feature_flags import is_on
+
+    if not is_on("ledger_bank_blockade", user_id):
+        return None
+    from wars.action_points import check_user_blockaded_market
+
+    return check_user_blockaded_market(db, user_id)
+
+
 RECENT_LOG_LIMIT = 50
 FULL_LOG_PAGE_SIZE = 100
 CSV_EXPORT_MAX_ROWS = 50_000
@@ -880,7 +891,8 @@ def coalition(coalition_id):
             tax_rate=tax_rate,
             allow_coalition_builds=allow_coalition_builds,
             build_share_qualifying_roles=BUILD_SHARE_QUALIFYING_ROLES,
-            all_resources=["money"] + list(variables.RESOURCES),
+            all_resources=["money"]
+            + __import__("app_core.economy.ledger_goods", fromlist=["x"]).visible(variables.RESOURCES),
         )
 
 
@@ -1679,6 +1691,10 @@ def deposit_into_bank(coalition_id):
         guard = _require_coalition_member(db, cId, coalition_id)
         if guard:
             return guard
+        frozen = _ledger_bank_frozen(db, cId)
+        if frozen:
+            flash("Bank access is frozen while you are blockaded: " + str(frozen), "warning")
+            return redirect(f"/coalition/{coalition_id}#bank")
 
     # Determine deposit destination:
     # "alliance": Deposited directly into coalition bank reserves as donation / payment.
@@ -1936,6 +1952,10 @@ def withdraw_from_bank(coalition_id):
         )
         if guard:
             return guard
+        frozen = _ledger_bank_frozen(db, cId)
+        if frozen:
+            flash("Bank access is frozen while you are blockaded: " + str(frozen), "warning")
+            return redirect(f"/coalition/{coalition_id}#bank")
 
         if get_coalition_settings(db, coalition_id)["bank_require_requests"]:
             flash(
@@ -1989,6 +2009,10 @@ def withdraw_personal_from_bank(coalition_id):
         guard = _require_coalition_member(db, cId, coalition_id)
         if guard:
             return guard
+        frozen = _ledger_bank_frozen(db, cId)
+        if frozen:
+            flash("Bank access is frozen while you are blockaded: " + str(frozen), "warning")
+            return redirect(f"/coalition/{coalition_id}#bank")
 
     resources = ["money"] + variables.RESOURCES
     withdrew_resources = []

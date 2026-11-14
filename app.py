@@ -914,8 +914,8 @@ def create_app():
     def inject_trade_fees():
         """Trade fee percents for market/trade forms (app_core/market/fees.py)."""
         return {
-            "trade_fee_percent": TRADE_FEE_PERCENT,
-            "union_trade_fee_percent": UNION_TRADE_FEE_PERCENT,
+            "trade_fee_percent": __import__("app_core.market.fees", fromlist=["x"]).base_fee_percent(),
+            "union_trade_fee_percent": __import__("app_core.market.fees", fromlist=["x"]).union_fee_percent(),
         }
 
     @app.context_processor
@@ -1373,6 +1373,10 @@ def create_app():
     # --- END RESTORED FILTERS ---
 
     app.jinja_env.globals["game_asset_path"] = game_ui.game_asset_path
+    from app_core.economy import ledger_goods as _ledger_goods
+
+    app.jinja_env.globals["ledger_goods_on"] = _ledger_goods.enabled
+    app.jinja_env.globals["ledger_goods_buildings"] = _ledger_goods.LEDGER_BUILDINGS
 
     from extensions import socketio
     from app_core.chat.routes import register_chat_routes, register_chat_socketio_handlers

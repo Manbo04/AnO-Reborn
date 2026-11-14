@@ -3,6 +3,7 @@ from flask import Blueprint, flash, redirect, render_template, request, session
 from helpers import redirect_back
 
 import variables
+from .fees import base_fee_percent
 from database import get_request_cursor, invalidate_view_cache
 from helpers import error, login_required
 
@@ -67,7 +68,7 @@ def auto_orders():
         market_resources=resources,  # "resources" is taken by layout.html's HUD
         currencies=currencies,
         max_rules=MAX_RULES_PER_NATION,
-        trade_fee_percent=variables.TRADE_FEE_PERCENT,
+        trade_fee_percent=base_fee_percent(),
     )
 
 

@@ -19,7 +19,7 @@ from .repositories import (
     get_market_preferences, upsert_market_preferences, record_market_fill,
     get_last_fill_prices, get_coalition_embargo_block, get_coalition_embargo_partners,
 )
-from .fees import trade_fee, trade_fee_percent, union_partner_ids, max_affordable_amount
+from .fees import trade_fee, trade_fee_percent, union_partner_ids, max_affordable_amount, base_fee_percent, union_fee_percent
 from .services import give_resource, report_trade_error
 from .currency_pricing import (
     parse_currency_choice, currency_balances, get_currency_labels, get_currency_balance,
@@ -63,9 +63,9 @@ def _book_row(row, cId, ctx):
     """One order-book entry as a dict the template can read by name."""
     user_id, offer_type, resource, amount, price, offer_id, username, currency_id = row
     pct = (
-        variables.UNION_TRADE_FEE_PERCENT
+        union_fee_percent()
         if user_id in ctx["union_partners"]
-        else variables.TRADE_FEE_PERCENT
+        else base_fee_percent()
     )
     if offer_type == "sell":
         # The viewer buys from this offer: capped by what they can pay

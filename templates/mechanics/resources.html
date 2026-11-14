@@ -117,6 +117,24 @@
             <tr><td><strong>Consumer Goods (Retail)</strong></td><td>Food Banks: +2 | Distribution Centers: +8 | Gas Stations: +12 | General Stores: +10 | Farmers Markets: +16 | Banks: +20 | Malls: +30 | Industrial Districts: +50 CG (base, per building)</td></tr>
         </table>
 
+        {% if ledger_goods_on() %}
+        <h3 class="templatecontentheader" style="margin-top: 20px;"><span class="material-icons-outlined">precision_manufacturing</span> Industrial Goods (per hour, not biome-gated)</h3>
+        <table class="templatetable">
+            <tr><td><strong>Machinery</strong></td><td>Machinery Works ($14M, upkeep $55,000/h): 30 steel + 12 components &rarr; 24 machinery</td></tr>
+            <tr><td><strong>Cement</strong></td><td>Cement Works ($9M, upkeep $40,000/h): 40 lumber + 60 coal &rarr; 36 cement</td></tr>
+            <tr><td><strong>Textiles</strong></td><td>Textile Mills ($7M, upkeep $35,000/h): 50 lumber + 30 oil &rarr; 40 textiles</td></tr>
+            <tr><td><strong>Clothing</strong></td><td>Clothing Factories ($6M, upkeep $30,000/h): 40 textiles + 4 aluminium &rarr; 30 clothing</td></tr>
+            <tr><td><strong>Chemicals</strong></td><td>Chemical Plants ($13M, upkeep $70,000/h): 80 oil + 40 coal &rarr; 40 chemicals</td></tr>
+            <tr><td><strong>Medicine</strong></td><td>Pharmaceutical Labs ($12M, upkeep $90,000/h): 20 chemicals + 20 rations &rarr; 12 medicine</td></tr>
+            <tr><td><strong>Fertilizer</strong></td><td>Fertilizer Plants ($8M, upkeep $45,000/h): 20 chemicals + 10 coal &rarr; 30 fertilizer</td></tr>
+            <tr><td><strong>Plastics</strong></td><td>Plastics Plants ($11M, upkeep $60,000/h): 30 chemicals + 20 oil &rarr; 30 plastics</td></tr>
+            <tr><td><strong>Electronics</strong></td><td>Electronics Factories ($18M, upkeep $120,000/h): 20 components + 20 aluminium + 10 plastics &rarr; 16 electronics</td></tr>
+            <tr><td><strong>Vehicles</strong></td><td>Vehicle Works ($22M, upkeep $150,000/h): 40 steel + 20 aluminium + 10 electronics &rarr; 8 vehicles</td></tr>
+            <tr><td><strong>Luxury Goods</strong></td><td>Luxury Workshops ($15M, upkeep $100,000/h): 12 silver + 4 diamonds + 10 textiles &rarr; 20 luxury goods</td></tr>
+        </table>
+        <p class="templatecontentpleft" style="margin-top: 8px; font-size: 0.9em; color: var(--text-secondary);">All eleven goods can be traded on the market. Chemicals and plastics are inputs for other factories; textiles feed clothing and luxury goods.</p>
+        {% endif %}
+
         <!-- Resource Tips -->
         <table class="templatetable">
             <tr>

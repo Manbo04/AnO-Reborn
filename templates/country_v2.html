@@ -1147,6 +1147,7 @@
     {{ net_resource_card('aluminium', 'Aluminum', revenue, is_daily=False) }}
     {{ net_resource_card('gasoline', 'Gasoline', revenue, is_daily=False) }}
     {{ net_resource_card('ammunition', 'Ammunition', revenue, is_daily=False) }}
+    {% if ledger_goods_on() %}{% for _lg, _lgn in [('machinery', 'Machinery'), ('cement', 'Cement'), ('textiles', 'Textiles'), ('clothing', 'Clothing'), ('chemicals', 'Chemicals'), ('medicine', 'Medicine'), ('fertilizer', 'Fertilizer'), ('plastics', 'Plastics'), ('electronics', 'Electronics'), ('vehicles', 'Vehicles'), ('luxury_goods', 'Luxury Goods')] %}{{ net_resource_card(_lg, _lgn, revenue, is_daily=False) }}{% endfor %}{% endif %}
 </div>
 
                 </div>
@@ -1334,6 +1335,7 @@
     {{ net_resource_card('aluminium', 'Aluminum', revenue_daily, is_daily=True) }}
     {{ net_resource_card('gasoline', 'Gasoline', revenue_daily, is_daily=True) }}
     {{ net_resource_card('ammunition', 'Ammunition', revenue_daily, is_daily=True) }}
+    {% if ledger_goods_on() %}{% for _lg, _lgn in [('machinery', 'Machinery'), ('cement', 'Cement'), ('textiles', 'Textiles'), ('clothing', 'Clothing'), ('chemicals', 'Chemicals'), ('medicine', 'Medicine'), ('fertilizer', 'Fertilizer'), ('plastics', 'Plastics'), ('electronics', 'Electronics'), ('vehicles', 'Vehicles'), ('luxury_goods', 'Luxury Goods')] %}{{ net_resource_card(_lg, _lgn, revenue_daily, is_daily=True) }}{% endfor %}{% endif %}
 </div>
 
                 </div>
@@ -3291,6 +3293,7 @@
                             <option value="aluminium" class="templateoption ">Aluminium</option>
                             <option value="gasoline" class="templateoption ">Gasoline</option>
                             <option value="ammunition" class="templateoption ">Ammunition</option>
+                            {% if ledger_goods_on() %}{% for _lg, _lgn in [('machinery', 'Machinery'), ('cement', 'Cement'), ('textiles', 'Textiles'), ('clothing', 'Clothing'), ('chemicals', 'Chemicals'), ('medicine', 'Medicine'), ('fertilizer', 'Fertilizer'), ('plastics', 'Plastics'), ('electronics', 'Electronics'), ('vehicles', 'Vehicles'), ('luxury_goods', 'Luxury Goods')] %}<option value="{{ _lg }}" class="templateoption ">{{ _lgn }}</option>{% endfor %}{% endif %}
                         </select>
 
 
@@ -3387,6 +3390,7 @@
                             <option value="aluminium" class="templateoption ">Aluminium</option>
                             <option value="gasoline" class="templateoption ">Gasoline</option>
                             <option value="ammunition" class="templateoption ">Ammunition</option>
+                            {% if ledger_goods_on() %}{% for _lg, _lgn in [('machinery', 'Machinery'), ('cement', 'Cement'), ('textiles', 'Textiles'), ('clothing', 'Clothing'), ('chemicals', 'Chemicals'), ('medicine', 'Medicine'), ('fertilizer', 'Fertilizer'), ('plastics', 'Plastics'), ('electronics', 'Electronics'), ('vehicles', 'Vehicles'), ('luxury_goods', 'Luxury Goods')] %}<option value="{{ _lg }}" class="templateoption ">{{ _lgn }}</option>{% endfor %}{% endif %}
                         </select>
                     </div>
 

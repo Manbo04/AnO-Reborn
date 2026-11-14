@@ -362,6 +362,17 @@ def province(pId):
             "component_factories",
             "steel_mills",
             "ammunition_factories",
+            "machinery_works",
+            "cement_works",
+            "textile_mills",
+            "clothing_factories",
+            "chemical_plants",
+            "pharmaceutical_labs",
+            "fertilizer_plants",
+            "plastics_plants",
+            "electronics_factories",
+            "vehicle_works",
+            "luxury_workshops",
             "aluminium_refineries",
             "oil_refineries",
             "distribution_centers", "food_banks",
@@ -670,6 +681,11 @@ def province(pId):
             query_cache.set(
                 "building_dictionary_active_v2", normalized_buildings, ttl_seconds=600
             )
+        from app_core.economy.ledger_goods import is_hidden as _ledger_hidden
+
+        normalized_buildings = [
+            b for b in normalized_buildings if not _ledger_hidden(b["name"])
+        ]
 
         infra = variables.INFRA
         prices = variables.PROVINCE_UNIT_PRICES
@@ -1076,7 +1092,7 @@ def province_slot_api(pId, slot_id):
             )
 
         rows = _province_units_for_user(db, cId, pId)
-        names = set(slot["buildings"])
+        names = set(__import__("app_core.economy.ledger_goods", fromlist=["x"]).visible(slot["buildings"]))
         buildings = []
         for row in rows:
             if row["name"] not in names:
@@ -1862,6 +1878,17 @@ def province_sell_buy(way, units, province_id):
             "component_factories",
             "steel_mills",
             "ammunition_factories",
+            "machinery_works",
+            "cement_works",
+            "textile_mills",
+            "clothing_factories",
+            "chemical_plants",
+            "pharmaceutical_labs",
+            "fertilizer_plants",
+            "plastics_plants",
+            "electronics_factories",
+            "vehicle_works",
+            "luxury_workshops",
             "aluminium_refineries",
             "oil_refineries",
             "fisheries",

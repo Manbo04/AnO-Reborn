@@ -2,6 +2,10 @@ from database import get_request_cursor, get_db_connection
 from app_core.economy import ledger
 
 def is_active_resource(db, resource):
+    from app_core.economy.ledger_goods import is_hidden
+
+    if is_hidden(resource):
+        return False
     db.execute(
         """
         SELECT 1
@@ -300,7 +304,9 @@ def get_active_resources(db):
     db.execute(
         "SELECT name FROM resource_dictionary WHERE is_active=TRUE ORDER BY resource_id"
     )
-    return [row[0] for row in db.fetchall()]
+    from app_core.economy.ledger_goods import visible
+
+    return visible([row[0] for row in db.fetchall()])
 
 def get_resource_book(db, resource):
     """Every open offer for ``resource`` ('all' = every resource), the

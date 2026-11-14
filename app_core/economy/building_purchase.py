@@ -9,6 +9,7 @@ from app_core.economy.building_costs import (
     CITY_UNITS,
     LAND_UNITS,
     apply_policy_gold_discount,
+    ledger_cement_cost,
     get_slot_type,
 )
 import variables
@@ -97,6 +98,10 @@ def purchase_building(
     prices = variables.PROVINCE_UNIT_PRICES
     if f"{name}_price" not in prices:
         raise BuildingPurchaseError("No such building exists.")
+    from app_core.economy.ledger_goods import is_hidden
+
+    if is_hidden(name):
+        raise BuildingPurchaseError("No such building exists.")
 
     db.execute(
         "SELECT userId FROM provinces WHERE id = %s FOR UPDATE",
@@ -122,6 +127,7 @@ def purchase_building(
     unit_gold = apply_policy_gold_discount(name, prices[f"{name}_price"], policies)
     total_gold = int(unit_gold) * quantity
     resources_data = dict(prices.get(f"{name}_resource") or {})
+    resources_data.update(ledger_cement_cost(name, unit_gold))
 
     db.execute("SELECT gold FROM stats WHERE id=%s", (user_id,))
     gold_row = db.fetchone()

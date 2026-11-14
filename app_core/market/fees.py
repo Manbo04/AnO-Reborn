@@ -7,7 +7,26 @@ the economy (not paid to anyone). Members of the same active currency union
 pay the reduced union rate with each other.
 """
 
+from fractions import Fraction
+
 import variables
+
+
+def base_fee_percent():
+    """Non-union fee percent (int, or an exact string like "0.5" under flag ledger_low_fee)."""
+    from app_core.feature_flags import is_on
+
+    if is_on("ledger_low_fee"):
+        return variables.LEDGER_TRADE_FEE_PERCENT
+    return variables.TRADE_FEE_PERCENT
+
+
+def union_fee_percent():
+    from app_core.feature_flags import is_on
+
+    if is_on("ledger_low_fee"):
+        return variables.LEDGER_UNION_TRADE_FEE_PERCENT
+    return variables.UNION_TRADE_FEE_PERCENT
 
 
 def trade_fee_percent(db, user_a, user_b):
@@ -15,13 +34,13 @@ def trade_fee_percent(db, user_a, user_b):
     from app_core.currency_unions.services import share_active_union
 
     if share_active_union(db, user_a, user_b):
-        return variables.UNION_TRADE_FEE_PERCENT
-    return variables.TRADE_FEE_PERCENT
+        return union_fee_percent()
+    return base_fee_percent()
 
 
 def trade_fee(total_price, percent):
     """Fee on a trade total, rounded down (integer gold)."""
-    return int(total_price) * int(percent) // 100
+    return int(Fraction(int(total_price)) * Fraction(str(percent)) / 100)
 
 
 def union_partner_ids(db, user_id):
@@ -59,7 +78,7 @@ def max_affordable_amount(gold, unit_price, percent):
     unit_price = int(unit_price or 0)
     if unit_price <= 0 or gold <= 0:
         return 0
-    amount = gold * 100 // (unit_price * (100 + int(percent)))
+    amount = int(Fraction(gold * 100) / (unit_price * (100 + Fraction(str(percent)))))
 
     def _cost(n):
         total = n * unit_price

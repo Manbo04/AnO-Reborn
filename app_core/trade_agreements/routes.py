@@ -36,7 +36,7 @@ def trade_agreements():
     return render_template(
         template,
         agreements=agreements,
-        resources=VALID_TRADE_RESOURCES,
+        resources=__import__("app_core.economy.ledger_goods", fromlist=["x"]).visible(VALID_TRADE_RESOURCES),
         resource_labels=TRADE_RESOURCE_LABELS,
         intervals=VALID_INTERVALS,
         user_id=user_id,

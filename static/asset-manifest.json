@@ -178,6 +178,50 @@
       "legacy": "ammunitionfactory.jpg",
       "path": "images/game/buildings/ammunition_factories.png"
     },
+    "cement_works": {
+      "legacy": "steelmill.jpg",
+      "path": "images/game/buildings/cement_works.png"
+    },
+    "textile_mills": {
+      "legacy": "aluminiumrefinery.jpg",
+      "path": "images/game/buildings/textile_mills.png"
+    },
+    "clothing_factories": {
+      "legacy": "componentfactory.jpg",
+      "path": "images/game/buildings/clothing_factories.png"
+    },
+    "chemical_plants": {
+      "legacy": "oilrefinery.jpg",
+      "path": "images/game/buildings/chemical_plants.png"
+    },
+    "pharmaceutical_labs": {
+      "legacy": "componentfactory.jpg",
+      "path": "images/game/buildings/pharmaceutical_labs.png"
+    },
+    "fertilizer_plants": {
+      "legacy": "aluminiumrefinery.jpg",
+      "path": "images/game/buildings/fertilizer_plants.png"
+    },
+    "plastics_plants": {
+      "legacy": "oilrefinery.jpg",
+      "path": "images/game/buildings/plastics_plants.png"
+    },
+    "electronics_factories": {
+      "legacy": "componentfactory.jpg",
+      "path": "images/game/buildings/electronics_factories.png"
+    },
+    "vehicle_works": {
+      "legacy": "steelmill.jpg",
+      "path": "images/game/buildings/vehicle_works.png"
+    },
+    "luxury_workshops": {
+      "legacy": "componentfactory.jpg",
+      "path": "images/game/buildings/luxury_workshops.png"
+    },
+    "machinery_works": {
+      "legacy": "componentfactory.jpg",
+      "path": "images/game/buildings/machinery_works.png"
+    },
     "aluminium_refineries": {
       "legacy": "aluminiumrefinery.jpg",
       "path": "images/game/buildings/aluminium_refineries.png"
@@ -357,6 +401,50 @@
     "bullion": {
       "legacy": "resbullion.png",
       "path": "images/game/resources/bullion.png"
+    },
+    "cement": {
+      "legacy": "rescomponents.png",
+      "path": "images/game/resources/cement.png"
+    },
+    "textiles": {
+      "legacy": "rescomponents.png",
+      "path": "images/game/resources/textiles.png"
+    },
+    "clothing": {
+      "legacy": "rescomponents.png",
+      "path": "images/game/resources/clothing.png"
+    },
+    "chemicals": {
+      "legacy": "rescomponents.png",
+      "path": "images/game/resources/chemicals.png"
+    },
+    "medicine": {
+      "legacy": "rescomponents.png",
+      "path": "images/game/resources/medicine.png"
+    },
+    "fertilizer": {
+      "legacy": "rescomponents.png",
+      "path": "images/game/resources/fertilizer.png"
+    },
+    "plastics": {
+      "legacy": "rescomponents.png",
+      "path": "images/game/resources/plastics.png"
+    },
+    "electronics": {
+      "legacy": "rescomponents.png",
+      "path": "images/game/resources/electronics.png"
+    },
+    "vehicles": {
+      "legacy": "rescomponents.png",
+      "path": "images/game/resources/vehicles.png"
+    },
+    "luxury_goods": {
+      "legacy": "rescomponents.png",
+      "path": "images/game/resources/luxury_goods.png"
+    },
+    "machinery": {
+      "legacy": "rescomponents.png",
+      "path": "images/game/resources/machinery.png"
     },
     "components": {
       "legacy": "rescomponents.png",

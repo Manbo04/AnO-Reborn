@@ -318,7 +318,10 @@ def get_trades_page(db, user_id, coalition_id):
         "is_officer": is_officer,
         "trades": trades,
         "bank": bank,
-        "resources": [(r, resource_label(r)) for r in BANK_RESOURCES],
+        "resources": [
+            (r, resource_label(r))
+            for r in __import__("app_core.economy.ledger_goods", fromlist=["x"]).visible(BANK_RESOURCES)
+        ],
         "max_pending": MAX_PENDING_TRADES_PER_MEMBER,
     }
 
