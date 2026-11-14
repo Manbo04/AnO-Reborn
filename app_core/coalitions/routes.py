@@ -891,7 +891,8 @@ def coalition(coalition_id):
             tax_rate=tax_rate,
             allow_coalition_builds=allow_coalition_builds,
             build_share_qualifying_roles=BUILD_SHARE_QUALIFYING_ROLES,
-            all_resources=["money"] + list(variables.RESOURCES),
+            all_resources=["money"]
+            + __import__("app_core.economy.ledger_goods", fromlist=["x"]).visible(variables.RESOURCES),
         )
 
 

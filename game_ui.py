@@ -99,17 +99,17 @@ BUILDING_LEGACY_IMAGES: dict[str, str] = {
     "component_factories": "componentfactory.jpg",
     "steel_mills": "steelmill.jpg",
     "ammunition_factories": "ammunitionfactory.jpg",
-    "cement_works": "steelmill.jpg",
-    "textile_mills": "aluminiumrefinery.jpg",
-    "clothing_factories": "componentfactory.jpg",
-    "chemical_plants": "oilrefinery.jpg",
-    "pharmaceutical_labs": "componentfactory.jpg",
-    "fertilizer_plants": "aluminiumrefinery.jpg",
-    "plastics_plants": "oilrefinery.jpg",
-    "electronics_factories": "componentfactory.jpg",
-    "vehicle_works": "steelmill.jpg",
-    "luxury_workshops": "componentfactory.jpg",
-    "machinery_works": "componentfactory.jpg",
+    "cement_works": "ledger/bld_cement_works.svg",
+    "textile_mills": "ledger/bld_textile_mills.svg",
+    "clothing_factories": "ledger/bld_clothing_factories.svg",
+    "chemical_plants": "ledger/bld_chemical_plants.svg",
+    "pharmaceutical_labs": "ledger/bld_pharmaceutical_labs.svg",
+    "fertilizer_plants": "ledger/bld_fertilizer_plants.svg",
+    "plastics_plants": "ledger/bld_plastics_plants.svg",
+    "electronics_factories": "ledger/bld_electronics_factories.svg",
+    "vehicle_works": "ledger/bld_vehicle_works.svg",
+    "luxury_workshops": "ledger/bld_luxury_workshops.svg",
+    "machinery_works": "ledger/bld_machinery_works.svg",
     "aluminium_refineries": "aluminiumrefinery.jpg",
     "oil_refineries": "oilrefinery.jpg",
     "drone_sites": "dronesite.jpg",
@@ -162,17 +162,17 @@ RESOURCE_LEGACY_IMAGES: dict[str, str] = {
     "silver": "ressilver.png",
     "diamonds": "resdiamonds.png",
     "bullion": "resbullion.png",
-    "cement": "rescomponents.png",
-    "textiles": "rescomponents.png",
-    "clothing": "rescomponents.png",
-    "chemicals": "rescomponents.png",
-    "medicine": "rescomponents.png",
-    "fertilizer": "rescomponents.png",
-    "plastics": "rescomponents.png",
-    "electronics": "rescomponents.png",
-    "vehicles": "rescomponents.png",
-    "luxury_goods": "rescomponents.png",
-    "machinery": "rescomponents.png",
+    "cement": "ledger/res_cement.svg",
+    "textiles": "ledger/res_textiles.svg",
+    "clothing": "ledger/res_clothing.svg",
+    "chemicals": "ledger/res_chemicals.svg",
+    "medicine": "ledger/res_medicine.svg",
+    "fertilizer": "ledger/res_fertilizer.svg",
+    "plastics": "ledger/res_plastics.svg",
+    "electronics": "ledger/res_electronics.svg",
+    "vehicles": "ledger/res_vehicles.svg",
+    "luxury_goods": "ledger/res_luxury_goods.svg",
+    "machinery": "ledger/res_machinery.svg",
     "components": "rescomponents.png",
     "steel": "ressteel.png",
     "consumer_goods": "resconsumer_goods.png",
@@ -542,6 +542,12 @@ def biome_resources(location: str | None) -> list[str]:
     return names
 
 
+def _ledger_visible(names):
+    from app_core.economy.ledger_goods import visible
+
+    return visible(names)
+
+
 def get_slot_config(slot_id: str) -> dict[str, Any] | None:
     for slot in PROVINCE_BASE_SLOTS:
         if slot["id"] == slot_id:
@@ -660,7 +666,7 @@ def build_province_layout_payload(province: dict, units: dict) -> dict[str, Any]
         theme = SLOT_THEMES.get(slot["id"], SLOT_THEMES["power"])
         breakdown = []
         total = 0
-        for b in slot["buildings"]:
+        for b in _ledger_visible(slot["buildings"]):
             q = int(units.get(b, 0) or 0)
             total += q
             if q > 0:
@@ -680,7 +686,7 @@ def build_province_layout_payload(province: dict, units: dict) -> dict[str, Any]
                 "label": slot["label"],
                 "icon": slot["icon"],
                 "quantity": total,
-                "buildings": slot["buildings"],
+                "buildings": _ledger_visible(slot["buildings"]),
                 "breakdown": breakdown[:10],
                 "theme": theme,
             }

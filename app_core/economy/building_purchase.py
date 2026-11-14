@@ -98,6 +98,10 @@ def purchase_building(
     prices = variables.PROVINCE_UNIT_PRICES
     if f"{name}_price" not in prices:
         raise BuildingPurchaseError("No such building exists.")
+    from app_core.economy.ledger_goods import is_hidden
+
+    if is_hidden(name):
+        raise BuildingPurchaseError("No such building exists.")
 
     db.execute(
         "SELECT userId FROM provinces WHERE id = %s FOR UPDATE",

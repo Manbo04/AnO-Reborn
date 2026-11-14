@@ -754,8 +754,6 @@ def create_app():
     app.register_blueprint(war_history_bp)
     app.register_blueprint(treaties_bp)
     app.register_blueprint(loans_bp)
-    from app_core.ledger_ui.routes import bp as ledger_ui_bp
-    app.register_blueprint(ledger_ui_bp)
     app.register_blueprint(bonds_bp)
     app.register_blueprint(coalition_bank_bp)
     app.register_blueprint(currency_unions_bp)
@@ -1375,6 +1373,10 @@ def create_app():
     # --- END RESTORED FILTERS ---
 
     app.jinja_env.globals["game_asset_path"] = game_ui.game_asset_path
+    from app_core.economy import ledger_goods as _ledger_goods
+
+    app.jinja_env.globals["ledger_goods_on"] = _ledger_goods.enabled
+    app.jinja_env.globals["ledger_goods_buildings"] = _ledger_goods.LEDGER_BUILDINGS
 
     from extensions import socketio
     from app_core.chat.routes import register_chat_routes, register_chat_socketio_handlers

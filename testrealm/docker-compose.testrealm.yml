@@ -7,7 +7,6 @@
 # First run 2026-11-07 on the vivobook: boots clean, /health 200. See docs/TEST_REALM.md.
 x-env: &env
   ENVIRONMENT: TEST
-  PYTHONPATH: /app
   SECRET_KEY: test-realm-secret-change-me
   DATABASE_URL: postgresql://ano_test:ano_test@postgres:5432/ano_test
   PG_DATABASE: ano_test

@@ -29,7 +29,7 @@ def worn_buildings():
 
 def apply(cur, user_ids, resources_map, resource_deltas):
     """Returns {user_id: output_factor}; adds Machinery consumption to resource_deltas."""
-    users = [u for u in user_ids if is_on("ledger_wearout", u)]
+    users = [u for u in user_ids if is_on("ledger_wearout", u)] if is_on("ledger_goods") else []
     if not users:
         return {}
     cur.execute("INSERT INTO ledger_wear_meta (id, ticks) VALUES (1, 1) ON CONFLICT (id) DO UPDATE SET ticks = ledger_wear_meta.ticks + 1 RETURNING ticks")

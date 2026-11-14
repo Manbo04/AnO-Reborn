@@ -688,6 +688,7 @@
     {{ net_resource_card('aluminium', 'Aluminum', revenue, is_daily=False) }}
     {{ net_resource_card('gasoline', 'Gasoline', revenue, is_daily=False) }}
     {{ net_resource_card('ammunition', 'Ammunition', revenue, is_daily=False) }}
+{% if ledger_goods_on() %}
     {{ net_resource_card('machinery', 'Machinery', revenue, is_daily=False) }}
     {{ net_resource_card('cement', 'Cement', revenue, is_daily=False) }}
     {{ net_resource_card('textiles', 'Textiles', revenue, is_daily=False) }}
@@ -699,6 +700,7 @@
     {{ net_resource_card('electronics', 'Electronics', revenue, is_daily=False) }}
     {{ net_resource_card('vehicles', 'Vehicles', revenue, is_daily=False) }}
     {{ net_resource_card('luxury_goods', 'Luxury Goods', revenue, is_daily=False) }}
+{% endif %}
 </div>
 
                 </div>
@@ -2508,6 +2510,7 @@
                             <option value="aluminium" class="templateoption ">Aluminium</option>
                             <option value="gasoline" class="templateoption ">Gasoline</option>
                             <option value="ammunition" class="templateoption ">Ammunition</option>
+{% if ledger_goods_on() %}
                             <option value="machinery" class="templateoption ">Machinery</option>
                             <option value="cement" class="templateoption ">Cement</option>
                             <option value="textiles" class="templateoption ">Textiles</option>
@@ -2519,6 +2522,7 @@
                             <option value="electronics" class="templateoption ">Electronics</option>
                             <option value="vehicles" class="templateoption ">Vehicles</option>
                             <option value="luxury_goods" class="templateoption ">Luxury Goods</option>
+{% endif %}
                         </select>
 
 
@@ -2598,6 +2602,7 @@
                             <option value="aluminium" class="templateoption ">Aluminium</option>
                             <option value="gasoline" class="templateoption ">Gasoline</option>
                             <option value="ammunition" class="templateoption ">Ammunition</option>
+{% if ledger_goods_on() %}
                             <option value="machinery" class="templateoption ">Machinery</option>
                             <option value="cement" class="templateoption ">Cement</option>
                             <option value="textiles" class="templateoption ">Textiles</option>
@@ -2609,6 +2614,7 @@
                             <option value="electronics" class="templateoption ">Electronics</option>
                             <option value="vehicles" class="templateoption ">Vehicles</option>
                             <option value="luxury_goods" class="templateoption ">Luxury Goods</option>
+{% endif %}
                         </select>
                     </div>
 

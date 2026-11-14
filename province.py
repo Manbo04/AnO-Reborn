@@ -1087,7 +1087,7 @@ def province_slot_api(pId, slot_id):
             )
 
         rows = _province_units_for_user(db, cId, pId)
-        names = set(slot["buildings"])
+        names = set(__import__("app_core.economy.ledger_goods", fromlist=["x"]).visible(slot["buildings"]))
         buildings = []
         for row in rows:
             if row["name"] not in names:

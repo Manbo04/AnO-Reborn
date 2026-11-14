@@ -64,3 +64,4 @@
   {"unit": "aluminium_refineries", "title": "Aluminium Refineries", "desc": "Aluminium refineries allow you to convert bauxite into aluminium, a general use material.", "bi": "aluminium_refineries", "img": "aluminium_refineries", "group": "processing", "bonus": true},
   {"unit": "oil_refineries", "title": "Oil Refinery", "desc": "Oil refineries convert oil into gasoline, used for fueling your war machines.", "bi": "oil_refineries", "img": "oil_refineries", "group": "processing", "bonus": true},
 ] %}
+{% if not ledger_goods_on() %}{% set PROVINCE_CATALOG = PROVINCE_CATALOG | rejectattr("unit", "in", ledger_goods_buildings) | list %}{% endif %}

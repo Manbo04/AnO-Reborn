@@ -22,7 +22,7 @@ def _cover(stock, need):
 
 
 def apply(cur, user_ids, resources_map, resource_deltas):
-    users = [u for u in user_ids if is_on("ledger_goods_use", u)]
+    users = [u for u in user_ids if is_on("ledger_goods_use", u)] if is_on("ledger_goods") else []
     if not users:
         return {"farm": {}, "happy": {}}
     cur.execute("INSERT INTO ledger_goods_meta (id, ticks) VALUES (1, 1) ON CONFLICT (id) DO UPDATE SET ticks = ledger_goods_meta.ticks + 1 RETURNING ticks")

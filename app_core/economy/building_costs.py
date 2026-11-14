@@ -179,7 +179,12 @@ def ledger_cement_cost(name: str, gold) -> dict:
     try:
         from app_core.feature_flags import is_on
 
-        if name != "cement_works" and is_on("ledger_cement") and name in (CITY_UNITS | LAND_UNITS):
+        if (
+            name != "cement_works"
+            and is_on("ledger_goods")
+            and is_on("ledger_cement")
+            and name in (CITY_UNITS | LAND_UNITS)
+        ):
             return {"cement": max(1, int(gold // CEMENT_GOLD_PER_UNIT))}
     except Exception:
         pass
