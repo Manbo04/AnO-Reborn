@@ -3,8 +3,8 @@
   "ballot_id": "2026-11-13",
   "created_at": "2026-11-09T03:12:49Z",
   "kind": "suggestion",
-  "last_message_id": "1571199751825653861",
-  "last_player_message_at": "2026-11-14T16:26:52Z",
+  "last_message_id": "1571212135655145487",
+  "last_player_message_at": "2026-11-14T17:16:04Z",
   "messages": [
     {
       "at": "2026-11-09T03:12:49Z",
@@ -95,6 +95,16 @@
       "id": "1571199751825653861",
       "staff": false,
       "text": "What is influence useful for then if it doesn't translate into WA leverage?\nI propose smth in between like floor(log10(influence)), as in every power of 10 gives you another delegate, so bigger nations' votes still weigh more but not that much that it blows a potential smaller opposition's votes out of the park"
+    },
+    {
+      "at": "2026-11-14T17:16:04Z",
+      "attachments": [],
+      "author": "Dede",
+      "author_id": "710359818329915443",
+      "bot": false,
+      "id": "1571212135655145487",
+      "staff": true,
+      "text": "It will be readded once its rebalanced and there are more players"
     }
   ],
   "poll_message_id": "1570919760428929055",
