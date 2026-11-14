@@ -3,8 +3,8 @@
   "ballot_id": "2026-11-13",
   "created_at": "2026-11-09T03:12:49Z",
   "kind": "suggestion",
-  "last_message_id": "1570846388793774102",
-  "last_player_message_at": "2026-11-09T05:50:00Z",
+  "last_message_id": "1571199751825653861",
+  "last_player_message_at": "2026-11-14T16:26:52Z",
   "messages": [
     {
       "at": "2026-11-09T03:12:49Z",
@@ -85,6 +85,16 @@
       "id": "1570846388793774102",
       "staff": false,
       "text": "<@429129579039555584> world assembly is one nation one vote now, live. it used to be weighted by nation size so the big ones had control. it still passes on more than half for with at least 5 votes. josh's point stands that it can get gamed later with alts, we'll watch it"
+    },
+    {
+      "at": "2026-11-14T16:26:52Z",
+      "attachments": [],
+      "author": "Rowald",
+      "author_id": "720265672038285352",
+      "bot": false,
+      "id": "1571199751825653861",
+      "staff": false,
+      "text": "What is influence useful for then if it doesn't translate into WA leverage?\nI propose smth in between like floor(log10(influence)), as in every power of 10 gives you another delegate, so bigger nations' votes still weigh more but not that much that it blows a potential smaller opposition's votes out of the park"
     }
   ],
   "poll_message_id": "1570919760428929055",
