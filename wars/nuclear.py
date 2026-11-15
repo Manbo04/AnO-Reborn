@@ -265,7 +265,7 @@ def enemy_provinces(db, enemy_id):
     return out
 
 
-def plan_strike(db, attacker_id, war_id, province_id=None) -> dict:
+def plan_strike(db, attacker_id, war_id, province_id=None, salvo=False) -> dict:
     """Everything the launch pages show. Raises StrikeError when the war is
     invalid; eligibility problems are reported in plan['blocked']."""
     enemy_id = _active_war(db, war_id, attacker_id)
@@ -276,7 +276,11 @@ def plan_strike(db, attacker_id, war_id, province_id=None) -> dict:
     nukes = _nuke_count(db, attacker_id)
     provinces = enemy_provinces(db, enemy_id)
     blocked = None
-    if volleys_used(db, war_id, attacker_id) >= MAX_NUKE_VOLLEYS_PER_WAR:
+    if salvo:
+        # Inside a Fire All salvo the volley/influence gates were checked once up front.
+        if nukes <= 0:
+            blocked = "You don't have any nukes."
+    elif volleys_used(db, war_id, attacker_id) >= MAX_NUKE_VOLLEYS_PER_WAR:
         blocked = "You have already launched your nuclear volley in this war."
     elif nukes <= 0:
         blocked = "You don't have any nukes."
@@ -313,14 +317,16 @@ def plan_strike(db, attacker_id, war_id, province_id=None) -> dict:
     }
 
 
-def execute_strike(db, attacker_id, war_id, province_id) -> dict:
+def execute_strike(db, attacker_id, war_id, province_id, salvo=False, cost_override=None) -> dict:
     """Launch one nuke. Atomic: runs in the caller's transaction under the
     attacker's advisory lock (same lock every strike route uses), so two
     concurrent launches can't spend one nuke twice or both skip the cost."""
     db.execute("SELECT pg_advisory_xact_lock(%s)", (attacker_id,))
-    plan = plan_strike(db, attacker_id, war_id, province_id)
+    plan = plan_strike(db, attacker_id, war_id, province_id, salvo=salvo)
     if plan["blocked"]:
         raise StrikeError(plan["blocked"])
+    if cost_override is not None:
+        plan["cost"] = int(cost_override)
     target = plan["target"]
 
     db.execute(
@@ -518,4 +524,8 @@ def execute_strike(db, attacker_id, war_id, province_id) -> dict:
         )
     except Exception:
         pass
+    if not salvo:
+        from wars.nuclear_salvo import maybe_auto_retaliate
+
+        maybe_auto_retaliate(db, plan["enemy_id"], attacker_id, war_id)
     return result

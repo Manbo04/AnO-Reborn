@@ -2551,6 +2551,80 @@ def nuclear_strike_launch(war_id):
         pass
     return render_template(_nuke_template(), step="result", result=result)
 
+@wars_bp.route("/nuclear_strike/<int:war_id>/salvo/review", methods=["POST"])
+@login_required
+@no_vacation
+def nuclear_salvo_review(war_id):
+    """Fire All, step 1 (flag nuke_rework): preview targets and the one flat influence cost."""
+    import secrets
+    from app_core import nuke_rework
+    from wars.nuclear import plan_strike, StrikeError
+    from wars.nuclear_salvo import pick_targets, salvo_cost
+
+    attacker_id = session["user_id"]
+    if not nuke_rework.enabled(attacker_id):
+        return error(404, "Page not found")
+    with get_request_cursor() as db:
+        try:
+            plan = plan_strike(db, attacker_id, war_id)
+        except StrikeError as exc:
+            return error(exc.status, str(exc))
+    if plan["blocked"]:
+        return error(400, plan["blocked"])
+    targets = pick_targets(plan["provinces"], plan["nukes"])
+    token = secrets.token_urlsafe(16)
+    session["nuke_salvo_confirm"] = {"token": token, "war_id": war_id, "ts": time.time()}
+    return {
+        "token": token,
+        "warheads": len(targets),
+        "spared": max(0, plan["nukes"] - len(targets)),
+        "targets": [{"id": p["id"], "name": p["name"], "population": p["population"]} for p in targets],
+        "cost": salvo_cost(plan["influence"], plan["is_retaliation"]),
+        "is_retaliation": plan["is_retaliation"],
+        "enemy_name": plan["enemy_name"],
+    }
+
+
+@wars_bp.route("/nuclear_strike/<int:war_id>/salvo/launch", methods=["POST"])
+@login_required
+@no_vacation
+def nuclear_salvo_launch(war_id):
+    """Fire All, step 2: needs the one-time token from the review (no stray/replayed launches)."""
+    from app_core import nuke_rework
+    from wars.nuclear import StrikeError
+    from wars.nuclear_salvo import execute_salvo
+
+    attacker_id = session["user_id"]
+    if not nuke_rework.enabled(attacker_id):
+        return error(404, "Page not found")
+    pending = session.pop("nuke_salvo_confirm", None)
+    if (
+        not pending
+        or request.form.get("token") != pending.get("token")
+        or pending.get("war_id") != war_id
+        or time.time() - float(pending.get("ts") or 0) > 600
+    ):
+        return error(400, "This launch confirmation expired or was already used. Please review again.")
+    if request.form.get("confirm_launch") != "yes":
+        return error(400, "Tick the confirmation box to launch.")
+    with get_request_cursor() as db:
+        try:
+            result = execute_salvo(db, attacker_id, war_id)
+        except StrikeError as exc:
+            rollback_db_cursor(db)
+            return error(exc.status, str(exc))
+        db.connection.commit()
+    try:
+        from database import invalidate_user_cache
+
+        invalidate_user_cache(attacker_id)
+        invalidate_user_cache(result["enemy_id"])
+    except Exception:
+        pass
+    result.pop("results", None)
+    return result
+
+
 @wars_bp.route("/strategic_airstrike", methods=["POST"])
 @login_required
 @no_vacation
