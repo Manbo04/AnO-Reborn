@@ -44,7 +44,7 @@
 .cb-spot.on{opacity:1}
 .cb-spot::after{content:"";position:absolute;inset:-8px;border:2px solid rgba(95,212,255,.6);border-radius:10px;animation:cb-ring 1.4s ease-out infinite}
 @keyframes cb-ring{from{opacity:1;transform:scale(.96)}to{opacity:0;transform:scale(1.12)}}
-.cb-tip{position:fixed;z-index:10041;pointer-events:none;max-width:260px;background:var(--cb-accent);color:#04121c;font:600 12px/1.35 var(--cb-body);padding:8px 10px;opacity:0;transition:opacity .25s}
+.cb-tip{position:fixed;z-index:10041;pointer-events:none;max-width:300px;background:var(--cb-accent);color:#04121c;font:600 12px/1.35 var(--cb-body);padding:8px 10px;opacity:0;transition:opacity .25s}
 .cb-tip.on{opacity:1}
 
 /* toast + welcome/graduation overlays */
