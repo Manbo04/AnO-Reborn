@@ -81,6 +81,7 @@
   var calc = null;
   var nf = new Intl.NumberFormat('en-US');
   function fmt(n) { return nf.format(Math.round(n)); }
+  var cf = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 });
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 
   function toast(msg, isError) {
@@ -107,7 +108,8 @@
     setLive('power', calc.power.used + '/' + calc.power.total, calc.power.total < calc.power.used);
     setLive('city', calc.city.used + '/' + calc.city.total);
     setLive('land', calc.land.used + '/' + calc.land.total);
-    setLive('gold', fmt(calc.gold));
+    setLive('gold', cf.format(calc.gold));
+    var gi = root.querySelector('.pstick-item[data-live="gold"]'); if (gi) gi.title = fmt(calc.gold) + ' gold in your treasury';
   }
 
   // ---- per-building preview ----
