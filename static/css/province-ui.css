@@ -129,3 +129,4 @@
 .bld-row--short{border-color:var(--danger)}
 .purchase-busy{opacity:.6;pointer-events:none}
 .pstick-item{overflow:hidden}.pstick-item b{overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.ptabs{scrollbar-width:none}.ptabs::-webkit-scrollbar{display:none}
