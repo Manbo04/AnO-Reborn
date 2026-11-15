@@ -234,6 +234,8 @@
             apply(data);
         });
     }
+    // Buys now happen in place (no page load), so re-check progress when the page says state changed.
+    document.addEventListener("ano:state-changed", function () { api("/api/tour/state").then(apply); });
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
     else start();
 })();
