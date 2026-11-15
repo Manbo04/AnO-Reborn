@@ -70,4 +70,191 @@
       if (empty) empty.hidden = shown !== 0;
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // Buy/sell without leaving the page + live cost pre-calculator + live essentials bar.
+  // Server stays the authority (purchase_building); this only previews and avoids the
+  // full-page redirect that threw players back to the Overview tab (celess mob, 11-15).
+  // ---------------------------------------------------------------------------
+  var pid = root.getAttribute('data-province');
+  if (!pid) return;
+  var calc = null;
+  var nf = new Intl.NumberFormat('en-US');
+  function fmt(n) { return nf.format(Math.round(n)); }
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+  function toast(msg, isError) {
+    var box = document.getElementById('toast-container');
+    if (!box) { box = el('div', 'toast-container'); box.id = 'toast-container'; box.setAttribute('role', 'status'); box.setAttribute('aria-live', 'polite'); document.body.appendChild(box); }
+    var t = el('div', 'toast-item' + (isError ? ' toast-item--error' : ''));
+    t.appendChild(el('span', 'toast-message', msg));
+    var x = el('button', 'toast-dismiss'); x.type = 'button'; x.setAttribute('aria-label', 'Dismiss notification');
+    x.appendChild(el('span', 'material-icons-outlined', 'close'));
+    x.addEventListener('click', function () { t.remove(); });
+    t.appendChild(x);
+    box.appendChild(t);
+    if (!isError) setTimeout(function () { if (t.parentNode) t.remove(); }, 4500);
+  }
+
+  function setLive(key, text, bad) {
+    var item = root.querySelector('.pstick-item[data-live="' + key + '"]');
+    if (!item) return;
+    var b = item.querySelector('b'); if (b) b.textContent = text;
+    if (bad !== undefined && key === 'power') { item.classList.toggle('pstick-item--bad', !!bad); item.classList.toggle('pstick-item--ok', !bad); }
+  }
+  function renderEssentials() {
+    if (!calc) return;
+    setLive('power', calc.power.total + '/' + calc.power.used, calc.power.total < calc.power.used);
+    setLive('city', calc.city.used + '/' + calc.city.total);
+    setLive('land', calc.land.used + '/' + calc.land.total);
+    setLive('gold', fmt(calc.gold));
+  }
+
+  // ---- per-building preview ----
+  function previewFor(unit, qty) {
+    var c = calc.costs[unit];
+    var out = [];
+    var short = false;
+    if (!c || !qty || qty < 1) return { parts: out, short: false };
+    var gold = c.gold * qty;
+    var gp = el('span', gold > calc.gold ? 'short' : 'ok', fmt(gold) + ' gold' + (gold > calc.gold ? ' (need ' + fmt(gold - calc.gold) + ' more)' : ''));
+    out.push(gp); if (gold > calc.gold) short = true;
+    Object.keys(c.resources).forEach(function (r) {
+      var need = c.resources[r] * qty, have = calc.stock[r] || 0;
+      var low = need > have;
+      out.push(el('span', low ? 'short' : 'ok', fmt(need) + ' ' + r.replace(/_/g, ' ') + (low ? ' (need ' + fmt(need - have) + ' more)' : '')));
+      if (low) short = true;
+    });
+    if (c.slot) {
+      var free = calc[c.slot].free;
+      if (qty > free) { out.push(el('span', 'short', 'Needs ' + (qty - free) + ' more ' + c.slot + ' slot' + (qty - free === 1 ? '' : 's') + ' (' + free + ' free)')); short = true; }
+    }
+    if (c.jobs) {
+      var wf = calc.workforce, needed = wf.jobs_needed + c.jobs * qty;
+      if (needed > wf.jobs_available) {
+        var eff = Math.max(calc.min_efficiency, wf.jobs_available / needed);
+        out.push(el('span', 'short', 'Not enough workers: ' + fmt(needed - wf.jobs_available) + ' jobs unfilled, all production runs at ' + Math.round(eff * 100) + '%'));
+        short = true;
+      } else {
+        out.push(el('span', 'ok', 'Adds ' + fmt(c.jobs * qty) + ' jobs (workers OK)'));
+      }
+    }
+    return { parts: out, short: short };
+  }
+  function renderRow(input) {
+    var unit = input.name;
+    var row = input.closest('.bld-row');
+    var line = row && row.querySelector('.bld-calc[data-calc-unit]');
+    if (!line || !calc) return;
+    var q = parseInt(input.value, 10);
+    var r = previewFor(unit, q);
+    line.textContent = '';
+    r.parts.forEach(function (p) { line.appendChild(p); });
+    line.hidden = !r.parts.length;
+    row.classList.toggle('bld-row--short', r.short);
+  }
+  root.addEventListener('input', function (ev) {
+    var t = ev.target;
+    if (t.classList && t.classList.contains('bld-qty')) renderRow(t);
+    if (t.id === 'citiesamount' || t.id === 'landamount') setTimeout(function () { renderLandCity(t); }, 0);
+  });
+  // City / land totals come from the page's own price formulas (output element); we only red it out.
+  function renderLandCity(input) {
+    if (!calc) return;
+    var outId = input.id === 'citiesamount' ? 'citiesoutput' : 'landoutput';
+    var line = document.getElementById(input.id === 'citiesamount' ? 'citiesshort' : 'landshort');
+    var out = document.getElementById(outId);
+    if (!line || !out) return;
+    var gold = parseInt((out.textContent || '0').replace(/[^0-9]/g, ''), 10) || 0;
+    line.textContent = '';
+    if (gold > calc.gold) {
+      line.appendChild(el('span', 'short', 'Need ' + fmt(gold - calc.gold) + ' more gold (you have ' + fmt(calc.gold) + ')'));
+      line.hidden = false;
+    } else line.hidden = true;
+    out.classList.toggle('short', gold > calc.gold);
+  }
+  function renderAll() {
+    renderEssentials();
+    Array.prototype.forEach.call(root.querySelectorAll('.bld-qty'), renderRow);
+    ['citiesamount', 'landamount'].forEach(function (id) { var i = document.getElementById(id); if (i) renderLandCity(i); });
+  }
+
+  function loadCalc() {
+    return fetch('/api/province/' + encodeURIComponent(pid) + '/build_calc', { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d || !d.ok) return;
+        calc = d;
+        var cc = document.getElementById('cityCount'); if (cc) cc.value = d.city.total;
+        var cl = document.getElementById('currentLand'); if (cl) cl.value = d.land.total;
+        renderAll();
+      })
+      .catch(function () { /* preview is optional; buying still works */ });
+  }
+
+  // After a purchase: refresh the server-rendered bits (vitals, info table, energy panel, owned counts) in place.
+  function refreshFragments() {
+    return fetch(location.pathname + '?_=' + Date.now(), { credentials: 'same-origin', headers: { 'Accept': 'text/html' } })
+      .then(function (r) { return r.ok ? r.text() : null; })
+      .then(function (html) {
+        if (!html) return;
+        var doc = new DOMParser().parseFromString(html, 'text/html');
+        ['.vitals-strip', '.province-info-grid', '.energy-balance-panel'].forEach(function (sel) {
+          var cur = root.querySelector(sel), nu = doc.querySelector(sel);
+          if (cur && nu) cur.innerHTML = nu.innerHTML;
+        });
+        Array.prototype.forEach.call(root.querySelectorAll('.bld-row[id]'), function (row) {
+          var nu = doc.getElementById(row.id); if (!nu) return;
+          var a = row.querySelector('.bld-owned'), b = nu.querySelector('.bld-owned');
+          if (a && b) { a.textContent = b.textContent; a.title = b.title; }
+          row.classList.toggle('bld-row--owned', nu.classList.contains('bld-row--owned'));
+        });
+      })
+      .catch(function () { /* next full load will catch up */ });
+  }
+
+  // ---- submit via fetch, stay on the same tab ----
+  var inflight = false;
+  root.addEventListener('submit', function (ev) {
+    var form = ev.target;
+    if (!form.matches || !form.matches('.bld-form, .province-purchase-grid, form[action="/build_structure"]')) return;
+    var btn = ev.submitter;
+    var url = (btn && btn.getAttribute('formaction')) || form.getAttribute('action');
+    if (!url || !window.fetch) return; // no JS fetch: classic redirect
+    ev.preventDefault();
+    if (inflight) return; // double-submit guard
+    inflight = true;
+    var panel = btn ? btn.closest('.bld-row, .province-purchase-panel, form') : form;
+    if (panel) panel.classList.add('purchase-busy');
+    var body = new URLSearchParams(new FormData(form));
+    fetch(url, { method: 'POST', body: body, credentials: 'same-origin', headers: { 'X-Requested-With': 'fetch', 'Accept': 'application/json' } })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok && j.ok, j: j }; }); })
+      .then(function (res) {
+        if (res.ok) {
+          toast(res.j.message || 'Done', false);
+          var qty = btn && btn.closest('.bld-row') && btn.closest('.bld-row').querySelector('.bld-qty');
+          if (qty) qty.value = '';
+          ['citiesamount', 'landamount'].forEach(function (id) {
+            var i = document.getElementById(id);
+            if (i && btn && btn.closest('.province-purchase-panel') && btn.closest('.province-purchase-panel').contains(i)) { i.value = ''; i.dispatchEvent(new Event('input', { bubbles: true })); }
+          });
+          return Promise.all([loadCalc(), refreshFragments()]);
+        }
+        toast((res.j && res.j.error) || 'That did not go through.', true);
+        return loadCalc();
+      })
+      .catch(function () { toast('Could not reach the server. Nothing was changed; reload and check.', true); })
+      .then(function () { inflight = false; if (panel) panel.classList.remove('purchase-busy'); });
+  });
+
+  // keep the essentials bar below the fixed site header
+  function placeNav() {
+    var nav = document.getElementById('navbarparent');
+    var h = nav ? nav.getBoundingClientRect().height : 0;
+    var cs = nav ? getComputedStyle(nav).position : '';
+    root.style.setProperty('--pnav-top', (cs === 'fixed' || cs === 'sticky' ? Math.round(h) : 0) + 'px');
+  }
+  placeNav();
+  window.addEventListener('resize', placeNav);
+  loadCalc();
 })();

@@ -35,8 +35,13 @@ def hospitals_needed(population):
     return int(math.ceil(pop / population2.HOSPITAL_CAPACITY))
 
 
+def _resource_label(key):
+    return str(key).replace("_", " ")
+
+
 def build_population_needs(
     population, rations_need, distribution_status, pop2,
+    province_health=None, resource_net=None,
 ):
     pop = int(population or 0)
     rows = []
@@ -95,6 +100,43 @@ def build_population_needs(
             "hospitals", "Hospitals", "hospitals", need_h, have_h, have_h >= need_h,
             f"Build {need_h - have_h:,} more hospitals to cut deaths to the minimum.",
             f"{pop2.get('hospital_cover_pct', 0):.0f}% of people covered",
+        ))
+
+    # Provinces that are unpowered / unstable and resources bleeding every hour
+    # (factories, trade agreements, upkeep). Optional: callers without the data
+    # simply do not get these rows.
+    if province_health and province_health.get("rows"):
+        total = len(province_health["rows"])
+        unpowered = int(province_health.get("unpowered") or 0)
+        unstable = int(province_health.get("unstable") or 0)
+        bad_power = [h["name"] for h in province_health["rows"] if not h.get("powered", True)]
+        bad_stab = [h["name"] for h in province_health["rows"] if h.get("stability") != "stable"]
+        rows.append(_row(
+            "power", "Provinces with power", "provinces", total, total - unpowered,
+            unpowered == 0,
+            "Build power plants in: " + ", ".join(bad_power[:5])
+            + (" and more" if len(bad_power) > 5 else "")
+            + ". Buildings in an unpowered province sit idle.",
+        ))
+        rows.append(_row(
+            "stability", "Stable provinces", "provinces", total, total - unstable,
+            unstable == 0,
+            "Raise happiness (consumer goods, rations, lower pollution) in: "
+            + ", ".join(bad_stab[:5]) + (" and more" if len(bad_stab) > 5 else "") + ".",
+        ))
+
+    if resource_net is not None:
+        negative = sorted(
+            ((k, v) for k, v in resource_net.items() if (v or 0) < 0 and k != "money"),
+            key=lambda kv: kv[1],
+        )
+        rows.append(_row(
+            "resource_net", "Resources with positive net", "resources",
+            len(resource_net), len(resource_net) - len(negative), not negative,
+            "Losing every hour: "
+            + ", ".join(f"{_resource_label(k)} ({v:,.0f}/h)" for k, v in negative[:6])
+            + (" and more" if len(negative) > 6 else "")
+            + ". Check factory use, trade agreements and military upkeep.",
         ))
 
     return {

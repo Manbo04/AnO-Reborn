@@ -37,7 +37,7 @@
 .bld-group-title{margin:0 0 6px;font-size:1.05rem;color:var(--colorOne)}
 .bld-group-intro{margin:0 0 8px;color:var(--text-secondary);font-size:.85rem}
 .bld-list{display:flex;flex-direction:column;gap:8px}
-.bld-row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"head actions" "details details";gap:8px 16px;align-items:center;padding:12px;background:var(--foreground);border:1px solid var(--border);border-radius:var(--game-radius-md,12px)}
+.bld-row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"head actions" "calc calc" "details details";gap:8px 16px;align-items:center;padding:12px;background:var(--foreground);border:1px solid var(--border);border-radius:var(--game-radius-md,12px)}
 .bld-row--owned{border-left:3px solid var(--accent)}
 .bld-head{grid-area:head;display:flex;align-items:center;gap:12px;min-width:0}
 .bld-thumb{width:48px;height:48px;object-fit:cover;border-radius:var(--game-radius-sm,8px);flex:0 0 auto;background:var(--foregroundThree,var(--border))}
@@ -54,7 +54,7 @@
 .bld-desc{margin:8px 0;color:var(--colorOne)}
 .bld-details .building-info{margin:6px 0;padding-left:18px}
 @media (max-width:640px){
-  .bld-row{grid-template-columns:1fr;grid-template-areas:"head" "actions" "details"}
+  .bld-row{grid-template-columns:1fr;grid-template-areas:"head" "actions" "calc" "details"}
   .bld-actions{flex-wrap:nowrap}
   .bld-qty{flex:1 1 70px;width:auto;min-width:0}
   .bld-actions .templatedivbutton,.bld-actions .bld-btn{flex:1 1 0;min-width:0;padding:0 8px}
@@ -108,3 +108,23 @@
 .province-ui .bld-group-title{margin:0;padding:10px 14px;background:var(--foreground);color:var(--colorOne);border:1px solid var(--border);border-radius:var(--game-radius-md,12px) var(--game-radius-md,12px) 0 0}
 .province-ui .bld-group-title + .bld-group-intro{margin:0 0 8px;padding:0 14px 10px;background:var(--foreground);color:var(--text-secondary);border:1px solid var(--border);border-top:0;border-radius:0 0 var(--game-radius-md,12px) var(--game-radius-md,12px)}
 .province-ui .bld-group-title:not(:has(+ .bld-group-intro)){margin-bottom:8px;border-radius:var(--game-radius-md,12px)}
+
+/* sticky essentials (Power / City / Land / Gold) under the tabs -- celess mob QoL 11-15 */
+.pnav{position:sticky;top:var(--pnav-top,56px);z-index:30;display:flex;flex-direction:column;gap:6px;padding:6px 0;background:var(--background);border-bottom:1px solid var(--border)}
+.pnav .ptabs{border-bottom:0;padding:0 2px}
+.pstick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.pstick-item{display:flex;align-items:center;gap:4px;min-width:0;padding:6px 8px;background:var(--foreground);border:1px solid var(--border);border-radius:var(--game-radius-sm,8px);font-size:.8rem;color:var(--colorOne)}
+.pstick-item .material-icons-outlined{font-size:16px;color:var(--accent);flex:0 0 auto}
+.pstick-item b{margin-left:auto;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pstick-item--ok{border-left:3px solid var(--success)}
+.pstick-item--bad{border-left:3px solid var(--danger)}
+.pstick-item--bad b{color:var(--danger)}
+@media (max-width:640px){.pstick-item{flex-direction:column;align-items:flex-start;gap:0;padding:4px 6px;font-size:.72rem}.pstick-item .material-icons-outlined{display:none}.pstick-item b{margin-left:0;font-size:.85rem}.pnav .ptab{min-height:40px;padding:0 12px}}
+
+/* buy pre-calculator line (per building, and under city/land) */
+.bld-calc{grid-area:calc;margin:0;font-size:.85rem;color:var(--text-secondary);display:flex;flex-wrap:wrap;gap:4px 12px}
+.bld-calc[hidden]{display:none}
+.bld-calc .ok{color:var(--colorOne)}
+.bld-calc .short{color:var(--danger);font-weight:600}
+.bld-row--short{border-color:var(--danger)}
+.purchase-busy{opacity:.6;pointer-events:none}

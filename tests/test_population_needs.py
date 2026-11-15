@@ -29,3 +29,36 @@ def test_hospitals_needed_matches_flat_cover_rule():
     assert hospitals_needed(2_500_000) == 3
     assert hospitals_needed(666_000_001) == 667
     assert hospitals_needed(800_000_000) == 800
+
+
+def _health(unpowered=0, unstable=0):
+    rows = [
+        {"name": "Alpha", "powered": unpowered == 0, "stability": "stable"},
+        {"name": "Beta", "powered": True, "stability": "unrest" if unstable else "stable"},
+    ]
+    return {"rows": rows, "unpowered": unpowered, "unstable": unstable}
+
+
+def test_power_and_stability_rows_flag_problem_provinces():
+    out = build_population_needs(1000, 1, None, None, province_health=_health(1, 1))
+    power = next(r for r in out["rows"] if r["key"] == "power")
+    stab = next(r for r in out["rows"] if r["key"] == "stability")
+    assert not power["ok"] and power["missing"] == 1 and "Alpha" in power["advice"]
+    assert not stab["ok"] and "Beta" in stab["advice"]
+    assert out["problems"] == 2
+
+
+def test_negative_resource_row_lists_bleeding_resources():
+    net = {"steel": -120.0, "oil": 5, "money": -9_999}
+    out = build_population_needs(1000, 1, None, None, resource_net=net)
+    row = next(r for r in out["rows"] if r["key"] == "resource_net")
+    assert not row["ok"] and row["missing"] == 1  # money is gold, not a resource
+    assert "steel" in row["advice"] and "oil" not in row["advice"]
+
+
+def test_new_rows_absent_without_data_and_ok_when_healthy():
+    out = build_population_needs(1000, 1, None, None)
+    assert not [r for r in out["rows"] if r["key"] in ("power", "stability", "resource_net")]
+    out = build_population_needs(
+        1000, 1, None, None, province_health=_health(), resource_net={"steel": 3})
+    assert out["problems"] == 0

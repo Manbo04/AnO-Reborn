@@ -16,8 +16,8 @@
 <script defer src="{{ url_for('static', filename='province-base.js') }}?v=11"></script>
 <script defer src="{{ url_for('static', filename='province-zones.js') }}?v=1"></script>
 {% endif %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/province-ui.css') }}?v=3">
-<script defer src="{{ url_for('static', filename='js/province-ui.js') }}?v=2"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/province-ui.css') }}?v=4">
+<script defer src="{{ url_for('static', filename='js/province-ui.js') }}?v=3"></script>
 {% endblock %}
 {% block body %}
 {% from 'macros/game_ui.html' import game_button, game_hero %}
@@ -64,7 +64,7 @@
     <div class="templatedivcontent">
         {% include 'partials/province_base_view.html' %}
         <div id="province-classic-view"{% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %} hidden{% endif %}>
-        <div class="province-ui">
+        <div class="province-ui"{% if province["own"] %} data-province="{{ province['id'] }}"{% endif %}>
 
             <div class="vitals-strip" role="group" aria-label="Province vitals">
                 {% set _g = province['growth_rate'] if province.get('own') else none %}
@@ -75,11 +75,20 @@
             </div>
 
             {% if province["own"] %}
+            <div class="pnav">
             <div class="ptabs" role="tablist" aria-label="Province sections">
                 <button class="ptab" role="tab" type="button" id="tab-overview" data-tab="overview" aria-controls="ptab-overview" aria-selected="true">Overview</button>
                 <button class="ptab" role="tab" type="button" id="tab-buildings" data-tab="buildings" aria-controls="ptab-buildings" aria-selected="false" tabindex="-1">Buildings</button>
                 <button class="ptab" role="tab" type="button" id="tab-military" data-tab="military" aria-controls="ptab-military" aria-selected="false" tabindex="-1">Military</button>
                 <button class="ptab" role="tab" type="button" id="tab-resources" data-tab="resources" aria-controls="ptab-resources" aria-selected="false" tabindex="-1">Resources</button>
+            </div>
+            {# Essentials stay in view on every tab so nobody has to go back to Overview to check them (celess mob QoL). Live-updated by province-ui.js after each purchase. #}
+            <div class="pstick" role="group" aria-label="Province essentials">
+                <span class="pstick-item {{ 'pstick-item--ok' if energy['net'] >= 0 else 'pstick-item--bad' }}" data-live="power" title="Power produced vs needed this hour"><span class="material-icons-outlined" aria-hidden="true">bolt</span><span class="pstick-k">Power</span><b>{{ energy['production'] }}/{{ energy['consumption'] }}</b></span>
+                <span class="pstick-item" data-live="city" title="City slots used / total"><span class="material-icons-outlined" aria-hidden="true">business</span><span class="pstick-k">City</span><b>{{ province['citycount'] - province['free_cityCount'] }}/{{ province['citycount'] }}</b></span>
+                <span class="pstick-item" data-live="land" title="Land slots used / total"><span class="material-icons-outlined" aria-hidden="true">landscape</span><span class="pstick-k">Land</span><b>{{ province['land'] - province['free_land'] }}/{{ province['land'] }}</b></span>
+                <span class="pstick-item" data-live="gold" title="Gold in your treasury"><span class="material-icons-outlined" aria-hidden="true">paid</span><span class="pstick-k">Gold</span><b>&hellip;</b></span>
+            </div>
             </div>
             {% endif %}
 
@@ -180,11 +189,12 @@
                         <ul class="resourceparent middle">This will cost <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource" />
                             <strong id="citiesoutput">0</strong>
                         </ul>
+                        <p class="bld-calc" id="citiesshort" data-calc-for="citiesoutput" hidden></p>
 
                         <div class="templatedivflex2 divflex2center">
                             <div class="templatedivflex2left">
 
-                                <input class="loginsignupinput" type="number" name="cityCount" aria-label="Number of cities to buy" placeholder="City Amount" id="citiesamount" onchange="citiesCost(event)" />
+                                <input class="loginsignupinput" type="number" name="cityCount" aria-label="Number of cities to buy" placeholder="City Amount" id="citiesamount" oninput="citiesCost(event)" />
                                 <input id="cityCount" type="hidden" value="{{ province['citycount'] }}" />
 
                             </div>
@@ -246,10 +256,11 @@
                         <ul class="resourceparent middle">This will cost <img alt="Image" src="{{ url_for( 'static', filename=game_asset_path('resources', 'gold') ) }}?v=2" class="resource" />
                             <strong id="landoutput">0</strong>
                         </ul>
+                        <p class="bld-calc" id="landshort" data-calc-for="landoutput" hidden></p>
                         <div class="templatedivflex2 divflex2center">
                             <div class="templatedivflex2left">
 
-                                <input class="loginsignupinput" type="number" name="land" aria-label="Amount of land to buy" placeholder="Land Amount" id="landamount" onchange="landCost(event)" />
+                                <input class="loginsignupinput" type="number" name="land" aria-label="Amount of land to buy" placeholder="Land Amount" id="landamount" oninput="landCost(event)" />
                                 <input type="hidden" id="currentLand" value="{{ province['land'] }}" />
 
                             </div>

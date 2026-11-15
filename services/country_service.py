@@ -850,6 +850,8 @@ class CountryService:
                         rations_need,
                         distribution_status,
                         (growth_rate or {}).get("pop2"),
+                        province_health=province_health,
+                        resource_net=(revenue or {}).get("net") if isinstance(revenue, dict) else None,
                     )
                 except Exception:
                     logging.getLogger(__name__).exception(

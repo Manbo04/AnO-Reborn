@@ -30,6 +30,7 @@
     {{ game_button('Buy', icon='add_circle_outline', formaction='/buy/' ~ unit ~ '/' ~ province['id'], extra_class='bld-btn bld-btn--primary') }}
     {{ game_button('Sell', icon='remove_circle_outline', formaction='/sell/' ~ unit ~ '/' ~ province['id'], extra_class='bld-btn bld-btn--secondary') }}
   </div>
+  <p class="bld-calc" data-calc-unit="{{ unit }}" aria-live="polite" hidden></p>
   {% endif %}
   <details class="bld-details">
     <summary>Cost and details</summary>
