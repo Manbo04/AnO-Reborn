@@ -35,3 +35,11 @@ def test_everything_else_keeps_status_code_and_error_page(headers):
     resp, flashed = _call(headers)
     body, status = resp
     assert status == 400 and flashed == []
+
+
+def test_fetch_request_gets_json_error_and_no_redirect():
+    """The province page's own JS (X-Requested-With: fetch) stays on its tab: JSON, real status, nothing flashed."""
+    resp, flashed = _call({"X-Requested-With": "fetch", "Referer": "http://example.test/province/252", "Accept": "application/json"})
+    body, status = resp
+    assert status == 400 and flashed == []
+    assert body.get_json() == {"ok": False, "error": "You don't have enough money."}

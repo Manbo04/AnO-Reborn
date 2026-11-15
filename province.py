@@ -1146,6 +1146,23 @@ def province_slot_api(pId, slot_id):
 
 from extensions import limiter
 
+@bp.route("/api/province/<int:pId>/build_calc", methods=["GET"])
+@login_required
+def province_build_calc_api(pId):
+    """Live gold/stock/slots/costs for the province page's buy pre-calculator
+    and sticky bar. Own province only, never cached (the page itself is)."""
+    from flask import jsonify
+    from app_core.economy.build_calc import build_calc_payload
+
+    with get_request_cursor() as db:
+        payload = build_calc_payload(db, session["user_id"], pId)
+    if payload is None:
+        return jsonify(ok=False, error="Province not found"), 404
+    resp = jsonify(ok=True, **payload)
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
 @bp.route("/api/province/<int:pId>/quick_build", methods=["POST"])
 @login_required
 @limiter.limit("30 per minute")
@@ -1253,6 +1270,12 @@ def province_quick_build_api(pId):
     )
 
 
+def _wants_json():
+    """The province page's own JS sends this header so a buy/sell/build answers
+    with JSON and the player stays on their tab instead of being redirected."""
+    return request.headers.get("X-Requested-With") == "fetch"
+
+
 def _province_error(code, message):
     """Error response for the province page's own forms.
 
@@ -1262,6 +1285,11 @@ def _province_error(code, message):
     come from a province page still get the normal error response and status code.
     """
     from urllib.parse import urlparse
+
+    if _wants_json():
+        from flask import jsonify
+
+        return jsonify(ok=False, error=str(message)), code
 
     ref = urlparse(request.referrer or "")
     from_province_page = (
@@ -1345,6 +1373,10 @@ def build_structure_action():
     except Exception:
         pass
 
+    if _wants_json():
+        from flask import jsonify
+
+        return jsonify(ok=True, message="Build order done" if quantity >= 0 else "Demolished")
     if province_id:
         return redirect(f"/province/{province_id}")
     return redirect(f"/country/id={cId}")
@@ -2312,6 +2344,10 @@ def province_sell_buy(way, units, province_id):
 
     action = "Sold" if way == "sell" else "Purchased"
     unit_display = units.replace("_", " ").title()
+    if _wants_json():
+        from flask import jsonify
+
+        return jsonify(ok=True, message=f"{action} {wantedUnits:,} {unit_display}")
     flash(f"{action}: {unit_display}")
     return redirect(f"/province/{province_id}?_={int(_now())}")
 

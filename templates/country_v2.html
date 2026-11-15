@@ -216,6 +216,9 @@
         <!--View-->
         <div class="view" id="view">
 
+            {# Moved to the top of the nation page (celess mob QoL): what the population still needs comes first. #}
+            {% include 'partials/population_needs.html' %}
+
             {% if status %}
             {% set resources = get_resources() %}
             {% set rations_pct = ((resources.rations / rations_need) * 100) | round if rations_need else 100 %}
@@ -442,7 +445,6 @@
             {# About / National Profile / Achievements live in the Profile tab for the owner (celess mob: declutter the nation page); visitors still see them here. #}
             {% if not status %}{{ profile_blocks() }}{% endif %}
 
-            {% include 'partials/population_needs.html' %}
             {% include 'partials/distribution_alert.html' %}
 
             {% include 'partials/coalition_recommendations.html' %}
