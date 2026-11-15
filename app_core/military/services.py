@@ -245,7 +245,9 @@ def process_activate_units(db, cId, units, wantedUnits, mildict):
     # from a single stockpile balance.
     db.execute("SELECT pg_advisory_xact_lock(%s)", (cId,))
 
-    if units not in STOCKPILE_UNITS:
+    from app_core import nuke_rework
+
+    if units not in STOCKPILE_UNITS and not nuke_rework.activatable(units, cId):
         return False, "This unit is not activated from a stockpile"
 
     unit_id = get_unit_id_by_name(db, units)

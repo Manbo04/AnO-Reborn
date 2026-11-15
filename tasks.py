@@ -56,6 +56,7 @@ from app_core.game_ticks.taxes import calc_ti, tax_income, war_reparation_tax
 from app_core.game_ticks.population import population_growth, calculate_workforce_available, apply_workforce_hiring_and_debuffs, find_unit_category
 from app_core.game_ticks.revenue import generate_province_revenue
 from app_core.game_ticks.unit_production import produce_unit_stockpiles
+from app_core.game_ticks.nuke_production import produce_nukes
 from app_core.game_ticks.disasters import run_natural_disasters
 from app_core.game_ticks.loan_interest import run_loan_interest
 from app_core.game_ticks.bond_tick import run_bond_tick
@@ -105,6 +106,12 @@ def task_generate_province_revenue():
 @leader_only(ttl_seconds=300)
 def task_produce_unit_stockpiles():
     _run_with_deadlock_retries(produce_unit_stockpiles, "produce_unit_stockpiles")
+
+
+@celery.task()
+@leader_only(ttl_seconds=300)
+def task_produce_nukes():
+    _run_with_deadlock_retries(produce_nukes, "produce_nukes")
 
 
 @celery.task()

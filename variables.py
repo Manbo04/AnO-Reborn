@@ -560,6 +560,7 @@ INFRA_TYPE_BUILDINGS = {
         "silos",
         "drone_sites",
         "missile_batteries",
+        "nuclear_weapons_facility",
     ],
     "industry": [
         "farms",
@@ -656,6 +657,7 @@ BUILDINGS = [
     "silos",
     "drone_sites",
     "missile_batteries",
+    "nuclear_weapons_facility",
     "city_parks",
     "monorails",
     "railways",
@@ -767,6 +769,7 @@ INFRA = {  # Display values — synced to NEW_INFRA engine values (units/hr per 
     "silos_money": 340000,
     "drone_sites_money": 5000,
     "missile_batteries_money": 40000,
+    "nuclear_weapons_facility_money": 500000,
     ################
     # Industry — synced to NEW_INFRA engine values
     "farms_money": 3000,
@@ -1090,6 +1093,8 @@ PROVINCE_UNIT_PRICES = {
     "silos_resource": {"steel": 1080000, "aluminium": 480000},
     "drone_sites_price": 15000000,
     "drone_sites_resource": {"components": 200000, "steel": 150000, "aluminium": 100000},
+    "nuclear_weapons_facility_price": 500000000,
+    "nuclear_weapons_facility_resource": {"steel": 1500000, "aluminium": 700000, "components": 400000, "uranium": 200000},
     "missile_batteries_price": 120000000,
     "missile_batteries_resource": {"steel": 600000, "aluminium": 300000, "components": 150000},
     # Resource Extraction (Tier 1)
@@ -1298,6 +1303,7 @@ NEW_INFRA = {  # (NEW INFRA)
     # military building above.
     "drone_sites": {"money": 5000},
     "missile_batteries": {"money": 40000},
+    "nuclear_weapons_facility": {"money": 500000},
     # INDUSTRY
     "farms": {
         "money": 3000,

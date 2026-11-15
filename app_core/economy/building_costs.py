@@ -55,6 +55,7 @@ LAND_UNITS = frozenset(
         "silos",
         "drone_sites",
         "missile_batteries",
+        "nuclear_weapons_facility",
         "farms",
         "fisheries",
         "pumpjacks",
