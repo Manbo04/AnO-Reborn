@@ -119,7 +119,7 @@
 .pstick-item--ok{border-left:3px solid var(--success)}
 .pstick-item--bad{border-left:3px solid var(--danger)}
 .pstick-item--bad b{color:var(--danger)}
-@media (max-width:640px){.pstick-item{flex-direction:column;align-items:flex-start;gap:0;padding:4px 6px;font-size:.72rem}.pstick-item .material-icons-outlined{display:none}.pstick-item b{margin-left:0;font-size:.85rem}.pnav .ptab{min-height:40px;padding:0 12px}}
+@media (max-width:640px){.pnav{display:contents}.pstick{position:sticky;top:var(--pnav-top,56px);z-index:30;padding:6px 0;background:var(--background);border-bottom:1px solid var(--border)}.pstick-item{flex-direction:column;align-items:flex-start;gap:0;padding:4px 6px;font-size:.72rem}.pstick-item .material-icons-outlined{display:none}.pstick-item b{margin-left:0;font-size:.85rem}.pnav .ptab{min-height:40px;padding:0 12px}}
 
 /* buy pre-calculator line (per building, and under city/land) */
 .bld-calc{grid-area:calc;margin:0;font-size:.85rem;color:var(--text-secondary);display:flex;flex-wrap:wrap;gap:4px 12px}

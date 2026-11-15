@@ -104,7 +104,7 @@
   }
   function renderEssentials() {
     if (!calc) return;
-    setLive('power', calc.power.total + '/' + calc.power.used, calc.power.total < calc.power.used);
+    setLive('power', calc.power.used + '/' + calc.power.total, calc.power.total < calc.power.used);
     setLive('city', calc.city.used + '/' + calc.city.total);
     setLive('land', calc.land.used + '/' + calc.land.total);
     setLive('gold', fmt(calc.gold));
@@ -127,7 +127,7 @@
     });
     if (c.slot) {
       var free = calc[c.slot].free;
-      if (qty > free) { out.push(el('span', 'short', 'Needs ' + (qty - free) + ' more ' + c.slot + ' slot' + (qty - free === 1 ? '' : 's') + ' (' + free + ' free)')); short = true; }
+      if (qty > free) { out.push(el('span', 'short', 'Needs ' + fmt(qty - free) + ' more ' + c.slot + ' slot' + (qty - free === 1 ? '' : 's') + ' (' + fmt(free) + ' free)')); short = true; }
     }
     if (c.jobs) {
       var wf = calc.workforce, needed = wf.jobs_needed + c.jobs * qty;
@@ -224,6 +224,7 @@
     ev.preventDefault();
     if (inflight) return; // double-submit guard
     inflight = true;
+    Array.prototype.forEach.call(document.querySelectorAll('.toast-item--error'), function (t) { t.remove(); }); // old failures are stale once you act again
     var panel = btn ? btn.closest('.bld-row, .province-purchase-panel, form') : form;
     if (panel) panel.classList.add('purchase-busy');
     var body = new URLSearchParams(new FormData(form));
@@ -249,10 +250,15 @@
 
   // keep the essentials bar below the fixed site header
   function placeNav() {
-    var nav = document.getElementById('navbarparent');
-    var h = nav ? nav.getBoundingClientRect().height : 0;
-    var cs = nav ? getComputedStyle(nav).position : '';
-    root.style.setProperty('--pnav-top', (cs === 'fixed' || cs === 'sticky' ? Math.round(h) : 0) + 'px');
+    // Fixed site header + the sticky resource HUD (phones) both sit above the page content.
+    var h = 0;
+    ['navbarparent'].forEach(function (id) {
+      var n = document.getElementById(id);
+      if (n && getComputedStyle(n).position === 'fixed') h += Math.round(n.getBoundingClientRect().height);
+    });
+    var hud = document.querySelector('.game-hud');
+    if (hud && getComputedStyle(hud).position === 'sticky' && hud.offsetHeight) h += hud.offsetHeight;
+    root.style.setProperty('--pnav-top', h + 'px');
   }
   placeNav();
   window.addEventListener('resize', placeNav);

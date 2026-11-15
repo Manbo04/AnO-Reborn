@@ -16,8 +16,8 @@
 <script defer src="{{ url_for('static', filename='province-base.js') }}?v=11"></script>
 <script defer src="{{ url_for('static', filename='province-zones.js') }}?v=1"></script>
 {% endif %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/province-ui.css') }}?v=4">
-<script defer src="{{ url_for('static', filename='js/province-ui.js') }}?v=3"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/province-ui.css') }}?v=5">
+<script defer src="{{ url_for('static', filename='js/province-ui.js') }}?v=4"></script>
 {% endblock %}
 {% block body %}
 {% from 'macros/game_ui.html' import game_button, game_hero %}
@@ -84,7 +84,7 @@
             </div>
             {# Essentials stay in view on every tab so nobody has to go back to Overview to check them (celess mob QoL). Live-updated by province-ui.js after each purchase. #}
             <div class="pstick" role="group" aria-label="Province essentials">
-                <span class="pstick-item {{ 'pstick-item--ok' if energy['net'] >= 0 else 'pstick-item--bad' }}" data-live="power" title="Power produced vs needed this hour"><span class="material-icons-outlined" aria-hidden="true">bolt</span><span class="pstick-k">Power</span><b>{{ energy['production'] }}/{{ energy['consumption'] }}</b></span>
+                <span class="pstick-item {{ 'pstick-item--ok' if energy['net'] >= 0 else 'pstick-item--bad' }}" data-live="power" title="Power needed / produced this hour"><span class="material-icons-outlined" aria-hidden="true">bolt</span><span class="pstick-k">Power</span><b>{{ energy['consumption'] }}/{{ energy['production'] }}</b></span>
                 <span class="pstick-item" data-live="city" title="City slots used / total"><span class="material-icons-outlined" aria-hidden="true">business</span><span class="pstick-k">City</span><b>{{ province['citycount'] - province['free_cityCount'] }}/{{ province['citycount'] }}</b></span>
                 <span class="pstick-item" data-live="land" title="Land slots used / total"><span class="material-icons-outlined" aria-hidden="true">landscape</span><span class="pstick-k">Land</span><b>{{ province['land'] - province['free_land'] }}/{{ province['land'] }}</b></span>
                 <span class="pstick-item" data-live="gold" title="Gold in your treasury"><span class="material-icons-outlined" aria-hidden="true">paid</span><span class="pstick-k">Gold</span><b>&hellip;</b></span>
