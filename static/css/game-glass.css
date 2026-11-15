@@ -1904,3 +1904,10 @@ html[data-bg-images="off"] [class*="game-glass"] {
 }
 
 
+
+/* Dan90 2026-11-16: secondary text on glass panels over the scenic background was a dim grey next to bright
+   headings and hard to read. One readable colour in the dark theme. */
+.theme-dark .game-panel .game-setting-desc,
+.theme-dark .game-panel p.templatecontentpleft {
+    color: rgba(224, 228, 234, 0.92);
+}

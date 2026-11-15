@@ -77,18 +77,32 @@
         // Building/unit buy buttons: pre-fill "1" in the amount box next to them.
         var box = target.closest(".purchasemilitarydiv, form, .menudiv");
         var amount = box && box.querySelector('input[type="number"]');
-        if (amount && !amount.value) amount.value = "1";
+        if (amount && !amount.value) {
+            amount.value = "1";
+            try { amount.dispatchEvent(new Event("input", { bubbles: true })); } catch (e) {}
+        }
         if (!spotEl) {
             spotEl = el("div", "cb-spot"); tipEl = el("div", "cb-tip");
             root.appendChild(spotEl); root.appendChild(tipEl);
         }
-        tipEl.textContent = step.kind === "state"
-            ? (amount ? "Amount is set to 1. Press this to build it." : "Press this to do it.")
-            : "This is it. Take a look around.";
+        // Dan90: do not say "press this to build it" when the row says you cannot afford it.
+        function tipText() {
+            if (step.kind !== "state") return "This is it. Take a look around.";
+            var row = target.closest(".bld-row");
+            if (row && row.classList.contains("bld-row--short")) {
+                var c = row.querySelector(".bld-calc");
+                var need = c ? c.textContent.replace(/\s+/g, " ").trim() : "";
+                return "You cannot afford this yet" + (need ? ": " + need : ".") + " Earn or buy the missing resources first.";
+            }
+            return amount ? "Amount is set to 1. Press this to build it." : "Press this to do it.";
+        }
+        tipEl.textContent = tipText();
         spotTarget = target;
         target.scrollIntoView({ behavior: "smooth", block: "center" });
         (function follow() {
             if (!spotTarget) return;
+            var tt = tipText();
+            if (tipEl.textContent !== tt) tipEl.textContent = tt;
             var r = spotTarget.getBoundingClientRect(), pad = 6;
             spotEl.style.left = (r.left - pad) + "px"; spotEl.style.top = (r.top - pad) + "px";
             spotEl.style.width = (r.width + pad * 2) + "px"; spotEl.style.height = (r.height + pad * 2) + "px";
@@ -138,8 +152,20 @@
         var act = b.getAttribute("data-cb");
         if (act === "min") { setMin(true); clearSpot(); renderCard(); }
         else if (act === "show") {
-            if (!spotlight(state.steps[state.current])) {
-                b.textContent = "Scroll down to find it";
+            var st = state.steps[state.current];
+            if (!spotlight(st)) {
+                // The control may sit on another tab of the page: open that tab, then retry.
+                var hidden = null;
+                try { hidden = document.querySelector(st.target); } catch (e) {}
+                var panel = hidden && hidden.closest("[id^='ptab-']");
+                var tab = panel && document.getElementById("tab-" + panel.id.slice(5));
+                if (tab) tab.click();
+                setTimeout(function () {
+                    if (!spotlight(st)) {
+                        var hint = card.querySelector(".cb-brief");
+                        if (hint && !hint.dataset.hinted) { hint.dataset.hinted = "1"; hint.textContent += " Scroll down the page to find it."; }
+                    }
+                }, 350);
             }
         } else if (act === "end") {
             if (b.classList.contains("warn")) {
