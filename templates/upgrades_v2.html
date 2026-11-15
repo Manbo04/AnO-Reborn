@@ -233,12 +233,12 @@
         </div>
         {% endif %}
 
-        <div class="proj-filter" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;">
+        <div class="proj-filter" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:4px 14px;background:var(--foreground);border:1px solid var(--border);border-radius:12px;color:var(--colorOne);">
             <label for="proj-available-only" style="display:inline-flex;align-items:center;gap:8px;min-height:44px;cursor:pointer;">
                 <input type="checkbox" id="proj-available-only" style="width:20px;height:20px;" />
                 <span>Show only available projects</span>
             </label>
-            <span id="proj-filter-note" class="game-faint" style="font-size:.85rem;" aria-live="polite"></span>
+            <span id="proj-filter-note" style="font-size:.85rem;color:var(--text-secondary);" aria-live="polite"></span>
         </div>
         <p id="proj-filter-empty" class="infodiv" hidden>You have researched every project. Untick the box to see them all.</p>
         <div class="tech-grid-form">
