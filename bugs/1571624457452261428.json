@@ -1,0 +1,47 @@
+{
+  "author_id": "911307050963836968",
+  "created_at": "2026-11-15T20:34:30Z",
+  "kind": "bug",
+  "last_message_id": "1571631350807527565",
+  "last_player_message_at": "2026-11-15T21:01:53Z",
+  "messages": [
+    {
+      "at": "2026-11-15T20:34:30Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1571624457452261428/1571624458236727417/image.png?ex=6afb68d6&is=6afa1756&hm=2b7c60472d44b26ede38e038bc8fb542bdea6463f154146c187140b5c3a9727b&",
+        "https://cdn.discordapp.com/attachments/1571624457452261428/1571624458702299301/image.png?ex=6afb68d6&is=6afa1756&hm=19fbd4ce350633cccb3ac7931f8fcf0d4b1a0e0daea503bbfdfb77c9ecad54be&"
+      ],
+      "author": "Dan90",
+      "author_id": "911307050963836968",
+      "bot": false,
+      "id": "1571624457452261428",
+      "staff": false,
+      "text": "flag has a sizing seizure can't figure out which size it wants need to fix lighting mode"
+    },
+    {
+      "at": "2026-11-15T20:52:16Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1571624457452261428/1571628928911540224/image.png?ex=6afb6d00&is=6afa1b80&hm=c65af665cf02ec7d08fff800da6cf13496afba407a9ec8154729806ac4c99d6f&"
+      ],
+      "author": "Dan90",
+      "author_id": "911307050963836968",
+      "bot": false,
+      "id": "1571628929373044767",
+      "staff": false,
+      "text": "another bug found even if i buy won't go away and go onto the next"
+    },
+    {
+      "at": "2026-11-15T21:01:53Z",
+      "attachments": [],
+      "author": "Dan90",
+      "author_id": "911307050963836968",
+      "bot": false,
+      "id": "1571631350807527565",
+      "staff": false,
+      "text": "so can't get my coal to run the city"
+    }
+  ],
+  "thread_id": "1571624457452261428",
+  "title": "Bugs",
+  "url": "https://discord.com/channels/708006319658893385/1571624457452261428"
+}
