@@ -1898,6 +1898,7 @@ def province_sell_buy(way, units, province_id):
             "silos",
             "drone_sites",
             "missile_batteries",
+            "nuclear_weapons_facility",
             "farms",
             "pumpjacks",
             "coal_mines",

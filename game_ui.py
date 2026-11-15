@@ -114,6 +114,7 @@ BUILDING_LEGACY_IMAGES: dict[str, str] = {
     "oil_refineries": "oilrefinery.jpg",
     "drone_sites": "dronesite.jpg",
     "missile_batteries": "missilebattery.jpg",
+    "nuclear_weapons_facility": "silo.jpg",  # placeholder until HQ art (PR3); hidden while flag off
     "silver_mines": "silvermine.jpg",
     "diamond_mines": "diamondmine.jpg",
     "bullion_mines": "bullionmine.jpg",
@@ -301,6 +302,7 @@ PROVINCE_BASE_SLOTS: list[dict[str, Any]] = [
             "silos",
             "drone_sites",
             "missile_batteries",
+            "nuclear_weapons_facility",
             "firewatch_towers",
             "levees",
             "seismic_reinforcements",
@@ -416,6 +418,7 @@ BUILDING_VISUAL_ICONS: dict[str, str] = {
     "silos": "warehouse",
     "drone_sites": "flight_takeoff",
     "missile_batteries": "rocket_launch",
+    "nuclear_weapons_facility": "radioactive",
 }
 
 BIOME_ICONS: dict[str, str] = {

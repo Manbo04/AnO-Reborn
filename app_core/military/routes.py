@@ -4,6 +4,7 @@ from helpers import login_required, error, is_theme_v2_enabled
 from app_core.vacation import ON_VACATION_ATTACKER_MSG, is_on_vacation, no_vacation
 from database import get_request_cursor, invalidate_user_cache, invalidate_view_cache
 from variables import MILDICT
+from app_core import nuke_rework
 from app_core.upgrades.services import get_upgrades
 
 from .repositories import ALL_UNITS, STOCKPILE_UNITS, get_user_units_with_stats, get_manpower_and_gold, get_user_stockpile
@@ -26,6 +27,13 @@ def military():
             manpower_cap = mp_data["cap"]
             manpower_free = mp_data["free"]
             stockpile = get_user_stockpile(db, cId)
+            nuke_info = None
+            if nuke_rework.enabled(cId):
+                from .repositories import get_stockpile_quantity, get_unit_id_by_name
+
+                nid = get_unit_id_by_name(db, nuke_rework.UNIT)
+                stockpile[nuke_rework.UNIT] = get_stockpile_quantity(db, cId, nid) if nid else 0
+                nuke_info = nuke_rework.status(db, cId)
             limits = compute_display_limits(cId, db, units_dict, stockpile)
             upgrades = get_upgrades(cId, db=db)  # Reuse cursor
 
@@ -42,6 +50,7 @@ def military():
             manpower_cap=manpower_cap,
             manpower_free=manpower_free,
             stockpile=stockpile,
+            nuke_info=nuke_info,
         )
 
 @bp.route("/military/<way>/<units>", methods=["POST"])
@@ -56,6 +65,8 @@ def military_sell_buy(way, units):
 
             if units in STOCKPILE_UNITS:
                 return error(400, "This unit is activated from its stockpile — see /military/activate.")
+            if way == "buy" and nuke_rework.activatable(units, cId):
+                return error(400, "Nukes are now manufactured by the Nuclear Weapons Facility — activate them from your stockpile.")
 
             units_str = request.form.get(units)
             if not units_str:
@@ -97,7 +108,7 @@ def military_sell_buy(way, units):
 def military_activate(units):
     cId = session["user_id"]
 
-    if units not in STOCKPILE_UNITS:
+    if units not in STOCKPILE_UNITS and not nuke_rework.activatable(units, cId):
         return error(400, "No such stockpile unit exists.")
 
     units_str = request.form.get(units)
@@ -123,4 +134,26 @@ def military_activate(units):
     except Exception:
         pass
 
+    return redirect_back("/military")
+
+
+@bp.route("/military/nukes/auto", methods=["POST"])
+@login_required
+@no_vacation
+def military_nukes_auto():
+    """Toggle auto-activation of newly manufactured nukes (nuke_rework)."""
+    cId = session["user_id"]
+    if not nuke_rework.enabled(cId):
+        return error(404, "Page not found")
+    want = request.form.get("auto") == "1"
+    with get_request_cursor() as db:
+        db.execute(
+            "INSERT INTO user_nuke_settings (user_id, auto_missile) VALUES (%s,%s) "
+            "ON CONFLICT (user_id) DO UPDATE SET auto_missile=EXCLUDED.auto_missile, updated_at=now()",
+            (cId, want),
+        )
+    try:
+        invalidate_view_cache("military", user_id=cId)
+    except Exception:
+        pass
     return redirect_back("/military")

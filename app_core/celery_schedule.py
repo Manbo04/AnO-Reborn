@@ -24,6 +24,7 @@ TASK_RUN_THRESHOLDS = {
     "population_growth": int(os.getenv("POP_GROWTH_MIN_INTERVAL", "3300")),
     "generate_province_revenue": int(os.getenv("PROV_REV_MIN_INTERVAL", "3300")),
     "produce_unit_stockpiles": int(os.getenv("UNIT_PRODUCTION_MIN_INTERVAL", "3300")),
+    "produce_nukes": int(os.getenv("NUKE_PRODUCTION_MIN_INTERVAL", "3300")),
     "execute_trade_agreements": int(os.getenv("TRADE_AGR_MIN_INTERVAL", "65")),
     "global_tick": int(os.getenv("GLOBAL_TICK_MIN_INTERVAL", "540")),
     # Military maintenance is deducted inside global_tick but must run at most
@@ -58,6 +59,7 @@ TASK_PERIODS = {
     "generate_province_revenue": "hour",
     "population_growth": "hour",
     "produce_unit_stockpiles": "hour",
+    "produce_nukes": "hour",
     "military_maintenance": "hour",
     "war_supply_regen": "hour",
     "natural_disasters": "hour",
@@ -90,6 +92,10 @@ CELERY_BEAT_SCHEDULE = {
     "produce_unit_stockpiles": {
         "task": "tasks.task_produce_unit_stockpiles",
         "schedule": get_crontab_env("UNIT_PRODUCTION_CRON", crontab(minute="35")),
+    },
+    "produce_nukes": {
+        "task": "tasks.task_produce_nukes",
+        "schedule": get_crontab_env("NUKE_PRODUCTION_CRON", crontab(minute="37")),
     },
     "population_growth": {
         "task": "tasks.task_population_growth",
