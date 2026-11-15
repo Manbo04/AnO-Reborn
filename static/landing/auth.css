@@ -190,7 +190,9 @@ main{position:relative;z-index:5;display:grid;grid-template-columns:1fr;gap:18px
 /* ---- step 3: customize ---- */
 @media (max-width:520px){.steps button{padding:12px 6px 10px;font-size:9px;letter-spacing:.1em}.steps button b{font-size:14px;letter-spacing:.03em}}
 .flagstage{position:relative;border:1px solid var(--line);background:#000;padding:10px;margin-bottom:12px}
-.flagstage canvas{display:block;width:100%;height:auto;aspect-ratio:3/2;box-shadow:0 18px 40px -18px #000;animation:wave 6s ease-in-out infinite;transform-origin:left center}
+.flagstage{overflow:hidden}
+.flagstage canvas{display:block;width:100%;height:auto;aspect-ratio:3/2;box-shadow:0 18px 40px -18px #000}
+/* Dan90 2026-11-15: the 3D wave transform made the flag preview jitter between sizes; it is static now. */
 @keyframes wave{0%,100%{transform:perspective(600px) rotateY(0deg) skewY(0deg)}50%{transform:perspective(600px) rotateY(-6deg) skewY(-.6deg)}}
 .flagtools{position:absolute;right:16px;top:16px;display:flex;gap:6px}
 .ftool{background:rgba(5,8,13,.8);border:1px solid rgba(255,255,255,.25);color:var(--ink);font:500 10px var(--f-mono);letter-spacing:.12em;padding:7px 9px;cursor:pointer;text-transform:uppercase}
