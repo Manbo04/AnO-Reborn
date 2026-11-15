@@ -146,10 +146,11 @@ def military_nukes_auto():
     if not nuke_rework.enabled(cId):
         return error(404, "Page not found")
     want = request.form.get("auto") == "1"
+    col = "auto_retaliate" if request.form.get("kind") == "retaliate" else "auto_missile"
     with get_request_cursor() as db:
         db.execute(
-            "INSERT INTO user_nuke_settings (user_id, auto_missile) VALUES (%s,%s) "
-            "ON CONFLICT (user_id) DO UPDATE SET auto_missile=EXCLUDED.auto_missile, updated_at=now()",
+            f"INSERT INTO user_nuke_settings (user_id, {col}) VALUES (%s,%s) "
+            f"ON CONFLICT (user_id) DO UPDATE SET {col}=EXCLUDED.{col}, updated_at=now()",
             (cId, want),
         )
     try:
