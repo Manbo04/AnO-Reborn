@@ -241,6 +241,7 @@
             var i = document.getElementById(id);
             if (i && btn && btn.closest('.province-purchase-panel') && btn.closest('.province-purchase-panel').contains(i)) { i.value = ''; i.dispatchEvent(new Event('input', { bubbles: true })); }
           });
+          try { document.dispatchEvent(new CustomEvent("ano:state-changed")); } catch (e) {}
           return Promise.all([loadCalc(), refreshFragments()]);
         }
         toast((res.j && res.j.error) || 'That did not go through.', true);
