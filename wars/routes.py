@@ -2472,7 +2472,11 @@ def nuclear_strike_plan(war_id):
             plan = plan_strike(db, attacker_id, war_id)
         except StrikeError as exc:
             return error(exc.status, str(exc))
-    return render_template(_nuke_template(), step="plan", plan=plan)
+    from app_core import nuke_rework
+
+    return render_template(
+        _nuke_template(), step="plan", plan=plan, salvo_on=nuke_rework.enabled(attacker_id)
+    )
 
 
 @wars_bp.route("/nuclear_strike/<int:war_id>/review", methods=["POST"])

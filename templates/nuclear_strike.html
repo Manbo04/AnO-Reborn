@@ -78,6 +78,46 @@
             {% if plan.blocked %}<p class="nuke-warn">{{ plan.blocked }}</p>{% endif %}
         </div>
 
+        {% if salvo_on and plan.nukes >= 2 and not plan.blocked %}
+        <div class="game-glass nuke-panel" id="fireall" data-war="{{ plan.war_id }}">
+            <h2 class="templatecontentheaderleft">Fire All</h2>
+            <p class="nuke-note">Launch every ready nuke at once, one warhead per enemy province, biggest populations first. Each warhead can still be shot down by Iron Domes. You pay one flat influence penalty for the whole salvo.</p>
+            <div id="fa-body"></div>
+            <div class="nuke-actions"><button type="button" class="game-btn game-btn-secondary" id="fa-review"><span class="material-icons-outlined">rocket_launch</span> Review Fire All</button></div>
+        </div>
+        <script>
+        (function(){
+          var root=document.getElementById("fireall"); if(!root) return;
+          var war=root.dataset.war, body=document.getElementById("fa-body"), btn=document.getElementById("fa-review");
+          function esc(t){var d=document.createElement("div");d.textContent=t;return d.innerHTML;}
+          function num(n){return Number(n).toLocaleString();}
+          function post(url,data){return fetch(url,{method:"POST",credentials:"same-origin",headers:{"X-Requested-With":"fetch","Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams(data||{})}).then(function(r){return r.text().then(function(t){var j=null;try{j=JSON.parse(t);}catch(e){}return {ok:r.ok,j:j,t:t};});});}
+          btn.addEventListener("click",function(){
+            btn.disabled=true;
+            post("/nuclear_strike/"+war+"/salvo/review").then(function(r){
+              btn.disabled=false;
+              if(!r.ok||!r.j||!r.j.token){body.innerHTML='<p class="nuke-warn">'+esc((r.t||"Could not review.").replace(/<[^>]+>/g," ").trim().slice(0,200))+'</p>';return;}
+              var j=r.j, rows=j.targets.map(function(t){return "<li>"+esc(t.name)+" · pop "+num(t.population)+"</li>";}).join("");
+              body.innerHTML='<div class="nuke-stats"><div class="nuke-stat"><strong>Warheads</strong><span>'+j.warheads+'</span></div><div class="nuke-stat"><strong>Influence cost</strong><span>'+num(j.cost)+'</span></div></div>'+
+                (j.spared?'<p class="nuke-note">'+j.spared+' nuke(s) stay in your silos: there are not enough enemy provinces.</p>':'')+
+                '<ul class="nuke-note" style="padding-left:18px">'+rows+'</ul>'+
+                '<label class="nuke-check"><input type="checkbox" id="fa-ok"><span>I understand this hits '+j.warheads+' provinces of '+esc(j.enemy_name)+' and costs me '+num(j.cost)+' influence. Fire all.</span></label>'+
+                '<div class="nuke-actions"><button type="button" class="templatedivbutton nuke-launch" id="fa-go"><span class="material-icons-outlined">warning</span>FIRE ALL</button></div>';
+              document.getElementById("fa-go").addEventListener("click",function(){
+                var go=this; if(!document.getElementById("fa-ok").checked){document.getElementById("fa-ok").focus();return;}
+                go.disabled=true;
+                post("/nuclear_strike/"+war+"/salvo/launch",{token:j.token,confirm_launch:"yes"}).then(function(r2){
+                  if(!r2.ok||!r2.j){body.innerHTML='<p class="nuke-warn">'+esc((r2.t||"Launch failed.").replace(/<[^>]+>/g," ").trim().slice(0,200))+'</p>';return;}
+                  var s=r2.j; btn.style.display="none";
+                  body.innerHTML='<h2 class="templatecontentheaderleft nuke-warn">Salvo launched</h2><div class="nuke-stats"><div class="nuke-stat"><strong>Fired</strong><span>'+s.fired+'</span></div><div class="nuke-stat"><strong>Intercepted</strong><span>'+s.intercepted+'</span></div><div class="nuke-stat"><strong>Killed</strong><span>'+num(s.deaths)+'</span></div><div class="nuke-stat"><strong>Cities destroyed</strong><span>'+num(s.cities_destroyed)+'</span></div></div><p class="nuke-note">Influence penalty: '+num(s.cost)+'. '+esc(s.enemy_name)+' has been notified.</p>';
+                });
+              });
+            });
+          });
+        })();
+        </script>
+        {% endif %}
+
         {% if step == 'confirm' %}
         {% set t = plan.target %}
         <form class="game-glass nuke-panel" method="POST" action="/nuclear_strike/{{ plan.war_id }}/launch">
