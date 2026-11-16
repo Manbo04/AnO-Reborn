@@ -1,0 +1,22 @@
+{
+  "author_id": "249007223454433292",
+  "created_at": "2026-11-16T12:49:03Z",
+  "kind": "bug",
+  "last_message_id": "1571869710989926460",
+  "last_player_message_at": "2026-11-16T12:49:03Z",
+  "messages": [
+    {
+      "at": "2026-11-16T12:49:03Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1571869710989926460",
+      "staff": false,
+      "text": "https://affairsandorder.org/province/ - province view\n\nThe newly added top bar on provinces with power/city/land/gold :\nthe power bar is not the same as the overview. most likely the power bar doesn't include modifiers.\n\nBoth used and available is inaccurate"
+    }
+  ],
+  "thread_id": "1571869710989926460",
+  "title": "Power Display Error",
+  "url": "https://discord.com/channels/708006319658893385/1571869710989926460"
+}

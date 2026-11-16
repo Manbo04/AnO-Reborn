@@ -2,7 +2,7 @@
   "author_id": "249007223454433292",
   "created_at": "2026-11-15T09:47:57Z",
   "kind": "suggestion",
-  "last_message_id": "1571711626535637013",
+  "last_message_id": "1571848641591902369",
   "last_player_message_at": "2026-11-16T02:20:52Z",
   "messages": [
     {
@@ -34,6 +34,16 @@
       "id": "1571711626535637013",
       "staff": false,
       "text": "5. checkbox or something to auto-buy cities or land as needed when buying buildings?\neg. checkbox autobuy land next to steel mills so when I buy 100 steel mills, it buys up to 100 land as needed for my province"
+    },
+    {
+      "at": "2026-11-16T11:25:19Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1571848641591902369",
+      "staff": false,
+      "text": "<@249007223454433292> got your #5, auto-buying land or cities when you buy buildings. it's next on my list. I'll post here when it's live."
     }
   ],
   "status": "new",

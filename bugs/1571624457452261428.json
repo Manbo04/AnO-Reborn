@@ -2,8 +2,8 @@
   "author_id": "911307050963836968",
   "created_at": "2026-11-15T20:34:30Z",
   "kind": "bug",
-  "last_message_id": "1571796401883582564",
-  "last_player_message_at": "2026-11-16T07:57:44Z",
+  "last_message_id": "1571900181048205483",
+  "last_player_message_at": "2026-11-16T14:50:07Z",
   "messages": [
     {
       "at": "2026-11-15T20:34:30Z",
@@ -142,6 +142,36 @@
       "id": "1571796401883582564",
       "staff": false,
       "text": "same issue"
+    },
+    {
+      "at": "2026-11-16T11:20:55Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1571847531661365290",
+      "staff": false,
+      "text": "<@911307050963836968> two more fixes are live. the briefing now tops up the missing building materials once per step, so you can't get stuck on something the market doesn't sell. and panels are darker behind the text, so it reads better over the flag colours. the tutorial overhaul is on my list, tell me what bugs you most about it."
+    },
+    {
+      "at": "2026-11-16T14:37:40Z",
+      "attachments": [],
+      "author": "Dan90",
+      "author_id": "911307050963836968",
+      "bot": false,
+      "id": "1571897045990514710",
+      "staff": false,
+      "text": "The tutorial just need a full rework on explaining the game better just its interface and how it looks"
+    },
+    {
+      "at": "2026-11-16T14:50:07Z",
+      "attachments": [],
+      "author": "Dan90",
+      "author_id": "911307050963836968",
+      "bot": false,
+      "id": "1571900181048205483",
+      "staff": false,
+      "text": "balance ideas:\ngrowth should slow down as pop gets huge, so small nations can catch up\ncatch-up bonus for nations way below average (cheaper provinces/faster growth)\ncap raid loot per war, less loot for repeat raids on the same target\nfirst-strike window after war declaration so defenders can react\nnuke damage as % of province, not raw pop\ndefensive units (SAM/iron dome) shouldnt count toward the 10% army cap\nlate-game stuff that isnt war (research, wonders)\npension crisis should scale with economy, -5k/h means nothing\nalso you should really deal with the people who abused raiding before the fixes. some nations farmed the top players for millions of components and now nobody can catch up, so even if you fix the mechanics the damage stays. maybe check the war logs for nations that raided the same targets over and over and either remove the excess loot or reset it. otherwise the new balance changes wont matter because they already have the lead locked in. a lot of people quit because of this"
     }
   ],
   "thread_id": "1571624457452261428",
