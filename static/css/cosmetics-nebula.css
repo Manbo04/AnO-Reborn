@@ -36,7 +36,7 @@ body.nation-nebula-theme {
     --tableOne: var(--foreground);
     --tableTwo: var(--foregroundTwo);
 
-    --game-glass-bg: rgba(8, 11, 30, 0.6);
+    --game-glass-bg: rgba(8, 11, 30, 0.76);
     --game-glass-bg-strong: rgba(8, 11, 30, 0.86);
     --game-glass-border: rgba(111, 195, 230, 0.3);
 

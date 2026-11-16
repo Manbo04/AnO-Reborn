@@ -79,7 +79,7 @@
     --shadow-card-hover: 0 4px 20px rgba(0, 0, 0, 0.4);
 
     /* Glass redesign (2026-08-30 UI port) — see .theme-light for token notes. */
-    --game-glass-bg: rgba(22, 26, 34, 0.32);
+    --game-glass-bg: rgba(22, 26, 34, 0.62);
     --game-glass-bg-strong: rgba(22, 26, 34, 0.62);
     --game-glass-border: rgba(255, 255, 255, 0.14);
     --game-text-faint: #657289;

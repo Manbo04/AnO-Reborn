@@ -102,3 +102,26 @@ def test_established_nations_never_get_the_tour_or_rewards():
         s = compute_tour(db, 1, visited="survey")
         assert s["eligible"] is False and s["current"] is None
         assert db.claimed == []  # nothing claimed, nothing paid
+
+
+def test_supply_tops_up_shortfall_once(monkeypatch):
+    """Briefing grants only the missing materials, once per step (Dan90 2026-11-16)."""
+    granted_calls = []
+    monkeypatch.setattr(troutes, "_apply_rewards", lambda db, uid, r: granted_calls.append(dict(r)) or dict(r))
+    monkeypatch.setattr(tour, "_supply_shortfall", lambda db, uid, key: {"lumber": 15000})
+
+    class Cur:
+        def __init__(self, fresh):
+            self.fresh = fresh
+            self.q = ""
+
+        def execute(self, q, params=None):
+            self.q = q
+
+        def fetchone(self):
+            return (1,) if ("RETURNING" in self.q and self.fresh) else None
+
+    assert tour.supply_current_step(Cur(True), 7, "power") == {"lumber": 15000}
+    assert tour.supply_current_step(Cur(False), 7, "power") == {}  # already supplied
+    assert tour.supply_current_step(Cur(True), 7, "survey") == {}  # not a build step
+    assert granted_calls == [{"lumber": 15000}]
