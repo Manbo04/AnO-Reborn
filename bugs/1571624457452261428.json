@@ -2,8 +2,8 @@
   "author_id": "911307050963836968",
   "created_at": "2026-11-15T20:34:30Z",
   "kind": "bug",
-  "last_message_id": "1571662312899870832",
-  "last_player_message_at": "2026-11-15T21:58:11Z",
+  "last_message_id": "1571796401883582564",
+  "last_player_message_at": "2026-11-16T07:57:44Z",
   "messages": [
     {
       "at": "2026-11-15T20:34:30Z",
@@ -95,6 +95,53 @@
       "id": "1571662312899870832",
       "staff": false,
       "text": "<@911307050963836968> thanks for all of these, all three are live now. the briefing tip now tells you when you can't afford the step and what's missing instead of saying build it. 'Show me' opens the right tab and scrolls to the button for you. and the grey text on the settings/invite panels is brighter now so it's one readable color. refresh once and tell me if anything still looks off."
+    },
+    {
+      "at": "2026-11-16T07:04:01Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1571624457452261428/1571782880986923028/image.png?ex=6afbfc61&is=6afaaae1&hm=b0b7c2d0325ebfd6e4decede6c0a3ec5446985eb5283fafd2fd650f46f01dfe4&",
+        "https://cdn.discordapp.com/attachments/1571624457452261428/1571782881276338286/image.png?ex=6afbfc61&is=6afaaae1&hm=5b7dc0404827eecaa8d147de5f89ca325f2233c84b7308c63f4ea25ea168af8f&"
+      ],
+      "author": "Dan90",
+      "author_id": "911307050963836968",
+      "bot": false,
+      "id": "1571782881741635694",
+      "staff": false,
+      "text": "<@1447272377896669236> might wanna make seeing resources easier cause its quite hard to find exactly what you have, you say i have missing resources but i can't find any on the trade store so either give those resources to the players for the briefing or add more support for global player market"
+    },
+    {
+      "at": "2026-11-16T07:07:05Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1571624457452261428/1571783655213244466/image.png?ex=6afbfd19&is=6afaab99&hm=af8607f1b659b4891ffad7581f2cc8f3c324d325789ec94926d6b7a139131b59&"
+      ],
+      "author": "Dan90",
+      "author_id": "911307050963836968",
+      "bot": false,
+      "id": "1571783655511031829",
+      "staff": false,
+      "text": "more like a suggestion try to fix the text transparency/color in generally all areas as you see it can be hard to read especially when another color is more dominant"
+    },
+    {
+      "at": "2026-11-16T07:45:54Z",
+      "attachments": [],
+      "author": "Dan90",
+      "author_id": "911307050963836968",
+      "bot": false,
+      "id": "1571793421155438685",
+      "staff": false,
+      "text": "tutorial also needs a ton of working on"
+    },
+    {
+      "at": "2026-11-16T07:57:44Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1571624457452261428/1571796401606623323/image.png?ex=6afc08f8&is=6afab778&hm=87656e8da31cb675621dd9b3307aa80c0466ec91e86ae4397c21d28e220423a6&"
+      ],
+      "author": "Dan90",
+      "author_id": "911307050963836968",
+      "bot": false,
+      "id": "1571796401883582564",
+      "staff": false,
+      "text": "same issue"
     }
   ],
   "thread_id": "1571624457452261428",
