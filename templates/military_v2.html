@@ -54,6 +54,7 @@
 
 {% macro unit_card(u) %}
 {% set k = u.key %}
+{% set sp = u.stockpile or (k == 'nukes' and nuke_info) %}
 {% set info = units[k] %}
 {% set cost = mildict[k] %}
 {#- Widespread Propaganda discounts soldiers' gold price (was the
@@ -82,7 +83,7 @@
         <p class="mil-desc">{{ u.desc }}</p>
 
         <div class="mil-costs" aria-label="Cost per unit">
-            <span class="mil-costs-label">{% if u.stockpile %}To activate{% else %}Cost each{% endif %}</span>
+            <span class="mil-costs-label">{% if sp %}To activate{% else %}Cost each{% endif %}</span>
             <span class="mil-cost"><img src="{{ url_for('static', filename='images/resmoney.png') }}?v=2" alt="">{{ price | fmt }}</span>
             {% if cost.manpower %}<span class="mil-cost"><span class="material-icons-outlined">person</span>{{ cost.manpower }}</span>{% endif %}
             {% for res, amt in (cost.resources or {}).items() %}
@@ -94,7 +95,7 @@
         <p class="mil-upkeep"><span class="material-icons-outlined">autorenew</span>Upkeep {{ info.maintenance_per_tick | commas }} {{ (info.maintenance_resource or '') | replace('_', ' ') }} per tick</p>
         {% endif %}
 
-        {% if u.stockpile %}
+        {% if sp %}
         <form class="mil-order" action="/military/activate/{{ k }}" method="POST">
             <input class="mil-amount" name="{{ k }}" type="number" min="1" inputmode="numeric" autocomplete="off" placeholder="Amount" aria-label="{{ u.name }} to activate" required>
             <button type="submit" class="game-btn game-btn-primary"><span class="material-icons-outlined">bolt</span> Activate</button>
@@ -110,8 +111,51 @@
         {% endif %}
     </div>
 </article>
+
+{% if k == 'nukes' and nuke_info %}
+{% set ni = nuke_info %}
+<section class="mil-nuke game-glass" id="nuke-facility" aria-label="Nuclear programme">
+    <h3><span class="material-icons-outlined">radioactive</span> Nuclear programme</h3>
+    <div class="mil-nuke-stats">
+        <span><strong>{{ ni.facilities }}</strong> facilit{{ 'y' if ni.facilities == 1 else 'ies' }}</span>
+        <span><strong>{{ ni.owned + ni.stockpile }}</strong> / {{ ni.capacity }} silo room</span>
+        <span><strong>{{ ni.stockpile }}</strong> ready to activate</span>
+    </div>
+    {% if ni.facilities %}
+    <div class="mil-nuke-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ (ni.progress * 100) | int }}"><i style="width: {{ [ni.progress * 100, 100] | min | round(1) }}%"></i></div>
+    <p class="mil-nuke-note">Next warhead {{ (ni.progress * 100) | int }}% built. One facility finishes a missile every {{ ni.hours_per_missile }} hours, using the resources below, as long as a silo has room.</p>
+    {% else %}
+    <p class="mil-nuke-note">Build a Nuclear Weapons Facility in a province to start making warheads. You also need Silos for room to store them.</p>
+    {% endif %}
+    <div class="mil-costs" aria-label="Resources per missile">
+        <span class="mil-costs-label">Per missile</span>
+        {% for res, amt in ni.resources.items() %}
+        <span class="mil-cost" title="{{ res | replace('_', ' ') | title }}"><img src="{{ url_for('static', filename=game_asset_path('resources', res)) }}" alt="{{ res }}" onerror="this.style.display='none'">{{ amt | weight_fmt }}</span>
+        {% endfor %}
+    </div>
+    <form class="mil-nuke-toggle" action="/military/nukes/auto" method="POST">
+        <input type="hidden" name="auto" value="{{ 0 if ni.auto else 1 }}">
+        <button type="submit" class="game-btn game-btn-secondary"><span class="material-icons-outlined">{{ 'toggle_on' if ni.auto else 'toggle_off' }}</span> Auto-activate new nukes: {{ 'ON' if ni.auto else 'OFF' }}</button>
+    </form>
+    <form class="mil-nuke-toggle" action="/military/nukes/auto" method="POST">
+        <input type="hidden" name="kind" value="retaliate">
+        <input type="hidden" name="auto" value="{{ 0 if ni.auto_retaliate else 1 }}">
+        <button type="submit" class="game-btn game-btn-secondary"><span class="material-icons-outlined">{{ 'toggle_on' if ni.auto_retaliate else 'toggle_off' }}</span> Auto-retaliate: {{ 'ON' if ni.auto_retaliate else 'OFF' }}</button>
+    </form>
+    <p class="mil-nuke-note">Auto-retaliate fires your active nukes back at once if someone nukes you and you detect the launch (25%, or 50% with the Star Wars Project). Launch from a war's page: <em>Fire All</em> sends one warhead at each enemy province.</p>
+</section>
+{% endif %}
 {% endmacro %}
 
+<style>
+.mil-nuke{padding:14px;margin:-4px 0 14px}
+.mil-nuke h3{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:1.05rem}
+.mil-nuke-stats{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.9rem;margin-bottom:10px}
+.mil-nuke-bar{height:8px;border-radius:6px;background:rgba(0,0,0,.35);overflow:hidden}
+.mil-nuke-bar i{display:block;height:100%;background:#e0a030}
+.mil-nuke-note{font-size:.85rem;opacity:.9;margin:8px 0}
+.mil-nuke-toggle{margin:8px 0}
+</style>
 <div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/military.jpg') }}');"></div>
 <div class="game-page-overlay"></div>
 

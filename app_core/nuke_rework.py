@@ -60,8 +60,9 @@ def status(db, user_id) -> dict:
     facilities = int(db.fetchone()[0] or 0)
     db.execute("SELECT progress FROM user_nuke_progress WHERE user_id=%s", (user_id,))
     r = db.fetchone(); progress = float(r[0]) if r else 0.0
-    db.execute("SELECT auto_missile FROM user_nuke_settings WHERE user_id=%s", (user_id,))
+    db.execute("SELECT auto_missile, auto_retaliate FROM user_nuke_settings WHERE user_id=%s", (user_id,))
     r = db.fetchone(); auto = bool(r[0]) if r else False
+    auto_ret = bool(r[1]) if r else False
     return {"owned": owned, "stockpile": stocked, "capacity": capacity(db, user_id), "facilities": facilities,
-            "progress": progress, "auto": auto, "hours_per_missile": HOURS_PER_MISSILE,
+            "progress": progress, "auto": auto, "auto_retaliate": auto_ret, "hours_per_missile": HOURS_PER_MISSILE,
             "resources": MISSILE_RESOURCES}
