@@ -2,8 +2,8 @@
   "author_id": "911307050963836968",
   "created_at": "2026-11-15T20:34:30Z",
   "kind": "bug",
-  "last_message_id": "1571631350807527565",
-  "last_player_message_at": "2026-11-15T21:01:53Z",
+  "last_message_id": "1571662312899870832",
+  "last_player_message_at": "2026-11-15T21:58:11Z",
   "messages": [
     {
       "at": "2026-11-15T20:34:30Z",
@@ -39,6 +39,62 @@
       "id": "1571631350807527565",
       "staff": false,
       "text": "so can't get my coal to run the city"
+    },
+    {
+      "at": "2026-11-15T21:51:31Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1571643840627089489",
+      "staff": false,
+      "text": "<@911307050963836968> both fixed and live. the signup flag preview was jittering because of a 3D wave animation, it's static now. and the briefing stuck on 'Power the grid' was my bug, it didn't notice your buy anymore, it picks it up right after you press Buy now. refresh once (ctrl+shift+R) and let me know if either still acts up, especially the flag in light mode."
+    },
+    {
+      "at": "2026-11-15T21:53:03Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1571624457452261428/1571644226872025128/image.png?ex=6afb7b3f&is=6afa29bf&hm=8aafb4d5c15e0543f169c2fd5fcc2e86e38c89cc59961fdcedb4a786c4883923&"
+      ],
+      "author": "Dan90",
+      "author_id": "911307050963836968",
+      "bot": false,
+      "id": "1571644226985402380",
+      "staff": false,
+      "text": "when pressing show let is go to the page to show then just say scroll down cause someone might not see it"
+    },
+    {
+      "at": "2026-11-15T21:53:54Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1571624457452261428/1571644439867297792/image.png?ex=6afb7b72&is=6afa29f2&hm=5b5be0d94ef5bcc69833972a6cf76827b57ea18f3f2b4f418f11802a7b71c9e2&"
+      ],
+      "author": "Dan90",
+      "author_id": "911307050963836968",
+      "bot": false,
+      "id": "1571644440223686868",
+      "staff": false,
+      "text": "another thing for the briefing says build it but why say when you don't have the resources for it"
+    },
+    {
+      "at": "2026-11-15T21:58:11Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1571624457452261428/1571645518025592913/image.png?ex=6afb7c73&is=6afa2af3&hm=0abda6845dac34b2ec576c0e3ea57ef07c19935e2837a55e3084852d0153eff3&"
+      ],
+      "author": "Dan90",
+      "author_id": "911307050963836968",
+      "bot": false,
+      "id": "1571645518357201067",
+      "staff": false,
+      "text": "maybe use one text color/transperancy its a bit hard to read on some and not on some"
+    },
+    {
+      "at": "2026-11-15T23:04:55Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1571662312899870832",
+      "staff": false,
+      "text": "<@911307050963836968> thanks for all of these, all three are live now. the briefing tip now tells you when you can't afford the step and what's missing instead of saying build it. 'Show me' opens the right tab and scrolls to the button for you. and the grey text on the settings/invite panels is brighter now so it's one readable color. refresh once and tell me if anything still looks off."
     }
   ],
   "thread_id": "1571624457452261428",
