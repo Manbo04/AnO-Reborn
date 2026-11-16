@@ -32,7 +32,7 @@ body.nation-frost-theme {
     --tableOne: var(--foreground);
     --tableTwo: var(--foregroundTwo);
 
-    --game-glass-bg: rgba(8, 14, 34, 0.55);
+    --game-glass-bg: rgba(8, 14, 34, 0.74);
     --game-glass-bg-strong: rgba(8, 14, 34, 0.84);
     --game-glass-border: rgba(58, 82, 168, 0.45);
 

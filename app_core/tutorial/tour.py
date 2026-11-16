@@ -182,6 +182,68 @@ def _state_step_done(key: str, facts: dict) -> bool:
     return False
 
 
+# Steps that need resources to build. The briefing tops up the SHORTFALL once per
+# step (never gold, never more than one building's worth) so a new nation cannot
+# get stuck on a resource it has no way to buy (Dan90, 2026-11-16).
+SUPPLY_BUILDINGS = {
+    "power": ("coal_burners",),
+    "farms": ("farms",),
+    "stores": ("general_stores",),
+    "extract": tuple(ALL_EXTRACTORS) + ("lumber_mills", "pumpjacks"),
+}
+
+
+def _supply_shortfall(db, user_id: int, key: str) -> dict:
+    """Resources missing for the cheapest building of this step (by total units)."""
+    from app_core.economy.building_costs import get_build_cost
+    from app_core.economy.building_purchase import _load_policies
+
+    policies = _load_policies(db, user_id)
+    best = None
+    for name in SUPPLY_BUILDINGS.get(key, ()):
+        try:
+            res = {r: int(a) for r, a in (get_build_cost(name, policies)["resources"] or {}).items()}
+        except Exception:
+            continue
+        if best is None or sum(res.values()) < sum(best.values()):
+            best = res
+    if not best:
+        return {}
+    db.execute(
+        "SELECT rd.name AS name, COALESCE(ue.quantity, 0) AS qty FROM user_economy ue "
+        "JOIN resource_dictionary rd ON rd.resource_id = ue.resource_id WHERE ue.user_id = %s",
+        (user_id,),
+    )
+    stock = {(r["name"] if isinstance(r, dict) else r[0]): int((r["qty"] if isinstance(r, dict) else r[1]) or 0)
+             for r in db.fetchall() or []}
+    return {r: a - stock.get(r, 0) for r, a in best.items() if a > stock.get(r, 0)}
+
+
+def supply_current_step(db, user_id: int, key: str) -> dict:
+    """Grant the shortfall for this step once. Returns what was granted ({} if nothing)."""
+    from app_core.tutorial.routes import _apply_rewards
+
+    if key not in SUPPLY_BUILDINGS:
+        return {}
+    db.execute(
+        "INSERT INTO tour_supply (user_id, step_key) VALUES (%s, %s) ON CONFLICT DO NOTHING RETURNING 1",
+        (user_id, key),
+    )
+    if not db.fetchone():
+        return {}
+    missing = _supply_shortfall(db, user_id, key)
+    if not missing:
+        return {}
+    granted = _apply_rewards(db, user_id, missing)
+    import json
+
+    db.execute(
+        "UPDATE tour_supply SET granted = %s::jsonb WHERE user_id = %s AND step_key = %s",
+        (json.dumps(granted), user_id, key),
+    )
+    return granted
+
+
 def compute_tour(db, user_id: int, *, visited: str | None = None) -> dict:
     """Return the tour state, completing (and rewarding) any step whose
     condition is now met. `visited` is a step key the client says the player
@@ -235,6 +297,17 @@ def compute_tour(db, user_id: int, *, visited: str | None = None) -> dict:
             graduation = _apply_rewards(db, user_id, GRADUATION_REWARD)
         graduated_at = True
 
+    supplied: dict = {}
+    nxt = next((i for i in range(len(STEPS)) if i not in claimed), None)
+    if nxt is not None and STEPS[nxt]["kind"] == "state":
+        try:
+            supplied = supply_current_step(db, user_id, STEPS[nxt]["key"])
+        except Exception:
+            import logging
+
+            logging.getLogger(__name__).exception("tour supply failed for %s", user_id)
+            supplied = {}
+
     from app_core.tutorial.rewards import CHAPTER_REWARDS
 
     capital_href = f"/province/{facts['capital_id']}" if facts["capital_id"] else "/provinces"
@@ -272,5 +345,6 @@ def compute_tour(db, user_id: int, *, visited: str | None = None) -> dict:
         "graduated": bool(graduated_at),
         "newly_completed": newly,
         "graduation_reward": graduation,
+        "supplied": supplied,
         "final_reward": GRADUATION_REWARD,
     }

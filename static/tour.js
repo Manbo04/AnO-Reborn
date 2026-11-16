@@ -92,7 +92,7 @@
             if (row && row.classList.contains("bld-row--short")) {
                 var c = row.querySelector(".bld-calc");
                 var need = c ? c.textContent.replace(/\s+/g, " ").trim() : "";
-                return "You cannot afford this yet" + (need ? ": " + need : ".") + " Earn or buy the missing resources first.";
+                return "You cannot afford this yet" + (need ? ": " + need : ".") + " Gold comes from hourly taxes; the briefing tops up missing building materials once per step, so if resources are short, reload in a moment.";
             }
             return amount ? "Amount is set to 1. Press this to build it." : "Press this to do it.";
         }
