@@ -118,11 +118,36 @@ def build_calc_payload(db, user_id: int, province_id: int) -> dict | None:
     except Exception:
         logger.exception("build_calc workforce lookup failed for %s", user_id)
 
+    # Same function the province page renders its Power figure from, so the
+    # live-updated sticky bar can't disagree with it (celess mob: raw building
+    # totals ignored productivity, workforce efficiency, fuel/gold limits and
+    # the Electric Arc Furnace's double draw).
     try:
-        from app_core.game_ticks.energy import energy_info
+        from app_core.economy import province_energy as province_energy_mod
 
-        power_used, power_total = energy_info(province_id)
+        db.execute(
+            "SELECT td.name FROM user_tech ut JOIN tech_dictionary td ON td.tech_id = ut.tech_id "
+            "WHERE ut.user_id = %s AND ut.is_unlocked = TRUE "
+            "AND td.name IN ('better_engineering', 'electric_arc_furnace')",
+            (user_id,),
+        )
+        techs = {r[0] for r in db.fetchall()}
+        db.execute("SELECT productivity FROM provinces WHERE id=%s", (province_id,))
+        prow = db.fetchone()
+        energy = province_energy_mod.province_energy(
+            owned,
+            {
+                "betterengineering": "better_engineering" in techs,
+                "electricarcfurnace": "electric_arc_furnace" in techs,
+            },
+            prow[0] if prow else None,
+            province_energy_mod.national_efficiency_multiplier(db, user_id),
+            gold,
+            stock,
+        )
+        power_used, power_total = int(energy["consumption"]), int(energy["production"])
     except Exception:
+        logger.exception("build_calc power lookup failed for %s", province_id)
         power_used = power_total = 0
 
     policies = _load_policies(db, user_id)
