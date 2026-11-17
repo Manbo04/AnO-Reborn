@@ -1163,6 +1163,31 @@ def province_build_calc_api(pId):
     return resp
 
 
+@bp.route("/api/province/<int:pId>/slot_cost", methods=["GET"])
+@login_required
+def province_slot_cost_api(pId):
+    """Exact gold for n more city/land slots (used to confirm the 'auto-buy slots' preview)."""
+    from flask import jsonify
+    from app_core.economy.build_calc import slot_cost
+
+    slot = request.args.get("slot", "")
+    try:
+        n = int(request.args.get("n", "0"))
+    except ValueError:
+        n = 0
+    if n < 1 or n > 100000:
+        return jsonify(ok=False, error="Bad amount"), 400
+    with get_request_cursor() as db:
+        cost = slot_cost(db, session["user_id"], pId, slot, n)
+        db.execute("SELECT gold FROM stats WHERE id=%s", (session["user_id"],))
+        g = db.fetchone()
+    if cost is None:
+        return jsonify(ok=False, error="Province not found"), 404
+    resp = jsonify(ok=True, gold=cost, have=int(g[0] or 0) if g else 0)
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
 @bp.route("/api/province/<int:pId>/quick_build", methods=["POST"])
 @login_required
 @limiter.limit("30 per minute")

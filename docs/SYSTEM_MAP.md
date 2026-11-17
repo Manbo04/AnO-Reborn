@@ -255,6 +255,7 @@ Tables no static query touches (dynamic SQL, scripts, or dead): `coalition_membe
 | `/api/province/<int:pId>/layout` | GET | `province:province_layout_api` |
 | `/api/province/<int:pId>/quick_build` | POST | `province:province_quick_build_api` |
 | `/api/province/<int:pId>/slot/<slot_id>` | GET | `province:province_slot_api` |
+| `/api/province/<int:pId>/slot_cost` | GET | `province:province_slot_cost_api` |
 | `/api/province_map/nodes` | GET | `app_core.world_map.routes:get_province_map_nodes` |
 | `/api/quick_search` | GET | `app_core.main.routes:api_quick_search` |
 | `/api/referrals/stats` | GET | `app_core.referrals.routes:referral_stats` |
