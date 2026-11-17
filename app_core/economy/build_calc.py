@@ -11,9 +11,12 @@ import logging
 import variables
 from app_core.economy.building_costs import (
     CITY_UNITS,
+    LAND_CITY_PRICING,
     LAND_UNITS,
+    apply_policy_gold_discount,
     get_build_cost,
     get_slot_type,
+    land_city_purchase_cost,
 )
 from app_core.economy.building_purchase import _load_policies, get_free_slots
 
@@ -43,6 +46,29 @@ def _unit_costs(policies) -> dict:
             "jobs": int((matrices.get(name) or {}).get("worker_count", 0) or 0),
         }
     return out
+
+
+SLOT_UNIT = {"city": "cityCount", "land": "land"}
+
+
+def _land_mult(db, user_id: int) -> float:
+    from app_core.directives.services import active_keys, land_price_multiplier_for
+
+    return land_price_multiplier_for(active_keys(db, user_id))
+
+
+def slot_cost(db, user_id: int, province_id: int, slot: str, n: int) -> int | None:
+    """Exact gold for buying n more city/land slots here (same helper the buy route and Mass
+    Purchase use). None if the province is not the user's or the slot type is unknown."""
+    unit = SLOT_UNIT.get(slot)
+    if not unit:
+        return None
+    col = "citycount" if slot == "city" else "land"
+    db.execute(f"SELECT CAST({col} AS INTEGER) FROM provinces WHERE id=%s AND userId=%s", (province_id, user_id))
+    row = db.fetchone()
+    if not row:
+        return None
+    return int(land_city_purchase_cost(unit, int(row[0] or 0), int(n), _load_policies(db, user_id), _land_mult(db, user_id)))
 
 
 def build_calc_payload(db, user_id: int, province_id: int) -> dict | None:
@@ -99,7 +125,21 @@ def build_calc_payload(db, user_id: int, province_id: int) -> dict | None:
     except Exception:
         power_used = power_total = 0
 
+    policies = _load_policies(db, user_id)
+    mult = _land_mult(db, user_id)
+    slots = {}
+    for slot, unit in SLOT_UNIT.items():
+        base, inc, cap = LAND_CITY_PRICING[unit]
+        slots[slot] = {
+            "base": base,
+            "inc": inc,
+            "cap": cap,
+            "owned": city_total if slot == "city" else land_total,
+            "factor": apply_policy_gold_discount(unit, 1_000_000, policies) / 1_000_000 * mult,
+        }
+
     return {
+        "slots": slots,
         "gold": gold,
         "stock": stock,
         "owned": owned,
@@ -107,6 +147,6 @@ def build_calc_payload(db, user_id: int, province_id: int) -> dict | None:
         "land": {"total": land_total, "free": free_land, "used": land_total - free_land},
         "power": {"used": int(power_used or 0), "total": int(power_total or 0)},
         "workforce": {"jobs_needed": jobs_needed, "jobs_available": jobs_available},
-        "costs": _unit_costs(_load_policies(db, user_id)),
+        "costs": _unit_costs(policies),
         "min_efficiency": float(getattr(variables, "PRODUCTION_EFFICIENCY_MIN", 0.2)),
     }

@@ -24,3 +24,27 @@ def test_payload_is_none_for_a_province_the_user_does_not_own():
             return None
 
     assert build_calc.build_calc_payload(Cur(), 1, 2) is None
+
+
+def _js_mirror(slot, n):
+    """Python copy of the formula in static/js/province-ui.js slotCostFor()."""
+    from app_core.economy.building_costs import LAND_CITY_PRICING
+
+    base, inc, cap = LAND_CITY_PRICING[build_calc.SLOT_UNIT[slot]]
+    return base, inc, cap
+
+
+def test_slot_preview_formula_matches_server_price():
+    from app_core.economy.building_costs import land_city_purchase_cost
+
+    for slot in ("city", "land"):
+        base, inc, cap = _js_mirror(slot, 0)
+        for owned in (0, 10, cap - 3, cap, cap + 40):
+            for n in (1, 7, 250):
+                unc = max(0, min(n, cap - owned))
+                raw = unc * base + inc * (unc * owned + unc * (unc - 1) / 2) + (n - unc) * (base + cap * inc)
+                assert int(raw) == land_city_purchase_cost(build_calc.SLOT_UNIT[slot], owned, n, [], 1.0)
+
+
+def test_slot_cost_unknown_slot_is_none():
+    assert build_calc.slot_cost(None, 1, 1, "sky", 5) is None

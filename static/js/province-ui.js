@@ -79,6 +79,24 @@
   var pid = root.getAttribute('data-province');
   if (!pid) return;
   var calc = null;
+  var autoSlots = false;
+  try { autoSlots = localStorage.getItem('ano_auto_slots') === '1'; } catch (e) { /* storage may be blocked */ }
+  Array.prototype.forEach.call(root.querySelectorAll('.auto-slots-cb'), function (cb) { cb.checked = autoSlots; });
+  root.addEventListener('change', function (ev) {
+    if (!ev.target.classList || !ev.target.classList.contains('auto-slots-cb')) return;
+    autoSlots = ev.target.checked;
+    try { localStorage.setItem('ano_auto_slots', autoSlots ? '1' : '0'); } catch (e) { /* ignore */ }
+    Array.prototype.forEach.call(root.querySelectorAll('.auto-slots-cb'), function (cb) { cb.checked = autoSlots; });
+    renderAll();
+  });
+  // Mirrors the server's capped-linear land/city price (display only; the server re-checks before buying).
+  function slotCostFor(slot, n) {
+    var s = calc && calc.slots && calc.slots[slot];
+    if (!s || n < 1) return 0;
+    var unc = Math.max(0, Math.min(n, s.cap - s.owned));
+    var raw = unc * s.base + s.inc * (unc * s.owned + unc * (unc - 1) / 2) + (n - unc) * (s.base + s.cap * s.inc);
+    return Math.floor(raw * s.factor);
+  }
   var nf = new Intl.NumberFormat('en-US');
   function fmt(n) { return nf.format(Math.round(n)); }
   var cf = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 });
@@ -119,6 +137,12 @@
     var short = false;
     if (!c || !qty || qty < 1) return { parts: out, short: false };
     var gold = c.gold * qty;
+    var slotDef = 0, slotGold = 0;
+    if (autoSlots && c.slot && calc.slots && qty > calc[c.slot].free) {
+      slotDef = qty - calc[c.slot].free;
+      slotGold = slotCostFor(c.slot, slotDef);
+      gold += slotGold;
+    }
     var gp = el('span', gold > calc.gold ? 'short' : 'ok', fmt(gold) + ' gold' + (gold > calc.gold ? ' (need ' + fmt(gold - calc.gold) + ' more)' : ''));
     out.push(gp); if (gold > calc.gold) short = true;
     Object.keys(c.resources).forEach(function (r) {
@@ -127,7 +151,9 @@
       out.push(el('span', low ? 'short' : 'ok', fmt(need) + ' ' + r.replace(/_/g, ' ') + (low ? ' (need ' + fmt(need - have) + ' more)' : '')));
       if (low) short = true;
     });
-    if (c.slot) {
+    if (slotDef > 0) {
+      out.push(el('span', 'ok', 'Includes ' + fmt(slotDef) + ' extra ' + c.slot + ' slot' + (slotDef === 1 ? '' : 's') + ' (' + fmt(slotGold) + ' gold)'));
+    } else if (c.slot) {
       var free = calc[c.slot].free;
       if (qty > free) { out.push(el('span', 'short', 'Needs ' + fmt(qty - free) + ' more ' + c.slot + ' slot' + (qty - free === 1 ? '' : 's') + ' (' + fmt(free) + ' free)')); short = true; }
     }
@@ -215,6 +241,29 @@
       .catch(function () { /* next full load will catch up */ });
   }
 
+  // Auto-buy slots: confirm the exact price first, then buy only the missing slots with the normal routes.
+  function buySlots(slot, n, buildingGold) {
+    var unit = slot === 'city' ? 'cityCount' : 'land';
+    return fetch('/api/province/' + encodeURIComponent(pid) + '/slot_cost?slot=' + slot + '&n=' + n, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (q) {
+        if (!q || !q.ok) { toast((q && q.error) || 'Could not price the extra slots.', true); return false; }
+        if (q.gold + buildingGold > q.have) {
+          toast('Not enough gold for the slots and buildings: need ' + fmt(q.gold + buildingGold - q.have) + ' more. Nothing was bought.', true);
+          return false;
+        }
+        var b = new URLSearchParams(); b.set(unit, String(n));
+        return fetch('/buy/' + unit + '/' + encodeURIComponent(pid), { method: 'POST', body: b, credentials: 'same-origin', headers: { 'X-Requested-With': 'fetch', 'Accept': 'application/json' } })
+          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok && j.ok, j: j }; }); })
+          .then(function (res) {
+            if (!res.ok) { toast((res.j && res.j.error) || 'Could not buy the extra slots. Nothing was built.', true); return false; }
+            toast('Bought ' + fmt(n) + ' ' + slot + ' slot' + (n === 1 ? '' : 's') + ' first.', false);
+            return true;
+          });
+      })
+      .catch(function () { toast('Could not reach the server. Nothing was changed; reload and check.', true); return false; });
+  }
+
   // ---- submit via fetch, stay on the same tab ----
   var inflight = false;
   root.addEventListener('submit', function (ev) {
@@ -230,9 +279,19 @@
     var panel = btn ? btn.closest('.bld-row, .province-purchase-panel, form') : form;
     if (panel) panel.classList.add('purchase-busy');
     var body = new URLSearchParams(new FormData(form));
-    fetch(url, { method: 'POST', body: body, credentials: 'same-origin', headers: { 'X-Requested-With': 'fetch', 'Accept': 'application/json' } })
-      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok && j.ok, j: j }; }); })
+    var qtyIn = btn && btn.closest('.bld-row') && btn.closest('.bld-row').querySelector('.bld-qty');
+    var pre = Promise.resolve(true);
+    if (autoSlots && calc && qtyIn && /^\/buy\//.test(url) && calc.costs[qtyIn.name] && calc.costs[qtyIn.name].slot) {
+      var c0 = calc.costs[qtyIn.name], q0 = parseInt(qtyIn.value, 10) || 0, def = q0 - calc[c0.slot].free;
+      if (def > 0) pre = buySlots(c0.slot, def, c0.gold * q0);
+    }
+    pre.then(function (go) {
+      if (!go) return { skipped: true };
+      return fetch(url, { method: 'POST', body: body, credentials: 'same-origin', headers: { 'X-Requested-With': 'fetch', 'Accept': 'application/json' } })
+        .then(function (r) { return r.json().then(function (j) { return { ok: r.ok && j.ok, j: j }; }); });
+    })
       .then(function (res) {
+        if (res.skipped) return loadCalc();
         if (res.ok) {
           toast(res.j.message || 'Done', false);
           var qty = btn && btn.closest('.bld-row') && btn.closest('.bld-row').querySelector('.bld-qty');
