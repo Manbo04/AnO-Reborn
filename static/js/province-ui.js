@@ -283,7 +283,16 @@
     var pre = Promise.resolve(true);
     if (autoSlots && calc && qtyIn && /^\/buy\//.test(url) && calc.costs[qtyIn.name] && calc.costs[qtyIn.name].slot) {
       var c0 = calc.costs[qtyIn.name], q0 = parseInt(qtyIn.value, 10) || 0, def = q0 - calc[c0.slot].free;
-      if (def > 0) pre = buySlots(c0.slot, def, c0.gold * q0);
+      if (def > 0) {
+        // Never buy slots for a build that cannot go through: check materials first.
+        var lack = Object.keys(c0.resources || {}).filter(function (r) { return c0.resources[r] * q0 > (calc.stock[r] || 0); });
+        if (lack.length) {
+          toast('Not enough ' + lack.map(function (r) { return r.replace(/_/g, ' '); }).join(', ') + ' for that many. Nothing was bought.', true);
+          pre = Promise.resolve(false);
+        } else {
+          pre = buySlots(c0.slot, def, c0.gold * q0);
+        }
+      }
     }
     pre.then(function (go) {
       if (!go) return { skipped: true };
