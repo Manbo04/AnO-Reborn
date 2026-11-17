@@ -154,8 +154,13 @@
                 <h3 class="templatecontentheader"><span class="material-icons-outlined">dangerous</span> Nuclear Weapons (Nukes)</h3>
                 <p class="templatecontentpleft">The ultimate weapon. A nuke hits <strong>one province you choose</strong> and faces that province's Iron Domes. A single nuke is all-or-nothing: without the Star Wars Project tech it can't be shot down, with it the target province needs about 6&ndash;10 Iron Domes (10 is the maximum) for a real chance (roughly 35% at 6, almost certain at 9&ndash;10). A shot-down nuke is still used up. You review the expected damage and cost, then confirm, before it launches.</p>
                 <table class="templatetable">
+                    {% if nuke_rework_on() %}
+                    <tr><td><strong>Production</strong></td><td>Nukes are no longer bought. Each Nuclear Weapons Facility builds 1 missile every 72 hours from 120 t aluminium + 100 t components + 25 t gasoline + 20 t uranium, taken from your stock as it is built. Then you activate it from the Military page for gold</td></tr>
+                    <tr><td><strong>Build Limit</strong></td><td>1 per Silo (requires silos). Production pauses when every silo is full; progress is never banked beyond one missile</td></tr>
+                    {% else %}
                     <tr><td><strong>Cost</strong></td><td>$80M + 120 t aluminium + 100 t components + 25 t gasoline + 20 t uranium</td></tr>
                     <tr><td><strong>Build Limit</strong></td><td>1 per Silo (requires silos)</td></tr>
+                    {% endif %}
                     <tr><td><strong>How to launch</strong></td><td>Wars &rarr; Attack &rarr; Nukes, or "Plan nuclear strike" on the enemy's country page (needs an active war)</td></tr>
                     <tr><td><strong>Deaths</strong></td><td>Depend on density: the blast covers ~1,413 km&sup2;, hitting the cities first. Many cities on little land = heavy losses; big spread-out provinces lose only a small share</td></tr>
                     <tr><td><strong>Damage</strong></td><td>Cities and buildings destroyed in proportion to the area hit; happiness in that province drops by up to 30 points</td></tr>
@@ -166,6 +171,15 @@
                     <tr><td><strong>Requirement</strong></td><td>At least 1,000,000 influence to launch, unless retaliating. Requires the Nuclear Testing Facility tech</td></tr>
                 </table>
                 <p class="templatecontentpleft" style="margin-top: 10px;"><em>Note: You cannot build nukes without silos. Each silo allows you to store 1 nuke.</em></p>
+                {% if nuke_rework_on() %}
+                <h3 class="templatecontentheader" style="margin-top: 14px;"><span class="material-icons-outlined">rocket_launch</span> Fire All and auto-retaliation</h3>
+                <table class="templatetable">
+                    <tr><td><strong>Fire All</strong></td><td>From the nuclear strike page of a war, launch every active nuke at once: one warhead per enemy province, the most populated first. Each warhead can still be shot down. You review the targets and cost, then confirm. A Fire All counts as your single volley for that war</td></tr>
+                    <tr><td><strong>Influence cost</strong></td><td>One flat penalty for the whole salvo: 75% of your influence (40% if you are retaliating), however many warheads you fire. A salvo where every warhead is shot down costs no influence</td></tr>
+                    <tr><td><strong>Auto-retaliate</strong></td><td>Optional (Military page). If someone nukes you and you detect the launch, your active nukes fire back at once, at the 40% retaliation cost. Detection is 25%, or 50% with the Star Wars Project</td></tr>
+                    <tr><td><strong>Auto-activate</strong></td><td>Optional (Military page). Newly built missiles are activated for you as they finish, if you can afford it</td></tr>
+                </table>
+                {% endif %}
             </div>
         </div>
 

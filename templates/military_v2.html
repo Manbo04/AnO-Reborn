@@ -115,7 +115,7 @@
 {% if k == 'nukes' and nuke_info %}
 {% set ni = nuke_info %}
 <section class="mil-nuke game-glass" id="nuke-facility" aria-label="Nuclear programme">
-    <h3><span class="material-icons-outlined">radioactive</span> Nuclear programme</h3>
+    <h3><span class="material-icons-outlined" aria-hidden="true">rocket_launch</span><span>Nuclear programme</span></h3>
     <div class="mil-nuke-stats">
         <span><strong>{{ ni.facilities }}</strong> facilit{{ 'y' if ni.facilities == 1 else 'ies' }}</span>
         <span><strong>{{ ni.owned + ni.stockpile }}</strong> / {{ ni.capacity }} silo room</span>
@@ -149,11 +149,12 @@
 
 <style>
 .mil-nuke{padding:14px;margin:-4px 0 14px}
-.mil-nuke h3{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:1.05rem}
+.mil-nuke h3{display:flex;align-items:center;justify-content:flex-start;gap:8px;margin:0 0 10px;font-size:1.05rem;text-align:left;width:auto}
+.mil-nuke h3 .material-icons-outlined{flex-shrink:0}
 .mil-nuke-stats{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.9rem;margin-bottom:10px}
 .mil-nuke-bar{height:8px;border-radius:6px;background:rgba(0,0,0,.35);overflow:hidden}
 .mil-nuke-bar i{display:block;height:100%;background:#e0a030}
-.mil-nuke-note{font-size:.85rem;opacity:.9;margin:8px 0}
+.mil-nuke-note{font-size:.85rem;opacity:.9;margin:8px 0;line-height:1.4}
 .mil-nuke-toggle{margin:8px 0}
 </style>
 <div class="game-page-bg" style="background-image: url('{{ url_for('static', filename='images/military.jpg') }}');"></div>
