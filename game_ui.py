@@ -114,7 +114,7 @@ BUILDING_LEGACY_IMAGES: dict[str, str] = {
     "oil_refineries": "oilrefinery.jpg",
     "drone_sites": "dronesite.jpg",
     "missile_batteries": "missilebattery.jpg",
-    "nuclear_weapons_facility": "silo.jpg",  # placeholder until HQ art (PR3); hidden while flag off
+    "nuclear_weapons_facility": "nuclear_weapons_facility.jpg",
     "silver_mines": "silvermine.jpg",
     "diamond_mines": "diamondmine.jpg",
     "bullion_mines": "bullionmine.jpg",
