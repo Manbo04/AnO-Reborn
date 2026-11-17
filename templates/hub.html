@@ -36,10 +36,9 @@
                 <div id="hubChatRoot" data-current-user-id="{{ session.user_id }}" data-current-username="{{ username }}" class="game-panel--flex-col" style="flex: 1; min-height: 0;">
                     <div class="game-chat-feed" id="hubChatMessages" aria-live="polite" style="flex: 1;">
                         {% if chat_history and chat_history|length > 0 %}
-                            {# Player-requested (2026-09-02): newest message on top, feed
-                               scrolls within a fixed height instead of growing. Reversed
-                               here since list_global_chat_messages() returns oldest-first. #}
-                            {% for m in chat_history|reverse %}
+                            {# Newest message at the bottom (Kiwi, 2026-11-17), like every chat app.
+                               list_global_chat_messages() returns oldest-first. #}
+                            {% for m in chat_history %}
                             <div class="game-chat-msg{% if m.sender_id|string == session.user_id|string %} game-chat-msg--mine{% endif %}">
                                 <a href="/country/id={{ m.sender_id }}" class="game-chat-avatar" title="{{ m.sender_username }}"><img src="/flag/country/{{ m.sender_id }}" alt="{{ m.sender_username }}"></a>
                                 <div>
@@ -182,6 +181,7 @@
         var available = root.getBoundingClientRect().height - form.getBoundingClientRect().height;
         if (available > 120) {
             messagesEl.style.maxHeight = available + 'px';
+            scrollToBottom();
         }
     }
     syncChatFeedHeight();
@@ -191,7 +191,16 @@
         resizeTimer = setTimeout(syncChatFeedHeight, 150);
     });
 
-    messagesEl.scrollTop = 0;
+    function scrollToBottom() { messagesEl.scrollTop = messagesEl.scrollHeight; }
+    function nearBottom() {
+        return messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight < 80;
+    }
+    scrollToBottom();
+    // Avatars load after first paint and grow the feed; stay pinned to the newest message.
+    window.addEventListener('load', scrollToBottom);
+    Array.prototype.forEach.call(messagesEl.querySelectorAll('img'), function (img) {
+        if (!img.complete) img.addEventListener('load', scrollToBottom, {once: true});
+    });
 
     function renderMessageNode(m) {
         var div = document.createElement('div');
@@ -218,8 +227,9 @@
     }
 
     function renderMessage(m) {
-        messagesEl.insertBefore(renderMessageNode(m), messagesEl.firstChild);
-        messagesEl.scrollTop = 0;
+        var stick = nearBottom();
+        messagesEl.appendChild(renderMessageNode(m));
+        if (stick) scrollToBottom();
     }
 
     // Messages we've rendered locally the instant they were sent, before the
@@ -235,8 +245,8 @@
             flair: null,
             content: content,
         });
-        messagesEl.insertBefore(div, messagesEl.firstChild);
-        messagesEl.scrollTop = 0;
+        messagesEl.appendChild(div);
+        scrollToBottom();
         pendingOwnMessages.push({content: content, el: div});
     }
 
