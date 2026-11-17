@@ -1376,6 +1376,9 @@ def create_app():
     from app_core.economy import ledger_goods as _ledger_goods
 
     app.jinja_env.globals["ledger_goods_on"] = _ledger_goods.enabled
+    from app_core import nuke_rework as _nuke_rework
+
+    app.jinja_env.globals["nuke_rework_on"] = _nuke_rework.enabled
     app.jinja_env.globals["ledger_goods_buildings"] = _ledger_goods.LEDGER_BUILDINGS
 
     from extensions import socketio
