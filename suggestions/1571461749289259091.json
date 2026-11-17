@@ -2,7 +2,7 @@
   "author_id": "249007223454433292",
   "created_at": "2026-11-15T09:47:57Z",
   "kind": "suggestion",
-  "last_message_id": "1571848641591902369",
+  "last_message_id": "1572216564730564659",
   "last_player_message_at": "2026-11-16T02:20:52Z",
   "messages": [
     {
@@ -44,6 +44,16 @@
       "id": "1571848641591902369",
       "staff": false,
       "text": "<@249007223454433292> got your #5, auto-buying land or cities when you buy buildings. it's next on my list. I'll post here when it's live."
+    },
+    {
+      "at": "2026-11-17T11:47:19Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1572216564730564659",
+      "staff": false,
+      "text": "<@249007223454433292> #5 is live. on a province's building tabs there's a checkbox, 'Also buy the land/city slots I need'. tick it and when you type more buildings than you have free slots, the cost preview includes the extra slots, and Buy gets just the missing ones first and then builds. if you're short on gold or materials it buys nothing. it's off by default."
     }
   ],
   "status": "new",

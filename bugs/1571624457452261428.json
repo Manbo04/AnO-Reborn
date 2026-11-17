@@ -2,8 +2,8 @@
   "author_id": "911307050963836968",
   "created_at": "2026-11-15T20:34:30Z",
   "kind": "bug",
-  "last_message_id": "1571900181048205483",
-  "last_player_message_at": "2026-11-16T14:50:07Z",
+  "last_message_id": "1572218739150164129",
+  "last_player_message_at": "2026-11-17T11:55:57Z",
   "messages": [
     {
       "at": "2026-11-15T20:34:30Z",
@@ -172,6 +172,26 @@
       "id": "1571900181048205483",
       "staff": false,
       "text": "balance ideas:\ngrowth should slow down as pop gets huge, so small nations can catch up\ncatch-up bonus for nations way below average (cheaper provinces/faster growth)\ncap raid loot per war, less loot for repeat raids on the same target\nfirst-strike window after war declaration so defenders can react\nnuke damage as % of province, not raw pop\ndefensive units (SAM/iron dome) shouldnt count toward the 10% army cap\nlate-game stuff that isnt war (research, wonders)\npension crisis should scale with economy, -5k/h means nothing\nalso you should really deal with the people who abused raiding before the fixes. some nations farmed the top players for millions of components and now nobody can catch up, so even if you fix the mechanics the damage stays. maybe check the war logs for nations that raided the same targets over and over and either remove the excess loot or reset it. otherwise the new balance changes wont matter because they already have the lead locked in. a lot of people quit because of this"
+    },
+    {
+      "at": "2026-11-17T11:54:01Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1572218251742814260",
+      "staff": false,
+      "text": "<@911307050963836968> got it, thanks. the tutorial rework is about explaining the interface properly, what each screen is and what to look at. I'll plan it out and post it here before I build it so you can tell me if I'm missing things. your balance ideas (slowing growth at huge pop, catch-up for small nations, loot caps, a first-strike window) change the economy and wars, so those go to the Friday vote rather than getting added quietly."
+    },
+    {
+      "at": "2026-11-17T11:55:57Z",
+      "attachments": [],
+      "author": "Dan90",
+      "author_id": "911307050963836968",
+      "bot": false,
+      "id": "1572218739150164129",
+      "staff": true,
+      "text": "Good to hear"
     }
   ],
   "thread_id": "1571624457452261428",

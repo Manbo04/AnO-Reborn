@@ -3,8 +3,8 @@
   "ballot_id": "2026-10-16",
   "created_at": "2026-10-15T08:49:02Z",
   "kind": "suggestion",
-  "last_message_id": "1563254455854698529",
-  "last_player_message_at": "2026-10-15T13:41:43Z",
+  "last_message_id": "1572145119409217548",
+  "last_player_message_at": "2026-11-17T07:03:25Z",
   "messages": [
     {
       "at": "2026-10-15T08:49:02Z",
@@ -75,6 +75,16 @@
       "id": "1563254455854698529",
       "staff": false,
       "text": "<@249007223454433292> the vote is in: **5 yes / 4 no**. Your suggestion passed, it's queued to be built. You'll get a ping here when it's live."
+    },
+    {
+      "at": "2026-11-17T07:03:25Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1572145119409217548",
+      "staff": false,
+      "text": "I didn't look into it, but seems like either some people don't like this idea, or don't know enough about how it will be changed.\n\nI'm just trying to play a trading game in a community too small to properly support it.\n\nAnother idea to accomplish the goal would be to allow for robot/npc/magic trades for stuff at generally crappier rates.\n1. Encourages instead of mandating human-to-human trading.\n2. If I happen to hate everyone here, I can still choose to trade at weaker rates and still play the game."
     }
   ],
   "poll_message_id": "1560691736928456726",
