@@ -81,7 +81,7 @@
         {% endif %}
 
         <p class="mil-desc">{{ u.desc }}</p>
-        {% if u.key == sam_batteries %}<p class="mil-desc"><strong>Your interception chance:</strong> {{ sam_intercept.drones }}% of incoming kamikaze drones, {{ sam_intercept.cruise }}% of cruise missiles (&plusmn;10% each strike).</p>{% endif %}
+        {% if u.key == 'sam_batteries' %}<p class="mil-desc"><strong>Your interception chance:</strong> {{ sam_intercept.drones }}% of incoming kamikaze drones, {{ sam_intercept.cruise }}% of cruise missiles (&plusmn;10% each strike).</p>{% endif %}
 
         <div class="mil-costs" aria-label="Cost per unit">
             <span class="mil-costs-label">{% if sp %}To activate{% else %}Cost each{% endif %}</span>
