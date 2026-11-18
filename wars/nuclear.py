@@ -297,6 +297,15 @@ def plan_strike(db, attacker_id, war_id, province_id=None, salvo=False) -> dict:
             f"You need at least {MIN_LAUNCH_INFLUENCE:,} influence to launch a "
             f"first strike (you have {influence:,})."
         )
+    # Who can nuke whom (flag nuke_target_rules, wars/nuke_eligibility.py): range and
+    # protection are rechecked at launch time. Checked once up front: warheads inside a
+    # Fire All salvo (salvo=True) are not rechecked, because the first warhead can push
+    # the target out of range. Retaliation is always allowed.
+    if blocked is None and not salvo:
+        from wars import nuke_eligibility
+
+        if nuke_eligibility.enabled(attacker_id):
+            blocked = nuke_eligibility.check(db, attacker_id, enemy_id, retaliation)
     # Temporary pause (flag pause_missile_launches): applies to every launch path,
     # including Fire All, retaliation and auto-retaliation, since they all go through
     # plan_strike. Previews show the same message in `blocked`.
