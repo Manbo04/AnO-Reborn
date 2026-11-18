@@ -16,7 +16,9 @@ def target_data(cId):
     }
 
 
-def apply_building_damage(db, target_id, building_name, damage_points, threshold):
+def apply_building_damage(
+    db, target_id, building_name, damage_points, threshold, max_share=None
+):
     """Roll accumulated damage_points against a building_dictionary row the
     defender owns, destroying floor(damage_points // threshold) of them.
 
@@ -26,6 +28,10 @@ def apply_building_damage(db, target_id, building_name, damage_points, threshold
     being copy-pasted per weapon type. Returns (destroyed_count, had_any)
     where had_any is False if the defender owns none of building_name at all
     (distinguishes "nothing to destroy" from "destroyed 0, missed").
+
+    ``max_share`` (flag strike_building_cap, wars/strike_building_cap.py): when given,
+    one call destroys at most that share of the building type the defender owns in
+    total. None (the default and the flag-off case) keeps the old behaviour.
     """
     # user_buildings has one row per (user, building, province). Spread the
     # destruction over those rows, biggest stack first; a single unfiltered
@@ -47,7 +53,9 @@ def apply_building_damage(db, target_id, building_name, damage_points, threshold
     if total <= 0:
         return 0, False
 
-    destroyed = min(total, int(damage_points // threshold))
+    from wars.strike_building_cap import capped_destroyed
+
+    destroyed = capped_destroyed(total, int(damage_points // threshold), max_share)
     left = destroyed
     for province_id, quantity, building_id in rows:
         if left <= 0:

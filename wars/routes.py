@@ -33,6 +33,7 @@ import random
 import traceback
 
 import variables
+from wars import strike_building_cap
 from wars.service import apply_building_damage, apply_population_strike
 from wars import rules as war_rules
 from app_core.world_affairs.services import log_event
@@ -3182,6 +3183,7 @@ def drone_strike():
             destroyed, had_target = apply_building_damage(
                 db, target_id, STRIKE_TARGET_BUILDINGS[strike_target],
                 damage_points, STRIKE_TARGET_THRESHOLDS[strike_target],
+                max_share=strike_building_cap.max_share_for(attacker_id),
             )
 
         soldiers_lost = 0
@@ -3322,6 +3324,7 @@ def cruise_missile_strike():
             destroyed, had_target = apply_building_damage(
                 db, target_id, STRIKE_TARGET_BUILDINGS[strike_target],
                 damage_points, STRIKE_TARGET_THRESHOLDS[strike_target],
+                max_share=strike_building_cap.max_share_for(attacker_id),
             )
 
         if strike_target == POPULATION_TARGET:
