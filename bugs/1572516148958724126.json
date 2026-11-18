@@ -1,0 +1,22 @@
+{
+  "author_id": "249007223454433292",
+  "created_at": "2026-11-18T07:37:45Z",
+  "kind": "bug",
+  "last_message_id": "1572516148958724126",
+  "last_player_message_at": "2026-11-18T07:37:45Z",
+  "messages": [
+    {
+      "at": "2026-11-18T07:37:45Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1572516148958724126",
+      "staff": false,
+      "text": "I have the project for 40% more spies. I had max spies.\n\nLost 1 spy in espionage. Says max capacity, unable to rebuy lost spy"
+    }
+  ],
+  "thread_id": "1572516148958724126",
+  "title": "Spies Limit Bug",
+  "url": "https://discord.com/channels/708006319658893385/1572516148958724126"
+}
