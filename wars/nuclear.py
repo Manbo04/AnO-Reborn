@@ -291,6 +291,13 @@ def plan_strike(db, attacker_id, war_id, province_id=None, salvo=False) -> dict:
             f"You need at least {MIN_LAUNCH_INFLUENCE:,} influence to launch a "
             f"first strike (you have {influence:,})."
         )
+    # Temporary pause (flag pause_missile_launches): applies to every launch path,
+    # including Fire All, retaliation and auto-retaliation, since they all go through
+    # plan_strike. Previews show the same message in `blocked`.
+    from app_core import missile_pause
+
+    if missile_pause.paused(attacker_id):
+        blocked = missile_pause.MESSAGE
     target = None
     if province_id is not None:
         target = next((p for p in provinces if p["id"] == int(province_id)), None)
