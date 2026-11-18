@@ -155,6 +155,12 @@ class StrikeError(Exception):
         self.status = status
 
 
+class SalvoClamped(StrikeError):
+    """Raised inside a Fire All salvo when the civilian cap (wars/salvo_cap.py) leaves
+    this warhead nothing to do. The caller rolls the launch back, so the warhead stays
+    in the stockpile and nothing is charged."""
+
+
 def fresh_influence(db, user_id) -> int:
     """Influence straight from the DB (bypasses the page cache)."""
     db.execute(
@@ -324,10 +330,87 @@ def plan_strike(db, attacker_id, war_id, province_id=None, salvo=False) -> dict:
     }
 
 
-def execute_strike(db, attacker_id, war_id, province_id, salvo=False, cost_override=None) -> dict:
+def _apply_salvo_cap(db, enemy_id, prov, dmg, cap, fallout_pct):
+    """Cut one warhead's damage down to what is left under the salvo's civilian cap
+    (wars/salvo_cap.py). Reads only; the caller writes the returned numbers.
+
+    Returns (damage dict with capped deaths/cities, [(building_id, lost)], fallout pct).
+    Raises SalvoClamped when the cap leaves this warhead nothing to do."""
+    from wars import salvo_cap as sc
+
+    rem = cap.remaining()
+    blast_deaths = sc.clamp(dmg["deaths"], rem["deaths"])
+    cities = sc.clamp(dmg["cities_destroyed"], rem["cities"])
+
+    db.execute(
+        "SELECT building_id, quantity FROM user_buildings "
+        "WHERE user_id = %s AND province_id = %s AND quantity > 0 "
+        "ORDER BY building_id FOR UPDATE",
+        (enemy_id, prov["id"]),
+    )
+    rows = [(int(b), int(q)) for b, q in db.fetchall()]
+    wanted = sc.allocate_building_losses([q for _, q in rows], dmg["infra_frac"], None)
+    allowed = sc.allocate_building_losses(
+        [q for _, q in rows], dmg["infra_frac"], rem["buildings"]
+    )
+    losses = [(b, lost) for (b, _), lost in zip(rows, allowed)]
+
+    # Fallout takes whatever death allowance the blast left, spread over the nation as
+    # it will be after the blast.
+    db.execute(
+        "SELECT id, COALESCE(population, 0) FROM provinces WHERE userid = %s",
+        (enemy_id,),
+    )
+    pops = [
+        max(0, int(p) - (blast_deaths if int(pid) == int(prov["id"]) else 0))
+        for pid, p in db.fetchall()
+    ]
+    fallout_allowed = None
+    if rem["deaths"] is not None:
+        fallout_allowed = max(0, rem["deaths"] - blast_deaths)
+    capped_pct = sc.fallout_pct_for_allowance(pops, fallout_pct, fallout_allowed)
+
+    would_do = (
+        dmg["deaths"] > 0 or dmg["cities_destroyed"] > 0 or sum(wanted) > 0
+        or sc.fallout_deaths(pops, fallout_pct) > 0
+    )
+    does = (
+        blast_deaths > 0
+        or cities > 0
+        or sum(allowed) > 0
+        or sc.fallout_deaths(pops, capped_pct) > 0
+    )
+    if would_do and not does:
+        raise SalvoClamped("The salvo's civilian damage cap is reached.")
+
+    capped = dict(dmg)
+    capped["deaths"] = blast_deaths
+    capped["cities_destroyed"] = cities
+    capped["capped"] = (
+        blast_deaths < dmg["deaths"]
+        or cities < dmg["cities_destroyed"]
+        or sum(allowed) < sum(wanted)
+        or capped_pct < fallout_pct
+    )
+    return capped, losses, capped_pct
+
+
+def execute_strike(
+    db,
+    attacker_id,
+    war_id,
+    province_id,
+    salvo=False,
+    cost_override=None,
+    salvo_cap=None,
+) -> dict:
     """Launch one nuke. Atomic: runs in the caller's transaction under the
     attacker's advisory lock (same lock every strike route uses), so two
-    concurrent launches can't spend one nuke twice or both skip the cost."""
+    concurrent launches can't spend one nuke twice or both skip the cost.
+
+    ``salvo_cap`` (a wars.salvo_cap.SalvoCap, only passed by a Fire All salvo while the
+    flag nuke_salvo_civilian_cap is on) limits the damage to what is left under the
+    salvo's civilian cap. None = the unchanged behaviour."""
     db.execute("SELECT pg_advisory_xact_lock(%s)", (attacker_id,))
     plan = plan_strike(db, attacker_id, war_id, province_id, salvo=salvo)
     if plan["blocked"]:
@@ -400,6 +483,14 @@ def execute_strike(db, attacker_id, war_id, province_id, salvo=False, cost_overr
         "happiness": int(row[5]),
     }
     dmg = strike_damage(prov, target["damage"]["multiplier"])
+    from wars import aftermath as war_aftermath
+
+    fallout_pct = war_aftermath.NUKE_FALLOUT_DEATHS * RADIATION_DAMAGE_MULTIPLIER
+    building_losses = None
+    if salvo_cap is not None:
+        dmg, building_losses, fallout_pct = _apply_salvo_cap(
+            db, plan["enemy_id"], prov, dmg, salvo_cap, fallout_pct
+        )
     pop = prov["population"]
     survive = 1.0 - (dmg["deaths"] / pop) if pop > 0 else 1.0
 
@@ -429,33 +520,46 @@ def execute_strike(db, attacker_id, war_id, province_id, salvo=False, cost_overr
     )
 
     # Buildings in the province, destroyed proportionally (floor per type).
-    db.execute(
-        """
-        WITH d AS (
-            SELECT ctid AS rid, FLOOR(quantity * %s)::int AS lost
-            FROM user_buildings
-            WHERE user_id = %s AND province_id = %s AND quantity > 0
-        ), hit AS (
-            UPDATE user_buildings ub SET quantity = ub.quantity - d.lost
-            FROM d WHERE ub.ctid = d.rid AND d.lost >= 1
-            RETURNING d.lost
+    if building_losses is not None:
+        # Salvo cap on: the per-type losses were already worked out (and trimmed to the
+        # cap) in _apply_salvo_cap.
+        buildings_destroyed = 0
+        for building_id, lost in building_losses:
+            if lost >= 1:
+                db.execute(
+                    "UPDATE user_buildings SET quantity = quantity - %s "
+                    "WHERE user_id = %s AND province_id = %s AND building_id = %s",
+                    (lost, plan["enemy_id"], province_id, building_id),
+                )
+                buildings_destroyed += lost
+    else:
+        db.execute(
+            """
+            WITH d AS (
+                SELECT ctid AS rid, FLOOR(quantity * %s)::int AS lost
+                FROM user_buildings
+                WHERE user_id = %s AND province_id = %s AND quantity > 0
+            ), hit AS (
+                UPDATE user_buildings ub SET quantity = ub.quantity - d.lost
+                FROM d WHERE ub.ctid = d.rid AND d.lost >= 1
+                RETURNING d.lost
+            )
+            SELECT COALESCE(SUM(lost), 0) FROM hit
+            """,
+            (dmg["infra_frac"], plan["enemy_id"], province_id),
         )
-        SELECT COALESCE(SUM(lost), 0) FROM hit
-        """,
-        (dmg["infra_frac"], plan["enemy_id"], province_id),
-    )
-    buildings_destroyed = int(db.fetchone()[0] or 0)
+        buildings_destroyed = int(db.fetchone()[0] or 0)
 
     # 2026-10-04 rebalance (wars/aftermath.py): radiation kills
     # NUKE_FALLOUT_DEATHS of the target's WHOLE nation (so spreading out over
     # many provinces doesn't make a nation nuke-proof).
-    from wars import aftermath as war_aftermath
-
-    fallout_deaths = war_aftermath.kill_civilians(
-        db,
-        plan["enemy_id"],
-        war_aftermath.NUKE_FALLOUT_DEATHS * RADIATION_DAMAGE_MULTIPLIER,
-    )
+    # With the salvo cap on, fallout_pct was lowered so the salvo's death total stays
+    # under the cap (it is the unchanged NUKE_FALLOUT_DEATHS * multiplier otherwise).
+    fallout_deaths = war_aftermath.kill_civilians(db, plan["enemy_id"], fallout_pct)
+    if salvo_cap is not None:
+        salvo_cap.record(
+            dmg["deaths"] + fallout_deaths, buildings_destroyed, dmg["cities_destroyed"]
+        )
 
     now = datetime.now(timezone.utc)
     cost = plan["cost"]
@@ -496,6 +600,7 @@ def execute_strike(db, attacker_id, war_id, province_id, salvo=False, cost_overr
         "influence_before": plan["influence"],
         "recovery_days": RECOVERY_DAYS,
         "fallout_deaths": fallout_deaths,
+        "capped": bool(dmg.get("capped")),
     }
 
     kind = "retaliatory nuclear strike" if plan["is_retaliation"] else "nuclear strike"
