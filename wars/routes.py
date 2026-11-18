@@ -2670,6 +2670,13 @@ def strategic_airstrike():
     if missile_pause.paused(attacker_id):
         return error(403, missile_pause.MESSAGE)
 
+    # Flag strategic_airstrike_limits (ships OFF, wars/airstrike_limits.py): air action
+    # points per strike, a cap on the share of silos one strike destroys, and a higher
+    # damage bar for destroying the Nuclear Testing Facility tech.
+    from wars import airstrike_limits
+
+    limits_on = airstrike_limits.enabled(attacker_id)
+
     with get_request_cursor() as db:
         # FIXED 2026-09-23: same race class already fixed in drone_strike/
         # cruise_missile_strike on 2026-09-13, and the same underlying bug
@@ -2697,8 +2704,10 @@ def strategic_airstrike():
             ),
             (attacker_id, target_id, target_id, attacker_id),
         )
-        if not db.fetchone():
+        war_row = db.fetchone()
+        if not war_row:
             return error(403, "You are not at war with this nation.")
+        active_war_id = war_row[0]
 
         # Check attacker bombers
         db.execute(
@@ -2714,6 +2723,21 @@ def strategic_airstrike():
         if not row or row[0] < bombers_count:
             return error(400, "You don't have enough bombers!")
         bombers_unit_id = row[1]
+
+        if limits_on:
+            # Same air action points as a drone strike. Charged only after every
+            # check that can refuse the strike, so a refused strike costs nothing.
+            from wars.action_points import spend_action_points
+
+            ok_ap, ap_err = spend_action_points(
+                db,
+                active_war_id,
+                attacker_id,
+                "air",
+                airstrike_limits.STRATEGIC_AIRSTRIKE_AP_COST,
+            )
+            if not ok_ap:
+                return error(400, ap_err)
 
         # Get defender fighters
         db.execute(
@@ -2764,9 +2788,20 @@ def strategic_airstrike():
             bombing_power = surviving_bombers * random.uniform(0.7, 1.3)
             
             if strike_target == "silo":
+                silo_power = bombing_power
+                if limits_on:
+                    db.execute(
+                        "SELECT COALESCE(SUM(ub.quantity), 0) FROM user_buildings ub "
+                        "JOIN building_dictionary bd ON bd.building_id = ub.building_id "
+                        "WHERE ub.user_id = %s AND bd.name = 'silos'",
+                        (target_id,),
+                    )
+                    silo_power = airstrike_limits.silo_damage_points(
+                        int(db.fetchone()[0] or 0), bombing_power
+                    )
                 # 15 damage points needed to destroy 1 silo
                 destroyed_silos, had_silos = apply_building_damage(
-                    db, target_id, "silos", bombing_power, 15
+                    db, target_id, "silos", silo_power, 15
                 )
                 if destroyed_silos > 0:
                     damage_report = f"destroyed {destroyed_silos} Missile Silo(s)"
@@ -2783,7 +2818,7 @@ def strategic_airstrike():
                 )
                 t_row = db.fetchone()
                 if t_row:
-                    if bombing_power >= 50:
+                    if bombing_power >= airstrike_limits.tech_threshold(limits_on):
                         tech_id = t_row[0]
                         db.execute(
                             "UPDATE user_tech SET is_unlocked = FALSE WHERE user_id = %s AND tech_id = %s",
