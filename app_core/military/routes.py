@@ -37,6 +37,13 @@ def military():
             limits = compute_display_limits(cId, db, units_dict, stockpile)
             upgrades = get_upgrades(cId, db=db)  # Reuse cursor
 
+        from wars.air_defense import expected_sam_interception
+
+        sam_n = int((units_dict.get("sam_batteries") or {}).get("quantity") or 0)
+        sam_intercept = {
+            "drones": round(expected_sam_interception(sam_n, "kamikaze_drones") * 100),
+            "cruise": round(expected_sam_interception(sam_n, "cruise_missiles") * 100),
+        }
         template = "military_v2.html" if is_theme_v2_enabled("military") else "military.html"
         return render_template(
             template,
@@ -51,6 +58,7 @@ def military():
             manpower_free=manpower_free,
             stockpile=stockpile,
             nuke_info=nuke_info,
+            sam_intercept=sam_intercept,
         )
 
 @bp.route("/military/<way>/<units>", methods=["POST"])

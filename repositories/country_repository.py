@@ -2,6 +2,10 @@ from database import get_request_cursor
 from psycopg2.extras import RealDictCursor
 from influence_formula import influence_subquery_sql
 
+class AccountDeletionBlocked(Exception):
+    """Raised when a nation cannot be deleted yet (unsettled debts)."""
+
+
 class CountryRepository:
     @staticmethod
     def get_countries_paginated(
@@ -116,6 +120,30 @@ class CountryRepository:
             # Track how many rows we delete from key tables for observability
             deleted_counts = {}
 
+            # Debts must be settled first: deleting would otherwise wipe an
+            # active loan/bond (free money for the borrower, lost principal
+            # for the lender). These tables FK to users with no ON DELETE
+            # action, which made nation deletion 500 (2026-11-18).
+            db.execute(
+                "SELECT 1 FROM user_loans WHERE user_id=%s "
+                "AND status='active' AND balance > 0 LIMIT 1",
+                (cId,),
+            )
+            if db.fetchone():
+                raise AccountDeletionBlocked(
+                    "Repay your active loan before deleting your nation."
+                )
+            db.execute(
+                "SELECT 1 FROM bonds WHERE status='active' "
+                "AND (issuer_id=%s OR lender_id=%s) LIMIT 1",
+                (cId, cId),
+            )
+            if db.fetchone():
+                raise AccountDeletionBlocked(
+                    "Settle your active bonds (as issuer or lender) before "
+                    "deleting your nation."
+                )
+
             db.execute("DELETE FROM referral_active_days WHERE referred_user_id=%s", (cId,))
             deleted_counts["referral_active_days"] = db.rowcount
             db.execute(
@@ -129,6 +157,13 @@ class CountryRepository:
                 (cId,),
             )
             deleted_counts["referred_by_user_id_cleared"] = db.rowcount
+
+            db.execute("DELETE FROM bonds WHERE issuer_id=%s OR lender_id=%s", (cId, cId))
+            deleted_counts["bonds"] = db.rowcount
+            db.execute("DELETE FROM user_loans WHERE user_id=%s", (cId,))
+            db.execute("DELETE FROM national_currency_conversions WHERE user_id=%s", (cId,))
+            db.execute("DELETE FROM interactive_events WHERE user_id=%s", (cId,))
+            db.execute("UPDATE bounties SET claimed_by=NULL WHERE claimed_by=%s", (cId,))
 
             # Before the users row goes (trades cascade on it): give nations
             # that offered this one a direct trade their escrow back.

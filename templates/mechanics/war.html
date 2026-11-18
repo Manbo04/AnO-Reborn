@@ -125,6 +125,7 @@
                 <table class="templatetable">
                     <tr><td><strong>Spies</strong></td><td>Intel ops, 10 per admin building</td></tr>
                     <tr><td><strong>Counter-Intelligence Agents</strong></td><td>Intercept enemy spy ops before they happen (up to 60% chance, higher the more agents you have per spy sent), 10 per admin building</td></tr>
+                    <tr><td><strong>SAM Batteries</strong></td><td>Shoot down incoming kamikaze drones and cruise missiles (not ICBMs or nukes, those face Iron Domes). Interception chance = 1 &minus; e<sup>&minus;SAMs/35</sup>: about 25% with 10 SAMs, 63% with 35, 76% with 50, 94% with 100, each roll varying &plusmn;10%. Hard cap 90% vs drones, 80% vs cruise missiles. 20 per army base. Your current chance is shown on the Military page under SAM Batteries</td></tr>
                     <tr><td><strong>ICBMs</strong></td><td>Long-range missiles (see below)</td></tr>
                     <tr><td><strong>Nukes</strong></td><td>Mass destruction (see below)</td></tr>
                 </table>
@@ -264,6 +265,8 @@
                     <tr><td><strong>Units</strong></td><td>Soldiers, Tanks, Artillery</td></tr>
                     <tr><td><strong>Cost</strong></td><td>3 ground AP</td></tr>
                     <tr><td><strong>Effective vs</strong></td><td>Enemy ground forces & infrastructure. Attack helicopters (Apaches) can join a ground attack</td></tr>
+                    <tr><td><strong>How a battle is decided</strong></td><td>Each side scores: a random roll (1&ndash;5) + a presence bonus (units sent &divide; 150, added up over every unit type) + a matchup bonus (every one of your unit types against every enemy unit type, from their attack and defense stats). The defender gets +10% on presence and matchup per entrenchment level (max level 3, +30%); the attacker gets +0.1% per point of intel (max +10% at 100 intel). Higher score wins and the defender wins ties. A side with no usable units (for example, out of upkeep resources) cannot win</td></tr>
+                    <tr><td><strong>Casualties</strong></td><td>Only units you committed can die. The winner loses about 4% of each unit type sent, times (1 + loser&apos;s score) &divide; winner&apos;s score, max 30%. The loser loses about 5% times (winner&apos;s score &divide; loser&apos;s score), max 50%. Both vary &plusmn;20&ndash;30% and at least 1 unit is lost per type sent</td></tr>
                 </table>
             </div>
             <div class="templatedivflex2left">

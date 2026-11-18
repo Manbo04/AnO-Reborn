@@ -806,6 +806,8 @@
 
                         <p class="templatecontentpleft">Surface-to-air missile batteries. They don't fight in normal battles, but they shoot down part of every incoming kamikaze drone and cruise missile strike before it hits. More batteries means more interceptions, with diminishing returns (never 100%). Each army base supports 20 batteries.</p>
 
+                        <p class="templatecontentpleft"><strong>Your interception chance:</strong> {{ sam_intercept.drones }}% of incoming kamikaze drones, {{ sam_intercept.cruise }}% of cruise missiles (&plusmn;10% each strike).</p>
+
                         <ul>{{ "sam_batteries" | milres }}
                         </ul>
                         <form action="/military" method="POST">
