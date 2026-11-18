@@ -1298,7 +1298,12 @@ def delete_own_account():
 
     from repositories.country_repository import CountryRepository
 
-    CountryRepository.delete_own_account(cId)
+    from repositories.country_repository import AccountDeletionBlocked
+
+    try:
+        CountryRepository.delete_own_account(cId)
+    except AccountDeletionBlocked as exc:
+        return error(400, str(exc))
 
     # Drop cached pages that still list/link the deleted nation, otherwise
     # /countries (60s cache) shows it and its link resolves to "Country

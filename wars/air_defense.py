@@ -14,9 +14,7 @@ def calculate_sam_interception(sam_count: int, projectile_type: str, rng=None) -
     rng = rng or random
     
     # Base effectiveness scales with SAM count
-    # 10 SAMs -> ~25%
-    # 50 SAMs -> ~71%
-    # 100 SAMs -> ~92% (before cap)
+    # 10 SAMs -> ~25%, 35 -> ~63%, 50 -> ~76%, 100 -> ~94% (before cap)
     softness = 35.0
     base_interception = 1.0 - math.exp(-sam_count / softness)
     
@@ -38,6 +36,16 @@ def calculate_sam_interception(sam_count: int, projectile_type: str, rng=None) -
     
     return min(max_interception, max(0.0, final_pct))
 
+
+
+def expected_sam_interception(sam_count: int, projectile_type: str) -> float:
+    """Average interception share (0-1), without the +/-10% roll. Shown to players."""
+    class _Mid:
+        @staticmethod
+        def uniform(a, b):
+            return 1.0
+
+    return calculate_sam_interception(sam_count, projectile_type, rng=_Mid())
 
 
 # Iron Dome (migration 0104): province-level interceptors. Unlike SAMs they
