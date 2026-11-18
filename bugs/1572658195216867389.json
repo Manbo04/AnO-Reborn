@@ -1,0 +1,34 @@
+{
+  "author_id": "1326884862346657803",
+  "created_at": "2026-11-18T17:02:12Z",
+  "kind": "bug",
+  "last_message_id": "1572685387925823523",
+  "last_player_message_at": "2026-11-18T17:02:12Z",
+  "messages": [
+    {
+      "at": "2026-11-18T17:02:12Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1572658195216867389/1572658196135415868/image.png?ex=6aff2b94&is=6afdda14&hm=c0cb24233a7e430c2c9b8bde271119fc0c33ed687f3ff63abfbc934e6db50cf4&"
+      ],
+      "author": "L4",
+      "author_id": "1326884862346657803",
+      "bot": false,
+      "id": "1572658195216867389",
+      "staff": false,
+      "text": ""
+    },
+    {
+      "at": "2026-11-18T18:50:15Z",
+      "attachments": [],
+      "author": "Affairs and Order",
+      "author_id": "1447272377896669236",
+      "bot": true,
+      "id": "1572685387925823523",
+      "staff": false,
+      "text": "<@1326884862346657803> sorry about that, deleting your nation was crashing and it's fixed now. one thing: if you still have an active loan or bond you'll need to settle it first, it'll tell you if that's the case."
+    }
+  ],
+  "thread_id": "1572658195216867389",
+  "title": "Nation deletion option doesn't work",
+  "url": "https://discord.com/channels/708006319658893385/1572658195216867389"
+}
