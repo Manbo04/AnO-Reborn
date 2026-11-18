@@ -927,6 +927,9 @@ def war_attack(war_id):
                 return redirect(f"/nuclear_strike/{war_id}")
             if special_unit != "icbms":
                 return _render_attack_page(error_msg="Invalid special unit selected", form_vals=request.form, active_tab="special")
+            from app_core import missile_pause
+            if missile_pause.paused(cId):
+                return _render_attack_page(error_msg=missile_pause.MESSAGE, form_vals=request.form, active_tab="special")
 
             amount_str = request.form.get("amount") or request.form.get(special_unit)
             try:
@@ -1068,6 +1071,9 @@ def warChoose(war_id):
             # string used to be accepted and fired as a free strike.
             if special_unit != "icbms":
                 return error(400, "Invalid special unit selected")
+            from app_core import missile_pause
+            if missile_pause.paused(session.get("user_id")):
+                return error(403, missile_pause.MESSAGE)
             selected_units[special_unit] = 0
             unit_amount = 1
             session["war_domain"] = None
@@ -1190,6 +1196,12 @@ def warAmount():
 def _resolve_special_attack(attack_units, eId, target):
     """Fire a special-unit strike at one enemy unit type (wartarget POST and
     the repeat-attack button both land here)."""
+    # Temporary pause (flag pause_missile_launches). This is the one place every ICBM
+    # strike goes through, so it is blocked here before anything is spent or damaged.
+    from app_core import missile_pause
+
+    if missile_pause.paused(session.get("user_id")):
+        return error(403, missile_pause.MESSAGE)
     target_amount = Military.get_particular_units_list(eId, [target])
     defender = Units(eId, {target: target_amount[0]}, selected_units_list=[target])
     # FIXED 2026-09-23: same replay race as warResult() (see its
@@ -2650,6 +2662,14 @@ def strategic_airstrike():
     if bombers_count <= 0:
         return error(400, "Must send at least 1 bomber.")
 
+    # Temporary pause (flag pause_missile_launches). Strategic airstrikes only hit nuke
+    # infrastructure, so they are paused together with the missiles: otherwise they
+    # could be used to disarm opponents who cannot answer during the pause.
+    from app_core import missile_pause
+
+    if missile_pause.paused(attacker_id):
+        return error(403, missile_pause.MESSAGE)
+
     with get_request_cursor() as db:
         # FIXED 2026-09-23: same race class already fixed in drone_strike/
         # cruise_missile_strike on 2026-09-13, and the same underlying bug
@@ -3198,6 +3218,13 @@ def cruise_missile_strike():
         return error(400, "Invalid target")
     if missiles_count <= 0:
         return error(400, "Must launch at least 1 missile.")
+
+    # Temporary pause (flag pause_missile_launches): refuse before any action points,
+    # fuel or missiles are spent.
+    from app_core import missile_pause
+
+    if missile_pause.paused(attacker_id):
+        return error(403, missile_pause.MESSAGE)
 
     with get_request_cursor() as db:
         # Same race as drone_strike above -- see the comment there.
