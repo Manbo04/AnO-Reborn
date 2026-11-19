@@ -3183,7 +3183,10 @@ def drone_strike():
             destroyed, had_target = apply_building_damage(
                 db, target_id, STRIKE_TARGET_BUILDINGS[strike_target],
                 damage_points, STRIKE_TARGET_THRESHOLDS[strike_target],
-                max_share=strike_building_cap.max_share_for(attacker_id),
+                limits=strike_building_cap.limits_for(
+                    db, attacker_id, target_id, STRIKE_TARGET_BUILDINGS[strike_target],
+                    "kamikaze_drones", drones_count,
+                ),
             )
 
         soldiers_lost = 0
@@ -3309,6 +3312,7 @@ def cruise_missile_strike():
         # Iron Dome (migration 0104): average province coverage vs a nationwide strike.
         from app_core.military.iron_dome import roll_intercepts
 
+        missiles_sent = missiles_count  # activation gold is for every missile committed
         dome_intercepted = roll_intercepts(db, target_id, missiles_count, "cruise_missiles")
         missiles_count -= dome_intercepted
 
@@ -3324,7 +3328,10 @@ def cruise_missile_strike():
             destroyed, had_target = apply_building_damage(
                 db, target_id, STRIKE_TARGET_BUILDINGS[strike_target],
                 damage_points, STRIKE_TARGET_THRESHOLDS[strike_target],
-                max_share=strike_building_cap.max_share_for(attacker_id),
+                limits=strike_building_cap.limits_for(
+                    db, attacker_id, target_id, STRIKE_TARGET_BUILDINGS[strike_target],
+                    "cruise_missiles", missiles_sent,
+                ),
             )
 
         if strike_target == POPULATION_TARGET:
