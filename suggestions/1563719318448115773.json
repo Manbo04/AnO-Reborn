@@ -3,8 +3,8 @@
   "ballot_id": "2026-10-30",
   "created_at": "2026-10-25T01:02:18Z",
   "kind": "suggestion",
-  "last_message_id": "1572956162901413979",
-  "last_player_message_at": "2026-11-19T12:46:13Z",
+  "last_message_id": "1572957318738350101",
+  "last_player_message_at": "2026-11-19T12:50:48Z",
   "messages": [
     {
       "at": "2026-10-25T01:02:18Z",
@@ -277,6 +277,26 @@
       "id": "1572956162901413979",
       "staff": false,
       "text": "2/3 of my alliance deleted their nations and the last one is just sitting there waiting for celess to come into range"
+    },
+    {
+      "at": "2026-11-19T12:48:18Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1572956689853063229",
+      "staff": false,
+      "text": "I didn’t mean to sound rude if that’s how it came off Cro  English isn’t my first language"
+    },
+    {
+      "at": "2026-11-19T12:50:48Z",
+      "attachments": [],
+      "author": "Sirius W. Frost",
+      "author_id": "1087866914497368064",
+      "bot": false,
+      "id": "1572957318738350101",
+      "staff": true,
+      "text": "It is fine; sorry to hear your concerns and ideas were not addressed in full."
     }
   ],
   "poll_message_id": "1565827464763019286",

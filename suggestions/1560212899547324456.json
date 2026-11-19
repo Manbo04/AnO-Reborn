@@ -3,8 +3,8 @@
   "ballot_id": "2026-10-16",
   "created_at": "2026-10-15T08:49:02Z",
   "kind": "suggestion",
-  "last_message_id": "1572145119409217548",
-  "last_player_message_at": "2026-11-17T07:03:25Z",
+  "last_message_id": "1572967392886132797",
+  "last_player_message_at": "2026-11-19T13:30:50Z",
   "messages": [
     {
       "at": "2026-10-15T08:49:02Z",
@@ -85,6 +85,76 @@
       "id": "1572145119409217548",
       "staff": false,
       "text": "I didn't look into it, but seems like either some people don't like this idea, or don't know enough about how it will be changed.\n\nI'm just trying to play a trading game in a community too small to properly support it.\n\nAnother idea to accomplish the goal would be to allow for robot/npc/magic trades for stuff at generally crappier rates.\n1. Encourages instead of mandating human-to-human trading.\n2. If I happen to hate everyone here, I can still choose to trade at weaker rates and still play the game."
+    },
+    {
+      "at": "2026-11-19T13:08:55Z",
+      "attachments": [],
+      "author": "Sirius W. Frost",
+      "author_id": "1087866914497368064",
+      "bot": false,
+      "id": "1572961874956259439",
+      "staff": true,
+      "text": "My idea was to give a limited amount of slots per nation to enable every player to always get off the ground without relying on trade, but advanced development would require it"
+    },
+    {
+      "at": "2026-11-19T13:09:58Z",
+      "attachments": [],
+      "author": "Sirius W. Frost",
+      "author_id": "1087866914497368064",
+      "bot": false,
+      "id": "1572962138971045939",
+      "staff": true,
+      "text": "I see you suggested specializations. Perhaps in the same vein there are animuses to certain productions your biome isnt hospitable to?"
+    },
+    {
+      "at": "2026-11-19T13:29:00Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1572966930673967115",
+      "staff": false,
+      "text": "I'm not a strong math guy and balancing isn't my thing. One of the glaring problems in this game is lack of balancing.\n\nMaluses can be considered, but only if it is balanced properly. Bonuses is easy to suggest, just to tie in with the current Biomes accessibility"
+    },
+    {
+      "at": "2026-11-19T13:29:57Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1572967169824915507",
+      "staff": false,
+      "text": "what do you mean by limited slots? like cap iron mines for jungle biomes at 10?"
+    },
+    {
+      "at": "2026-11-19T13:30:28Z",
+      "attachments": [],
+      "author": "Sirius W. Frost",
+      "author_id": "1087866914497368064",
+      "bot": false,
+      "id": "1572967297583288371",
+      "staff": true,
+      "text": "Something like that yea."
+    },
+    {
+      "at": "2026-11-19T13:30:40Z",
+      "attachments": [],
+      "author": "Sirius W. Frost",
+      "author_id": "1087866914497368064",
+      "bot": false,
+      "id": "1572967351144677437",
+      "staff": true,
+      "text": "You cant scale liks others but you have enough to get started"
+    },
+    {
+      "at": "2026-11-19T13:30:50Z",
+      "attachments": [],
+      "author": "Sirius W. Frost",
+      "author_id": "1087866914497368064",
+      "bot": false,
+      "id": "1572967392886132797",
+      "staff": true,
+      "text": "And nobody gets completely soft locked"
     }
   ],
   "poll_message_id": "1560691736928456726",

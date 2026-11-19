@@ -3,8 +3,8 @@
   "ballot_id": "2026-11-13",
   "created_at": "2026-11-09T03:12:49Z",
   "kind": "suggestion",
-  "last_message_id": "1571212135655145487",
-  "last_player_message_at": "2026-11-14T17:16:04Z",
+  "last_message_id": "1572990006321086555",
+  "last_player_message_at": "2026-11-19T15:00:42Z",
   "messages": [
     {
       "at": "2026-11-09T03:12:49Z",
@@ -105,6 +105,36 @@
       "id": "1571212135655145487",
       "staff": true,
       "text": "It will be readded once its rebalanced and there are more players"
+    },
+    {
+      "at": "2026-11-19T13:10:34Z",
+      "attachments": [],
+      "author": "Sirius W. Frost",
+      "author_id": "1087866914497368064",
+      "bot": false,
+      "id": "1572962289718399027",
+      "staff": true,
+      "text": "Boasting rights. Not everything needs to be super important no?"
+    },
+    {
+      "at": "2026-11-19T13:10:56Z",
+      "attachments": [],
+      "author": "Sirius W. Frost",
+      "author_id": "1087866914497368064",
+      "bot": false,
+      "id": "1572962383758889002",
+      "staff": true,
+      "text": "I agree with this"
+    },
+    {
+      "at": "2026-11-19T15:00:42Z",
+      "attachments": [],
+      "author": "Rowald",
+      "author_id": "720265672038285352",
+      "bot": false,
+      "id": "1572990006321086555",
+      "staff": false,
+      "text": "If influence is not gonna be relevant in WA it might as well be removed altogether"
     }
   ],
   "poll_message_id": "1570919760428929055",

@@ -3,8 +3,8 @@
   "ballot_id": "2026-10-30",
   "created_at": "2026-10-24T14:13:13Z",
   "kind": "suggestion",
-  "last_message_id": "1568366541005783107",
-  "last_player_message_at": "2026-10-24T14:13:13Z",
+  "last_message_id": "1572963177207963691",
+  "last_player_message_at": "2026-11-19T13:14:05Z",
   "messages": [
     {
       "at": "2026-10-24T14:13:13Z",
@@ -35,6 +35,16 @@
       "id": "1568366541005783107",
       "staff": false,
       "text": "<@307290318590705667> the vote is in: **6 yes / 4 no**. Your suggestion passed, it's queued to be built. You'll get a ping here when it's live."
+    },
+    {
+      "at": "2026-11-19T13:14:05Z",
+      "attachments": [],
+      "author": "Sirius W. Frost",
+      "author_id": "1087866914497368064",
+      "bot": false,
+      "id": "1572963177207963691",
+      "staff": true,
+      "text": "Theres also merit in merely limiting nukes"
     }
   ],
   "poll_message_id": "1565827455342608521",
