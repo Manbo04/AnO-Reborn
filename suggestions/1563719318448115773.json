@@ -3,8 +3,8 @@
   "ballot_id": "2026-10-30",
   "created_at": "2026-10-25T01:02:18Z",
   "kind": "suggestion",
-  "last_message_id": "1572272957739499582",
-  "last_player_message_at": "2026-11-17T15:31:24Z",
+  "last_message_id": "1572956162901413979",
+  "last_player_message_at": "2026-11-19T12:46:13Z",
   "messages": [
     {
       "at": "2026-10-25T01:02:18Z",
@@ -175,6 +175,108 @@
       "id": "1572272957739499582",
       "staff": true,
       "text": "Yeah wanted to ping him"
+    },
+    {
+      "at": "2026-11-19T12:42:37Z",
+      "attachments": [],
+      "author": "Sirius W. Frost",
+      "author_id": "1087866914497368064",
+      "bot": false,
+      "id": "1572955259540734084",
+      "staff": true,
+      "text": "Some of these are good ideas. This can serve as a good basis. Infact it mirrors some suggestions I had in this screenshot Ill post:"
+    },
+    {
+      "at": "2026-11-19T12:43:31Z",
+      "attachments": [
+        "https://cdn.discordapp.com/attachments/1563719318448115773/1572955481930993714/Screenshot_20261119_074322_Discord.jpg?ex=6b004072&is=6afeeef2&hm=bf8f2857c8896dba6bebf45a08508bb7a54aec90e261239354649a8d4f0fe723&"
+      ],
+      "author": "Sirius W. Frost",
+      "author_id": "1087866914497368064",
+      "bot": false,
+      "id": "1572955482296156271",
+      "staff": true,
+      "text": ""
+    },
+    {
+      "at": "2026-11-19T12:43:58Z",
+      "attachments": [],
+      "author": "Sirius W. Frost",
+      "author_id": "1087866914497368064",
+      "bot": false,
+      "id": "1572955598419529769",
+      "staff": true,
+      "text": "And, yes, this is already passed but i think we should still keep asking ourselves what the point of nukes actually is."
+    },
+    {
+      "at": "2026-11-19T12:44:23Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1572955700592640163",
+      "staff": false,
+      "text": "There is already a natsim with no war where you can grow stats endlessly called nationstates you should check it out"
+    },
+    {
+      "at": "2026-11-19T12:44:45Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1572955794092335235",
+      "staff": false,
+      "text": "Only like 2 things were added from this do whatever you like with the suggestion I’ve already deleted my nation"
+    },
+    {
+      "at": "2026-11-19T12:44:58Z",
+      "attachments": [],
+      "author": "Sirius W. Frost",
+      "author_id": "1087866914497368064",
+      "bot": false,
+      "id": "1572955848651841578",
+      "staff": true,
+      "text": "You do not need to be rude. I have been nothing but candid and earnest in trying to talk to you as players and come to an understanding"
+    },
+    {
+      "at": "2026-11-19T12:45:06Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1572955883548319867",
+      "staff": false,
+      "text": "I’m not trying to be rude"
+    },
+    {
+      "at": "2026-11-19T12:45:16Z",
+      "attachments": [],
+      "author": "Sirius W. Frost",
+      "author_id": "1087866914497368064",
+      "bot": false,
+      "id": "1572955926036619317",
+      "staff": true,
+      "text": "You need to stop treating this as adversarial then."
+    },
+    {
+      "at": "2026-11-19T12:45:28Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1572955974254202994",
+      "staff": false,
+      "text": "Im not I deleted my nation Cro"
+    },
+    {
+      "at": "2026-11-19T12:46:13Z",
+      "attachments": [],
+      "author": "ivegottogodosomething",
+      "author_id": "429129579039555584",
+      "bot": false,
+      "id": "1572956162901413979",
+      "staff": false,
+      "text": "2/3 of my alliance deleted their nations and the last one is just sitting there waiting for celess to come into range"
     }
   ],
   "poll_message_id": "1565827464763019286",
