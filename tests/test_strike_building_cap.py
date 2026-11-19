@@ -179,10 +179,67 @@ def test_limits_for_is_none_with_the_flag_off_and_reads_nothing(monkeypatch):
 
 def test_limits_for_flag_on(monkeypatch):
     monkeypatch.setattr(cap, "enabled", lambda *a, **k: True)
-    got = cap.limits_for(_Db(total=5), 1, 2, "farms", "kamikaze_drones", 1000)
-    assert got == L(0.25, 5, 46)
+    db = _Db(total=5)
+    got = cap.limits_for(db, 1, 2, "farms", "kamikaze_drones", 1000)
+    # The 72h window total is NOT read here: it has to be read after the victim's
+    # building rows are locked, or overlapping strikes all read the same stale total.
+    assert got == L(0.25, None, 46)
+    assert db.sql == []
     got = cap.limits_for(_Db(), 1, 2, "silos", "cruise_missiles", 100)
-    assert got == L(0.10, 0, 1)  # 500,000,000 / 350,000,000
+    assert got == L(0.10, None, 1)  # 500,000,000 / 350,000,000
+
+
+def test_resolve_window_reads_the_log_only_when_it_is_missing():
+    db = _Db(total=9)
+    assert cap.resolve_window(L(0.25, None, 46), db, 7, "farms") == L(0.25, 9, 46)
+    assert len([s for s in db.sql if "FROM war_building_losses" in s[0]]) == 1
+    # flag off (None) or already known: untouched and no query
+    quiet = _Db(total=99)
+    assert cap.resolve_window(None, quiet, 7, "farms") is None
+    assert cap.resolve_window(L(0.25, 3, 46), quiet, 7, "farms") == L(0.25, 3, 46)
+    assert quiet.sql == []
+
+
+class _OrderDb:
+    """Records statement order for apply_building_damage. One stack of 750 farms."""
+
+    def __init__(self, recent):
+        self.recent, self.sql, self._last = recent, [], ""
+
+    def execute(self, sql, params=()):
+        self._last = " ".join(sql.split())
+        self.sql.append(self._last)
+
+    def fetchall(self):
+        return [(1, 750, 5)]
+
+    def fetchone(self):
+        if "FROM war_building_losses" in self._last and "SUM" in self._last:
+            return (self.recent,)
+        return None  # no active war: nothing is logged
+
+
+def test_the_window_total_is_read_after_the_rows_are_locked():
+    from wars.service import apply_building_damage
+
+    db = _OrderDb(recent=250)
+    destroyed, had = apply_building_damage(
+        db, 9, "farms", 10**9, 6, limits=L(0.25, None, None)
+    )
+    lock = next(i for i, s in enumerate(db.sql) if "FOR UPDATE" in s)
+    read = next(i for i, s in enumerate(db.sql) if "SUM(quantity)" in s)
+    assert lock < read, "window must be read after the row lock"
+    # 25% of (750 owned + 250 already lost) = 250 per window, 250 already used
+    assert (destroyed, had) == (0, True)
+
+
+def test_flag_off_never_reads_the_window():
+    from wars.service import apply_building_damage
+
+    db = _OrderDb(recent=250)
+    destroyed, _ = apply_building_damage(db, 9, "farms", 10**9, 6, limits=None)
+    assert destroyed == 750  # old behaviour: everything the points allow
+    assert not any("SUM(quantity)" in s for s in db.sql)
 
 
 # --------------------------------------------------------------- local database
@@ -444,5 +501,71 @@ def test_strategic_airstrike_is_not_affected_by_this_flag(client, monkeypatch):
         with get_db_connection() as conn:
             db = conn.cursor()
             assert resp.status_code == 302 and _count(db, b, "silos") == 40 - 13
+    finally:
+        _cleanup(ids)
+
+
+@needs_db
+def test_overlapping_strikes_from_two_accounts_share_one_window(monkeypatch):
+    """Security review finding: both strikes build their limits BEFORE either one has
+    locked the victim's building rows (the routes do exactly that). The second strike
+    must still see what the first one destroyed, so together they stay inside the
+    one 25% window, not 25% + 18.75%."""
+    import threading
+    import time
+
+    from database import get_db_connection
+    from wars.service import apply_building_damage
+
+    monkeypatch.setattr(cap, "enabled", lambda *a, **k: True)
+    ids = []
+    try:
+        with get_db_connection() as conn:
+            db = conn.cursor()
+            a, b = _world(db, "farms", 1000)
+            ids = [a, b]
+            conn.commit()
+
+        both_have_limits = threading.Barrier(2)
+        a_holds_the_lock = threading.Event()
+        b_is_going_in = threading.Event()
+        destroyed, errors = {}, []
+
+        def strike(name, first):
+            try:
+                with get_db_connection() as conn:
+                    db = conn.cursor()
+                    limits = cap.limits_for(db, a, b, "farms", "kamikaze_drones", 1000)
+                    limits = limits._replace(max_by_value=None)  # test share + window
+                    both_have_limits.wait(timeout=30)
+                    if not first:
+                        assert a_holds_the_lock.wait(timeout=30)
+                        b_is_going_in.set()
+                    got, _ = apply_building_damage(
+                        db, b, "farms", 10**9, 6, limits=limits
+                    )
+                    destroyed[name] = got
+                    if first:
+                        a_holds_the_lock.set()
+                        assert b_is_going_in.wait(timeout=30)
+                        time.sleep(1.5)  # B reaches, and waits on, A's row lock
+                    conn.commit()
+            except Exception as exc:  # surfaced below
+                errors.append(repr(exc))
+
+        threads = [
+            threading.Thread(target=strike, args=("a", True)),
+            threading.Thread(target=strike, args=("b", False)),
+        ]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=90)
+        assert not errors, errors
+
+        with get_db_connection() as conn:
+            left = _count(conn.cursor(), b, "farms")
+        assert destroyed == {"a": 250, "b": 0}
+        assert left == 750
     finally:
         _cleanup(ids)

@@ -54,7 +54,10 @@ class StrikeLimits(NamedTuple):
     """What one strike on one building type is allowed to destroy (flag ON)."""
 
     share: float  # share of the type, per window
-    recent_lost: int  # destroyed by strikes in the last STRIKE_WINDOW_HOURS
+    # Destroyed by strikes in the last STRIKE_WINDOW_HOURS. None = not read yet: it MUST
+    # be read after the victim's building rows are locked (``resolve_window``), or two
+    # overlapping strikes both read the same stale total and each get a full share.
+    recent_lost: Optional[int]
     max_by_value: Optional[int]  # most the value cap allows (None = not applied)
 
 
@@ -163,16 +166,31 @@ def recent_strike_losses(db, victim_id: int, building: str) -> int:
         return 0
 
 
+def resolve_window(
+    limits: Optional[StrikeLimits], db, victim_id: int, building: str
+) -> Optional[StrikeLimits]:
+    """Fill in the 72h window total. Call it only AFTER the victim's rows of this
+    building are locked (``SELECT ... FOR UPDATE``), inside the same transaction: a
+    strike that waited for the lock then sees what the strike before it logged (default
+    READ COMMITTED: each statement sees what has been committed by then). Flag off
+    (None) or already known: returned untouched, no query."""
+    if limits is None or limits.recent_lost is not None:
+        return limits
+    return limits._replace(recent_lost=recent_strike_losses(db, victim_id, building))
+
+
 def limits_for(
     db, user_id, victim_id: int, building: str, unit: str, units_sent: int
 ) -> Optional[StrikeLimits]:
     """The limits to pass to ``apply_building_damage``; None when the flag is off (the
-    old behaviour, and no extra queries)."""
+    old behaviour, and no extra queries). The window total is deliberately NOT read here
+    (``recent_lost`` is None): ``apply_building_damage`` reads it after it has locked the
+    victim's rows, see ``resolve_window``."""
     if not enabled(user_id):
         return None
     return StrikeLimits(
         share=share_for(building),
-        recent_lost=recent_strike_losses(db, victim_id, building),
+        recent_lost=None,
         max_by_value=max_by_value(
             unit_activation_gold(unit, units_sent), building_gold(building) or 0
         ),
