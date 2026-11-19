@@ -60,12 +60,37 @@ def test_one_icbm_is_the_same_flag_on_or_off_when_the_cap_is_not_reached():
     )
 
 
-def test_share_cap_limits_one_strike():
-    # 50 destroyers: 2 ICBMs used to wipe them all, now at most 25%
-    assert ic.limited_destruction(DMG * 2, 0, 2, 0.5, 50) == pytest.approx(12.5)
-    assert ic.limited_destruction(DMG * 10, 0, 10, 0.5, 50) == pytest.approx(12.5)
-    # custom share
-    assert ic.limited_destruction(DMG * 2, 0, 2, 0.5, 50, max_share=0.1) == 5
+def test_share_cap_limits_a_barrage_on_a_big_stack():
+    # 10,000 destroyers, rate 0.5: one missile destroys 500, 40 missiles would be 20,000
+    assert ic.limited_destruction(DMG * 40, 0, 40, 0.5, 10_000) == pytest.approx(2500)
+    # custom share (cap = max(share, one missile))
+    assert ic.limited_destruction(
+        DMG * 40, 0, 40, 0.5, 10_000, max_share=0.1
+    ) == pytest.approx(1000)
+
+
+def test_a_single_icbm_is_never_weakened():
+    """cap = max(25% of the stack, what one missile destroys): a lone ICBM keeps
+    today's effect even against a small stack."""
+    for rate in (0.3, 0.4, 0.5):
+        for stack in (1, 4, 50, 500, 5000):
+            one = ic.limited_destruction(DMG, 0, 1, rate, stack)
+            assert one == pytest.approx(
+                min(
+                    ic.legacy_destruction(DMG, 0, 1, rate),
+                    max(0.25 * stack, rate * DMG),
+                )
+            )
+            assert one == pytest.approx(ic.legacy_destruction(DMG, 0, 1, rate))
+    # 1 ICBM at 50 units destroys all 50 (it used to be cut to 12 by a plain 25% cap)
+    assert ic.limited_destruction(DMG, 0, 1, 0.4, 50) >= 50
+
+
+def test_extra_missiles_do_not_exceed_the_single_missile_on_a_small_stack():
+    # 2 ICBMs at a 50 stack: cap is one missile's 400, far above 50: all 50 fall
+    assert ic.limited_destruction(DMG * 2, 0, 2, 0.4, 50) == pytest.approx(400)
+    # 2 ICBMs at 500: today 500 (all), now 400 (linear 800 cut to one missile's 400)
+    assert ic.limited_destruction(DMG * 2, 0, 2, 0.4, 500) == pytest.approx(400)
 
 
 def test_iron_dome_survivors_scale_the_damage_down_first():
@@ -100,14 +125,16 @@ def test_submarine_bonus_no_longer_makes_destruction_negative():
 @pytest.mark.parametrize("amount", [1, 7, 50, 1000, 10**6])
 @pytest.mark.parametrize("fired", [1, 2, 3, 5, 20, 200])
 @pytest.mark.parametrize("target", ["destroyers", "tanks", "submarines"])
-def test_never_negative_and_never_above_the_share(amount, fired, target):
+def test_never_negative_and_never_above_the_cap(amount, fired, target):
     import units
 
     eff = units.IcbmUnit(fired).attack(target)
     for rate in (0.3, 0.4, 0.5):
         for surviving in (0.0, 0.5, 1.0):
             got = ic.limited_destruction(eff[0], eff[1], fired, rate, amount, surviving)
-            assert 0 <= got <= ic.ICBM_MAX_UNIT_SHARE * amount + 1e-9
+            single = rate * DMG / max(ic.ICBM_MIN_DIVISOR, 1 + eff[1] / fired)
+            cap = max(ic.ICBM_MAX_UNIT_SHARE * amount, single)
+            assert 0 <= got <= cap + 1e-9
 
 
 # ------------------------------------------------------------- special_fight itself
@@ -195,9 +222,10 @@ def test_special_fight_flag_on_is_linear_and_capped(monkeypatch):
     assert _fight(monkeypatch, on=True, fired=1, owned=10_000)[0] == 400
     assert _fight(monkeypatch, on=True, fired=2, owned=10_000)[0] == 800
     assert _fight(monkeypatch, on=True, fired=5, owned=100_000)[0] == 2000
-    # 50 destroyers: 2 ICBMs now take at most 25%: floor(12.5) = 12
-    destroyed, defender = _fight(monkeypatch, on=True, fired=2, owned=50)
-    assert destroyed == 12 and defender.selected_units["destroyers"] == 38
+    # 50 destroyers: one missile (400) already covers the stack, so it is not weakened
+    assert _fight(monkeypatch, on=True, fired=1, owned=50)[0] == 50
+    # 500 destroyers, 2 ICBMs: linear 800, cut to one missile's 400 (today: all 500)
+    assert _fight(monkeypatch, on=True, fired=2, owned=500)[0] == 400
     # 10,000 units, 40 ICBMs: capped at 25%
     assert _fight(monkeypatch, on=True, fired=40, owned=10_000)[0] == 2500
 
@@ -220,9 +248,13 @@ def test_special_fight_flag_off_submarines_get_negative_destruction(monkeypatch)
 
 def test_special_fight_flag_on_submarines_are_hit_like_any_target(monkeypatch):
     destroyed, defender = _fight(
-        monkeypatch, on=True, fired=1, owned=100, target="submarines"
+        monkeypatch, on=True, fired=1, owned=10_000, target="submarines"
     )
-    assert destroyed == 25 and defender.selected_units["submarines"] == 75  # share cap
+    assert destroyed == 400 and defender.selected_units["submarines"] == 9_600
+    destroyed, _ = _fight(
+        monkeypatch, on=True, fired=40, owned=10_000, target="submarines"
+    )
+    assert destroyed == 2500  # share cap
 
 
 def test_flag_does_not_touch_other_special_units(monkeypatch):
