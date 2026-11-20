@@ -75,12 +75,7 @@ PR into master, not by `railway up`.
 
 ## 🚦 How changes ship (enforced by GitHub, not optional)
 
-**Guard (required check):** a PR that touches CI, `scripts/check_*`, the schema snapshot
-(`db/`), test config, deletes/skips tests, or raises `scripts/economy_write_baseline.json`
-fails the `guard` check until Dede adds `guard-approve: <code>` from his authenticator to
-the PR description (`scripts/guard_check.py`). Never try to get around it: do not ask for
-the TOTP secret, do not move tests, do not fake statuses. If a check blocks a correct change,
-explain why to Dede and let him approve. Money/resource writes go through
+**No approval-code gate (removed 2026-11-20).** The old `guard` check, which wanted a `guard-approve: <code>` from an authenticator, is gone. Required checks are `prod-shaped` and `lint-and-test`. That does not make weakening them fine: never skip, move or delete tests, edit CI, or fake a status just to get a PR green. If a check blocks a correct change, say why to Dede. Money/resource writes go through
 `app_core/economy/ledger.py`; lower the baseline with `check_economy_writes.py --update`
 only after removing raw writes.
 
