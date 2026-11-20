@@ -62,9 +62,11 @@ def get_user_units_with_stats(db, cId):
 
         from app_core.economy import military_upkeep_v2 as _v2
 
+        v2_on = _v2.v2_active()
         unit_info = {
-            "upkeep_v2": _v2.describe(name),
-            "upkeep_v2_active": _v2.v2_active(),
+            # Hidden while the military_upkeep_v2 flag is off, so the page never promises "from 6 Nov".
+            "upkeep_v2": _v2.describe(name) if v2_on else "",
+            "upkeep_v2_active": v2_on,
             "name": name,
             "quantity": qty,
             "attack": attack,
