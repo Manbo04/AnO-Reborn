@@ -60,7 +60,13 @@ def get_user_units_with_stats(db, cId):
         maint_amount = int(maint_amount or 0)
         maint_cost_per_tick = qty * maint_amount
 
+        from app_core.economy import military_upkeep_v2 as _v2
+
+        v2_on = _v2.v2_active()
         unit_info = {
+            # Hidden while the military_upkeep_v2 flag is off, so the page never promises "from 6 Nov".
+            "upkeep_v2": _v2.describe(name) if v2_on else "",
+            "upkeep_v2_active": v2_on,
             "name": name,
             "quantity": qty,
             "attack": attack,
@@ -224,6 +230,24 @@ def get_current_unit_quantity(db, cId, unit_id):
     )
     current_row = db.fetchone()
     return int(current_row[0] or 0) if current_row else 0
+
+def mark_units_bought(db, cId, unit_id):
+    """Stamp a purchase so freshly bought units cannot be sold back at once (flag unit_sell_lock)."""
+    db.execute(
+        "UPDATE user_military SET last_bought_at = now() WHERE user_id=%s AND unit_id=%s",
+        (cId, unit_id),
+    )
+
+def seconds_until_sell_unlock(db, cId, unit_id, lock_hours):
+    """Seconds left before this nation may sell this unit again after buying it (0 = free to sell)."""
+    db.execute(
+        "SELECT GREATEST(0, EXTRACT(EPOCH FROM "
+        "(last_bought_at + make_interval(hours => %s) - now()))) "
+        "FROM user_military WHERE user_id=%s AND unit_id=%s",
+        (lock_hours, cId, unit_id),
+    )
+    row = db.fetchone()
+    return float(row[0]) if row and row[0] is not None else 0.0
 
 def remove_units(db, cId, unit_id, amount):
     db.execute(

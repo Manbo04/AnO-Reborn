@@ -35,7 +35,18 @@ UPKEEP_V2 = {  # per unit, per game year
 
 
 def v2_active(now=None):
-    return (now or datetime.now(timezone.utc)) >= UPKEEP_V2_START
+    """Is v2 upkeep charged? An explicit `now` is the pure time check (tests, previews).
+    With no `now` it also needs the `military_upkeep_v2` feature flag, so v2 can be turned
+    off at /admin/flags without another revert. A flag read never raises; if the flags
+    cannot be read it is off.
+    """
+    if now is not None:
+        return now >= UPKEEP_V2_START
+    if datetime.now(timezone.utc) < UPKEEP_V2_START:
+        return False
+    from app_core.feature_flags import is_on
+
+    return is_on("military_upkeep_v2")
 
 
 def v2_unit_names():
