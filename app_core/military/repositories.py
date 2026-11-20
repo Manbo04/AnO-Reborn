@@ -229,6 +229,24 @@ def get_current_unit_quantity(db, cId, unit_id):
     current_row = db.fetchone()
     return int(current_row[0] or 0) if current_row else 0
 
+def mark_units_bought(db, cId, unit_id):
+    """Stamp a purchase so freshly bought units cannot be sold back at once (flag unit_sell_lock)."""
+    db.execute(
+        "UPDATE user_military SET last_bought_at = now() WHERE user_id=%s AND unit_id=%s",
+        (cId, unit_id),
+    )
+
+def seconds_until_sell_unlock(db, cId, unit_id, lock_hours):
+    """Seconds left before this nation may sell this unit again after buying it (0 = free to sell)."""
+    db.execute(
+        "SELECT GREATEST(0, EXTRACT(EPOCH FROM "
+        "(last_bought_at + make_interval(hours => %s) - now()))) "
+        "FROM user_military WHERE user_id=%s AND unit_id=%s",
+        (lock_hours, cId, unit_id),
+    )
+    row = db.fetchone()
+    return float(row[0]) if row and row[0] is not None else 0.0
+
 def remove_units(db, cId, unit_id, amount):
     db.execute(
         "UPDATE user_military SET quantity = quantity - %s "
