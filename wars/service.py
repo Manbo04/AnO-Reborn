@@ -16,7 +16,9 @@ def target_data(cId):
     }
 
 
-def apply_building_damage(db, target_id, building_name, damage_points, threshold):
+def apply_building_damage(
+    db, target_id, building_name, damage_points, threshold, limits=None
+):
     """Roll accumulated damage_points against a building_dictionary row the
     defender owns, destroying floor(damage_points // threshold) of them.
 
@@ -26,6 +28,10 @@ def apply_building_damage(db, target_id, building_name, damage_points, threshold
     being copy-pasted per weapon type. Returns (destroyed_count, had_any)
     where had_any is False if the defender owns none of building_name at all
     (distinguishes "nothing to destroy" from "destroyed 0, missed").
+
+    ``limits`` (flag strike_building_cap, wars/strike_building_cap.py ``StrikeLimits``):
+    when given, one call destroys at most what the share, window and value caps allow.
+    None (the default and the flag-off case) keeps the old behaviour.
     """
     # user_buildings has one row per (user, building, province). Spread the
     # destruction over those rows, biggest stack first; a single unfiltered
@@ -47,7 +53,14 @@ def apply_building_damage(db, target_id, building_name, damage_points, threshold
     if total <= 0:
         return 0, False
 
-    destroyed = min(total, int(damage_points // threshold))
+    from wars.strike_building_cap import capped_destroyed, resolve_window
+
+    # The rows above are locked, so this strike now waits for any strike that is still
+    # in flight on the same victim and building. Only now read the 72h window: reading
+    # it earlier (when the route builds ``limits``) let overlapping strikes from
+    # different accounts all see the same stale total and each take a full share.
+    limits = resolve_window(limits, db, target_id, building_name)
+    destroyed = capped_destroyed(total, int(damage_points // threshold), limits)
     left = destroyed
     for province_id, quantity, building_id in rows:
         if left <= 0:

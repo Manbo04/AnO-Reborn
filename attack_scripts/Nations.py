@@ -641,6 +641,8 @@ class Military(Nation):
             # land on one random province; that province's domes get a shot.
             dome_province = None
             dome_intercepted = 0
+            surviving = 1.0
+            raw_damage, raw_bonus = attack_effects[0], attack_effects[1]
             fired = int(attacker.selected_units.get(special_unit) or 0)
             if special_unit in ("icbms", "nukes") and fired > 0:
                 from app_core.military.iron_dome import roll_intercepts
@@ -674,6 +676,20 @@ class Military(Nation):
                 final_destruction *= surviving
                 attack_effects = (attack_effects[0] * surviving,) + tuple(attack_effects[1:])
 
+            # Flag icbm_damage_limits (ships OFF): linear growth and a cap on the share
+            # of one unit type a strike can destroy (app_core/military/icbm_damage.py).
+            if special_unit == "icbms":
+                from app_core.military import icbm_damage
+
+                if icbm_damage.enabled(attacker.user_id):
+                    final_destruction = icbm_damage.limited_destruction(
+                        raw_damage,
+                        raw_bonus,
+                        fired,
+                        destruction_rate,
+                        target_amount,
+                        surviving,
+                    )
 
             before_casulaties = list(dict(defender.selected_units).values())[0]
             defender.casualties(target, final_destruction)

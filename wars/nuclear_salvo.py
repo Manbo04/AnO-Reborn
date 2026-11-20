@@ -7,6 +7,8 @@ The influence penalty is ONE flat charge for the whole salvo (not compounding pe
 warhead): 75% of influence, 40% when answering a nuke. It is stored on the first
 warhead that gets through and decays over 7 days like any strike.
 Deferred to a later PR: per-salvo destruction caps on silos/harbours/aerodomes.
+Civilian damage cap per salvo (people, buildings, cities): wars/salvo_cap.py, behind
+its own flag ``nuke_salvo_civilian_cap`` (default OFF, separate from nuke_rework).
 """
 from __future__ import annotations
 
@@ -14,12 +16,17 @@ import logging
 import random
 
 from app_core import nuke_rework
-from wars.nuclear import StrikeError, execute_strike, plan_strike
+from wars import salvo_cap
+from wars.nuclear import SalvoClamped, StrikeError, execute_strike, plan_strike
 
 logger = logging.getLogger(__name__)
 
 SALVO_FIRST_COST = 0.75
 SALVO_RETALIATION_COST = 0.40
+# The per-salvo civilian caps (SALVO_CIVILIAN_CAP_DEATHS / _BUILDINGS / _CITIES) are
+# defined in wars/salvo_cap.py so the pure math and its numbers sit together.
+SALVO_CIVILIAN_CAP_DEATHS = salvo_cap.SALVO_CIVILIAN_CAP_DEATHS
+SALVO_CIVILIAN_CAP_BUILDINGS = salvo_cap.SALVO_CIVILIAN_CAP_BUILDINGS
 DETECTION_BASE = 0.25
 DETECTION_STAR_WARS_BONUS = 0.25
 
@@ -39,6 +46,22 @@ def pick_targets(provinces, nukes):
     return ordered[: max(0, min(int(nukes), len(ordered)))]
 
 
+def read_salvo_cap(db, enemy_id):
+    """Start a SalvoCap from the target's totals before the first warhead."""
+    db.execute(
+        "SELECT COALESCE(SUM(population), 0), COALESCE(SUM(citycount), 0) "
+        "FROM provinces WHERE userid = %s",
+        (enemy_id,),
+    )
+    pop, cities = db.fetchone()
+    db.execute(
+        "SELECT COALESCE(SUM(quantity), 0) FROM user_buildings WHERE user_id = %s",
+        (enemy_id,),
+    )
+    buildings = db.fetchone()[0]
+    return salvo_cap.SalvoCap(int(pop or 0), int(buildings or 0), int(cities or 0))
+
+
 def execute_salvo(db, attacker_id, war_id, auto=False) -> dict:
     """Fire every nuke you can at distinct enemy provinces. Atomic in the caller's transaction."""
     if not nuke_rework.enabled(attacker_id):
@@ -53,11 +76,30 @@ def execute_salvo(db, attacker_id, war_id, auto=False) -> dict:
     cost = salvo_cost(plan["influence"], plan["is_retaliation"])
     carried = False
     results = []
+    # Flag nuke_salvo_civilian_cap: one salvo may kill / destroy at most a set share of
+    # the target (wars/salvo_cap.py). Off = no cap object, so nothing below changes.
+    cap = None
+    if salvo_cap.enabled(attacker_id):
+        cap = read_salvo_cap(db, plan["enemy_id"])
+    clamped = 0
     for prov in targets:
-        r = execute_strike(
-            db, attacker_id, war_id, prov["id"], salvo=True,
-            cost_override=0 if carried else cost,
-        )
+        if cap is not None and cap.exhausted():
+            clamped += 1  # nothing left to destroy: stays in stock, not fired
+            continue
+        if cap is not None:
+            db.execute("SAVEPOINT nuke_salvo_warhead")
+        try:
+            r = execute_strike(
+                db, attacker_id, war_id, prov["id"], salvo=True,
+                cost_override=0 if carried else cost, salvo_cap=cap,
+            )
+        except SalvoClamped:
+            # Nothing left for this warhead under the cap: undo its launch (stays in stock).
+            db.execute("ROLLBACK TO SAVEPOINT nuke_salvo_warhead")
+            clamped += 1
+            continue
+        if cap is not None:
+            db.execute("RELEASE SAVEPOINT nuke_salvo_warhead")
         if not r.get("intercepted"):
             carried = True
         results.append(r)
@@ -76,6 +118,9 @@ def execute_salvo(db, attacker_id, war_id, auto=False) -> dict:
         "cost": cost if carried else 0,
         "is_retaliation": plan["is_retaliation"],
         "spared_nukes": max(0, int(plan["nukes"]) - len(results)),
+        "capped": cap is not None
+        and (clamped > 0 or any(r.get("capped") for r in results)),
+        "clamped": clamped,
         "results": results,
     }
     if not auto:
