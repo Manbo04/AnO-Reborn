@@ -241,8 +241,13 @@ def conclude_war(
     # Check for Looting Teams upgrade
     from app_core.upgrades.services import get_upgrades
     winner_upgrades = get_upgrades(winner_id, db=db)
-    loot_multiplier = 0.3 if winner_upgrades.get("lootingteams") else 0.2
     from wars import rules as war_rules
+    from app_core.feature_flags import is_on
+
+    loot_multiplier = war_rules.standard_spoils_rate(
+        bool(winner_upgrades.get("lootingteams")),
+        reduced=is_on("war_spoils_reduced", winner_id),
+    )
 
     loot_multiplier = war_rules.surrender_spoils_rate(surrender_kind, loot_multiplier)
     if surrender_kind == "unconditional":

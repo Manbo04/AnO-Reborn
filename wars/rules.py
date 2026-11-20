@@ -32,6 +32,13 @@ DEFENDER_COOLDOWN_SECONDS = 24 * HOUR
 
 SURRENDER_KINDS = ("conditional", "unconditional")
 CONDITIONAL_SURRENDER_SPOILS = 0.10  # share of each resource (standard: 20%)
+# Standard end-of-war spoils (share of each resource the loser holds).
+STANDARD_SPOILS = 0.20
+LOOTING_TEAMS_SPOILS = 0.30
+# Flag war_spoils_reduced: lower rates so a nation cannot live off winning wars alone.
+# PLACEHOLDERS for Dede to pick (see PR); a conditional surrender stays at 0.10, below both.
+REDUCED_STANDARD_SPOILS = 0.12
+REDUCED_LOOTING_TEAMS_SPOILS = 0.18
 UNCONDITIONAL_SURRENDER_MANPOWER_FACTOR = 0.5
 UNCONDITIONAL_SURRENDER_PENALTY_SECONDS = 5 * DAY
 PENALTY_MANPOWER_CAP = "manpower_cap"
@@ -83,6 +90,13 @@ def penalized_manpower_cap(cap: int, factors) -> int:
     if not factors:
         return int(cap)
     return max(0, int(int(cap) * min(factors)))
+
+
+def standard_spoils_rate(has_looting_teams, reduced=False):
+    """Share of every resource the winner takes when a war ends (before any surrender rule)."""
+    if reduced:
+        return REDUCED_LOOTING_TEAMS_SPOILS if has_looting_teams else REDUCED_STANDARD_SPOILS
+    return LOOTING_TEAMS_SPOILS if has_looting_teams else STANDARD_SPOILS
 
 
 def surrender_spoils_rate(kind, standard_rate):
