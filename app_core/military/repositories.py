@@ -60,7 +60,11 @@ def get_user_units_with_stats(db, cId):
         maint_amount = int(maint_amount or 0)
         maint_cost_per_tick = qty * maint_amount
 
+        from app_core.economy import military_upkeep_v2 as _v2
+
         unit_info = {
+            "upkeep_v2": _v2.describe(name),
+            "upkeep_v2_active": _v2.v2_active(),
             "name": name,
             "quantity": qty,
             "attack": attack,

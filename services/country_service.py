@@ -804,22 +804,9 @@ class CountryService:
             military_rations_upkeep = 0
             if status:
                 try:
-                    db.execute(
-                        """
-                        SELECT COALESCE(SUM(um.quantity * ud.maintenance_cost_amount), 0)
-                        FROM user_military um
-                        JOIN unit_dictionary ud ON ud.unit_id = um.unit_id
-                        JOIN resource_dictionary rd ON rd.resource_id = ud.maintenance_cost_resource_id
-                        WHERE um.user_id = %s
-                          AND um.quantity > 0
-                          AND ud.maintenance_cost_resource_id IS NOT NULL
-                          AND ud.maintenance_cost_amount > 0
-                          AND rd.name = 'rations'
-                        """,
-                        (cId,),
-                    )
-                    row = db.fetchone()
-                    military_rations_upkeep = int(row[0] or 0) if row else 0
+                    from app_core.economy.military_upkeep import military_upkeep_totals
+
+                    military_rations_upkeep = military_upkeep_totals(db, cId).get("rations", 0)
                 except Exception:
                     rollback_db_cursor(db)
             rations_need = citizen_rations_need + military_rations_upkeep
