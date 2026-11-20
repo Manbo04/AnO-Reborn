@@ -5,6 +5,8 @@ from .repositories import (
     get_user_units_with_stats,
     get_unit_costs,
     get_current_unit_quantity,
+    mark_units_bought,
+    seconds_until_sell_unlock,
     get_manpower_and_gold,
     get_resource_balances,
     adjust_resources_batch,
@@ -30,6 +32,17 @@ SPIES_PER_ADMIN_BUILDING = 10
 # SAM batteries (air defense, migration 0084) are housed at army bases.
 SAM_BATTERIES_PER_ARMY_BASE = 20
 COUNTER_INTEL_PER_ADMIN_BUILDING = 10
+
+# Raid fix (flag unit_sell_lock): units bought in the last SELL_LOCK_HOURS cannot be sold back.
+# Upkeep is charged once an hour, so a lock longer than an hour means every unit pays at least
+# one upkeep tick; this closes buy after the tick, raid, sell before the next one.
+SELL_LOCK_HOURS = 2
+
+
+def sell_lock_message(seconds_left):
+    """Player-facing refusal for a sale inside the lock window."""
+    minutes = max(1, int(-(-seconds_left // 60)))
+    return f"Units you just bought cannot be sold yet. Try again in {minutes} min."
 
 def compute_display_limits(cId, db, units_row=None, stockpile_row=None):
     """Return limits as shown on the military page."""
@@ -147,6 +160,12 @@ def process_sell_units(db, cId, units, wantedUnits, mildict):
     currentUnits = get_current_unit_quantity(db, cId, unit_id)
     if wantedUnits > currentUnits:
         return False, f"Not enough {units} (have {currentUnits})"
+
+    from app_core.feature_flags import is_on
+    if is_on("unit_sell_lock", cId):
+        wait = seconds_until_sell_unlock(db, cId, unit_id, SELL_LOCK_HOURS)
+        if wait > 0:
+            return False, sell_lock_message(wait)
     
     price = _unit_gold_price(cId, units, unit_costs["gold_cost"], db)
     resources = unit_costs["resource_costs"]
@@ -229,6 +248,9 @@ def process_buy_units(db, cId, units, wantedUnits, mildict):
     
     unit_id = unit_costs["unit_id"]
     add_units(db, cId, unit_id, wantedUnits)
+    from app_core.feature_flags import is_on
+    if is_on("unit_sell_lock", cId):
+        mark_units_bought(db, cId, unit_id)
     update_manpower_and_gold(db, cId, gold_delta=-totalPrice, manpower_delta=-needed_manpower)
     
     insert_revenue(db, cId, "expense", f"Buying {wantedUnits} {units} for your military.", "", units, wantedUnits)
