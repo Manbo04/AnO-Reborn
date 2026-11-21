@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% block title %}{{ province['name'] }}{% endblock %}
-{% block body_class %} page-province{% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %} province-base-view-active{% endif %}{% endblock %}
+{% block body_class %} page-province game-page-v2{% if FEATURE_PROVINCE_BASE_VIEW and province_base_layout %} province-base-view-active{% endif %}{% endblock %}
 {% block og_title %}{{ province['name'] }} · Affairs and Order{% endblock %}
 {% block og_description %}{{ province['name'] }} — {{ "{:,}".format(province['population']) }} population · {{ "{:,}".format(province['land']) }} land{% endblock %}
 {% block og_image %}{{ url_for('social_cards.province_card', province_id=province['id'], _external=True) }}{% endblock %}
@@ -19,6 +19,9 @@
 {% endblock %}
 {% block body %}
 {% from 'macros/game_ui.html' import game_button %}
+{# Same photo backdrop as every other page (Overview etc.); without it the classic page fell back to a bare white body in light mode. #}
+<div class="game-page-bg" style="background-image: url('{% if province.has_image %}{{ province.image_url }}{% else %}{{ url_for('static', filename='images/province.jpg') }}{% endif %}');"></div>
+<div class="game-page-overlay"></div>
 <div class="templatediv">
 
     {# Rendered in every layout; game-experience.css hides it while the base view is active. #}
