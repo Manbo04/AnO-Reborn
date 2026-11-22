@@ -2,8 +2,8 @@
   "author_id": "249007223454433292",
   "created_at": "2026-11-15T09:47:57Z",
   "kind": "suggestion",
-  "last_message_id": "1573725739038015622",
-  "last_player_message_at": "2026-11-21T15:44:14Z",
+  "last_message_id": "1573894504828768348",
+  "last_player_message_at": "2026-11-22T02:54:51Z",
   "messages": [
     {
       "at": "2026-11-15T09:47:57Z",
@@ -104,6 +104,16 @@
       "id": "1573725739038015622",
       "staff": false,
       "text": "There is already a very brief summary of buildings destroyed - please add a summary for the involved nations detailing the damage to their nations. How many buildings destroyed and where.\nPreferably with links to the provinces. Even better with a \"repair all button\" with checkboxes so we insta-repair."
+    },
+    {
+      "at": "2026-11-22T02:54:51Z",
+      "attachments": [],
+      "author": "slotherer",
+      "author_id": "249007223454433292",
+      "bot": false,
+      "id": "1573894504828768348",
+      "staff": false,
+      "text": "Please add checkbox for auto-buy city/land to mass purchase screen also"
     }
   ],
   "status": "new",
